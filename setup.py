@@ -119,7 +119,7 @@ setup(name='qudi',
                 'instrument',
                 'modular'
                 ],
-      license='GPLv3',
+      license='LGPLv3+',
       install_requires=windows_dep if sys.platform == 'win32' else unix_dep,
       python_requires='~=3.8',
       cmdclass={'develop': PrePostDevelopCommands, 'install': PrePostInstallCommands},
