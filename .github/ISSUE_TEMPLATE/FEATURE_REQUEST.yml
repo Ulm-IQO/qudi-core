@@ -1,0 +1,62 @@
+name: Feature Request
+description: File ideas for improvements and new features
+title: "[New Feature] "
+labels: ["enhancement"]
+#assignees:
+#  - Neverhorst
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for submitting new ideas for features and enhancements.
+        This issue can be used as a collection of ideas and as a discussion forum.
+        Maybe this can encourage people to step up and implement this new feature.
+        Please understand that you generally can not expect people to implement this for you.
+        Consider discussing this issue with the community and implementing it yourself afterwards.
+  - type: textarea
+    id: description
+    attributes:
+      label: "*Feature* Description"
+      description: "A clear and concise description of what you want to happen."
+    validations:
+      required: true
+  - type: textarea
+    id: problem_related
+    attributes:
+      label: "Related Problem"
+      description: "If this feature request is related to an existing problem describe it please."
+      placeholder: "I'm always frustrated when..."
+    validations:
+      required: false
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: "Considered Alternatives"
+      description: |
+        A clear and concise description of any alternative solutions or features you've considered.
+    validations:
+      required: true
+  - type: textarea
+    id: additional_context
+    attributes:
+      label: "Additional Context"
+      description: |
+        If you have additional context (screenshots etc.) for this issue, please drop it here.
+    validations:
+      required: false
+  - type: input
+    id: contact
+    attributes:
+      label: "Contact Details"
+      description: "How can we get in touch with you if we need more info?"
+      placeholder: "email@example.com"
+    validations:
+      required: false
+  #- type: checkboxes
+  #  id: terms
+  #  attributes:
+  #    label: Code of Conduct
+  #    description: By submitting this issue, you agree to follow our [Code of Conduct](https://example.com)
+  #    options:
+  #      - label: I agree to follow this project's Code of Conduct
+  #        required: true
