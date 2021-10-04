@@ -399,9 +399,9 @@ class QudiMainGui(GuiBase):
             except:
                 self.log.exception('Unexpected error while trying to get git repo:')
 
-        # Get core version number from VERSION.txt
+        # Get core version number from VERSION
         try:
-            with open(os.path.join(get_main_dir(), 'core', 'VERSION.txt'), 'r') as file:
+            with open(os.path.join(get_main_dir(), 'core', 'VERSION'), 'r') as file:
                 return file.read().strip()
         except:
             self.log.exception('Unexpected error while trying to get qudi version:')

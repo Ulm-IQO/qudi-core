@@ -9,7 +9,7 @@ from setuptools.command.install import install
 with open('README.md', 'r') as file:
     long_description = file.read()
 
-with open(os.path.join('.', 'qudi', 'core', 'VERSION.txt'), 'r') as file:
+with open(os.path.join('.', 'qudi', 'core', 'VERSION'), 'r') as file:
     version = file.read().strip()
 
 unix_dep = ['cycler',
@@ -89,7 +89,7 @@ setup(name='qudi',
                 'qudi.tools',
                 'qudi.tools.config_editor'
                 ],
-      package_data={'': ['LICENSE.txt', 'COPYRIGHT.txt', 'docs/*'],
+      package_data={'': ['COPYING', 'COPYING.LESSER', 'COPYRIGHT', 'docs/*'],
                     'qudi': ['artwork/logo/*',
                              'artwork/icons/oxygen/*',
                              'artwork/icons/oxygen/**/*.png',
@@ -103,7 +103,7 @@ setup(name='qudi',
                              'artwork/styles/**/*.png',
                              'artwork/styles/**/*.txt',
                              ],
-                    'qudi.core': ['VERSION.txt', 'default.cfg']
+                    'qudi.core': ['VERSION', 'default.cfg']
                     },
       description='A modular laboratory experiment management suite',
       long_description=long_description,
