@@ -7,42 +7,42 @@
 - [NVision Imaging Technologies GmbH](https://www.nvision-imaging.com/)
 
 ### People:
-- Jan M. Binder <mailto:jan-git@nlogn.org>
-- Nikolas B. A. Tomek <mailto:tomek.qudi@gmail.com>
-- Lachlan J. Rogers <mailto:lachlan.rogers@newcastle.edu.au>
-- Kay D. Jahnke <mailto:kay.jahnke@alumni.uni-ulm.de>
-- Jochen Scheuer <mailto:scheuerjochen@gmail.com>
-- Simon Schmitt <mailto:schmitt.simon1988@gmx.de>
-- Alrik Durand <mailto:alrik.durand@gmail.com>
-- Tobias Gehring <mailto:tobias.gehring@fysik.dtu.dk>
-- Alexander Stark <mailto:alexander.stark@qnami.ch>
-- Florian Frank <mailto:florian.frank@uni-ulm.de>
-- Christoph Müller <mailto:cmueller2603@gmail.com>
-- Timo Joas <mailto:timo.joas@gmx.de>
-- Gerhard Wolff <mailto:wgolff@googlemail.com>
-- Ou Wang <mailto:ou.wang.git@gmail.com>
-- Yan Liu <mailto:liuyan@baqis.ac.cn>
-- Thomas Unden <mailto:thomas@nvision-imaging.com>
-- Nicolas Staudenmaier <mailto:nicolas.staudenmaier@uni-ulm.de>
-- Matt van Breugel <mailto:matt.vanbreugel@gmail.com>
-- Genko Genov <mailto:genko.genov@uni-ulm.de>
-- Mathias Metsch <mailto:mathias.metsch@uni-ulm.de>
-- Alastair Marshall <mailto:alastair@nvision-imaging.com>
-- Ben Green <mailto:b.green@warwick.ac.uk>
-- John Jarman <mailto:jcj27@cam.ac.uk>
-- Philipp Vetter <mailto:philipp.vetter@uni-ulm.de>
-- Michael Barson <mailto:michaelb1886@gmail.com>
-- Colin Stephen <mailto:colin.stephen@warwick.ac.uk>
-- Lukas Lindner <mailto:lukas.lindner@iaf.fraunhofer.de>
-- Andreas Filipovski <mailto:andrea.filipovski@uni-ulm.de>
-- Marco Capelli <mailto:marco.capelli@rmit.edu.au>
-- Thomas Reisser <mailto:thomas.reisser@mail.de>
-- Konstantin Fehler <mailto:konstantin.fehler@uni-ulm.de>
-- Maria Carol Villavedra <mailto:mcarolvillavedra@gmail.com>
-- Stefan Häussler <mailto:stefan.haeussler@alumni.uni-ulm.de>
-- Lukas Antoniuk <mailto:lukas.antoniuk@uni-ulm.de>
-- Philipp Neumann <mailto:philipp@nvision-imaging.com>
-- Katharina Senkalla <mailto:katharina.senkalla@uni-ulm.de>
-- Raul Gonzalez <mailto:raul.gonzalez-brouwer@uni-ulm.de>
-- Daniel Dulog <mailto:daniel.dulog@gmail.com>
-- Anjusha Vijayakumar Sreeja <mailto:anjusha.vijayakumar-sreeja@uni-ulm.de>
+- [Jan M. Binder](mailto:jan-git@nlogn.org?subject=[qudi]%20Contact%20Author)
+- [Nikolas B. A. Tomek](mailto:tomek.qudi@gmail.com?subject=[qudi]%20Contact%20Author)
+- [Lachlan J. Rogers](mailto:lachlan.rogers@newcastle.edu.au?subject=[qudi]%20Contact%20Author)
+- [Kay D. Jahnke](mailto:kay.jahnke@alumni.uni-ulm.de?subject=[qudi]%20Contact%20Author)
+- [Jochen Scheuer](mailto:scheuerjochen@gmail.com?subject=[qudi]%20Contact%20Author)
+- [Simon Schmitt](mailto:schmitt.simon1988@gmx.de?subject=[qudi]%20Contact%20Author)
+- [Alrik Durand](mailto:alrik.durand@gmail.com?subject=[qudi]%20Contact%20Author)
+- [Tobias Gehring](mailto:tobias.gehring@fysik.dtu.dk?subject=[qudi]%20Contact%20Author)
+- [Alexander Stark](mailto:alexander.stark@qnami.ch?subject=[qudi]%20Contact%20Author)
+- [Florian Frank](mailto:florian.frank@uni-ulm.de?subject=[qudi]%20Contact%20Author)
+- [Christoph Müller](mailto:cmueller2603@gmail.com?subject=[qudi]%20Contact%20Author)
+- [Timo Joas](mailto:timo.joas@gmx.de?subject=[qudi]%20Contact%20Author)
+- [Gerhard Wolff](mailto:wgolff@googlemail.com?subject=[qudi]%20Contact%20Author)
+- [Ou Wang](mailto:ou.wang.git@gmail.com?subject=[qudi]%20Contact%20Author)
+- [Yan Liu](mailto:liuyan@baqis.ac.cn?subject=[qudi]%20Contact%20Author)
+- [Thomas Unden](mailto:thomas@nvision-imaging.com?subject=[qudi]%20Contact%20Author)
+- [Nicolas Staudenmaier](mailto:nicolas.staudenmaier@uni-ulm.de?subject=[qudi]%20Contact%20Author)
+- [Matt van Breugel](mailto:matt.vanbreugel@gmail.com?subject=[qudi]%20Contact%20Author)
+- [Genko Genov](mailto:genko.genov@uni-ulm.de?subject=[qudi]%20Contact%20Author)
+- [Mathias Metsch](mailto:mathias.metsch@uni-ulm.de?subject=[qudi]%20Contact%20Author)
+- [Alastair Marshall](mailto:alastair@nvision-imaging.com?subject=[qudi]%20Contact%20Author)
+- [Ben Green](mailto:b.green@warwick.ac.uk?subject=[qudi]%20Contact%20Author)
+- [John Jarman](mailto:jcj27@cam.ac.uk?subject=[qudi]%20Contact%20Author)
+- [Philipp Vetter](mailto:philipp.vetter@uni-ulm.de?subject=[qudi]%20Contact%20Author)
+- [Michael Barson](mailto:michaelb1886@gmail.com?subject=[qudi]%20Contact%20Author)
+- [Colin Stephen](mailto:colin.stephen@warwick.ac.uk?subject=[qudi]%20Contact%20Author)
+- [Lukas Lindner](mailto:lukas.lindner@iaf.fraunhofer.de?subject=[qudi]%20Contact%20Author)
+- [Andreas Filipovski](mailto:andrea.filipovski@uni-ulm.de?subject=[qudi]%20Contact%20Author)
+- [Marco Capelli](mailto:marco.capelli@rmit.edu.au?subject=[qudi]%20Contact%20Author)
+- [Thomas Reisser](mailto:thomas.reisser@mail.de?subject=[qudi]%20Contact%20Author)
+- [Konstantin Fehler](mailto:konstantin.fehler@uni-ulm.de?subject=[qudi]%20Contact%20Author)
+- [Maria Carol Villavedra](mailto:mcarolvillavedra@gmail.com?subject=[qudi]%20Contact%20Author)
+- [Stefan Häussler](mailto:stefan.haeussler@alumni.uni-ulm.de?subject=[qudi]%20Contact%20Author)
+- [Lukas Antoniuk](mailto:lukas.antoniuk@uni-ulm.de?subject=[qudi]%20Contact%20Author)
+- [Philipp Neumann](mailto:philipp@nvision-imaging.com?subject=[qudi]%20Contact%20Author)
+- [Katharina Senkalla](mailto:katharina.senkalla@uni-ulm.de?subject=[qudi]%20Contact%20Author)
+- [Raul Gonzalez](mailto:raul.gonzalez-brouwer@uni-ulm.de?subject=[qudi]%20Contact%20Author)
+- [Daniel Dulog](mailto:daniel.dulog@gmail.com?subject=[qudi]%20Contact%20Author)
+- [Anjusha Vijayakumar Sreeja](mailto:anjusha.vijayakumar-sreeja@uni-ulm.de?subject=[qudi]%20Contact%20Author)
