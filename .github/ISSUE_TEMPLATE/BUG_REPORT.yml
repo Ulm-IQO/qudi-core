@@ -25,6 +25,7 @@ body:
     attributes:
       label: "**What** is affected by the bug?"
       description: Clearly state the affected platform, version and modules involved
+      render: Markdown
     validations:
       required: true
   - type: textarea
