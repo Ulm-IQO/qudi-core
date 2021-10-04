@@ -17,8 +17,8 @@ An incomplete list of functionality the qudi-core provides:
 - various tooling as a Python library
 - basic data storage facility
 
-## Installation of new core
-First create a new environment with python 3.8 (>=3.9 is not yet supported by some packages 
+## Installation
+First create a new Python environment with python 3.8 (>=3.9 is not yet supported by some packages 
 we use) to install qudi and all dependencies in and activate this environment. 
 ### Using conda:
 ```bash
