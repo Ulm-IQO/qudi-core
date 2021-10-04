@@ -48,7 +48,7 @@ environment.
 
 Install the qudi package in the right environment and folder (see above) using pip. This also installs a qudi-kernel for jupyter notebooks (be careful, this might overright an already existing qudi-kernel).
 ```bash
-python -m pip install -e git+https://github.com/Ulm-IQO/qudi@core_pyside2_with_modules#egg=qudi
+python -m pip install -e git+https://github.com/Ulm-IQO/qudi-core@main#egg=qudi
 ```
 
 If you have created the environment with `venv`, the qudi repository will be checked out into `qudicore\src\qudi\`
@@ -79,18 +79,13 @@ You should cite our paper [Qudi: A modular python suite for experiment control a
 ## Documentation
 User and code documentation about Qudi is located at http://ulm-iqo.github.io/qudi-generated-docs/html-docs/ .
 
-## Continuous integration 
-[![Build Status](https://travis-ci.org/Ulm-IQO/qudi.svg?branch=master)](https://travis-ci.org/Ulm-IQO/qudi)
-[![Build status](https://ci.appveyor.com/api/projects/status/ma1a125b31cbl6tu/branch/master?svg=true)](https://ci.appveyor.com/project/InstituteforQuantumOptics/qudi/branch/master)
-[![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/Ulm-IQO/qudi/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/Ulm-IQO/qudi/?branch=master)
-
 ## Collaboration
 For development-related questions and discussion, please use the [qudi-dev mailing list](http://www.freelists.org/list/qudi-dev).
 
 If you just want updates about releases and breaking changes to Qudi without discussion or issue reports,
 subscribe to the [qudi-announce mailing list](http://www.freelists.org/list/qudi-announce).
 
-Feel free to add issues and pull requests for improvements on github at https://github.com/Ulm-IQO/qudi .
+Feel free to add issues and pull requests for improvements on github [here](https://github.com/Ulm-IQO/qudi-core/issues).
 
 The code in pull requests should be clean, PEP8-compliant and commented, as with every academic institution in Germany,
 our resources in the area of software development are quite limited.
