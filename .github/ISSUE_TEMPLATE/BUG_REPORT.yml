@@ -11,15 +11,15 @@ body:
           Please fill out this bug report form as thorough as possible!
           Thank you for taking the time.
   - type: dropdown
-      id: version
-      attributes:
-        label: Version
-        description: What version of our software are you running?
-        options:
-          - current main
-          - 1.0.0
-      validations:
-        required: true
+    id: version
+    attributes:
+      label: Version
+      description: What version of our software are you running?
+      options:
+        - current main
+        - 1.0.0
+    validations:
+      required: true
   - type: textarea
     id: what
     attributes:
@@ -28,49 +28,49 @@ body:
     validations:
       required: true
   - type: textarea
-      id: when
-      attributes:
-        label: "**When** does the bug occur?"
-        description: Describe the conditions that lead to the bug/error
-      validations:
-        required: true
+    id: when
+    attributes:
+      label: "**When** does the bug occur?"
+      description: Describe the conditions that lead to the bug/error
+    validations:
+      required: true
   - type: textarea
-      id: How
-      attributes:
-        label: "**How** do we replicate the issue?"
-        description: |
-          Please be specific as possible.
-          Use dashes (-) or numbers (1.) to create a list of steps
-      validations:
-        required: true
+    id: How
+    attributes:
+      label: "**How** do we replicate the issue?"
+      description: |
+        Please be specific as possible.
+        Use dashes (-) or numbers (1.) to create a list of steps
+    validations:
+      required: true
   - type: textarea
-      id: Expectation
-      attributes:
-        label: Expected behavior
-        description: How should qudi behave in this case?
-      validations:
-        required: true
+    id: Expectation
+    attributes:
+      label: Expected behavior
+      description: How should qudi behave in this case?
+    validations:
+      required: true
   - type: textarea
-      id: Logs
-      attributes:
-        label: Relevant log output
-        description: |
-          Please copy and paste any relevant log output. This will be automatically formatted.
-        render: shell
+    id: Logs
+    attributes:
+      label: Relevant log output
+      description: |
+        Please copy and paste any relevant log output. This will be automatically formatted.
+      render: shell
   - type: textarea
-      id: Comments
-      attributes:
-        label: Additional Comments
-      validations:
-        required: false
+    id: Comments
+    attributes:
+      label: Additional Comments
+    validations:
+      required: false
   - type: input
-      id: contact
-      attributes:
-        label: Contact Details
-        description: How can we get in touch with you if we need more info?
-        placeholder: email@example.com
-      validations:
-        required: false
+    id: contact
+    attributes:
+      label: Contact Details
+      description: How can we get in touch with you if we need more info?
+      placeholder: email@example.com
+    validations:
+      required: false
   #- type: checkboxes
   #  id: terms
   #  attributes:
