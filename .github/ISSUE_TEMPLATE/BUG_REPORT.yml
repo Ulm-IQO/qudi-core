@@ -1,6 +1,6 @@
 name: Bug Report
-description: File a bug report
-title: "[Bug]: "
+description: File a new bug report
+title: "[Bug] "
 labels: ["bug"]
 #assignees:
 #  - octocat
@@ -9,56 +9,73 @@ body:
     attributes:
       value: |
           Please fill out this bug report form as thorough as possible!
-
           Thank you for taking the time.
+  - type: dropdown
+      id: version
+      attributes:
+        label: Version
+        description: What version of our software are you running?
+        options:
+          - current main
+          - 1.0.0
+      validations:
+        required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: "**What** is affected by the bug?"
+      description: Clearly state the affected platform, version and modules involved
+    validations:
+      required: true
+  - type: textarea
+      id: when
+      attributes:
+        label: "**When** does the bug occur?"
+        description: Describe the conditions that lead to the bug/error
+      validations:
+        required: true
+  - type: textarea
+      id: How
+      attributes:
+        label: "**How** do we replicate the issue?"
+        description: |
+          Please be specific as possible.
+          Use dashes (-) or numbers (1.) to create a list of steps
+      validations:
+        required: true
+  - type: textarea
+      id: Expectation
+      attributes:
+        label: Expected behavior
+        description: How should qudi behave in this case?
+      validations:
+        required: true
+  - type: textarea
+      id: Logs
+      attributes:
+        label: Relevant log output
+        description: |
+          Please copy and paste any relevant log output. This will be automatically formatted.
+        render: shell
+  - type: textarea
+      id: Comments
+      attributes:
+        label: Additional Comments
+      validations:
+        required: false
   - type: input
-    id: contact
-    attributes:
-      label: Contact Details
-      description: How can we get in touch with you if we need more info?
-      placeholder: ex. email@example.com
-    validations:
-      required: false
-  - type: textarea
-    id: what-happened
-    attributes:
-      label: What happened?
-      description: Also tell us, what did you expect to happen?
-      placeholder: Tell us what you see!
-      value: "A bug happened!"
-    validations:
-      required: true
-  - type: dropdown
-    id: version
-    attributes:
-      label: Version
-      description: What version of our software are you running?
-      options:
-        - 1.0.2 (Default)
-        - 1.0.3 (Edge)
-    validations:
-      required: true
-  - type: dropdown
-    id: browsers
-    attributes:
-      label: What browsers are you seeing the problem on?
-      multiple: true
-      options:
-        - Firefox
-        - Chrome
-        - Safari
-        - Microsoft Edge
-  - type: textarea
-    id: logs
-    attributes:
-      label: Relevant log output
-      description: Please copy and paste any relevant log output. This will be automatically formatted into code, so no need for backticks.
-      render: shell
-  - type: checkboxes
-    id: terms
-    attributes:
-      label: Code of Conduct
-      description: By submitting this issue, you agree to follow our [Code of Conduct](https://example.com)
-      options:
-        - label: I agree to follow this project's Code of Conduct
-          required: true
+      id: contact
+      attributes:
+        label: Contact Details
+        description: How can we get in touch with you if we need more info?
+        placeholder: email@example.com
+      validations:
+        required: false
+  #- type: checkboxes
+  #  id: terms
+  #  attributes:
+  #    label: Code of Conduct
+  #    description: By submitting this issue, you agree to follow our [Code of Conduct](https://example.com)
+  #    options:
+  #      - label: I agree to follow this project's Code of Conduct
+  #        required: true
