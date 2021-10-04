@@ -12,7 +12,8 @@ with open('README.md', 'r') as file:
 with open(os.path.join('.', 'qudi', 'core', 'VERSION'), 'r') as file:
     version = file.read().strip()
 
-unix_dep = ['cycler',
+unix_dep = ['wheel',
+            'cycler',
             'entrypoints',
             'fysom',
             'GitPython',
@@ -28,7 +29,8 @@ unix_dep = ['cycler',
             'scipy',
             ]
 
-windows_dep = ['cycler',
+windows_dep = ['wheel',
+               'cycler',
                'entrypoints',
                'fysom',
                'GitPython',
