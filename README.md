@@ -1,6 +1,21 @@
-# qudi
-Qudi is a suite of tools for operating multi-instrument and multi-computer laboratory experiments.
-Originally built around a confocal fluorescence microscope experiments, it has grown to be a generally applicaple framework for controlling experiments.
+# qudi-core
+
+The qudi-core installation provides a versatile framework for modular multi-instrument and multi-computer measurement applications.
+It enables scientists and engineers to easily develop specialized multithreaded graphical or non-graphical applications. 
+Most of the more technical details about a complex measurement suite are handled automatically by the qudi-core so the developer can focus on what matters most... the measurement logic and the optional user interface.
+
+An incomplete list of functionality the qudi-core provides:
+- logging
+- thread management
+- automatic app status dumping/loading
+- runtime resource management
+- Python module structure
+- support for installable `qudi` package addons
+- interactive local IPython kernel interface
+- high-level automation framework via tasks/scripts
+- measurement setup configuration via YAML config file
+- various tooling as a Python library
+- basic data storage facility
 
 ## Installation of new core
 First create a new environment with python 3.8 (>=3.9 is not yet supported by some packages 
