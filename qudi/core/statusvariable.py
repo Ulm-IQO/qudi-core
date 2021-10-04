@@ -3,7 +3,7 @@
 StatusVar object for qudi modules to allow storing of application status variables on disk.
 These variables get stored during deactivation of qudi modules and loaded back in during activation.
 
-Copyright (c) the qudi developers. See the COPYRIGHT file at the top-level directory of this
+Copyright (c) 2021, the qudi developers. See the AUTHORS.md file at the top-level directory of this
 distribution and on <https://github.com/Ulm-IQO/qudi-core/>
 
 This file is part of qudi.

@@ -17,7 +17,7 @@ to mpl-colormaps.
 You should have received a copy of the CC0 legalcode along with this
 work.  If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 
-Copyright (c) the qudi developers. See the COPYRIGHT file at the top-level directory of this
+Copyright (c) 2021, the qudi developers. See the AUTHORS.md file at the top-level directory of this
 distribution and on <https://github.com/Ulm-IQO/qudi-core/>
 
 This file is part of qudi.

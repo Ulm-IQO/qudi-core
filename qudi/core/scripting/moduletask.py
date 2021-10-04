@@ -4,7 +4,7 @@
 This file contains a task class to run with qudi module dependencies as well as various
 helper classes to run and manage these tasks.
 
-Copyright (c) the qudi developers. See the COPYRIGHT file at the top-level directory of this
+Copyright (c) 2021, the qudi developers. See the AUTHORS.md file at the top-level directory of this
 distribution and on <https://github.com/Ulm-IQO/qudi-core/>
 
 This file is part of qudi.

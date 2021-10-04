@@ -4,7 +4,7 @@ This file extends the ruamel.yaml package functionality to load and dump more da
 qudi (mostly numpy array and number types).
 Provides easy to use yaml_load and yaml_dump functions to read and write qudi YAML files.
 
-Copyright (c) the qudi developers. See the COPYRIGHT file at the top-level directory of this
+Copyright (c) 2021, the qudi developers. See the AUTHORS.md file at the top-level directory of this
 distribution and on <https://github.com/Ulm-IQO/qudi-core/>
 
 This file is part of qudi.

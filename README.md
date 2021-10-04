@@ -98,4 +98,4 @@ Almost all parts of Qudi are licensed under LGPLv3 or later (see COPYING and COP
 that originate from the Jupyter/IPython project.
 These are under BSD license, check the file headers and the documentation folder.
 
-Check COPYRIGHT for a list of authors and the git history for their individual contributions.
+Check `AUTHORS.md` for a list of authors and the git history for their individual contributions.

@@ -89,7 +89,7 @@ setup(name='qudi',
                 'qudi.tools',
                 'qudi.tools.config_editor'
                 ],
-      package_data={'': ['COPYING', 'COPYING.LESSER', 'COPYRIGHT', 'docs/*'],
+      package_data={'': ['COPYING', 'COPYING.LESSER', 'AUTHORS.md', 'docs/*'],
                     'qudi': ['artwork/logo/*',
                              'artwork/icons/oxygen/*',
                              'artwork/icons/oxygen/**/*.png',

@@ -7,7 +7,7 @@ Automatically installs all important logging handlers for qudi to work but also 
 registering (and removal) of additional handlers.
 Installs a rotating log file handler to write log messages to disk.
 
-Copyright (c) the qudi developers. See the COPYRIGHT file at the top-level directory of this
+Copyright (c) 2021, the qudi developers. See the AUTHORS.md file at the top-level directory of this
 distribution and on <https://github.com/Ulm-IQO/qudi-core/>
 
 This file is part of qudi.

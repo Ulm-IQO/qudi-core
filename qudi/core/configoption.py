@@ -4,7 +4,7 @@ ConfigOption object to be used in qudi modules. The value of each ConfigOption c
 (if it has a default value) or must be specified by the user in the config file.
 Usually these values should be constant for the duration of a qudi session.
 
-Copyright (c) the qudi developers. See the COPYRIGHT file at the top-level directory of this
+Copyright (c) 2021, the qudi developers. See the AUTHORS.md file at the top-level directory of this
 distribution and on <https://github.com/Ulm-IQO/qudi-core/>
 
 This file is part of qudi.

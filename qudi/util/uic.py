@@ -10,7 +10,7 @@ QAbstractSpinBox).
 Funny enough it works if you use Pyside2's ui-to-py-converter and run the generated python code.
 This module provides a wrapper to do just that.
 
-Copyright (c) the qudi developers. See the COPYRIGHT file at the top-level directory of this
+Copyright (c) 2021, the qudi developers. See the AUTHORS.md file at the top-level directory of this
 distribution and on <https://github.com/Ulm-IQO/qudi-core/>
 
 This file is part of qudi.

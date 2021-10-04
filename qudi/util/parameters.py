@@ -20,7 +20,7 @@ Arguments annotated with these types are represented with the following widgets:
 Any other type annotation that can not be mapped to a simple builtin or a custom generic type
 (see above) will result in no corresponding widget (None).
 
-Copyright (c) the qudi developers. See the COPYRIGHT file at the top-level directory of this
+Copyright (c) 2021, the qudi developers. See the AUTHORS.md file at the top-level directory of this
 distribution and on <https://github.com/Ulm-IQO/qudi-core/>
 
 This file is part of qudi.
