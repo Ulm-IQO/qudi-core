@@ -98,8 +98,8 @@ our resources in the area of software development are quite limited.
 Do not expect help, debugging efforts or other support.
 
 ## License
-Almost all parts of Qudi are licensed under GPLv3 (see LICENSE.txt) with the exception of some files
+Almost all parts of Qudi are licensed under LGPLv3 or later (see COPYING and COPYING.LESSER) with the exception of some files
 that originate from the Jupyter/IPython project.
 These are under BSD license, check the file headers and the documentation folder.
 
-Check COPYRIGHT.txt for a list of authors and the git history for their individual contributions.
+Check COPYRIGHT for a list of authors and the git history for their individual contributions.
