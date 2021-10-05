@@ -1,5 +1,6 @@
 ---
-title: qudi-core
+title: qudi-core2
+parent: qudi-core
 nav_order: 2
 ---
 
