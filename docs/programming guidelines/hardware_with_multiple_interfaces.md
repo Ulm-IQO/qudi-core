@@ -1,5 +1,6 @@
 ---
 title: qudi-core
+nav_order: 2
 ---
 
 # Creating hardware modules satisfying multiple interfaces
