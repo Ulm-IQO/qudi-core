@@ -1,3 +1,12 @@
+---
+layout: default
+title: qudi-core
+---
+
+[back](index.md)
+
+---
+
 # Data storage with qudi
 
 Qudi provides data storage objects that can be imported from `qudi.util.datastorage` for saving and 
@@ -338,3 +347,7 @@ Every thread should create its own instance of a data storage object and read/wr
 separate files.
 
 The handling of the global parameters (read/add/remove) can be considered thread-safe.
+
+---
+
+[back](index.md)

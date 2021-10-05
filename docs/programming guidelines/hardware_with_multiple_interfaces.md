@@ -1,8 +1,10 @@
 ---
 layout: default
-title: qudi-core2
-parent: qudi-core
-nav_order: 2
+title: qudi-core
+---
+
+[back](../index.md)
+
 ---
 
 # Creating hardware modules satisfying multiple interfaces
