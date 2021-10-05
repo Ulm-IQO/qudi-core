@@ -26,9 +26,9 @@ title: qudi-core
 ### Programming Guidelines
 - [Code Style]()
 - [Writing a qudi Module]()
-- [Hardware With Multiple Interfaces](programming%20guidelines/hardware_with_multiple_interfaces.md)
+- [Hardware With Multiple Interfaces](programming guidelines/hardware_with_multiple_interfaces.md)
 - [Implementing a Fit Model]()
-- [Data Fitting Integration](programming%20guidelines/data_fitting_integration.md)
+- [Data Fitting Integration](programming guidelines/data_fitting_integration.md)
 - [Contributing]()
 
 ### Core Elements
