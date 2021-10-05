@@ -240,3 +240,7 @@ It can overload any attribute type (descriptor objects, callables, staticmethods
 etc.) in the class body with any non-empty `str` keywords. You do not need qudi module base/meta 
 classes for the overload mechanism to work, which allows you to use it with any Python3 class.
 The same is true for hiding the overloading semantics using `OverloadProxy`.
+
+---
+
+[back](../index.md)
