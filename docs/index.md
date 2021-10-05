@@ -1,5 +1,6 @@
 ---
 title: qudi-core
+has_children: true
 ---
 
 # Welcome to the qudi documentation
