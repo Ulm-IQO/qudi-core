@@ -1,3 +1,5 @@
+# qudi-core
+
 # Welcome to the qudi documentation
 
 ### [Getting Started]()
