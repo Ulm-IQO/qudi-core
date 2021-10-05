@@ -7,6 +7,7 @@ has_children: true
 # Welcome to the qudi documentation
 
 ---
+[![License: LGPL v3](https://img.shields.io/badge/License-LGPL%20v3-blue.svg)](https://www.gnu.org/licenses/lgpl-3.0)
 
 ### [Getting Started]()
 
@@ -30,9 +31,9 @@ has_children: true
 ### Programming Guidelines
 - [Code Style]()
 - [Writing a qudi Module]()
-- [Hardware With Multiple Interfaces](programming guidelines/hardware_with_multiple_interfaces.md)
+- [Hardware With Multiple Interfaces](programming_guidelines/hardware_with_multiple_interfaces.md)
 - [Implementing a Fit Model]()
-- [Data Fitting Integration](programming guidelines/data_fitting_integration.md)
+- [Data Fitting Integration](programming_guidelines/data_fitting_integration.md)
 - [Contributing]()
 
 ### Core Elements

@@ -1,4 +1,4 @@
-# qudi-core
+# qudi-core [![License: LGPL v3](https://img.shields.io/badge/License-LGPL%20v3-blue.svg)](https://www.gnu.org/licenses/lgpl-3.0)
 
 The qudi-core installation provides a versatile framework for modular multi-instrument and multi-computer measurement applications.
 It enables scientists and engineers to easily develop specialized multithreaded graphical or non-graphical applications. 
@@ -107,7 +107,7 @@ our resources in the area of software development are quite limited.
 
 Do not expect help, debugging efforts or other support.
 
-## License [![License: LGPL v3](https://img.shields.io/badge/License-LGPL%20v3-blue.svg)](https://www.gnu.org/licenses/lgpl-3.0)
+## License
 
 Almost all parts of Qudi are licensed under LGPLv3 or later (see COPYING and COPYING.LESSER) with the exception of some files
 that originate from the Jupyter/IPython project.
