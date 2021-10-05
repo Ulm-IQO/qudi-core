@@ -48,6 +48,6 @@ has_children: true
 - [Task Runner]()
 - [Graphical Config Editor]()
 - [Data Fit Models]()
-- [Data Storage](data_storage.md)
+- [Data Storage](core_elements/data_storage.md)
 
 ### [License]()

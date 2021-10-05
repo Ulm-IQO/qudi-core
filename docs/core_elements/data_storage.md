@@ -3,7 +3,7 @@ layout: default
 title: qudi-core
 ---
 
-[back](index.md)
+[back](../index.md)
 
 ---
 
@@ -350,4 +350,4 @@ The handling of the global parameters (read/add/remove) can be considered thread
 
 ---
 
-[back](index.md)
+[back](../index.md)
