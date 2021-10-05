@@ -1,3 +1,7 @@
+---
+title: qudi-core
+---
+
 # Creating hardware modules satisfying multiple interfaces
 
 This article will describe the qudi feature to overload interface attributes within hardware modules 
