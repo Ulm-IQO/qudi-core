@@ -1,4 +1,4 @@
-# Creating hardware modules satisfying multiple interfaces {#multiple_interface_hardware}
+# Creating hardware modules satisfying multiple interfaces
 
 This article will describe the qudi feature to overload interface attributes within hardware modules 
 in case of namespace collisions between multiple inherited interface classes.

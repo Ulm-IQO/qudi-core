@@ -1,4 +1,4 @@
-# Data storage with qudi {#data_storage}
+# Data storage with qudi
 
 Qudi provides data storage objects that can be imported from `qudi.util.datastorage` for saving and 
 loading (measurement) data. There is an object for each supported data storage format, which 
