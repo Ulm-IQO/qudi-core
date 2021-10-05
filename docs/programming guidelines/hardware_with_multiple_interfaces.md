@@ -1,4 +1,5 @@
 ---
+layout: default
 title: qudi-core2
 parent: qudi-core
 nav_order: 2

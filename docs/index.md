@@ -1,4 +1,5 @@
 ---
+layout: default
 title: qudi-core
 has_children: true
 ---
