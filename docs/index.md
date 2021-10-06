@@ -12,7 +12,7 @@ has_children: true
 ### [Getting Started]()
 
 ### Setup
-- [Installation]()
+- [Installation](setup/installation.md)
 - [Startup]()
 - [Jupyter Notebook Integration]()
 
