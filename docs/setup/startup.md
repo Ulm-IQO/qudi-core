@@ -32,11 +32,11 @@ startup:
 
 | argument        | description                                                   |
 | --------------- | ------------------------------------------------------------- |
-| `-h` `--help`   | Print help message about available command line arguments     |
-| `-g` `--no-gui` | Run qudi "headless" without GUI support. User interaction can only happen via IPython kernel interface. |
-| `-d` `--debug`  | Run qudi in debug mode to log all debug messages. This can impact performance. |
-| `-c` `--config` | Must be followed by the file path to a qudi config file to use for this qudi session. |
-| `-l` `--logdir` | Must be followed by the full path to a directory where qudi should dump log messages into. |
+| `-h`<br/>`--help`   | Print help message about available command line arguments. |
+| `-g`<br/>`--no-gui` | Run qudi "headless" without GUI support.<br/>User interaction can only happen via IPython kernel interface. |
+| `-d`<br/>`--debug`  | Run qudi in debug mode to log all debug messages.<br/>This might impact performance. |
+| `-c`<br/>`--config` | Must be followed by the file path to a qudi config file to use for this qudi session. |
+| `-l`<br/>`--logdir` | Must be followed by the full path to a directory where qudi should dump log messages into. |
 
 You can execute `qudi -h` to receive a help message about available command line arguments:
 ```
