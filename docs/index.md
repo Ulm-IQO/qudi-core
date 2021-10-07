@@ -9,7 +9,7 @@ has_children: true
 ---
 [![License: LGPL v3](https://img.shields.io/badge/License-LGPL%20v3-blue.svg)](https://www.gnu.org/licenses/lgpl-3.0)
 
-### Getting Started
+### [Getting Started](getting_started.md)
 
 ### [License](license.md)
 
