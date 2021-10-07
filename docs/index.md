@@ -11,6 +11,8 @@ has_children: true
 
 ### Getting Started
 
+### [License](license.md)
+
 ### Setup
 - [Installation](setup/installation.md)
 - [Startup](setup/startup.md)
@@ -49,5 +51,3 @@ has_children: true
 - Graphical Config Editor
 - Data Fit Models
 - [Data Storage](core_elements/data_storage.md)
-
-### [License](license.md)
