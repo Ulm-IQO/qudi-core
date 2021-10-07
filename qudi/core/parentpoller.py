@@ -21,12 +21,12 @@ You should have received a copy of the GNU Lesser General Public License along w
 If not, see <https://www.gnu.org/licenses/>.
 """
 
+__all__ = ['ParentPollerUnix', 'ParentPollerWindows']
+
 import ctypes
 import os
 import platform
-# import signal
 import time
-# from _thread import interrupt_main
 from threading import Thread
 import logging
 
