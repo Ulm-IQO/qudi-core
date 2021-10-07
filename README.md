@@ -2,11 +2,13 @@
 [![License: LGPL v3](https://img.shields.io/badge/License-LGPL%20v3-blue.svg)](https://www.gnu.org/licenses/lgpl-3.0)
 
 ---
-The qudi-core repository represents the base installation for the `qudi` Python package.\
+The qudi-core repository represents the base installation for the `qudi` Python package.
+
 It provides a versatile framework for modular multi-instrument and multi-computer measurement 
 applications.
 It enables scientists and engineers to easily develop specialized multithreaded graphical or 
-non-graphical applications.\
+non-graphical applications.
+
 Most of the more technical details about a complex measurement suite are handled automatically by 
 `qudi` so the developer can focus on what matters most... the measurement control logic and the 
 optional graphical user interface.
@@ -65,7 +67,8 @@ For any other development-related questions or discussions please subscribe to a
 
 ## News and Updates
 We will occasionally inform the qudi community about releases and breaking changes (no discussions).
-If you want to stay in the loop, please subscribe to our 
+
+If you are using qudi and want to stay in the loop, please subscribe to our 
 [qudi-announce mailing list](http://www.freelists.org/list/qudi-announce).
 
 ## License
