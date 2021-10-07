@@ -2,6 +2,8 @@
 """
 Parent poller mechanism from IPython.
 
+Copyright (c) 2015, IPython Development Team
+
 Copyright (c) 2021, the qudi developers. See the AUTHORS.md file at the top-level directory of this
 distribution and on <https://github.com/Ulm-IQO/qudi-core/>
 
@@ -17,11 +19,8 @@ See the GNU Lesser General Public License for more details.
 
 You should have received a copy of the GNU Lesser General Public License along with qudi.
 If not, see <https://www.gnu.org/licenses/>.
-
-Copyright (c) 2015 IPython Development Team.
-See documentation/BSDLicense_IPython.md for details.
-Also distributable under the terms of the Modified BSD License.
 """
+
 import ctypes
 import os
 import platform

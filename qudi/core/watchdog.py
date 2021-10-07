@@ -2,6 +2,9 @@
 
 """
 This file contains the qudi application watchdog.
+Derived from the ACQ4 project.
+
+Copyright (c) 2010, Luke Campagnola.
 
 Copyright (c) 2021, the qudi developers. See the AUTHORS.md file at the top-level directory of this
 distribution and on <https://github.com/Ulm-IQO/qudi-core/>
@@ -18,10 +21,6 @@ See the GNU Lesser General Public License for more details.
 
 You should have received a copy of the GNU Lesser General Public License along with qudi.
 If not, see <https://www.gnu.org/licenses/>.
-
-Derived form ACQ4:
-Copyright 2010  Luke Campagnola
-Originally distributed under MIT/X11 license. See documentation/MITLicense.txt for more infomation.
 """
 
 import os
