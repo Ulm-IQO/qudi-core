@@ -13,7 +13,7 @@ has_children: true
 
 ### Setup
 - [Installation](setup/installation.md)
-- [Startup]()
+- [Startup](setup/startup.md)
 - [Jupyter Notebook Integration]()
 
 ### Design Concepts

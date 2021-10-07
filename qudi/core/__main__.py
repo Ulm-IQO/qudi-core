@@ -17,21 +17,35 @@ You should have received a copy of the GNU Lesser General Public License along w
 If not, see <https://www.gnu.org/licenses/>.
 """
 
-import sys
 import argparse
 from qudi.core.application import Qudi
 
 # parse commandline parameters
 parser = argparse.ArgumentParser(prog='python -m qudi')
-group = parser.add_mutually_exclusive_group()
 parser.add_argument(
-    '-g', '--no-gui', action='store_true', help='does not load the manager gui module'
+    '-g',
+    '--no-gui',
+    action='store_true',
+    help='Run qudi "headless", i.e. without GUI. User interaction only possible via IPython kernel.'
 )
 parser.add_argument(
-    '-d', '--debug', action='store_true', help='start qudi in debug mode to log all debug messages'
+    '-d',
+    '--debug',
+    action='store_true',
+    help='Run qudi in debug mode to log all debug messages. Can affect performance.'
 )
-parser.add_argument('-c', '--config', default=None, help='configuration file')
-parser.add_argument('-l', '--logdir', default='', help='log directory')
+parser.add_argument(
+    '-c',
+    '--config',
+    default=None,
+    help='Path to the configuration file to use for for this qudi session.'
+)
+parser.add_argument(
+    '-l',
+    '--logdir',
+    default='',
+    help='Absolute path to log directory to use instead of the default one "<user_home>/qudi/log/"'
+)
 args = parser.parse_args()
 
 app = Qudi(no_gui=args.no_gui, debug=args.debug, log_dir=args.logdir, config_file=args.config)

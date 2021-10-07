@@ -98,6 +98,11 @@ register the qudi IPython kernel in your system (effectively calling `qudi-insta
 If you want to use the current development version of qudi and/or want to actively contribute to 
 to the [qudi-core repository](https://github.com/Ulm-IQO/qudi-core), 
 
+```shell
+> python -m pip install -e git+https://github.com/Ulm-IQO/qudi-core@main#egg=qudi
+```
+
+
 ---
 
 [back](../index.md)
