@@ -16,14 +16,15 @@ An incomplete list of functionality `qudi` provides:
 - thread management
 - automatic app status dumping/loading
 - runtime resource management
-- Python module structure
+- base modules for hardware interfaces, measurement logics and graphical user interfaces
+- inter-module communication
 - support for installable `qudi` namespace package addons
 - interactive local IPython kernel interface
 - high-level automation framework via tasks/scripts
 - measurement setup configuration via YAML config file
 - various tooling as a Python library
 - basic data storage facility
-- 
+- ...
 
 ## Attribution
 If you are publishing any work based on using qudi as a framework/tool it is good practice to 
