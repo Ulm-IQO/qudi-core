@@ -24,7 +24,7 @@ has_children: true
 - Config Options
 - Connectors
 - Configuration
-- Hardware Interface
+- [Hardware Interface](design_concepts/hardware_interface.md)
 - Module Interfuse
 - Logging
 - Integrated IPython Kernel
