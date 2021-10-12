@@ -59,7 +59,7 @@ instrument
 All qudi measurement module classes are descendants of the abstract `qudi.core.module.Base` class
 which provides the following features:
 
-#### 1. **Logging:**
+#### 1. Logging
 Easy access to the qudi logging facility via their own logger object property `log`.  
 It can be used with all major log levels:
 ```python
@@ -71,7 +71,7 @@ It can be used with all major log levels:
                                            # qudi shutdown attempt
 ```
 
-#### 2. **Finite State Machine:**
+#### 2. Finite State Machine
 A very simple finite state machine (FSM) that can be accessed via property `module_state`:  
 
 ![FSM state diagram](../images/module_fsm_diagram.svg)  
@@ -82,7 +82,7 @@ It can also be accessed by other entities in order to check if the measurement m
 or `locked` state (i.e. if the module is busy).  
 The name of the current state can be polled by calling the FSM object: `<module>.module_state()`.
 
-#### 3. **Thread Management:**
+#### 3. Thread Management
 Logic modules (subclass of `qudi.core.module.LogicBase`) will run by default in their own thread. 
 Hardware and GUI modules will not live in their own threads by default. This is why it is so 
 important to facilitate [inter-module communication](../404.md) mainly with Qt Signals in order 
@@ -108,7 +108,7 @@ class MyExampleModule(Base):
 ```
 Spawning and joining threads is handled automatically by the qudi [thread manager](../404.md).
 
-#### 4. **Balloon and Pop-Up Messaging:**
+#### 4. Balloon and Pop-Up Messaging
 An easy way to notify the user with a message independent of the logging facility is provided via 
 the two utility methdos `_send_balloon_message` and `_send_pop_up_message`.
 
@@ -121,7 +121,7 @@ Of course pop-up messages will not work if qudi is running in headless mode. In 
 message will be printed out. This is also the behaviour if balloon messages are not supported 
 by the OS.
 
-#### 5. **S**tatus Variables:**
+#### 5. Status Variables
 Status variables (`qudi.core.module.StatusVar` members) are automatically dumped and loaded upon 
 deactivation and activation of the measurement module, respectively.  
 
@@ -135,7 +135,7 @@ the type and size of the variables. So think carefully before using manual dumpi
 
 See also the [qudi status variable documentation](../404.md).
 
-#### 6. **Static Configuration:**
+#### 6. Static Configuration
 Using qudi config options (`qudi.core.module.ConfigOption` members) one can facilitate static 
 configuration of your measurement modules.  
 Upon instantiation of a module, `ConfigOption` meta 
@@ -147,14 +147,14 @@ NOT each time the module is activated.
 
 See also the [qudi configuration option documentation](../404.md).
 
-#### 7. **Measurement Module Interconnection:**
+#### 7. Measurement Module Interconnection
 You can define other measurement modules that can be accessed via `Connector` meta object members.  
 The qudi module manager will automatically load and activate dependency modules according to the 
 configuration and connect them to the module upon activation.
 
 See also the [qudi connectors documentation](../404.md) for more info.
     
-#### 8. **Meta Information:**
+#### 8. Meta Information
 Various read-only properties providing meta-information about the module:
 
 | property                  | description                                                                                     |
@@ -164,7 +164,7 @@ Various read-only properties providing meta-information about the module:
 | `module_uuid`             | A unique `UUID` that can be used to identify the module unambiguously                           |
 | `module_default_data_dir` | The full path to the default module data directory. Can be overridden by module implementation. |
 
-#### 9. **Access to qudi main instance:**
+#### 9. Access to qudi main instance
 Each measurement module holds a (weak) reference to the [`qudi.core.application.Qudi`](../404.md) 
 singleton instance. 
 This object holds references to all running core facilities like the currently loaded 
