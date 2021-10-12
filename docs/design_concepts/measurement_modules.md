@@ -157,11 +157,11 @@ See also the [qudi connectors documentation](../404.md) for more info.
 #### 8. **Meta Information:**
 Various read-only properties providing meta-information about the module:
 
-| property                  | description                                                        |
-| ------------------------- | ------------------------------------------------------------- |
-| `module_name`             | The name given to the module by the currently loaded qudi configuration |
-| `module_base`             | The module base type identifier string (`'gui'`, `'logic'` or `'hardware'`) |
-| `module_uuid`             | A unique `UUID` that can be used to identify the module unambiguously |
+| property                  | description                                                                                     |
+| ------------------------- | ----------------------------------------------------------------------------------------------- |
+| `module_name`             | The name given to the module by the currently loaded qudi configuration                         |
+| `module_base`             | The module base type identifier string (`'gui'`, `'logic'` or `'hardware'`)                     |
+| `module_uuid`             | A unique `UUID` that can be used to identify the module unambiguously                           |
 | `module_default_data_dir` | The full path to the default module data directory. Can be overridden by module implementation. |
 
 #### 9. **Access to qudi main instance:**
