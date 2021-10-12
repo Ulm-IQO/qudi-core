@@ -48,14 +48,8 @@ They must connect to at least one logic module in order to provide a graphical i
 > In other words they MUST NOT facilitate any 
 > functionality that could not be achieved by using the bare logic module(s) it is connecting to.
 
-So, as you might have noticed the relationship of GUI, logic and hardware modules is hierarchical:
-- GUI modules control one or more logic modules but no other GUI or hardware modules
-- Logic modules control other logic modules and/or hardware modules but no GUI modules
-- Hardware modules control no other qudi modules and are just providing an interface to a specific 
-instrument
 
 ## Module Features
-
 All qudi measurement module classes are descendants of the abstract `qudi.core.module.Base` class
 which provides the following features:
 
@@ -152,7 +146,7 @@ You can define other measurement modules that can be accessed via `Connector` me
 The qudi module manager will automatically load and activate dependency modules according to the 
 configuration and connect them to the module upon activation.
 
-See also the [qudi connectors documentation](../404.md) for more info.
+See also the [section further below](#inter-module-communication) for more info.
     
 #### 8. Meta Information
 Various read-only properties providing meta-information about the module:
@@ -179,7 +173,113 @@ you should never use this object in your experiment toolchains.
 
 
 ## Inter-Module Communication
-To be continued...
+So, as you might have noticed the relationship of GUI, logic and hardware modules is hierarchical:
+- GUI modules control one or more logic modules but no other GUI or hardware modules
+- Logic modules control other logic modules and/or hardware modules but no GUI modules
+- Hardware modules control no other qudi modules and are just providing an interface to a specific 
+instrument
+
+The connection to another module is done by the `qudi.core.connector.Connector` meta object. These
+connectors declare the dependency of a module on another module further down the hierarchy, i.e. it 
+opens up a control flow path to another module.
+
+See the [qudi connectors documentation](connectors.md) for more details on how connectors work.
+
+Generally the control flow between modules should be signal-driven according to the 
+[Qt signal-slot principle](https://doc.qt.io/qt-5/signalsandslots.html).  
+
+In the case of qudi this means a module should connect its own Qt signals to slots 
+(callback methods) in another module (unidirectional control flow) and connect signals from the 
+other module with its own slots (bidirectional control flow).  
+So, a modules can trigger the execution of a slot in another module. If both modules connected that 
+way are not running in the same thread all this will automatically happen asynchronously.  
+This is especially useful for GUI modules calling long-running logic methods/slots because they 
+would otherwise lock up and be unresponsive until the logic method has returned.
+
+A common example would be a GUI module triggering the start of a long-running logic method:
+```python
+from PySide2.QtCore import Signal
+from qudi.core.module import Base, LogicBase
+from qudi.core.connector import Connector
+
+# GUI module declaration in e.g. qudi/gui/my_gui_module.py
+class MyGuiModule(Base):
+    """ Description goes here """
+    
+    # Qt signal triggering the start of the measurement
+    sigStartMeasurement = Signal()  
+    
+    # Connector to get a reference to the measurement logic module
+    _logic_connector = Connector(interface='MyLogicModule', name='my_logic')
+
+    ...
+    
+    def on_activate(self):
+        self.sigStartMeasurement.connect(self._logic_connector().start_measurement)
+        self._logic_connector().sigMeasurementFinished.connect(self._measurement_finished)
+        
+    def trigger_measurement_start(self):
+        """ Will just emit the sigStartMeasurement signal """
+        self.sigStartMeasurement.emit()
+
+    def _measurement_finished(self):
+        """ Callback for measurement finished signal from logic module """
+        print('Logic has finished the measurement')
+
+    ...
+
+# Logic module declaration in e.g. qudi/logic/my_logic_module.py
+class MyLogicModule(LogicBase):
+    """ Description goes here """
+    
+    # Qt signal notifying all connected "listeners" about a finished measurement
+    sigMeasurementFinished = Signal()  
+
+    ...
+        
+    def start_measurement(self):
+        """ API method to start a measurement """
+        # Actually perform your measurement here and emit notification signal upon finishing
+        self.sigMeasurementFinished.emit()
+
+    ...
+```
+In the above example, a GUI call to `trigger_measurement_start` will return immediately and cause 
+the logic module to asynchronously start the measurement by running `start_measurement`.  
+While the measurement is running in the logic thread, the GUI module stays responsive and can 
+perform other tasks.  
+As soon as the logic module has finished its measurement it will emit a signal causing all 
+connected slots to be called asynchronously in their respective threads. In our case this will 
+execute the `_measurement_finished` callback and print the message.
+
+The same kind of control flow can be established between multiple logic modules, each running in 
+its own thread.
+
+There is an exception to this kind of control flow... hardware modules.  
+Hardware modules usually just provide a set of wrapper methods to control an instrument and are 
+typically controlled by logic modules that run in their own thread. So in most cases there is no 
+need to access hardware functionality asynchronously and the logic can thus simply access the 
+hardware directly via its connector (without signal/slot mechanics):
+```python
+from qudi.core.module import LogicBase
+from qudi.core.connector import Connector
+
+
+class MyLogicModule(LogicBase):
+    """ Description goes here """
+    
+    # Connector to get a reference to the hardware module
+    _hardware_connector = Connector(interface='MyHardwareInterface', name='my_hardware')
+
+    ...
+        
+    def do_stuff_in_hardware(self):
+        """ Will perform some task using the connected hardware """
+        self._hardware_connector().do_stuff()  # direct method call, no signal/slot shenanigans
+
+    ...
+```
+
 
 ---
 
