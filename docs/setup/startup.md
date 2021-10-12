@@ -3,7 +3,7 @@ layout: default
 title: qudi-core
 ---
 
-[back](../index.md)
+[index](../index.md)
 
 ---
 
@@ -54,4 +54,4 @@ optional arguments:
 
 ---
 
-[back](../index.md)
+[index](../index.md)

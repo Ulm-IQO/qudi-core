@@ -3,7 +3,7 @@ layout: default
 title: qudi-core
 ---
 
-[back](../index.md)
+[index](../index.md)
 
 ---
 
@@ -130,4 +130,4 @@ This is also called "hardware abstraction".
 
 ---
 
-[back](../index.md)
+[index](../index.md)

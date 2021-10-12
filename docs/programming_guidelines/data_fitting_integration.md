@@ -3,7 +3,7 @@ layout: default
 title: qudi-core
 ---
 
-[back](../index.md)
+[index](../index.md)
 
 ---
 
@@ -15,4 +15,4 @@ implementation of data fitting and fit constraint configuration.
 
 ---
 
-[back](../index.md)
+[index](../index.md)

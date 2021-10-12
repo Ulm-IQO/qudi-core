@@ -19,7 +19,7 @@ has_children: true
 - Jupyter Notebook Integration
 
 ### Design Concepts
-- qudi Modules (Hardware/Logic/GUI)
+- [Measurement Modules (Hardware/Logic/GUI)](design_concepts/measurement_modules.md)
 - Status Variables
 - Config Options
 - Connectors

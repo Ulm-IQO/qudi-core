@@ -3,7 +3,7 @@ layout: default
 title: qudi-core
 ---
 
-[back](index.md)
+[index](index.md)
 
 ---
 
@@ -72,4 +72,4 @@ matter. Please refer to our [contributing guideline](programming_guidelines/cont
  
 ---
 
-[back](index.md)
+[index](index.md)

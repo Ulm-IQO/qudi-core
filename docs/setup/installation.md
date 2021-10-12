@@ -3,7 +3,7 @@ layout: default
 title: qudi-core
 ---
 
-[back](../index.md)
+[index](../index.md)
 
 ---
 
@@ -105,4 +105,4 @@ to the [qudi-core repository](https://github.com/Ulm-IQO/qudi-core),
 
 ---
 
-[back](../index.md)
+[index](../index.md)

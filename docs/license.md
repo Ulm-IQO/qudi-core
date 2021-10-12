@@ -3,7 +3,7 @@ layout: default
 title: qudi-core
 ---
 
-[back](index.md)
+[index](index.md)
 
 ---
 
@@ -99,4 +99,4 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 
 ---
 
-[back](index.md)
+[index](index.md)

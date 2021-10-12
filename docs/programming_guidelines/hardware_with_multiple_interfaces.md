@@ -3,7 +3,7 @@ layout: default
 title: qudi-core
 ---
 
-[back](../index.md)
+[index](../index.md)
 
 ---
 
@@ -245,4 +245,4 @@ The same is true for hiding the overloading semantics using `OverloadProxy`.
 
 ---
 
-[back](../index.md)
+[index](../index.md)
