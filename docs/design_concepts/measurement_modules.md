@@ -39,7 +39,7 @@ notebook using the qudi kernel or the qudi manager GUI console.
 While a logic module is in principle enough to control a measurement application, you may want to 
 provide a more user-friendly interface. This is where qudi GUI modules come into play. 
 Each qudi GUI module must assemble and show a Qt `QMainWindow` instance that can use everything 
-[Qt for Python (PySide2)]() has to offer.  
+[Qt for Python (PySide2)](https://doc.qt.io/qtforpython/) has to offer.  
 They must connect to at least one logic module in order to provide a graphical interface for it. 
 
 > **⚠ WARNING:**
@@ -74,7 +74,7 @@ It can be used with all major log levels:
 #### 2. **Finite State Machine:**
 A very simple finite state machine (FSM) that can be accessed via property `module_state`:  
 
-![FSM state diagram](fsm_state_diagram.jpg)  
+![FSM state diagram](../images/module_fsm_diagram.svg)  
 
 The qudi [module manager](../404.md) uses this FSM to control and monitor qudi measurement modules.
 
