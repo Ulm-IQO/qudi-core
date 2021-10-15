@@ -26,29 +26,25 @@ has_children: true
 - Configuration
 - [Hardware Interface](design_concepts/hardware_interface.md)
 - Module Interfuse
-- Logging
+- [Logging](design_concepts/logging.md)
 - Integrated IPython Kernel
 - Remote Modules
+- Thread Manager
+- Module Manager
+- Main Application
+- Module Servers
+- Task Runner
+- [Data Storage](core_elements/data_storage.md)
+- Data Fit Models
 
 ### Programming Guidelines
 - Code Style
-- Writing a qudi Module
+- Writing qudi Modules
 - Porting Old qudi Modules
 - [Hardware With Multiple Interfaces](programming_guidelines/hardware_with_multiple_interfaces.md)
-- Implementing a Fit Model
+- Implementing Fit Models
 - [Data Fitting Integration](programming_guidelines/data_fitting_integration.md)
 - Contributing
 
-### Core Elements
-- Manager GUI
-- Main Application
-- Module Manager
-- Logger
-- Thread Manager
-- Module Namespace Server
-- Remote Modules Server
-- IPython Kernel
-- Task Runner
-- Graphical Config Editor
-- Data Fit Models
-- [Data Storage](core_elements/data_storage.md)
+### Graphical Config Editor
+
