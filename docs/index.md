@@ -20,9 +20,9 @@ has_children: true
 
 ### Design Concepts
 - [Measurement Modules (Hardware/Logic/GUI)](design_concepts/measurement_modules.md)
-- Status Variables
-- Config Options
-- Connectors
+- [Status Variables](design_concepts/status_variables.md)
+- [Config Options](design_concepts/config_options.md)
+- [Connectors](design_concepts/connectors.md)
 - Configuration
 - [Hardware Interface](design_concepts/hardware_interface.md)
 - Module Interfuse
@@ -33,6 +33,7 @@ has_children: true
 ### Programming Guidelines
 - Code Style
 - Writing a qudi Module
+- Porting Old qudi Modules
 - [Hardware With Multiple Interfaces](programming_guidelines/hardware_with_multiple_interfaces.md)
 - Implementing a Fit Model
 - [Data Fitting Integration](programming_guidelines/data_fitting_integration.md)
