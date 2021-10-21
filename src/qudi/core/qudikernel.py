@@ -19,6 +19,9 @@ You should have received a copy of the GNU Lesser General Public License along w
 If not, see <https://www.gnu.org/licenses/>.
 """
 
+__all__ = ['install_kernel', 'uninstall_kernel', 'QudiIPythonKernel', 'QudiKernelClient',
+           'QudiKernelService']
+
 import os
 import numpy
 import sys
@@ -31,14 +34,11 @@ from ipykernel.ipkernel import IPythonKernel
 
 from qudi.core.config import Configuration
 
-__all__ = ('install_kernel', 'uninstall_kernel', 'QudiIPythonKernel', 'QudiKernelClient',
-           'QudiKernelService')
-
 
 def install_kernel():
     from jupyter_client.kernelspec import KernelSpecManager
 
-    print('> Installing Qudi kernel...')
+    print('> Installing qudi kernel...')
     try:
         # prepare temporary kernelspec folder
         tempdir = tempfile.mkdtemp(suffix='_kernels')
@@ -67,7 +67,7 @@ def install_kernel():
 def uninstall_kernel():
     from jupyter_client.kernelspec import KernelSpecManager
 
-    print('> Uninstalling Qudi kernel...')
+    print('> Uninstalling qudi kernel...')
     try:
         KernelSpecManager().remove_kernel_spec('qudi')
     except KeyError:

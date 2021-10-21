@@ -235,7 +235,7 @@ class QudiMainGui(GuiBase):
         self._has_console = False
         try:
             # Create and start kernel process
-            kernel_manager = QtKernelManager(kernel_name='Qudi', autorestart=False)
+            kernel_manager = QtKernelManager(kernel_name='qudi', autorestart=False)
             # kernel_manager.kernel.gui = 'qt4'
             kernel_manager.start_kernel()
 
@@ -256,9 +256,10 @@ class QudiMainGui(GuiBase):
             self._has_console = True
             self.log.info('IPython kernel for qudi main GUI successfully started.')
         except jupyter_client.kernelspec.NoSuchKernel:
-            self.log.error(
-                'Qudi IPython kernelspec not installed. IPython console not available. Please run '
-                '"qudi-install-kernel" from within the qudi Python environment and restart qudi. '
+            self.log.warn(
+                'Qudi IPython kernelspec not installed.\n'
+                'IPython console and jupyter notebook integration not available.\n'
+                'Run "qudi-install-kernel" from within the qudi Python environment to fix this. '
             )
         except:
             self.log.exception(

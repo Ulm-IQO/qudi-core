@@ -15,11 +15,6 @@ class PrePostDevelopCommands(develop):
         # PUT YOUR PRE-INSTALL SCRIPT HERE
         develop.run(self)
         # PUT YOUR POST-INSTALL SCRIPT HERE
-        try:
-            from qudi.core.qudikernel import install_kernel
-            install_kernel()
-        except:
-            pass
 
 
 class PrePostInstallCommands(install):
@@ -30,11 +25,6 @@ class PrePostInstallCommands(install):
         # PUT YOUR PRE-INSTALL SCRIPT HERE
         install.run(self)
         # PUT YOUR POST-INSTALL SCRIPT HERE
-        try:
-            from qudi.core.qudikernel import install_kernel
-            install_kernel()
-        except:
-            pass
 
 
 unix_dep = [
