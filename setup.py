@@ -76,10 +76,12 @@ class PrePostInstallCommands(install):
         except:
             pass
 
+packages = ['qudi']
+packages.extend(f'qudi.{pkg}' for pkg in find_namespace_packages(where='qudi'))
 
 setup(name='qudi-core',
       version=version,
-      packages=find_namespace_packages(include='qudi'),
+      packages=packages,
       # packages=['qudi',
       #           'qudi.core',
       #           'qudi.core.gui',
