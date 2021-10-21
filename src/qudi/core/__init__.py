@@ -19,6 +19,11 @@ You should have received a copy of the GNU Lesser General Public License along w
 If not, see <https://www.gnu.org/licenses/>.
 """
 
+__all__ = ['StatusVar', 'ConfigOption', 'Connector', 'Base', 'LogicBase', 'GuiBase', 'get_logger']
+
+from importlib import metadata
+__version__ = metadata.version('qudi-core')
+
 from qudi.core.statusvariable import StatusVar
 from qudi.core.configoption import ConfigOption
 from qudi.core.connector import Connector

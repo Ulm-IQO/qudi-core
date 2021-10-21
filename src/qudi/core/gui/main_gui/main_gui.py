@@ -22,7 +22,6 @@ import os
 import sys
 import logging
 import subprocess
-
 import jupyter_client.kernelspec
 from PySide2 import QtCore, QtWidgets
 from qtconsole.manager import QtKernelManager
@@ -399,10 +398,10 @@ class QudiMainGui(GuiBase):
             except:
                 self.log.exception('Unexpected error while trying to get git repo:')
 
-        # Get core version number from VERSION
+        # Try to get qudi.core version number
         try:
-            with open(os.path.join(get_main_dir(), 'core', 'VERSION'), 'r') as file:
-                return file.read().strip()
+            from qudi.core import __version__
+            return __version__
         except:
             self.log.exception('Unexpected error while trying to get qudi version:')
         return 'unknown'
