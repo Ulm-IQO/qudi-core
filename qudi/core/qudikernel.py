@@ -48,7 +48,7 @@ def install_kernel():
 
         kernel_dict = {
             'argv': [sys.executable, kernel_path, '-f', '{connection_file}'],
-            'display_name': 'Qudi',
+            'display_name': 'qudi',
             'language': 'python'
         }
         # write the kernelspec file
