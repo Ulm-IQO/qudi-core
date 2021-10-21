@@ -17,7 +17,7 @@ qudi is by command line (do not forget to activate the Python environment before
 There are also two additional supported ways to run qudi:
 1. Run as a Python module with:
    ```shell
-   > python -m qudi
+   > python -m qudi.core
    ```
 2. Execute the startup script `runnable.py` located in the qudi main directory: 
    ```shell
@@ -40,7 +40,7 @@ startup:
 
 You can execute `qudi -h` to receive a help message about available command line arguments:
 ```
-usage: python -m qudi [-h] [-g] [-d] [-c CONFIG] [-l LOGDIR]
+usage: python -m qudi.core [-h] [-g] [-d] [-c CONFIG] [-l LOGDIR]
 
 optional arguments:
   -h, --help            show this help message and exit

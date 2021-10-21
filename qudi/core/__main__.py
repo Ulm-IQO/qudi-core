@@ -21,7 +21,7 @@ import argparse
 from qudi.core.application import Qudi
 
 # parse commandline parameters
-parser = argparse.ArgumentParser(prog='python -m qudi')
+parser = argparse.ArgumentParser(prog='python -m qudi.core')
 parser.add_argument(
     '-g',
     '--no-gui',
