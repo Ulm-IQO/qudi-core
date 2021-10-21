@@ -2,7 +2,7 @@
 
 import os
 import sys
-from setuptools import setup, find_namespace_packages
+from setuptools import setup
 from setuptools.command.develop import develop
 from setuptools.command.install import install
 
@@ -76,24 +76,25 @@ class PrePostInstallCommands(install):
         except:
             pass
 
-packages = ['qudi']
-packages.extend(f'qudi.{pkg}' for pkg in find_namespace_packages(where='qudi'))
 
 setup(name='qudi-core',
       version=version,
-      packages=packages,
-      # packages=['qudi',
-      #           'qudi.core',
-      #           'qudi.core.gui',
-      #           'qudi.core.gui.main_gui',
-      #           'qudi.core.logger',
-      #           'qudi.core.scripting',
-      #           'qudi.util',
-      #           'qudi.util.fit_models',
-      #           'qudi.util.widgets',
-      #           'qudi.tools',
-      #           'qudi.tools.config_editor'
-      #           ],
+      packages=['qudi',
+                'qudi.core',
+                'qudi.core.gui',
+                'qudi.core.gui.main_gui',
+                'qudi.core.logger',
+                'qudi.core.scripting',
+                'qudi.gui',
+                'qudi.gui.taskrunner',
+                'qudi.logic',
+                'qudi.tasks',
+                'qudi.util',
+                'qudi.util.fit_models',
+                'qudi.util.widgets',
+                'qudi.tools',
+                'qudi.tools.config_editor'
+                ],
       package_data={'': ['LICENSE', 'LICENSE.LESSER', 'AUTHORS.md', 'README.md'],
                     'qudi': ['artwork/logo/*',
                              'artwork/icons/oxygen/*',
