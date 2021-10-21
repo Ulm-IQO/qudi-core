@@ -2,14 +2,14 @@
 
 import os
 import sys
-from setuptools import setup
+from setuptools import setup, find_namespace_packages
 from setuptools.command.develop import develop
 from setuptools.command.install import install
 
 with open('README.md', 'r') as file:
     long_description = file.read()
 
-with open(os.path.join('.', 'qudi', 'core', 'VERSION'), 'r') as file:
+with open(os.path.join('.', 'src', 'qudi', 'core', 'VERSION'), 'r') as file:
     version = file.read().strip()
 
 unix_dep = ['wheel',
@@ -79,43 +79,16 @@ class PrePostInstallCommands(install):
 
 setup(name='qudi-core',
       version=version,
-      packages=['qudi',
-                'qudi.core',
-                'qudi.core.gui',
-                'qudi.core.gui.main_gui',
-                'qudi.core.logger',
-                'qudi.core.scripting',
-                'qudi.gui',
-                'qudi.gui.taskrunner',
-                'qudi.logic',
-                'qudi.tasks',
-                'qudi.util',
-                'qudi.util.fit_models',
-                'qudi.util.widgets',
-                'qudi.tools',
-                'qudi.tools.config_editor'
-                ],
+      packages=find_namespace_packages(where='src', exclude=['qudi.artwork*']),
+      package_dir={'': 'src'},
       package_data={'': ['LICENSE', 'LICENSE.LESSER', 'AUTHORS.md', 'README.md'],
-                    'qudi': ['artwork/logo/*',
-                             'artwork/icons/oxygen/*.txt',
-                             'artwork/icons/oxygen/**/*.png',
-                             'artwork/icons/oxygen/**/*.svg',
-                             'artwork/icons/oxygen/**/*.svgz',
-                             'artwork/icons/qudiTheme/*',
-                             'artwork/icons/qudiTheme/**/*.png',
-                             'artwork/icons/qudiTheme/**/*.svg',
-                             'artwork/icons/qudiTheme/**/*.svgz',
-                             'artwork/logo/*.png',
-                             'artwork/logo/*.svg',
-                             'artwork/logo/*.svgz',
-                             'artwork/logo/*.ico',
-                             'artwork/logo/*.txt',
-                             'artwork/styles/*.qss',
-                             'artwork/styles/*.txt',
-                             'artwork/styles/**/*.png',
-                             'artwork/styles/**/*.txt',
-                             'artwork/styles/**/svg/*.svg',
-                             'artwork/styles/**/svg/*.svgz',
+                    'qudi': ['artwork/icons/*',
+                             'artwork/icons/**/*',
+                             'artwork/icons/**/**/*',
+                             'artwork/styles/*',
+                             'artwork/styles/**/*',
+                             'artwork/styles/**/**/*',
+                             'artwork/logo/*',
                              ],
                     'qudi.core': ['VERSION', 'default.cfg']
                     },
