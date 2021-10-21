@@ -43,7 +43,7 @@ Thank you!
 
 ## Installation
 For installation instructions please refer to our 
-[qudi installation guide](docs/setup/installation.md).
+[qudi installation guide](https://ulm-iqo.github.io/qudi-core/setup/installation.html).
 
 ## Documentation
 The official qudi documentation homepage can be found [here](https://ulm-iqo.github.io/qudi-core/).
@@ -78,7 +78,8 @@ Qudi is licensed under the
 A copy of the full license text can be found in the repository root directory in 
 [LICENSE](LICENSE) and [LICENSE.LESSER](LICENSE.LESSER)
 
-For more information please check the [license section in the qudi documentation](docs/license.md). 
+For more information please check the 
+[license section in the qudi documentation](https://ulm-iqo.github.io/qudi-core/license.html). 
 
 ## Copyright
 Check [AUTHORS.md](AUTHORS.md) for a list of authors and the git history for their individual 
