@@ -79,7 +79,7 @@ class PrePostInstallCommands(install):
 
 setup(name='qudi-core',
       version=version,
-      packages=find_namespace_packages(where='qudi'),
+      packages=find_namespace_packages(include='qudi'),
       # packages=['qudi',
       #           'qudi.core',
       #           'qudi.core.gui',
