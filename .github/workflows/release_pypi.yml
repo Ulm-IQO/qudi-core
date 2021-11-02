@@ -2,20 +2,34 @@ name: Build and upload qudi-core release to the PyPI
 
 on:
   release:
-    types: [created]
+    types: [published]
 
 jobs:
   deploy:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-python@v2
-    - name: Install dependencies
+    - name: get latest release with tag
+      id: latestrelease
+      run: |
+        echo "::set-output name=releasetag::$(curl -s https://api.github.com/repos/Ulm-IQO/qudi-core/releases/latest | jq '.tag_name' | sed 's/\"//g')"
+    - name: confirm release tag
+      run: |
+        echo ${{ steps.latestrelease.outputs.releasetag }}
+    - name: tag checkout
+      uses: actions/checkout@v2
+      with:
+        ref: ${{ steps.latestrelease.outputs.releasetag }}
+    - name: setup virtual machine and Python environment
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.8'
+        architecture: 'x64'
+    - name: install dependencies
       run: |
         python -m pip install --upgrade pip
         python -m pip install --upgrade setuptools wheel twine
-    - name: Build and publish
+    - name: build and publish
       env:
         TWINE_USERNAME: __token__
         TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
