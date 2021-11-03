@@ -44,7 +44,9 @@ This should have created a subfolder named `qudi-venv`.
 > Python 3.8.x
 > ```
 > Any older Python version is not supported and some packages qudi depends on can not cope with 
-> Python >= 3.9 yet.
+> Python >= 3.9 yet. 
+> In case the above command didn't yield the desired version, you can obtain a standalone Python 3.8 package [here](https://www.python.org/downloads/release/python-3812/). 
+> If you're using a distribution like Anaconda, make sure that you created and activated a [conda environment](https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html) with Python 3.8 before creating the Python virtual environment via venv. 
 
 ### 3. Activate the new Python environment
 Anything related to qudi and its package dependencies must be done in the new Python environment.
@@ -72,8 +74,8 @@ of your installation, you might want to consider skipping ahead to
 > [measurement modules](../design_concepts/measurement_modules.md).
 > 
 > Measurement module libraries can be easily installed after `qudi-core` as namespace packages.
-> So for most users it makes sense to NOT install `qudi-core` from source but from the PyPI and 
-> just install the measurement modules in development mode. 
+> Even if you want to change existing or write your own measurement modules, we recommend to install qudi-core from PyPI (NOT from source).
+> For this purpose, you can just  install the measurment modules in development mode later.
 
 With the active Python environment you can install the latest release of qudi like any other Python 
 package from PyPI via:
