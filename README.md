@@ -1,6 +1,6 @@
 # qudi-core
 [![License: LGPL v3](https://img.shields.io/badge/License-LGPL%20v3-blue.svg)](https://www.gnu.org/licenses/lgpl-3.0)
-![PyPI release](https://github.com/Ulm-IQO/qudi-core/actions/workflows/release_test_pypi.yml/badge.svg)
+![PyPI release](https://github.com/Ulm-IQO/qudi-core/actions/workflows/release_pypi.yml/badge.svg)
 
 ---
 The qudi-core repository represents the base installation for the `qudi` Python package.
