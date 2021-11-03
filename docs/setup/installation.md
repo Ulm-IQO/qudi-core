@@ -46,7 +46,6 @@ This should have created a subfolder named `qudi-venv`.
 > Any older Python version is not supported and some packages qudi depends on can not cope with 
 > Python >= 3.9 yet. 
 > In case the above command didn't yield the desired version, you can obtain a standalone Python 3.8 package [here](https://www.python.org/downloads/release/python-3812/). 
-> If you're using a distribution like Anaconda, make sure that you created and activated a [conda environment](https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html) with Python 3.8 before creating the Python virtual environment via venv. 
 
 ### 3. Activate the new Python environment
 Anything related to qudi and its package dependencies must be done in the new Python environment.
