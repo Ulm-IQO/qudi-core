@@ -1,19 +1,19 @@
-name: Build and upload qudi-core release to the PyPI
+name: Build and upload qudi-core version to the Test PyPI
 
 on:
-  release:
-    types: [published]
+  push:
+    branches:
+      - main
+    paths:
+      - 'VERSION'
 
 jobs:
   deploy:
-    if: "!github.event.release.prerelease"
     runs-on: ubuntu-latest
 
     steps:
-    - name: checkout tag
+    - name: checkout main
       uses: actions/checkout@v2
-      with:
-        ref: ${{ github.event.release.tag_name }}
     - name: setup Python environment
       uses: actions/setup-python@v2
       with:
@@ -26,9 +26,9 @@ jobs:
     - name: build wheel
       run: |
         python setup.py sdist bdist_wheel
-    - name: upload to PyPI
+    - name: upload to Test PyPI
       env:
         TWINE_USERNAME: __token__
-        TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
+        TWINE_PASSWORD: ${{ secrets.TEST_PYPI_API_TOKEN }}
       run: |
-        twine upload dist/*
+        twine upload --repository testpypi dist/*
