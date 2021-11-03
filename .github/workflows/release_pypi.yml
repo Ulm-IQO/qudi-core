@@ -1,4 +1,4 @@
-name: Build and upload qudi-core release to the PyPI
+name: PyPI Release
 
 on:
   release:

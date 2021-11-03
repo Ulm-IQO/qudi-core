@@ -1,4 +1,4 @@
-name: Build and upload qudi-core version to the Test PyPI
+name: Test PyPI release
 
 on:
   push:
