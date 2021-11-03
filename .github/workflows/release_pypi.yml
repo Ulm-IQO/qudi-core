@@ -2,25 +2,19 @@ name: Build and upload qudi-core release to the PyPI
 
 on:
   release:
-    types: [published]
+    types: [published, released]
 
 jobs:
   deploy:
+    if: "!github.event.release.prerelease"
     runs-on: ubuntu-latest
 
     steps:
-    - name: get latest release with tag
-      id: latestrelease
-      run: |
-        echo "::set-output name=releasetag::$(curl -s https://api.github.com/repos/Ulm-IQO/qudi-core/releases/latest | jq '.tag_name' | sed 's/\"//g')"
-    - name: confirm release tag
-      run: |
-        echo ${{ steps.latestrelease.outputs.releasetag }}
     - name: tag checkout
       uses: actions/checkout@v2
       with:
-        ref: ${{ steps.latestrelease.outputs.releasetag }}
-    - name: setup virtual machine and Python environment
+        ref: ${{ github.event.release.tag_name }}
+    - name: setup Python environment
       uses: actions/setup-python@v2
       with:
         python-version: '3.8'
