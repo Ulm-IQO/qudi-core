@@ -33,7 +33,7 @@ environment name.
 > **⚠ WARNING:**
 > 
 > Do not use this method if you are running an Anaconda/Miniconda distribution!  
-> See [variant 2](#variant-2-anaconda-miniconda) in that case.
+> See [variant 2](#variant-2-anacondaminiconda) in that case.
 
 Using the builtin `venv` module from the Python standard library we can create a Python environment 
 in the current directory.  
@@ -73,6 +73,7 @@ correct interpreter. On windows you may also use the `py` launcher instead.
 
 </details>
 
+
 <details>
   <summary> <b>Unix</b> users click here to expand</summary>
 
@@ -103,7 +104,8 @@ correct interpreter. On windows you may also use the `py` launcher instead.
 > 
 > Most of the times qudi runs without any issues but should you encounter crashes or error messages 
 > coming from C++ extensions during startup, consider installing a "plain" Python desitribution 
-> instead and install a Python environment according to [variant 1](#variant-2-python-standard-library).
+> instead and install a Python environment according to 
+> [variant 1](#variant-1-python-standard-library).
 
 If you are using Anaconda or Miniconda Python distributions, this is probably the way to go for you.
 This method uses `conda` to create the Python 3.8 environment.
@@ -121,6 +123,7 @@ You can find OS specific commands to create the environment below.
   ```
 
 </details>
+
 
 <details>
   <summary> <b>Unix</b> users click here to expand</summary>
