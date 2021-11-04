@@ -203,7 +203,7 @@ folder under `.../qudi-env/Scripts/` .
 The `qudi-core` package installation provides you with the general qudi framework and a minimum 
 running application. User application measurement modules need to be installed as namespace 
 packages on top of the `qudi-core` package at a later stage (see 
-[step 4](#5-install-measurement-module-addons)).
+[step 4](#4-install-measurement-module-addons)).
 
 > **⚠ WARNING:**
 > 
