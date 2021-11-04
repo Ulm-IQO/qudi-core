@@ -10,12 +10,12 @@ title: qudi-core
 # Installation
 
 ## Step 1: Create a Python 3.8 environment 
-In order to install qudi as a python package and application, we strongly recommend to create an 
+In order to install qudi as a python package and application, we strongly recommend creating an 
 isolated Python 3.8(!) environment. Qudi needs very specific package dependencies that 
 can otherwise mess up your system Python installation.
  
 Another advantage of installing qudi in its own Python environment is, that you can easily 
-deinstall qudi and all dependencies again by simply deleting this environment.
+uninstall qudi and all dependencies again by simply deleting this environment.
 
 You can choose any environment name you like. For this guide we will choose `qudi-env` as the 
 environment name.
@@ -37,8 +37,8 @@ environment name.
 
 Using the builtin `venv` module from the Python standard library we can create a Python environment 
 in the current directory.  
-The entire environment will be placed in a subfolder with the corresponding name and can be 
-tracelessly deinstalled by simply deleting this folder again.
+The entire environment will be placed in a sub-folder with the corresponding name and can be 
+tracelessly uninstalled by simply deleting this folder again.
 
 While this is to our knowledge the most robust and preferred way of setting up a Python environment 
 for qudi, it has a small disadvantage.
@@ -51,7 +51,7 @@ If you are missing Python 3.8 on your system, you can download and install the r
 You can find OS specific commands to create the environment below.  
 If your Python 3.8 interpreter is not found on your `PATH` (e.g. if you have multiple versions of 
 Python installed), you need to replace all `python`/`python3` calls with the full path to the 
-correct interpreter. On windows you may also use the `py` launcher instead.
+correct interpreter. On Windows you may also use the `py` launcher instead.
 
 <details>
   <summary> <b>Windows</b> users click here to expand</summary>
@@ -106,8 +106,8 @@ correct interpreter. On windows you may also use the `py` launcher instead.
 > in conjunction with `conda` environments.  
 > We have not been able to narrow down the source of these problems so far.
 > 
-> Most of the times qudi runs without any issues but should you encounter crashes or error messages 
-> coming from C++ extensions during startup, consider installing a "plain" Python desitribution 
+> Most of the time, qudi runs without any issues but should you encounter crashes or error messages 
+> coming from C++ extensions during startup, consider installing a "plain" Python distribution 
 > instead and install a Python environment according to 
 > [variant 1](#variant-1-python-standard-library).
 
@@ -120,7 +120,7 @@ You can find OS specific commands to create the environment below.
   <summary> <b>Windows</b> users click here to expand</summary>
 
   You can execute these commands from any working directory since the environment will be created 
-  in a Anaconda/Miniconda specific default directory.
+  in an Anaconda/Miniconda specific default directory.
 
   ```console
   C:\> conda create --name qudi-env python=3.8
@@ -135,7 +135,7 @@ You can find OS specific commands to create the environment below.
   <summary> <b>Unix</b> users click here to expand</summary>
 
   You can execute these commands from any working directory since the environment will be created 
-  in a Anaconda/Miniconda specific default directory.
+  in an Anaconda/Miniconda specific default directory.
 
   ```bash
   foo@bar:~$ conda create --name qudi-env python=3.8
@@ -242,7 +242,7 @@ packages on top of the `qudi-core` package at a later stage (see
 > For this most common use-case we recommend installing `qudi-core` directly from the Python Package 
 > Index (PyPI) and installing the measurement module addons from source in development mode.  
 > This enables you to fiddle with your measurement code later on and have the `qudi-core` installed 
-> as stable version that can be maintained via `pip` and the PyPI in a user-fiendly way known from 
+> as stable version that can be maintained via `pip` and the PyPI in a user-friendly way known from 
 > other Python packages.
 
 > **⚠ WARNING:**
@@ -270,7 +270,8 @@ OR
 using [`git`](https://git-scm.com/)
 
 The latter option enables you to contribute code and/or to pull the latest development 
-version from all branches but it requires you to install [`git`](https://git-scm.com/) on your system.
+version from all branches, but it requires you to install [`git`](https://git-scm.com/) on your 
+system.
 
 Once you have a copy of the source code on your local machine, you can change into this directory 
 (top directory containing `setup.py`) and install `qudi-core` using `pip` with the development flag 
