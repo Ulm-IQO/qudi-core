@@ -9,7 +9,7 @@ title: qudi-core
 
 # Installation
 
-## 1. Create a Python 3.8 environment 
+## Step 1: Create a Python 3.8 environment 
 In order to install qudi as a python package and application, we strongly recommend to create an 
 isolated Python 3.8(!) environment. Qudi needs very specific package dependencies that 
 can otherwise mess up your system Python installation.
@@ -143,7 +143,7 @@ You can delete the environment again by calling:
 conda env remove --name qudi-env
 ```
 
-## 2. Activate the new Python environment
+## Step 2: Activate the new Python environment
 Anything related to qudi and its package dependencies must be done in the new Python environment.
 Make sure to activate the environment in your command line before starting or (de-)installing any 
 Python packages that should be used with qudi.
@@ -199,11 +199,11 @@ folder under `.../qudi-env/Scripts/` .
 
 </details>
 
-## 3. Install qudi-core
+## Step 3: Install qudi-core
 The `qudi-core` package installation provides you with the general qudi framework and a minimum 
 running application. User application measurement modules need to be installed as namespace 
 packages on top of the `qudi-core` package at a later stage (see 
-[step 4](#4-install-measurement-module-addons)).
+[step 4](#step-4-install-measurement-module-addons)).
 
 > **⚠ WARNING:**
 > 
@@ -283,7 +283,7 @@ executables within the Python environment:
 > application and not just a plain Python package installation to get around this minor 
 > inconvenience and some other usability issues.
 
-## 4. Install measurement module addons
+## Step 4: Install measurement module addons
 Unless you have a robust deployment of measurement modules at hand that do not need to be altered 
 too often, you may want to install any measurement module namespace packages from source.
 
