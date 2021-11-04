@@ -71,6 +71,8 @@ correct interpreter. On windows you may also use the `py` launcher instead.
 
   You should now see a new folder `qudi-env` in your current working directory.
 
+  ---
+
 </details>
 
 
@@ -91,6 +93,8 @@ correct interpreter. On windows you may also use the `py` launcher instead.
   ```
 
   You should now see a new folder `qudi-env` in your current working directory.
+
+  ---
 
 </details>
 
@@ -122,6 +126,8 @@ You can find OS specific commands to create the environment below.
   C:\> conda create --name qudi-env python=3.8
   ```
 
+  ---
+
 </details>
 
 
@@ -134,6 +140,8 @@ You can find OS specific commands to create the environment below.
   ```bash
   foo@bar:~$ conda create --name qudi-env python=3.8
   ```
+
+  ---
 
 </details>
 
@@ -184,6 +192,8 @@ folder under `.../qudi-env/Scripts/` .
   (qudi-env) C:\Software\qudi\qudi-env\Scripts>
   ```
 
+  ---
+
 </details>
 
 <details>
@@ -197,7 +207,24 @@ folder under `.../qudi-env/Scripts/` .
   foo@bar:/opt/qudi/qudi-env/Scripts$ source activate
   ```
 
+  ---
+
 </details>
+
+You can deactivate the environment with the command `deactivate`.
+
+### Variant 2: Anaconda/Miniconda
+If you have installed the Python environment with `conda`, you can activate the environment in your 
+command line (assuming `qudi-env` as environment name) with:
+```cmd
+conda activate qudi-env
+```
+
+And you can deactivate the environment with:
+```cmd
+conda deactivate
+```
+
 
 ## Step 3: Install qudi-core
 The `qudi-core` package installation provides you with the general qudi framework and a minimum 
