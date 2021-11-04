@@ -46,7 +46,7 @@ You can not change the Python version for the environment, meaning you can only 
 environment with the same Python version you created the environment with.  
 So make sure the Python interpreter you use for calling the following commands has version `3.8.x`.
 If you are missing Python 3.8 on your system, you can download and install the right version from 
-https://www.python.org/ .
+[https://www.python.org/](https://www.python.org/).
 
 You can find OS specific commands to create the environment below.  
 If your Python 3.8 interpreter is not found on your `PATH` (e.g. if you have multiple versions of 
