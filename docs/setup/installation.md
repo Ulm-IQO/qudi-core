@@ -65,7 +65,7 @@ correct interpreter. On windows you may also use the `py` launcher instead.
 
   Change to a desired working directory to create the environment in (here: `C:\Software\qudi\`):
 
-  ```bash
+  ```console
   C:\Software\qudi> python -m venv qudi-env
   ```
 
