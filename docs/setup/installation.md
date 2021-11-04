@@ -57,14 +57,18 @@ correct interpreter. On windows you may also use the `py` launcher instead.
   <summary> <b>Windows</b> users click here to expand</summary>
 
   Check first if you are using Python version 3.8:
+
   ```cmd
   C:\> python -V
   Python 3.8.7
   ```
+
   Change to a desired working directory to create the environment in (here: `C:\Software\qudi\`):
+
   ```cmd
   C:\Software\qudi> python -m venv qudi-env
   ```
+
   You should now see a new folder `qudi-env` in your current working directory.
 
 </details>
@@ -73,14 +77,18 @@ correct interpreter. On windows you may also use the `py` launcher instead.
   <summary> <b>Unix</b> users click here to expand</summary>
 
   Check first if you are using Python version 3.8:
+
   ```bash
   foo@bar:~$ python3 -V
   Python 3.8.7
   ```
+
   Change to a desired working directory to create the environment in (here: `/opt/qudi`):
+  
   ```bash
   foo@bar:/opt/qudi$ python3 -m venv qudi-env
   ```
+
   You should now see a new folder `qudi-env` in your current working directory.
 
 </details>
@@ -107,6 +115,7 @@ You can find OS specific commands to create the environment below.
 
   You can execute these commands from any working directory since the environment will be created 
   in a Anaconda/Miniconda specific default directory.
+
   ```cmd
   C:\> conda create --name qudi-env python=3.8
   ```
@@ -118,6 +127,7 @@ You can find OS specific commands to create the environment below.
 
   You can execute these commands from any working directory since the environment will be created 
   in a Anaconda/Miniconda specific default directory.
+
   ```bash
   foo@bar:~$ conda create --name qudi-env python=3.8
   ```
@@ -125,6 +135,7 @@ You can find OS specific commands to create the environment below.
 </details>
 
 You can delete the environment again by calling:
+
 ```cmd
 conda env remove --name qudi-env
 ```
@@ -156,6 +167,7 @@ folder under `.../qudi-env/Scripts/` .
   > for further information if you encounter any errors with the commands below.
 
   Execute the `activate` script in `qudi-env\Scripts\`
+
   ```cmd
   C:\Software\qudi> cd qudi-env\Scripts\
   
@@ -164,6 +176,7 @@ folder under `.../qudi-env/Scripts/` .
 
   Your command prompt should now have a prefix showing your environment name. In this example it 
   would look like:
+
   ```cmd
   (qudi-env) C:\Software\qudi\qudi-env\Scripts>
   ```
@@ -174,6 +187,7 @@ folder under `.../qudi-env/Scripts/` .
   <summary> <b>Unix</b> users click here to expand</summary>
 
   Execute the `activate` script in `qudi-env/Scripts/`
+
   ```bash
   foo@bar:/opt/qudi$ cd qudi-env/Scripts
   
@@ -208,6 +222,7 @@ packages on top of the `qudi-core` package at a later stage (see
 
 ### Variant 1: Installing from PyPI
 This is as easy as installing any other Python package:
+
 ```cmd
 python -m pip install qudi-core
 ```
