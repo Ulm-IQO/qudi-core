@@ -58,7 +58,7 @@ correct interpreter. On windows you may also use the `py` launcher instead.
 
   Check first if you are using Python version 3.8:
 
-  ```bash
+  ```console
   C:\> python -V
   Python 3.8.7
   ```
@@ -122,7 +122,7 @@ You can find OS specific commands to create the environment below.
   You can execute these commands from any working directory since the environment will be created 
   in a Anaconda/Miniconda specific default directory.
 
-  ```bash
+  ```console
   C:\> conda create --name qudi-env python=3.8
   ```
 
@@ -147,7 +147,7 @@ You can find OS specific commands to create the environment below.
 
 You can delete the environment again by calling:
 
-```bash
+```console
 conda env remove --name qudi-env
 ```
 
@@ -179,7 +179,7 @@ folder under `.../qudi-env/Scripts/` .
 
   Execute the `activate` script in `qudi-env\Scripts\`
 
-  ```bash
+  ```console
   C:\Software\qudi> cd qudi-env\Scripts\
   
   C:\Software\qudi\qudi-env\Scripts> .\activate
@@ -188,7 +188,7 @@ folder under `.../qudi-env/Scripts/` .
   Your command prompt should now have a prefix showing your environment name. In this example it 
   would look like:
 
-  ```bash
+  ```console
   (qudi-env) C:\Software\qudi\qudi-env\Scripts>
   ```
 
@@ -216,12 +216,12 @@ You can deactivate the environment with the command `deactivate`.
 ### Variant 2: Anaconda/Miniconda
 If you have installed the Python environment with `conda`, you can activate the environment in your 
 command line (assuming `qudi-env` as environment name) with:
-```bash
+```console
 conda activate qudi-env
 ```
 
 And you can deactivate the environment with:
-```bash
+```console
 conda deactivate
 ```
 
@@ -253,7 +253,7 @@ packages on top of the `qudi-core` package at a later stage (see
 ### Variant 1: Installing from PyPI
 This is as easy as installing any other Python package:
 
-```bash
+```console
 python -m pip install qudi-core
 ```
 
@@ -275,7 +275,7 @@ version from all branches but it requires you to install [`git`](https://git-scm
 Once you have a copy of the source code on your local machine, you can change into this directory 
 (top directory containing `setup.py`) and install `qudi-core` using `pip` with the development flag 
 `-e` set:
-```bash
+```console
 python -m pip install -e .
 ```
 
