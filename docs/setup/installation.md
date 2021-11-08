@@ -273,6 +273,8 @@ The latter option enables you to contribute code and/or to pull the latest devel
 version from all branches, but it requires you to install [`git`](https://git-scm.com/) on your 
 system.
 
+NOTE: The exact directory location on your local machine does not matter as long as you keep it there and do not copy it around later on.
+
 Once you have a copy of the source code on your local machine, you can change into this directory 
 (top directory containing `setup.py`) and install `qudi-core` using `pip` with the development flag 
 `-e` set:
