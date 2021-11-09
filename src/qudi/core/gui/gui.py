@@ -169,13 +169,7 @@ class Gui(QtCore.QObject):
     def _init_app_icon():
         """ Set up the Qudi application icon.
         """
-        iconpath = os.path.join(get_artwork_dir(), 'logo')
-        app_icon = QtGui.QIcon()
-        app_icon.addFile(os.path.join(iconpath, 'logo-qudi-16x16.png'), QtCore.QSize(16, 16))
-        app_icon.addFile(os.path.join(iconpath, 'logo-qudi-24x24.png'), QtCore.QSize(24, 24))
-        app_icon.addFile(os.path.join(iconpath, 'logo-qudi-32x32.png'), QtCore.QSize(32, 32))
-        app_icon.addFile(os.path.join(iconpath, 'logo-qudi-48x48.png'), QtCore.QSize(48, 48))
-        app_icon.addFile(os.path.join(iconpath, 'logo-qudi-256x256.png'), QtCore.QSize(256, 256))
+        app_icon = QtGui.QIcon(os.path.join(get_artwork_dir(), 'logo', 'logo-qudi.svg'))
         QtWidgets.QApplication.instance().setWindowIcon(app_icon)
 
     @staticmethod

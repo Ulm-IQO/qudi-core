@@ -349,13 +349,7 @@ class ConfigurationEditor(QtWidgets.QApplication):
     """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        icon_dir = os.path.join(get_artwork_dir(), 'logo')
-        app_icon = QtGui.QIcon()
-        app_icon.addFile(os.path.join(icon_dir, 'logo-qudi-16x16.png'), QtCore.QSize(16, 16))
-        app_icon.addFile(os.path.join(icon_dir, 'logo-qudi-24x24.png'), QtCore.QSize(24, 24))
-        app_icon.addFile(os.path.join(icon_dir, 'logo-qudi-32x32.png'), QtCore.QSize(32, 32))
-        app_icon.addFile(os.path.join(icon_dir, 'logo-qudi-48x48.png'), QtCore.QSize(48, 48))
-        app_icon.addFile(os.path.join(icon_dir, 'logo-qudi-256x256.png'), QtCore.QSize(256, 256))
+        app_icon = QtGui.QIcon(os.path.join(get_artwork_dir(), 'logo', 'logo-qudi.svg'))
         self.setWindowIcon(app_icon)
 
 
