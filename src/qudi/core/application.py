@@ -52,6 +52,10 @@ except ImportError:
 # Set QT_API environment variable to PySide2
 os.environ['QT_API'] = 'pyside2'
 
+# Set QT_LOGGING_RULES environment variable to suppress qt.svg related warnings that otherwise
+# spam the log due to some known Qt5 bugs, e.g. https://bugreports.qt.io/browse/QTBUG-52079
+os.environ['QT_LOGGING_RULES'] = 'qt.svg.warning=false'
+
 # Make icons work on non-X11 platforms, import a custom theme
 if sys.platform == 'win32':
     try:

@@ -78,9 +78,7 @@ def qt_message_handler(msg_type, context, msg):
     elif msg_type == QtCore.QtInfoMsg:
         logger.info(msg)
     elif msg_type == QtCore.QtWarningMsg:
-        # Exclude svg related warnings (see e.g. https://bugreports.qt.io/browse/QTBUG-52079)
-        if context.category != 'qt.svg':
-            logger.warning(msg)
+        logger.warning(msg)
     elif msg_type == QtCore.QtCriticalMsg:
         logger.critical(msg)
     else:
