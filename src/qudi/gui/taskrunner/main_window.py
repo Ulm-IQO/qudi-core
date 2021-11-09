@@ -44,9 +44,9 @@ class TaskMainWindow(QtWidgets.QMainWindow):
         self.setWindowTitle('qudi: Taskrunner')
 
         # Create actions
-        icon_path = os.path.join(get_artwork_dir(), 'icons', 'oxygen', '22x22')
+        icon_path = os.path.join(get_artwork_dir(), 'icons')
         self.action_quit = QtWidgets.QAction()
-        self.action_quit.setIcon(QtGui.QIcon(os.path.join(icon_path, 'application-exit.png')))
+        self.action_quit.setIcon(QtGui.QIcon(os.path.join(icon_path, 'application-exit')))
         self.action_quit.setText('Close')
         self.action_quit.setToolTip('Close')
         self.action_quit.triggered.connect(self.close)

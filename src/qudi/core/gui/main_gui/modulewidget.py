@@ -46,10 +46,10 @@ class ModuleFrameWidget(QtWidgets.QWidget):
         self.reload_button.setObjectName('reloadButton')
 
         # Set icons for QToolButtons
-        icon_path = os.path.join(get_artwork_dir(), 'icons', 'oxygen', '22x22')
-        self.cleanup_button.setIcon(QtGui.QIcon(os.path.join(icon_path, 'edit-clear.png')))
-        self.deactivate_button.setIcon(QtGui.QIcon(os.path.join(icon_path, 'edit-delete.png')))
-        self.reload_button.setIcon(QtGui.QIcon(os.path.join(icon_path, 'view-refresh.png')))
+        icon_path = os.path.join(get_artwork_dir(), 'icons')
+        self.cleanup_button.setIcon(QtGui.QIcon(os.path.join(icon_path, 'edit-clear')))
+        self.deactivate_button.setIcon(QtGui.QIcon(os.path.join(icon_path, 'edit-delete')))
+        self.reload_button.setIcon(QtGui.QIcon(os.path.join(icon_path, 'view-refresh')))
 
         # Create activation pushbutton
         self.activate_button = QtWidgets.QPushButton('load/activate <module_name>')

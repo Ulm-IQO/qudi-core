@@ -50,17 +50,17 @@ class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
         self.right_menu = QtWidgets.QMenu('Quit')
         self.left_menu = QtWidgets.QMenu('Manager')
 
-        iconpath = os.path.join(get_artwork_dir(), 'icons', 'oxygen', '22x22')
+        iconpath = os.path.join(get_artwork_dir(), 'icons')
         self.managericon = QtGui.QIcon()
-        self.managericon.addFile(os.path.join(iconpath, 'go-home.png'), QtCore.QSize(16, 16))
+        self.managericon.addFile(os.path.join(iconpath, 'go-home'), QtCore.QSize(16, 16))
         self.managerAction = QtWidgets.QAction(self.managericon, 'Manager', self.left_menu)
 
         self.exiticon = QtGui.QIcon()
-        self.exiticon.addFile(os.path.join(iconpath, 'application-exit.png'), QtCore.QSize(16, 16))
+        self.exiticon.addFile(os.path.join(iconpath, 'application-exit'), QtCore.QSize(16, 16))
         self.quitAction = QtWidgets.QAction(self.exiticon, 'Quit', self.right_menu)
 
         self.restarticon = QtGui.QIcon()
-        self.restarticon.addFile(os.path.join(iconpath, 'view-refresh.png'), QtCore.QSize(16, 16))
+        self.restarticon.addFile(os.path.join(iconpath, 'view-refresh'), QtCore.QSize(16, 16))
         self.restartAction = QtWidgets.QAction(self.restarticon, 'Restart', self.right_menu)
 
         self.left_menu.addAction(self.managerAction)
@@ -89,8 +89,8 @@ class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
 
         if not isinstance(icon, QtGui.QIcon):
             icon = QtGui.QIcon()
-            iconpath = os.path.join(get_artwork_dir(), 'icons', 'oxygen', '22x22')
-            icon.addFile(os.path.join(iconpath, 'go-next.png'), QtCore.QSize(16, 16))
+            iconpath = os.path.join(get_artwork_dir(), 'icons')
+            icon.addFile(os.path.join(iconpath, 'go-next'))
 
         action = QtWidgets.QAction(label)
         action.setIcon(icon)
