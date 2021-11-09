@@ -130,7 +130,7 @@ class FitConfigurationWidget(QtWidgets.QWidget):
         self.name_lineedit = QtWidgets.QLineEdit()
         self.add_config_toolbutton = QtWidgets.QToolButton()
         self.add_config_toolbutton.setToolButtonStyle(QtCore.Qt.ToolButtonIconOnly)
-        self.add_config_toolbutton.setIcon(QtGui.QIcon(os.path.join(icon_dir, 'add-icon')))
+        self.add_config_toolbutton.setIcon(QtGui.QIcon(os.path.join(icon_dir, 'list-add')))
         hlayout = QtWidgets.QHBoxLayout()
         hlayout.addWidget(self.model_combobox)
         hlayout.addWidget(self.name_lineedit)
@@ -254,7 +254,7 @@ class _FitConfigPanel(QtWidgets.QWidget):
         self.remove_config_toolbutton = QtWidgets.QToolButton()
         self.remove_config_toolbutton.setToolButtonStyle(QtCore.Qt.ToolButtonIconOnly)
         self.remove_config_toolbutton.setIcon(
-            QtGui.QIcon(os.path.join(icon_dir, 'remove-icon'))
+            QtGui.QIcon(os.path.join(icon_dir, 'list-remove'))
         )
         self.remove_config_toolbutton.clicked.connect(
             lambda: self.sigConfigurationRemovedClicked.emit(self._name)

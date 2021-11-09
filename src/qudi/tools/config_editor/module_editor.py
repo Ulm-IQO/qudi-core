@@ -15,8 +15,8 @@ class ModuleConfigurationWidget(QtWidgets.QWidget):
     """
     sigModuleConfigFinished = QtCore.Signal(str, dict, dict, dict)
 
-    _add_icon_path = os.path.join(get_artwork_dir(), 'icons', 'add-icon')
-    _remove_icon_path = os.path.join(os.path.dirname(_add_icon_path), 'remove-icon')
+    _add_icon_path = os.path.join(get_artwork_dir(), 'icons', 'list-add')
+    _remove_icon_path = os.path.join(os.path.dirname(_add_icon_path), 'list-remove')
 
     _non_config_options = frozenset(
         {'connect', 'allow_remote', 'module.Class', 'remote_url', 'certfile', 'keyfile'}

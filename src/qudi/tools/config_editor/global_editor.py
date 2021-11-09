@@ -158,8 +158,8 @@ class GlobalConfigurationWidget(QtWidgets.QWidget):
         # Create new option editor button and name lineedit
         layout = QtWidgets.QHBoxLayout()
         main_layout.addLayout(layout)
-        icon_path = os.path.join(get_artwork_dir(), 'icons', 'add-icon')
-        self._remove_icon = QtGui.QIcon(os.path.join(os.path.dirname(icon_path), 'remove-icon'))
+        icon_path = os.path.join(get_artwork_dir(), 'icons', 'list-add')
+        self._remove_icon = QtGui.QIcon(os.path.join(os.path.dirname(icon_path), 'list-remove'))
         self.add_option_button = QtWidgets.QToolButton()
         self.add_option_button.setIcon(QtGui.QIcon(icon_path))
         self.add_option_button.setToolTip('Add a custom option to the global config.')
