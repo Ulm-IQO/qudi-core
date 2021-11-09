@@ -70,9 +70,9 @@ class TaskWidget(QtWidgets.QWidget):
 
         # Create control button and state label. Arrange them in a sub-layout and connect button.
         # Also add animated busy-indicator
-        icon_dir = os.path.join(get_artwork_dir(), 'icons', 'oxygen', 'source_svg')
-        self._play_icon = QtGui.QIcon(os.path.join(icon_dir, 'media-playback-start.svgz'))
-        self._stop_icon = QtGui.QIcon(os.path.join(icon_dir, 'media-playback-stop.svgz'))
+        icon_dir = os.path.join(get_artwork_dir(), 'icons')
+        self._play_icon = QtGui.QIcon(os.path.join(icon_dir, 'media-playback-start'))
+        self._stop_icon = QtGui.QIcon(os.path.join(icon_dir, 'media-playback-stop'))
         self.state_label = QtWidgets.QLabel('stopped')
         self.state_label.setAlignment(QtCore.Qt.AlignCenter)
         font = self.state_label.font()
