@@ -217,7 +217,6 @@ class ModuleListModel(QtCore.QAbstractListModel):
                     f'Can not change module app status in ModuleListModel. No module by the name '
                     f'"{name}" found.'
                 )
-            print(name, exists)
             self._module_app_data[name] = exists
             row = self._module_names.index(name)
             self.dataChanged.emit(self.createIndex(row, 0), self.createIndex(row, 0))
