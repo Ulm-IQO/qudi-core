@@ -66,7 +66,12 @@ setup(
     long_description=long_description,
     long_description_content_type='text/markdown',
     url='https://github.com/Ulm-IQO/qudi-core',
-    keywords=['diamond',
+    project_urls={'Documentation': 'https://ulm-iqo.github.io/qudi-core/',
+                  'Source Code': 'https://github.com/Ulm-IQO/qudi-core/',
+                  'Bug Tracker': 'https://github.com/Ulm-IQO/qudi-core/issues/',
+                  },
+    keywords=['qudi',
+              'diamond',
               'quantum',
               'confocal',
               'experiment',
@@ -80,7 +85,35 @@ setup(
               ],
     license='LGPLv3',
     install_requires=windows_dep if sys.platform == 'win32' else unix_dep,
-    python_requires='~=3.8',
+    python_requires='>=3.8, <=3.9',
+    classifiers=['Development Status :: 5 - Production/Stable',
+
+                 'Environment :: Win32 (MS Windows)',
+                 'Environment :: X11 Applications',
+                 'Environment :: MacOS X',
+
+                 'Intended Audience :: Developers',
+                 'Intended Audience :: Science/Research',
+                 'Intended Audience :: End Users/Desktop',
+
+                 'License :: OSI Approved :: GNU Lesser General Public License v3 (LGPLv3)',
+
+                 'Natural Language :: English',
+
+                 'Operating System :: Microsoft :: Windows :: Windows 8',
+                 'Operating System :: Microsoft :: Windows :: Windows 8.1',
+                 'Operating System :: Microsoft :: Windows :: Windows 10',
+                 'Operating System :: MacOS :: MacOS X',
+                 'Operating System :: Unix',
+                 'Operating System :: POSIX :: Linux',
+
+                 'Programming Language :: Python :: 3.8',
+                 'Programming Language :: Python :: 3.9',
+
+                 'Topic :: Scientific/Engineering',
+                 'Topic :: Software Development :: Libraries :: Application Frameworks',
+                 'Topic :: Software Development :: User Interfaces',
+                 ],
     entry_points={
         'console_scripts': ['qudi=qudi.runnable:main',
                             'qudi-config-editor=qudi.tools.config_editor.config_editor:main',
