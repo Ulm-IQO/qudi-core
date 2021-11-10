@@ -51,6 +51,8 @@ except ImportError:
 
 # Set QT_API environment variable to PySide2
 os.environ['QT_API'] = 'pyside2'
+# Enable the High DPI scaling support of Qt5
+os.environ['QT_ENABLE_HIGHDPI_SCALING'] = '1'
 
 if sys.platform == 'win32':
     # Set QT_LOGGING_RULES environment variable to suppress qt.svg related warnings that otherwise
@@ -66,7 +68,7 @@ else:
 if sys.platform == 'win32':
     try:
         import ctypes
-        myappid = 'quantumoptics.qudi.mainapp'  # arbitrary string
+        myappid = 'qudicore-app'  # arbitrary string
         ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
     except ImportError:
         raise
