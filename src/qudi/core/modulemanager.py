@@ -483,12 +483,13 @@ class ManagedModule(QtCore.QObject):
     @QtCore.Slot()
     def clear_module_app_data(self):
         with self._lock:
+            success = True
             try:
                 os.remove(self.status_file_path)
             except OSError:
-                return False
+                success = False
             self.sigAppDataChanged.emit(self._base, self._name, self.has_app_data)
-            return True
+            return success
 
     @QtCore.Slot()
     def activate(self):

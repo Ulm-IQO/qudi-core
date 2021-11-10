@@ -117,12 +117,9 @@ class ModuleFrameWidget(QtWidgets.QWidget):
             if not self.activate_button.isChecked():
                 self.activate_button.setChecked(True)
         self.status_label.setText('Module is {0}'.format(state))
-        return
 
     def set_module_app_data(self, exists):
-        if not self.reload_button.isEnabled():
-            self.cleanup_button.setEnabled(exists)
-        return
+        self.cleanup_button.setEnabled(exists)
 
     @QtCore.Slot()
     def activate_clicked(self):
@@ -220,11 +217,10 @@ class ModuleListModel(QtCore.QAbstractListModel):
                     f'Can not change module app status in ModuleListModel. No module by the name '
                     f'"{name}" found.'
                 )
+            print(name, exists)
             self._module_app_data[name] = exists
             row = self._module_names.index(name)
-            self.dataChanged.emit(self.createIndex(row, 0),
-                                  self.createIndex(row + 1, 0),
-                                  (QtCore.Qt.DisplayRole,))
+            self.dataChanged.emit(self.createIndex(row, 0), self.createIndex(row, 0))
 
 
 class ModuleListItemDelegate(QtWidgets.QStyledItemDelegate):
