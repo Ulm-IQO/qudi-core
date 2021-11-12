@@ -28,7 +28,7 @@ import faulthandler
 from logging import DEBUG, INFO
 from PySide2 import QtCore, QtWidgets
 
-from qudi.core.logger import init_rotating_file_handler, init_record_model_handler
+from qudi.core.logger import init_rotating_file_handler, init_record_model_handler, clear_handlers
 from qudi.core.logger import get_logger, set_log_level
 from qudi.util.paths import get_main_dir, get_default_log_dir
 from qudi.util.mutex import Mutex
@@ -397,6 +397,7 @@ class Qudi(QtCore.QObject):
             print('> Stopping remaining threads...')
             self.thread_manager.quit_all_threads()
             QtCore.QCoreApplication.instance().processEvents()
+            clear_handlers()
             if restart:
                 QtCore.QCoreApplication.exit(42)
             else:
