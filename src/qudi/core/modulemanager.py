@@ -197,14 +197,14 @@ class ModuleManager(QtCore.QObject):
             if module_name not in self._modules:
                 raise KeyError(f'No module named "{module_name}" found in managed qudi modules. '
                                f'Module activation aborted.')
-            return self._modules[module_name].activate()
+            self._modules[module_name].activate()
 
     def deactivate_module(self, module_name):
         with self._lock:
             if module_name not in self._modules:
                 raise KeyError(f'No module named "{module_name}" found in managed qudi modules. '
                                f'Module deactivation aborted.')
-            return self._modules[module_name].deactivate()
+            self._modules[module_name].deactivate()
 
     def reload_module(self, module_name):
         with self._lock:
