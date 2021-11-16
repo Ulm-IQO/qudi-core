@@ -20,13 +20,13 @@ You should have received a copy of the GNU Lesser General Public License along w
 If not, see <https://www.gnu.org/licenses/>.
 """
 
-__all__ = ('ScanPlotDataItem', 'Scan1DPlotWidget', 'Scan1DViewBox', 'Scan1DWidget')
+__all__ = ['ScanPlotDataItem', 'Scan1DPlotWidget', 'Scan1DViewBox', 'Scan1DWidget']
 
 import numpy as np
 from PySide2 import QtCore, QtWidgets
 from pyqtgraph import PlotWidget, PlotDataItem, ViewBox, InfiniteLine, LinearRegionItem, mkPen
 
-from ..colordefs import QudiPalette
+from qudi.util.colordefs import QudiPalette
 
 
 class ScanPlotDataItem(PlotDataItem):
