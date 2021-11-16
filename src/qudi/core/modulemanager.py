@@ -131,16 +131,16 @@ class ModuleManager(QtCore.QObject):
 
     def remove_module(self, module_name, ignore_missing=False, emit_change=True):
         with self._lock:
-            if not ignore_missing and module_name not in self._modules:
+            module = self._modules.pop(module_name, None)
+            if module is None and not ignore_missing:
                 raise KeyError(f'No module with name "{module_name}" registered.')
-            self._modules[module_name].deactivate()
-            self._modules[module_name].sigStateChanged.disconnect(self.sigModuleStateChanged)
-            self._modules[module_name].sigAppDataChanged.disconnect(self.sigModuleAppDataChanged)
-            if self._modules[module_name].allow_remote_access:
+            module.deactivate()
+            module.sigStateChanged.disconnect(self.sigModuleStateChanged)
+            module.sigAppDataChanged.disconnect(self.sigModuleAppDataChanged)
+            if module.allow_remote_access:
                 remote_modules_server = self._qudi_main_ref().remote_modules_server
                 if remote_modules_server is not None:
                     remote_modules_server.remove_shared_module(module_name)
-            del self._modules[module_name]
             self.refresh_module_links()
             if emit_change:
                 self.sigManagedModulesChanged.emit(self.modules)
@@ -236,7 +236,6 @@ class ModuleManager(QtCore.QObject):
         with self._lock:
             for module in self._modules.values():
                 module.deactivate()
-            print('all modules stopped')
 
     def _module_ref_dead_callback(self, dead_ref, module_name):
         self.remove_module(module_name, ignore_missing=True)
