@@ -26,8 +26,8 @@ import numpy as np
 from PySide2 import QtCore, QtWidgets
 from pyqtgraph import PlotWidget, ImageItem, ViewBox, InfiniteLine, ROI
 
-from .colorbar import ColorBarWidget, ColorBarMode
-from ..colordefs import ColorScaleInferno
+from qudi.util.widgets.colorbar import ColorBarWidget, ColorBarMode
+from qudi.util.colordefs import ColorScaleInferno
 
 
 class ScanImageItem(ImageItem):

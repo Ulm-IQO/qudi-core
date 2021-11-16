@@ -42,7 +42,7 @@ class ColorBarItem(BarGraphItem):
         pen = mkPen(QtGui.QPen(QtCore.Qt.PenStyle.NoPen)) if pen is None else mkPen(pen)
         grad = QtGui.QLinearGradient(0, 0, 0, 1)
         grad.setCoordinateMode(QtGui.QGradient.ObjectMode)
-        for stop, color in zip(*cmap.getStops('float')):
+        for stop, color in zip(*cmap.getStops('byte')):
             grad.setColorAt(stop, QtGui.QColor(*color))
         brush = mkBrush(QtGui.QBrush(grad))
         height = abs(limits[1] - limits[0])
@@ -116,7 +116,7 @@ class ColorBarWidget(QtWidgets.QWidget):
 
         grad = QtGui.QLinearGradient(0, 0, 0, 1)
         grad.setCoordinateMode(QtGui.QGradient.ObjectMode)
-        for stop, color in zip(*ColorScaleInferno().colormap.getStops('float')):
+        for stop, color in zip(*ColorScaleInferno().colormap.getStops('byte')):
             grad.setColorAt(stop, QtGui.QColor(*color))
         self._cb_brush = mkBrush(QtGui.QBrush(grad))
 
@@ -196,7 +196,6 @@ class ColorBarWidget(QtWidgets.QWidget):
     def set_pen(self, pen=None):
         return self.colorbar.set_pen(pen)
 
-    @QtCore.Slot(float, float)
     @QtCore.Slot(float, float, float, float)
     def set_limits(self, min_value, max_value, low_percentile=None, high_percentile=None):
         # Check and set percentile values in spinboxes
