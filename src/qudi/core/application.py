@@ -19,6 +19,7 @@ You should have received a copy of the GNU Lesser General Public License along w
 If not, see <https://www.gnu.org/licenses/>.
 """
 
+import gc
 import sys
 import os
 import weakref
@@ -398,6 +399,7 @@ class Qudi(QtCore.QObject):
             self.thread_manager.quit_all_threads()
             QtCore.QCoreApplication.instance().processEvents()
             clear_handlers()
+            gc.collect()  # Explicit gc call to prevent Qt C++ extensions from using deleted Python objects
             if restart:
                 QtCore.QCoreApplication.exit(42)
             else:
