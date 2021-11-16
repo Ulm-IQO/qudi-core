@@ -58,6 +58,7 @@ class CircleLoadingIndicator(QtWidgets.QWidget):
         # property value (angle in 1/16th of a degree) for current indicator position.
         # 0 means 3 o'clock.
         self._indicator_position = 0
+        self._indicator_text = None
 
         # misc parameters
         self.__animation = None
@@ -95,6 +96,8 @@ class CircleLoadingIndicator(QtWidgets.QWidget):
 
         # draw indicator
         p.drawArc(self.__draw_rect, self._indicator_position, self._indicator_length)
+        if self._indicator_text:
+            p.drawText(self.__draw_rect, QtCore.Qt.AlignCenter, self._indicator_text)
 
     def showEvent(self, ev):
         super().showEvent(ev)
@@ -111,6 +114,12 @@ class CircleLoadingIndicator(QtWidgets.QWidget):
             self.__animation.stop()
             self.__animation = None
         super().hideEvent(ev)
+
+    def setTextValue(self, text):
+        if text:
+            self._indicator_text = str(text)
+        else:
+            self._indicator_text = None
 
     def __update_draw_size(self):
         width = self.width()
