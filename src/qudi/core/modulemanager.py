@@ -23,6 +23,7 @@ import os
 import importlib
 import copy
 import weakref
+import fysom
 
 from typing import FrozenSet, Iterable
 from functools import partial
@@ -532,16 +533,24 @@ class ManagedModule(QtCore.QObject):
                         thread_manager.quit_thread(thread_name)
                         thread_manager.join_thread(thread_name)
             else:
-                self._instance.module_state.activate()
-
-            # Raise exception if by some reason no exception propagated to here and the activation
-            # is still unsuccessful.
-            if not self.is_active:
-                raise RuntimeError(f'Failed to activate {self.module_base} module "{self.name}"!')
+                try:
+                    self._instance.module_state.activate()
+                except fysom.Canceled:
+                    pass
 
             self.__last_state = self.state
             self.sigStateChanged.emit(self._base, self._name, self.__last_state)
             self.sigAppDataChanged.emit(self._base, self._name, self.has_app_data)
+
+            # Raise exception if by some reason no exception propagated to here and the activation
+            # is still unsuccessful.
+            if not self.is_active:
+                try:
+                    self._disconnect()
+                except:
+                    pass
+                raise RuntimeError(f'Failed to activate {self.module_base} module "{self.name}"!')
+
             if self.is_remote:
                 self.__poll_timer = QtCore.QTimer(self)
                 self.__poll_timer.setInterval(int(round(self.__state_poll_interval * 1000)))
@@ -620,13 +629,11 @@ class ManagedModule(QtCore.QObject):
                     thread_manager.quit_thread(thread_name)
                     thread_manager.join_thread(thread_name)
             else:
-                self._instance.module_state.deactivate()
+                try:
+                    self._instance.module_state.deactivate()
+                except fysom.Canceled:
+                    pass
             QtCore.QCoreApplication.instance().processEvents()  # ToDo: Is this still needed?
-
-            # Raise exception if by some reason no exception propagated to here and the deactivation
-            # is still unsuccessful.
-            if self.is_active:
-                raise RuntimeError(f'Failed to deactivate {self.module_base} module "{self.name}"!')
 
             # Disconnect modules from this module
             self._disconnect()
@@ -634,6 +641,11 @@ class ManagedModule(QtCore.QObject):
             self.__last_state = self.state
             self.sigStateChanged.emit(self._base, self._name, self.__last_state)
             self.sigAppDataChanged.emit(self._base, self._name, self.has_app_data)
+
+            # Raise exception if by some reason no exception propagated to here and the deactivation
+            # is still unsuccessful.
+            if self.is_active:
+                raise RuntimeError(f'Failed to deactivate {self.module_base} module "{self.name}"!')
 
     @QtCore.Slot()
     def reload(self):
