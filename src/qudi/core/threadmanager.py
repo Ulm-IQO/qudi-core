@@ -125,8 +125,7 @@ class ThreadManager(QtCore.QAbstractListModel):
                 del self._thread_names[index]
                 self.endRemoveRows()
 
-    @QtCore.Slot(str)
-    @QtCore.Slot(QtCore.QThread)
+    @QtCore.Slot(object)
     def quit_thread(self, name):
         """ Stop event loop of QThread.
 
