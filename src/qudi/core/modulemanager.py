@@ -577,7 +577,6 @@ class ManagedModule(QtCore.QObject):
             if self.__poll_timer is not None:
                 self.__poll_timer.start()
 
-    @QtCore.Slot()
     @QtCore.Slot(object)
     def _state_change_callback(self, event=None):
         self.sigStateChanged.emit(self._base, self._name, self.state)
