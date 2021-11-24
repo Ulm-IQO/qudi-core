@@ -5,7 +5,7 @@
 
 __all__ = ('ModuleSelector',)
 
-from PySide2 import QtWidgets, QtCore
+from PySide6 import QtWidgets, QtCore
 from qudi.tools.config_editor.tree_widgets import AvailableModulesTreeWidget, SelectedModulesTreeWidget
 
 

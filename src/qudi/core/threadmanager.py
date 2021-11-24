@@ -22,7 +22,7 @@ If not, see <https://www.gnu.org/licenses/>.
 import logging
 import weakref
 from functools import partial
-from PySide2 import QtCore
+from PySide6 import QtCore
 
 from qudi.util.mutex import RecursiveMutex
 from qudi.core.logger import get_logger

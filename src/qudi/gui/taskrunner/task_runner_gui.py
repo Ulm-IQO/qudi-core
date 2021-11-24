@@ -19,7 +19,7 @@ You should have received a copy of the GNU Lesser General Public License along w
 If not, see <https://www.gnu.org/licenses/>.
 """
 
-from PySide2 import QtCore
+from PySide6 import QtCore
 
 from qudi.core.connector import Connector
 from qudi.core.module import GuiBase

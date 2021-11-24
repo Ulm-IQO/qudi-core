@@ -22,7 +22,7 @@ If not, see <https://www.gnu.org/licenses/>.
 __all__ = ('ABCQObjectMeta', 'ModuleMeta', 'QObjectMeta', 'QudiObjectMeta')
 
 from abc import ABCMeta
-from PySide2.QtCore import QObject
+from PySide6.QtCore import QObject
 from qudi.core.statusvariable import StatusVar
 from qudi.core.connector import Connector
 from qudi.core.configoption import ConfigOption
@@ -31,12 +31,12 @@ from qudi.core.configoption import ConfigOption
 QObjectMeta = type(QObject)
 
 
-class ABCQObjectMeta(ABCMeta, QObjectMeta):
+class ABCQObjectMeta(QObjectMeta):
     """ Metaclass for abstract QObject subclasses.
     """
 
     def __new__(mcs, name, bases, attributes):
-        cls = super(ABCQObjectMeta, mcs).__new__(mcs, name, bases, attributes)
+        cls = super().__new__(mcs, name, bases, attributes)
         # Compute set of abstract method names
         abstracts = {
             attr_name for attr_name, attr in attributes.items() if \

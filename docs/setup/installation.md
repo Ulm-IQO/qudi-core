@@ -102,7 +102,7 @@ correct interpreter. On Windows you may also use the `py` launcher instead.
 > **⚠ WARNING:**
 > 
 > While Anaconda and Miniconda are very popular Python distributions in the scientific community, 
-> we encountered occasional instabilities with binary package distributions like `PySide2` 
+> we encountered occasional instabilities with binary package distributions like `PySide6` 
 > in conjunction with `conda` environments.  
 > We have not been able to narrow down the source of these problems so far.
 > 

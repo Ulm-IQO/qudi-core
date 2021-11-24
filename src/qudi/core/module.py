@@ -25,7 +25,7 @@ import uuid
 from abc import abstractmethod
 from uuid import uuid4
 from fysom import Fysom
-from PySide2 import QtCore, QtGui, QtWidgets
+from PySide6 import QtCore, QtGui, QtWidgets
 from typing import Any, Mapping, Optional, Callable, Union
 
 from qudi.core.configoption import MissingOption
@@ -134,7 +134,7 @@ class Base(QtCore.QObject, metaclass=ModuleMeta):
     """
     _threaded = False
 
-    # FIXME: This __new__ implementation has the sole purpose to circumvent a known PySide2(6) bug.
+    # FIXME: This __new__ implementation has the sole purpose to circumvent a known PySide6(6) bug.
     #  See https://bugreports.qt.io/browse/PYSIDE-1434 for more details.
     def __new__(cls, *args, **kwargs):
         abstract = getattr(cls, '__abstractmethods__', frozenset())

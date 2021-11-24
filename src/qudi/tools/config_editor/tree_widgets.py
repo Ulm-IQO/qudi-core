@@ -5,7 +5,7 @@
 
 __all__ = ('AvailableModulesTreeWidget', 'SelectedModulesTreeWidget', 'ConfigModulesTreeWidget')
 
-from PySide2 import QtCore, QtGui, QtWidgets
+from PySide6 import QtCore, QtGui, QtWidgets
 
 
 class AvailableModulesTreeWidget(QtWidgets.QTreeWidget):

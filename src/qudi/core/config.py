@@ -27,7 +27,7 @@ import os
 import re
 import copy
 from warnings import warn
-from PySide2 import QtCore
+from PySide6 import QtCore
 
 import qudi.util.paths as _paths
 from qudi.util.yaml import yaml_dump, yaml_load
