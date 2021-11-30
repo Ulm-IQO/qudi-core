@@ -85,7 +85,7 @@ setup(
               ],
     license='LGPLv3',
     install_requires=windows_dep if sys.platform == 'win32' else unix_dep,
-    python_requires='>=3.8, <=3.9',
+    python_requires='>=3.8, <3.10',
     classifiers=['Development Status :: 5 - Production/Stable',
 
                  'Environment :: Win32 (MS Windows)',
