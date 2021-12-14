@@ -92,6 +92,7 @@ class ParentPollerWindows(Thread):
         self.daemon = True
         self.quit_function = quit_function
         self.parent_handle = parent_handle
+        self._stop_requested = False
 
     def run(self):
         """ Run the poll loop. This method never returns.
@@ -108,11 +109,15 @@ class ParentPollerWindows(Thread):
 
         # Listen forever.
         while True:
+            # Return if stop has been requested
+            if self._stop_requested:
+                return
+
             result = ctypes.windll.kernel32.WaitForMultipleObjects(
                 len(handle_list),                           # nCount
                 (c_int * len(handle_list))(*handle_list),   # lpHandles
                 False,                                      # bWaitAll
-                10000)                                      # dwMilliseconds
+                1000)                                       # dwMilliseconds
 
             if result >= len(handle_list):
                 # Nothing happened. Probably timed out.
@@ -131,3 +136,9 @@ class ParentPollerWindows(Thread):
                         self.quit_function()
                     return
 
+    def stop(self) -> None:
+        self._stop_requested = True
+
+    def start(self) -> None:
+        self._stop_requested = False
+        return super().start()

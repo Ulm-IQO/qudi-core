@@ -371,6 +371,8 @@ class Qudi(QtCore.QObject):
             QtCore.QCoreApplication.instance().processEvents()
             self.log.info('Qudi shutting down...')
             print('> Qudi shutting down...')
+            self.watchdog.terminate()
+            self.watchdog = None
             self.log.info('Stopping module server(s)...')
             print('> Stopping module server(s)...')
             if self.remote_modules_server is not None:

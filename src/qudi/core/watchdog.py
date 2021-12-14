@@ -72,3 +72,20 @@ class AppWatchdog(QtCore.QObject):
         for i in range(100):
             x += i
         return
+
+    def terminate(self) -> None:
+        try:
+            self.parent_poller.stop()
+            self.parent_poller.join()
+        except AttributeError:
+            pass
+        finally:
+            self.parent_poller = None
+            self.parent_handle = None
+
+        try:
+            self.__timer.timeout.disconnect()
+            self.__timer.stop()
+        finally:
+            self.__timer = None
+
