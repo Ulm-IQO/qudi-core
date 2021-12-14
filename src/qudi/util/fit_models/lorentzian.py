@@ -20,9 +20,8 @@ You should have received a copy of the GNU Lesser General Public License along w
 If not, see <https://www.gnu.org/licenses/>.
 """
 
-__all__ = (
-    'DoubleLorentzian', 'Lorentzian', 'LorentzianLinear', 'TripleLorentzian', 'multiple_lorentzian'
-)
+__all__ = ['ComplexLorentzian', 'DoubleLorentzian', 'Lorentzian', 'LorentzianLinear',
+           'TripleLorentzian', 'multiple_lorentzian', 'multiple_complex_lorentzian']
 
 import numpy as np
 from typing import Sequence
@@ -340,3 +339,20 @@ class LorentzianLinear(FitModelBase):
                                   min=-estimate['amplitude'].max,
                                   max=-estimate['amplitude'].min)
         return estimate
+
+
+class ComplexLorentzian(FitModelBase):
+    """ ToDo: Implement estimators
+    """
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.set_param_hint('offset', value=0., min=-np.inf, max=np.inf)
+        self.set_param_hint('amplitude', value=0., min=0., max=np.inf)
+        self.set_param_hint('center', value=0., min=-np.inf, max=np.inf)
+        self.set_param_hint('sigma', value=0., min=0., max=np.inf)
+        self.set_param_hint('theta', value=0., min=-180., max=180.)
+
+    @staticmethod
+    def _model_function(x, offset, center, sigma, amplitude, theta):
+        return offset + multiple_complex_lorentzian(x, (center,), (sigma,), (amplitude,), (theta,))
