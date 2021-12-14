@@ -3,7 +3,8 @@
 ## Pre-Release
 
 ### Breaking Changes
-None
+- Changed event handling of qudi module state machine. `on_deactivate` will be run BEFORE the state 
+machine actually changes into state `deactivated`.
 
 ### Bugfixes
 None
