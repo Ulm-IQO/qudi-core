@@ -347,12 +347,11 @@ class ComplexLorentzian(FitModelBase):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.set_param_hint('offset', value=0., min=-np.inf, max=np.inf)
         self.set_param_hint('amplitude', value=0., min=0., max=np.inf)
         self.set_param_hint('center', value=0., min=-np.inf, max=np.inf)
-        self.set_param_hint('sigma', value=0., min=0., max=np.inf)
+        self.set_param_hint('sigma', value=1e-15, min=0, max=np.inf)
         self.set_param_hint('theta', value=0., min=-180., max=180.)
 
     @staticmethod
-    def _model_function(x, offset, center, sigma, amplitude, theta):
-        return offset + multiple_complex_lorentzian(x, (center,), (sigma,), (amplitude,), (theta,))
+    def _model_function(x, center, sigma, amplitude, theta):
+        return multiple_complex_lorentzian(x, (center,), (sigma,), (amplitude,), (theta,))
