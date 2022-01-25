@@ -77,6 +77,10 @@ if sys.platform == 'win32':
         print('SetCurrentProcessExplicitAppUserModelID failed! This is probably not Microsoft '
               'Windows!')
 
+# Set default Qt locale to "C" in order to avoid surprises with number formats and other things
+# QtCore.QLocale.setDefault(QtCore.QLocale('en_US'))
+QtCore.QLocale.setDefault(QtCore.QLocale.c())
+
 
 class Qudi(QtCore.QObject):
     """
