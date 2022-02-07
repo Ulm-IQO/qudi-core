@@ -250,7 +250,8 @@ class Qudi(QtCore.QObject):
         if self.no_gui:
             return
         self.gui = Gui(qudi_instance=self, stylesheet_path=self.configuration.stylesheet)
-        self.gui.activate_main_gui()
+        if not self.configuration.hide_manager_window:
+            self.gui.activate_main_gui()
 
     def _start_startup_modules(self):
         for module in self.configuration.startup_modules:
