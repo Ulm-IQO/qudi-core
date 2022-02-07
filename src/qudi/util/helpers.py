@@ -165,6 +165,9 @@ def csv_2_list(csv_string: str, str_2_val: Optional[Callable[[str], Any]] = None
     if not isinstance(csv_string, str):
         raise TypeError('string_2_list accepts only str type input.')
 
+    if csv_string == "":
+        return []
+
     csv_string = csv_string.replace('[', '').replace(']', '')  # Remove square brackets
     csv_string = csv_string.replace('(', '').replace(')', '')  # Remove round brackets
     csv_string = csv_string.replace('{', '').replace('}', '')  # Remove curly brackets

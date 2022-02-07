@@ -154,6 +154,11 @@ class QudiIPythonKernel(IPythonKernel):
         self._qudi_client.connect()
         self._namespace_qudi_modules = set()
         self.update_module_namespace()
+        # Fixme: Dirty workaround after hours of searching on how to disable the insanely
+        #  aggressive tab completion resolution of jedi that causes each descriptor (e.g. property)
+        #  of the inspected object to be evaluated even if you do not want it to be inspected.
+        #  Jupyter/IPython offer absolutely no documentation on anything not super shallow.
+        self.shell.run_cell(r'%config IPCompleter.use_jedi = False')
 
     def update_module_namespace(self):
         modules = self._qudi_client.get_active_modules()
