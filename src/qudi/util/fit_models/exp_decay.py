@@ -89,7 +89,7 @@ class ExponentialDecay(FitModelBase):
         # Take all values up to the standard deviation, the remaining values are
         # more disturbing the estimation then helping:
         tmp = np.argwhere(data_smoothed <= np.std(data_smoothed))
-        stop_index = tmp[0, 0] if tmp else len(data_smoothed)
+        stop_index = tmp[0, 0] if tmp.size > 0 else len(data_smoothed)
 
         # perform a linear fit on the logarithm of the remaining data
         try:

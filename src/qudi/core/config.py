@@ -162,6 +162,25 @@ class Configuration(QtCore.QObject):
         self.sigConfigChanged.emit(self)
 
     @property
+    def hide_manager_window(self):
+        """ Flag indicating if the MainWindow of the qudi manager should be shown at startup.
+
+        @return bool: Shows the MainWindow of the qudi manager at startup
+        """
+        return self._global_config.get('hide_manager_window', False)
+
+    @hide_manager_window.setter
+    def hide_manager_window(self, flag):
+        """ Setter for a flag to hide the Manager Window.
+        By using the tray icon the Manager Window can be started at a later point in time.
+
+        @param bool hide_manager_window: Shows the MainWindow of the qudi manager at startup
+        """
+        assert isinstance(flag, bool), 'hide_manager_window flag must be bool type.'
+        self._global_config['hide_manager_window'] = flag
+        self.sigConfigChanged.emit(self)
+
+    @property
     def stylesheet(self):
         """ Absolute .qss file path used as stylesheet for qudi Qt application.
 
@@ -428,8 +447,8 @@ class Configuration(QtCore.QObject):
         new_config.daily_data_dirs = global_cfg.pop('daily_data_dirs', None)
         new_config.default_data_dir = global_cfg.pop('default_data_dir', None)
         new_config.namespace_server_port = global_cfg.pop('namespace_server_port', 18861)
-        new_config.force_remote_calls_by_value = global_cfg.pop('force_remote_calls_by_value',
-                                                                True)
+        new_config.force_remote_calls_by_value = global_cfg.pop('force_remote_calls_by_value', True)
+        new_config.hide_manager_window = global_cfg.pop('hide_manager_window', False)
         new_config.remote_modules_server = global_cfg.pop('remote_modules_server', None)
         if global_cfg:
             warn(f'Found additional entries in global config. The following entries will be '
