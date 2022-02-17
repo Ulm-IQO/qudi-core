@@ -67,7 +67,10 @@ def loadUi(file_path, base_widget):
             os.remove(file_path)
             raise
     try:
-        result = subprocess.run(f'pyside2-uic "{file_path}"', capture_output=True, text=True, check=True, shell=True)
+        result = subprocess.run(["pyside2-uic", f"{file_path}"],
+                                capture_output=True,
+                                text=True,
+                                check=True)
         compiled = result.stdout
     finally:
         if converted is not None:
