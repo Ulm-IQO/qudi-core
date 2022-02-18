@@ -19,9 +19,7 @@ You should have received a copy of the GNU Lesser General Public License along w
 If not, see <https://www.gnu.org/licenses/>.
 """
 
-import os
 from PySide2 import QtCore, QtGui, QtWidgets
-from qudi.util.paths import get_artwork_dir
 from qudi.util.mutex import Mutex
 
 
@@ -46,10 +44,9 @@ class ModuleFrameWidget(QtWidgets.QWidget):
         self.reload_button.setObjectName('reloadButton')
 
         # Set icons for QToolButtons
-        icon_path = os.path.join(get_artwork_dir(), 'icons')
-        self.cleanup_button.setIcon(QtGui.QIcon(os.path.join(icon_path, 'edit-clear')))
-        self.deactivate_button.setIcon(QtGui.QIcon(os.path.join(icon_path, 'edit-delete')))
-        self.reload_button.setIcon(QtGui.QIcon(os.path.join(icon_path, 'view-refresh')))
+        self.cleanup_button.setIcon(QtGui.QIcon(':/icons/edit-clear'))
+        self.deactivate_button.setIcon(QtGui.QIcon(':/icons/edit-delete'))
+        self.reload_button.setIcon(QtGui.QIcon(':/icons/view-refresh'))
 
         # Create activation pushbutton
         self.activate_button = QtWidgets.QPushButton('load/activate <module_name>')

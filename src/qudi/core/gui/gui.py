@@ -50,17 +50,13 @@ class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
         self.right_menu = QtWidgets.QMenu('Quit')
         self.left_menu = QtWidgets.QMenu('Manager')
 
-        iconpath = os.path.join(get_artwork_dir(), 'icons')
-        self.managericon = QtGui.QIcon()
-        self.managericon.addFile(os.path.join(iconpath, 'go-home'), QtCore.QSize(16, 16))
+        self.managericon = QtGui.QIcon(':/icons/go-home')
         self.managerAction = QtWidgets.QAction(self.managericon, 'Manager', self.left_menu)
 
-        self.exiticon = QtGui.QIcon()
-        self.exiticon.addFile(os.path.join(iconpath, 'application-exit'), QtCore.QSize(16, 16))
+        self.exiticon = QtGui.QIcon(':/icons/application-exit')
         self.quitAction = QtWidgets.QAction(self.exiticon, 'Quit', self.right_menu)
 
-        self.restarticon = QtGui.QIcon()
-        self.restarticon.addFile(os.path.join(iconpath, 'view-refresh'), QtCore.QSize(16, 16))
+        self.restarticon = QtGui.QIcon(':/icons/view-refresh')
         self.restartAction = QtWidgets.QAction(self.restarticon, 'Restart', self.right_menu)
 
         self.left_menu.addAction(self.managerAction)
@@ -89,8 +85,7 @@ class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
 
         if not isinstance(icon, QtGui.QIcon):
             icon = QtGui.QIcon()
-            iconpath = os.path.join(get_artwork_dir(), 'icons')
-            icon.addFile(os.path.join(iconpath, 'go-next'))
+            icon.addFile(':/icons/go-next')
 
         action = QtWidgets.QAction(label)
         action.setIcon(icon)
@@ -124,11 +119,9 @@ class Gui(QtCore.QObject):
             'created instance.'
         )
 
-    def __init__(self, qudi_instance, stylesheet_path=None, theme=None, use_opengl=False):
+    def __init__(self, qudi_instance, stylesheet_path=None, use_opengl=False):
         if stylesheet_path is not None and not os.path.isfile(stylesheet_path):
             raise FileNotFoundError('stylesheet_path "{0}" not found.'.format(stylesheet_path))
-        if theme is None:
-            theme = 'qudiTheme'
 
         super().__init__()
 
@@ -139,7 +132,6 @@ class Gui(QtCore.QObject):
         app.setQuitOnLastWindowClosed(False)
 
         self._init_app_icon()
-        self.set_theme(theme)
         if stylesheet_path is not None:
             self.set_style_sheet(stylesheet_path)
         self.system_tray_icon = SystemTrayIcon()
@@ -169,7 +161,7 @@ class Gui(QtCore.QObject):
     def _init_app_icon():
         """ Set up the Qudi application icon.
         """
-        app_icon = QtGui.QIcon(os.path.join(get_artwork_dir(), 'logo', 'logo-qudi.svg'))
+        app_icon = QtGui.QIcon(':/icons/logo-qudi')
         QtWidgets.QApplication.instance().setWindowIcon(app_icon)
 
     @staticmethod
@@ -184,24 +176,6 @@ class Gui(QtCore.QObject):
             pg.setConfigOption('background', bgcolor)
             # experimental opengl usage
             pg.setConfigOption('useOpenGL', use_opengl)
-
-    @staticmethod
-    def set_theme(theme):
-        """
-        Set icon theme for qudi app.
-
-        @param str theme: qudi theme name
-        """
-        # Make icons work on non-X11 platforms, set custom theme
-        # if not sys.platform.startswith('linux') and not sys.platform.startswith('freebsd'):
-        #
-        # To enable the use of custom action icons, for now the above if statement has been
-        # removed and the QT theme is being set to our artwork/icons folder for
-        # all OSs.
-        themepaths = QtGui.QIcon.themeSearchPaths()
-        themepaths.append(os.path.join(get_artwork_dir(), 'icons'))
-        QtGui.QIcon.setThemeSearchPaths(themepaths)
-        QtGui.QIcon.setThemeName(theme)
 
     @staticmethod
     def set_style_sheet(stylesheet_path):
@@ -229,6 +203,11 @@ class Gui(QtCore.QObject):
             '''
             stylesheet += mac_fix
         QtWidgets.QApplication.instance().setStyleSheet(stylesheet)
+        # file = QtCore.QFile(':/stylesheets/Combinear')
+        # file.open(QtCore.QIODevice.ReadOnly)
+        # stylesheet = file.readAll().data().decode('utf-8')
+        # file.close()
+        # QtWidgets.QApplication.instance().setStyleSheet(stylesheet)
 
     @staticmethod
     def close_windows():

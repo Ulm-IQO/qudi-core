@@ -22,11 +22,9 @@ If not, see <https://www.gnu.org/licenses/>.
 
 __all__ = ['FitWidget', 'FitConfigurationWidget', 'FitConfigurationDialog']
 
-import os
 import weakref
 from PySide2 import QtCore, QtWidgets, QtGui
 from qudi.util.datafitting import FitContainer, FitConfigurationsModel, FitConfiguration
-from qudi.util.paths import get_artwork_dir
 from qudi.util.widgets.scientific_spinbox import ScienDSpinBox
 
 
@@ -121,8 +119,6 @@ class FitConfigurationWidget(QtWidgets.QWidget):
         self.setLayout(main_layout)
         main_layout.setContentsMargins(0, 0, 0, 0)
 
-        icon_dir = os.path.join(get_artwork_dir(), 'icons')
-
         # Create new fit config editor elements
         self.model_combobox = QtWidgets.QComboBox()
         self.model_combobox.setSizeAdjustPolicy(QtWidgets.QComboBox.AdjustToContents)
@@ -130,7 +126,7 @@ class FitConfigurationWidget(QtWidgets.QWidget):
         self.name_lineedit = QtWidgets.QLineEdit()
         self.add_config_toolbutton = QtWidgets.QToolButton()
         self.add_config_toolbutton.setToolButtonStyle(QtCore.Qt.ToolButtonIconOnly)
-        self.add_config_toolbutton.setIcon(QtGui.QIcon(os.path.join(icon_dir, 'list-add')))
+        self.add_config_toolbutton.setIcon(QtGui.QIcon(':/icons/list-add'))
         hlayout = QtWidgets.QHBoxLayout()
         hlayout.addWidget(self.model_combobox)
         hlayout.addWidget(self.name_lineedit)
@@ -249,13 +245,10 @@ class _FitConfigPanel(QtWidgets.QWidget):
         groupbox.setLayout(main_layout)
 
         # add remove button
-        icon_dir = os.path.join(get_artwork_dir(), 'icons')
         self._name = fit_config.name
         self.remove_config_toolbutton = QtWidgets.QToolButton()
         self.remove_config_toolbutton.setToolButtonStyle(QtCore.Qt.ToolButtonIconOnly)
-        self.remove_config_toolbutton.setIcon(
-            QtGui.QIcon(os.path.join(icon_dir, 'list-remove'))
-        )
+        self.remove_config_toolbutton.setIcon(QtGui.QIcon(':/icons/list-remove'))
         self.remove_config_toolbutton.clicked.connect(
             lambda: self.sigConfigurationRemovedClicked.emit(self._name)
         )

@@ -19,14 +19,12 @@ You should have received a copy of the GNU Lesser General Public License along w
 If not, see <https://www.gnu.org/licenses/>.
 """
 
-import os
 from PySide2 import QtCore, QtGui, QtWidgets
 from qudi.core.gui.main_gui.logwidget import LogWidget
 from qudi.core.gui.main_gui.remotewidget import RemoteWidget
 from qudi.core.gui.main_gui.aboutqudidialog import AboutQudiDialog
 from qudi.core.gui.main_gui.settingsdialog import SettingsDialog
 from qudi.core.gui.main_gui.modulewidget import ModuleWidget
-from qudi.util.paths import get_artwork_dir
 from qudi.util.widgets.advanced_dockwidget import AdvancedDockWidget
 from qtconsole.rich_jupyter_widget import RichJupyterWidget
 
@@ -49,34 +47,28 @@ class QudiMainWindow(QtWidgets.QMainWindow):
 
         # Create actions
         # Toolbar actions
-        icon_path = os.path.join(get_artwork_dir(), 'icons')
         self.action_load_configuration = QtWidgets.QAction()
-        self.action_load_configuration.setIcon(
-            QtGui.QIcon(os.path.join(icon_path, 'document-open')))
+        self.action_load_configuration.setIcon(QtGui.QIcon(':/icons/document-open'))
         self.action_load_configuration.setText('Load configuration')
         self.action_load_configuration.setToolTip('Load configuration')
         self.action_open_configuration_editor = QtWidgets.QAction()
-        self.action_open_configuration_editor.setIcon(
-            QtGui.QIcon(os.path.join(icon_path, 'document-new'))
-        )
+        self.action_open_configuration_editor.setIcon(QtGui.QIcon(':/icons/document-new'))
         self.action_open_configuration_editor.setText('New configuration')
         self.action_open_configuration_editor.setToolTip(
             'Open the graphical configuration editor for editing or creating a new qudi '
             'configuration'
         )
         self.action_reload_qudi = QtWidgets.QAction()
-        self.action_reload_qudi.setIcon(
-            QtGui.QIcon(os.path.join(icon_path, 'view-refresh')))
+        self.action_reload_qudi.setIcon(QtGui.QIcon(':/icons/view-refresh'))
         self.action_reload_qudi.setText('Reload current configuration')
         self.action_reload_qudi.setToolTip('Reload current configuration')
         self.action_load_all_modules = QtWidgets.QAction()
-        self.action_load_all_modules.setIcon(
-            QtGui.QIcon(os.path.join(icon_path, 'dialog-warning')))
+        self.action_load_all_modules.setIcon(QtGui.QIcon(':/icons/dialog-warning'))
         self.action_load_all_modules.setText('Load all modules')
         self.action_load_all_modules.setToolTip('Load all available modules found in configuration')
         # quit action
         self.action_quit = QtWidgets.QAction()
-        self.action_quit.setIcon(QtGui.QIcon(os.path.join(icon_path, 'application-exit')))
+        self.action_quit.setIcon(QtGui.QIcon(':/icons/application-exit'))
         self.action_quit.setText('Quit qudi')
         self.action_quit.setToolTip('Quit qudi')
         self.action_quit.setShortcut(QtGui.QKeySequence('Ctrl+Q'))
@@ -111,17 +103,15 @@ class QudiMainWindow(QtWidgets.QMainWindow):
         self.action_view_default.setToolTip('Restore default view')
         # Dialog actions
         self.action_settings = QtWidgets.QAction()
-        self.action_settings.setIcon(QtGui.QIcon(os.path.join(icon_path, 'configure')))
+        self.action_settings.setIcon(QtGui.QIcon(':/icons/configure'))
         self.action_settings.setText('Settings')
         self.action_settings.setToolTip('Open settings dialog')
         self.action_about_qudi = QtWidgets.QAction()
-        self.action_about_qudi.setIcon(
-            QtGui.QIcon(os.path.join(icon_path, 'go-home')))
+        self.action_about_qudi.setIcon(QtGui.QIcon(':/icons/go-home'))
         self.action_about_qudi.setText('About qudi')
         self.action_about_qudi.setToolTip('Read up about qudi')
         self.action_about_qt = QtWidgets.QAction()
-        self.action_about_qt.setIcon(
-            QtGui.QIcon(os.path.join(icon_path, 'go-home')))
+        self.action_about_qt.setIcon(QtGui.QIcon(':/icons/go-home'))
         self.action_about_qt.setText('About Qt')
         self.action_about_qt.setToolTip('Read up about Qt')
 

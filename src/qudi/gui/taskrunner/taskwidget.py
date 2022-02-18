@@ -21,12 +21,10 @@ If not, see <https://www.gnu.org/licenses/>.
 
 __all__ = ['TaskWidget']
 
-import os
 from typing import Type, Optional, Dict, Tuple, Any, Iterable
 from PySide2 import QtCore, QtWidgets, QtGui
 
 from qudi.util.helpers import is_integer
-from qudi.util.paths import get_artwork_dir
 from qudi.util.parameters import ParameterWidgetMapper
 from qudi.util.widgets.loading_indicator import CircleLoadingIndicator
 from qudi.core.scripting.moduletask import ModuleTask
@@ -70,9 +68,8 @@ class TaskWidget(QtWidgets.QWidget):
 
         # Create control button and state label. Arrange them in a sub-layout and connect button.
         # Also add animated busy-indicator
-        icon_dir = os.path.join(get_artwork_dir(), 'icons')
-        self._play_icon = QtGui.QIcon(os.path.join(icon_dir, 'media-playback-start'))
-        self._stop_icon = QtGui.QIcon(os.path.join(icon_dir, 'media-playback-stop'))
+        self._play_icon = QtGui.QIcon(':/icons/media-playback-start')
+        self._stop_icon = QtGui.QIcon(':/icons/media-playback-stop')
         self.state_label = QtWidgets.QLabel('stopped')
         self.state_label.setAlignment(QtCore.Qt.AlignCenter)
         font = self.state_label.font()

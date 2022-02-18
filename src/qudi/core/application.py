@@ -26,12 +26,13 @@ import weakref
 import inspect
 import traceback
 import faulthandler
+from importlib import import_module
 from logging import DEBUG, INFO
 from PySide2 import QtCore, QtWidgets
 
 from qudi.core.logger import init_rotating_file_handler, init_record_model_handler, clear_handlers
 from qudi.core.logger import get_logger, set_log_level
-from qudi.util.paths import get_main_dir, get_default_log_dir
+from qudi.util.paths import get_default_log_dir
 from qudi.util.mutex import Mutex
 from qudi.util.colordefs import QudiMatplotlibStyle
 from qudi.core.config import Configuration
@@ -40,6 +41,7 @@ from qudi.core.modulemanager import ModuleManager
 from qudi.core.threadmanager import ThreadManager
 from qudi.core.gui.gui import Gui
 from qudi.core.servers import RemoteModulesServer, QudiNamespaceServer
+from qudi.util.helpers import iter_modules_recursive
 
 # Use non-GUI "Agg" backend for matplotlib by default since it is reasonably thread-safe. Otherwise
 # you can only plot from main thread and not e.g. in a logic module.
@@ -263,6 +265,17 @@ class Qudi(QtCore.QObject):
             self.log.info(f'Loading startup module: {module}')
             self.module_manager.activate_module(module)
 
+    def _initialize_resources(self):
+        import qudi.resources as _resources_ns
+        for mod_finder in iter_modules_recursive(_resources_ns.__path__,
+                                                 _resources_ns.__name__ + '.'):
+            try:
+                import_module(mod_finder.name)
+            except ImportError:
+                self.log.exception(
+                    f'Exception while initializing qudi.resources sub-module "{mod_finder.name}":'
+                )
+
     def run(self):
         """
         """
@@ -300,6 +313,9 @@ class Qudi(QtCore.QObject):
 
             # Install app watchdog
             self.watchdog = AppWatchdog(self.interrupt_quit)
+
+            # initialize Qt resources
+            self._initialize_resources()
 
             # Start module servers
             if self.remote_modules_server is not None:
