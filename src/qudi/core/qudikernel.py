@@ -23,13 +23,13 @@ __all__ = ['install_kernel', 'uninstall_kernel', 'QudiIPythonKernel', 'QudiKerne
            'QudiKernelService']
 
 import os
-import numpy
 import sys
 import rpyc
 import json
 import shutil
 import logging
 import tempfile
+import warnings
 from ipykernel.ipkernel import IPythonKernel
 
 from qudi.core.config import Configuration
@@ -163,6 +163,10 @@ class QudiIPythonKernel(IPythonKernel):
         self.config.IPCompleter.use_jedi = False
         self.config.PlainTextFormatter.pprint = False
         self.config.BaseFormatter.enabled = False
+        # lure out first warning and ignore
+        with warnings.catch_warnings():
+            warnings.filterwarnings('ignore', module=r'traitlets', category=UserWarning)
+            self.shell.run_cell('object()')
 
     def update_module_namespace(self):
         modules = self._qudi_client.get_active_modules()
