@@ -21,7 +21,7 @@ ToDo: Throw errors around for non-existent directories
 
 __all__ = ['get_appdata_dir', 'get_default_config_dir', 'get_default_log_dir',
            'get_default_data_dir', 'get_daily_directory', 'get_home_dir', 'get_main_dir',
-           'get_userdata_dir', 'get_artwork_dir', 'get_module_app_data_path']
+           'get_userdata_dir', 'get_resources_dir', 'get_module_app_data_path']
 
 import datetime
 import os
@@ -38,12 +38,16 @@ def get_main_dir() -> str:
     return os.path.abspath(os.path.join(os.path.dirname(core.__file__), '..'))
 
 
-def get_artwork_dir() -> str:
-    """ Returns the absolute path to the qudi artwork directory
+def get_resources_dir(create_missing: Optional[bool] = False) -> str:
+    """ Returns the absolute path to the qudi resources directory. Usually a sub-directory of the
+    appdata directory (see: get_appdata_dir)
 
-    @return string: path to the artwork directory of qudi
+    @return string: path to the resources directory of qudi
     """
-    return os.path.join(get_main_dir(), 'artwork')
+    path = os.path.join(get_appdata_dir(create_missing=create_missing), 'resources')
+    if create_missing and not os.path.exists(path):
+        os.mkdir(path)
+    return path
 
 
 def get_home_dir() -> str:

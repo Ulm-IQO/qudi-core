@@ -187,9 +187,13 @@ class Configuration(QtCore.QObject):
         @return str|None: Absolute file path to stylesheet file, None if not configured
         """
         stylesheet = self._global_config.get('stylesheet', None)
-        if not os.path.dirname(stylesheet):
-            stylesheet = os.path.join(_paths.get_artwork_dir(), 'styles', stylesheet)
-        return os.path.abspath(stylesheet)
+        if not isinstance(stylesheet, str):
+            return None
+        if not stylesheet.startswith(':/'):
+            stylesheet = f':/styles/{stylesheet}'
+        if stylesheet.endswith('.qss'):
+            stylesheet = stylesheet[:-4]
+        return stylesheet
 
     @stylesheet.setter
     def stylesheet(self, file_path):

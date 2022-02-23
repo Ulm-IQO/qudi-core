@@ -25,7 +25,6 @@ import platform
 from PySide2 import QtCore, QtGui, QtWidgets
 from qudi.core.gui.main_gui.main_gui import QudiMainGui
 from qudi.core.modulemanager import ModuleManager
-from qudi.util.paths import get_artwork_dir
 from qudi.core.logger import get_logger
 
 try:
@@ -184,30 +183,35 @@ class Gui(QtCore.QObject):
 
         @param str stylesheet_path: path to style sheet file
         """
-        with open(stylesheet_path, 'r') as stylesheetfile:
-            stylesheet = stylesheetfile.read()
-
-        if stylesheet_path.endswith('qdark.qss'):
-            path = os.path.join(os.path.dirname(stylesheet_path), 'qdark').replace('\\', '/')
-            stylesheet = stylesheet.replace('{qdark}', path)
-
-        # see issue #12 on qdarkstyle github
-        if platform.system().lower() == 'darwin' and stylesheet_path.endswith('qdark.qss'):
-            mac_fix = '''
-            QDockWidget::title
-            {
-                background-color: #31363b;
-                text-align: center;
-                height: 12px;
-            }
-            '''
-            stylesheet += mac_fix
-        QtWidgets.QApplication.instance().setStyleSheet(stylesheet)
-        # file = QtCore.QFile(':/stylesheets/Combinear')
-        # file.open(QtCore.QIODevice.ReadOnly)
-        # stylesheet = file.readAll().data().decode('utf-8')
-        # file.close()
+        # with open(stylesheet_path, 'r') as stylesheetfile:
+        #     stylesheet = stylesheetfile.read()
+        #
+        # if stylesheet_path.endswith('qdark.qss'):
+        #     path = os.path.join(os.path.dirname(stylesheet_path), 'qdark').replace('\\', '/')
+        #     stylesheet = stylesheet.replace('{qdark}', path)
+        #
+        # # see issue #12 on qdarkstyle github
+        # if platform.system().lower() == 'darwin' and stylesheet_path.endswith('qdark.qss'):
+        #     mac_fix = '''
+        #     QDockWidget::title
+        #     {
+        #         background-color: #31363b;
+        #         text-align: center;
+        #         height: 12px;
+        #     }
+        #     '''
+        #     stylesheet += mac_fix
         # QtWidgets.QApplication.instance().setStyleSheet(stylesheet)
+        file = QtCore.QFile(stylesheet_path)
+        file.open(QtCore.QIODevice.ReadOnly)
+        try:
+            stylesheet = file.readAll().data().decode('utf-8')
+        finally:
+            file.close()
+        if stylesheet_path.endswith('qdark'):
+            path = r':/styles/qdark'
+            stylesheet = stylesheet.replace('{qdark}', path)
+        QtWidgets.QApplication.instance().setStyleSheet(stylesheet)
 
     @staticmethod
     def close_windows():
