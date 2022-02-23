@@ -158,7 +158,11 @@ class QudiIPythonKernel(IPythonKernel):
         #  aggressive tab completion resolution of jedi that causes each descriptor (e.g. property)
         #  of the inspected object to be evaluated even if you do not want it to be inspected.
         #  Jupyter/IPython offer absolutely no documentation on anything not super shallow.
-        self.shell.run_cell(r'%config IPCompleter.use_jedi = False')
+        # Fixme: Also tried to fix the crazy fomatting scheme of IPython this way. Clashes badly
+        #  with rpyc otherwise.
+        self.config.IPCompleter.use_jedi = False
+        self.config.PlainTextFormatter.pprint = False
+        self.config.BaseFormatter.enabled = False
 
     def update_module_namespace(self):
         modules = self._qudi_client.get_active_modules()
