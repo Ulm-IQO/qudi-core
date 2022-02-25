@@ -380,8 +380,6 @@ class Scan1DWidget(QtWidgets.QWidget):
         self._toggle_scan_button.setFocusPolicy(QtCore.Qt.FocusPolicy.TabFocus)
         if scan_icon is not None:
             self._toggle_scan_button.setIcon(scan_icon)
-            # self._toggle_scan_button.setIconSize(QtCore.QSize(22, 22))
-            # self._toggle_scan_button.setText('Scan')
         self._toggle_scan_button.setMinimumWidth(self._toggle_scan_button.sizeHint().width())
         layout.addWidget(self._toggle_scan_button, 0, 0)
 

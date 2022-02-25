@@ -20,7 +20,7 @@ You should have received a copy of the GNU Lesser General Public License along w
 If not, see <https://www.gnu.org/licenses/>.
 """
 
-__all__ = ('ScanImageItem', 'Scan2DPlotWidget', 'Scan2DViewBox', 'Scan2DWidget')
+__all__ = ['ScanImageItem', 'Scan2DPlotWidget', 'Scan2DViewBox', 'Scan2DWidget', 'ImageWidget']
 
 import numpy as np
 from PySide2 import QtCore, QtWidgets
@@ -629,8 +629,6 @@ class Scan2DWidget(QtWidgets.QWidget):
         self._toggle_scan_button.setFocusPolicy(QtCore.Qt.FocusPolicy.TabFocus)
         if scan_icon is not None:
             self._toggle_scan_button.setIcon(scan_icon)
-            # self._toggle_scan_button.setIconSize(QtCore.QSize(22, 22))
-            # self._toggle_scan_button.setText('Scan')
         self._toggle_scan_button.setMinimumWidth(self._toggle_scan_button.sizeHint().width())
         layout.addWidget(self._toggle_scan_button, 0, 0)
 
