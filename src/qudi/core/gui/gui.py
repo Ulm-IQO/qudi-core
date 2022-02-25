@@ -175,8 +175,7 @@ class Gui(QtCore.QObject):
 
     @staticmethod
     def set_style_sheet(stylesheet_path):
-        """
-        Set qss style sheet for application.
+        """ Set qss style sheet for application.
 
         @param str stylesheet_path: path to style sheet file
         """
