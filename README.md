@@ -49,6 +49,10 @@ For installation instructions please refer to our
 ## Documentation
 The official qudi documentation homepage can be found [here](https://ulm-iqo.github.io/qudi-core/).
 
+## Forum
+For questions concerning qudi on any level, there is a [forum](https://github.com/Ulm-IQO/qudi-core/discussions) to discuss with the qudi community. Feel free to ask! 
+If you found a bug and located it already, please note GitHub's [issue tracking](https://github.com/Ulm-IQO/qudi-core/issues) feature.
+
 ## Contributing
 You want to contribute to the qudi project? Great! Please start by reading through our 
 [contributing guideline]().
