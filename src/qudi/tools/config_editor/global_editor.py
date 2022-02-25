@@ -7,7 +7,6 @@ __all__ = ('GlobalConfigurationWidget',)
 
 import os
 from PySide2 import QtCore, QtGui, QtWidgets
-from qudi.util.paths import get_artwork_dir
 
 
 class GlobalConfigurationWidget(QtWidgets.QWidget):
@@ -158,10 +157,9 @@ class GlobalConfigurationWidget(QtWidgets.QWidget):
         # Create new option editor button and name lineedit
         layout = QtWidgets.QHBoxLayout()
         main_layout.addLayout(layout)
-        icon_path = os.path.join(get_artwork_dir(), 'icons', 'list-add')
-        self._remove_icon = QtGui.QIcon(os.path.join(os.path.dirname(icon_path), 'list-remove'))
+        self._remove_icon = QtGui.QIcon(':/icons/list-remove')
         self.add_option_button = QtWidgets.QToolButton()
-        self.add_option_button.setIcon(QtGui.QIcon(icon_path))
+        self.add_option_button.setIcon(QtGui.QIcon(':/icons/list-add'))
         self.add_option_button.setToolTip('Add a custom option to the global config.')
         self.add_option_button.clicked.connect(self.add_custom_option)
         self.custom_opt_name_lineedit = QtWidgets.QLineEdit()

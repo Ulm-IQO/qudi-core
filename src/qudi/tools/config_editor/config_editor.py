@@ -9,7 +9,7 @@ import os
 import sys
 from PySide2 import QtCore, QtGui, QtWidgets
 from qudi.core.configoption import MissingOption
-from qudi.util.paths import get_main_dir, get_default_config_dir, get_artwork_dir
+from qudi.util.paths import get_main_dir, get_default_config_dir
 from qudi.core.config import Configuration
 
 from qudi.tools.config_editor.module_selector import ModuleSelector
@@ -349,8 +349,7 @@ class ConfigurationEditor(QtWidgets.QApplication):
     """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        app_icon = QtGui.QIcon(os.path.join(get_artwork_dir(), 'logo', 'logo-qudi.svg'))
-        self.setWindowIcon(app_icon)
+        self.setWindowIcon(QtGui.QIcon(':/logo/logo-qudi'))
 
 
 def main():

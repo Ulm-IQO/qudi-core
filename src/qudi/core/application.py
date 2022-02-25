@@ -42,6 +42,7 @@ from qudi.core.threadmanager import ThreadManager
 from qudi.core.gui.gui import Gui
 from qudi.core.servers import RemoteModulesServer, QudiNamespaceServer
 from qudi.util.helpers import iter_modules_recursive
+from qudi.util.resources import init_resources
 
 # Use non-GUI "Agg" backend for matplotlib by default since it is reasonably thread-safe. Otherwise
 # you can only plot from main thread and not e.g. in a logic module.
@@ -266,15 +267,16 @@ class Qudi(QtCore.QObject):
             self.module_manager.activate_module(module)
 
     def _initialize_resources(self):
-        import qudi.resources as _resources_ns
-        for mod_finder in iter_modules_recursive(_resources_ns.__path__,
-                                                 _resources_ns.__name__ + '.'):
-            try:
-                import_module(mod_finder.name)
-            except ImportError:
-                self.log.exception(
-                    f'Exception while initializing qudi.resources sub-module "{mod_finder.name}":'
-                )
+        init_resources()
+        # import qudi.resources as _resources_ns
+        # for mod_finder in iter_modules_recursive(_resources_ns.__path__,
+        #                                          _resources_ns.__name__ + '.'):
+        #     try:
+        #         import_module(mod_finder.name)
+        #     except ImportError:
+        #         self.log.exception(
+        #             f'Exception while initializing qudi.resources sub-module "{mod_finder.name}":'
+        #         )
 
     def run(self):
         """

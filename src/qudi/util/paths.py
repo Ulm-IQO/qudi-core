@@ -47,6 +47,9 @@ def get_resources_dir(create_missing: Optional[bool] = False) -> str:
     path = os.path.join(get_appdata_dir(create_missing=create_missing), 'resources')
     if create_missing and not os.path.exists(path):
         os.mkdir(path)
+        init_path = os.path.join(path, '__init__.py')
+        with open(init_path, 'w') as file:
+            file.write('from . import *\n')
     return path
 
 

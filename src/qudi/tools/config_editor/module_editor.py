@@ -5,9 +5,7 @@
 
 __all__ = ('ModuleConfigurationWidget',)
 
-import os
 from PySide2 import QtCore, QtGui, QtWidgets
-from qudi.util.paths import get_artwork_dir
 
 
 class ModuleConfigurationWidget(QtWidgets.QWidget):
@@ -15,8 +13,8 @@ class ModuleConfigurationWidget(QtWidgets.QWidget):
     """
     sigModuleConfigFinished = QtCore.Signal(str, dict, dict, dict)
 
-    _add_icon_path = os.path.join(get_artwork_dir(), 'icons', 'list-add')
-    _remove_icon_path = os.path.join(os.path.dirname(_add_icon_path), 'list-remove')
+    _add_icon_path = ':/icons/list-add'
+    _remove_icon_path = ':/icons/list-remove'
 
     _non_config_options = frozenset(
         {'connect', 'allow_remote', 'module.Class', 'remote_url', 'certfile', 'keyfile'}

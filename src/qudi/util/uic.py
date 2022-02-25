@@ -34,7 +34,6 @@ import re
 import tempfile
 import subprocess
 from importlib.util import spec_from_loader, module_from_spec
-from qudi.util.paths import get_artwork_dir
 
 __ui_class_pattern = re.compile(r'class (Ui_.*?)\(')
 __artwork_path_pattern = re.compile(r'>(.*?/artwork/.*?)</')
@@ -110,7 +109,7 @@ def _convert_ui_to_absolute_paths(file_path):
     @param str file_path: The path to the .ui file to convert
     @return str|NoneType: Converted file content of the .ui file, None if conversion is not needed
     """
-    path_prefix = get_artwork_dir()
+    path_prefix = ':/'
     with open(file_path, 'r') as file:
         ui_content = file.read()
     chunks = __artwork_path_pattern.split(ui_content)

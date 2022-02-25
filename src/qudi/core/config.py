@@ -191,30 +191,25 @@ class Configuration(QtCore.QObject):
             return None
         if not stylesheet.startswith(':/'):
             stylesheet = f':/styles/{stylesheet}'
-        if stylesheet.endswith('.qss'):
-            stylesheet = stylesheet[:-4]
         return stylesheet
 
     @stylesheet.setter
     def stylesheet(self, file_path):
         """ Setter for .qss file path used as stylesheet for qudi Qt application.
-        Can either be a relative path to <qudi>/artwork/styles/ or an absolute path.
+        Must be a path in the Qt resource system, i.e. with root ":/". Can either be a relative
+        path to ":/styles/" or an absolute path.
 
         If stylesheet path is set to None, it will be removed from config. This will cause the
         application to fall back to platform dependent Qt defaults.
 
         @param str|None file_path: Absolute file path to stylesheet or file name
         """
-        assert file_path is None or isinstance(file_path, str), 'stylesheet must be None or str'
+        if not (file_path is None or isinstance(file_path, str)):
+            raise TypeError('stylesheet must be None or str type')
 
         if not file_path:
             self._global_config.pop('stylesheet', None)
             return
-
-        assert file_path.endswith('.qss'), 'stylesheet file must have ".qss" extension'
-        if not os.path.isabs(file_path):
-            assert not os.path.dirname(file_path), \
-                'stylesheet must either be file name or absolute path'
 
         self._global_config['stylesheet'] = file_path
         self.sigConfigChanged.emit(self)

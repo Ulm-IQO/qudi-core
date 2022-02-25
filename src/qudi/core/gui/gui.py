@@ -119,9 +119,6 @@ class Gui(QtCore.QObject):
         )
 
     def __init__(self, qudi_instance, stylesheet_path=None, use_opengl=False):
-        if stylesheet_path is not None and not os.path.isfile(stylesheet_path):
-            raise FileNotFoundError('stylesheet_path "{0}" not found.'.format(stylesheet_path))
-
         super().__init__()
 
         app = QtWidgets.QApplication.instance()
