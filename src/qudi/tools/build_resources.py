@@ -27,12 +27,14 @@ from qudi.util.resources import ResourceCompiler
 
 
 def main(resource_name: str, resource_root: str) -> None:
+    print(f'> Building resources "{resource_name}" for qudi from {resource_root} ...')
     rc = ResourceCompiler(resource_name=resource_name, resource_root=resource_root)
     rc.find_png_paths()
     rc.find_svg_paths()
     rc.find_qss_paths()
     rc.write_qrc_file()
     rc.write_rcc_file()
+    print(f'> Resources "{resource_name}" built successfully')
 
 
 if __name__ == '__main__':
