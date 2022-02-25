@@ -59,14 +59,15 @@ class ResourceCompiler:
         self.resource_name = resource_name
         self.resource_paths = list()
 
-    def find_svg_paths(self, include_subdirs: Optional[bool] = True) -> None:
-        self.find_resource_paths(file_endings=['.svg', '.svgz'], include_subdirs=include_subdirs)
+    def find_svg_paths(self, include_subdirs: Optional[bool] = True) -> List[str]:
+        return self.find_resource_paths(file_endings=['.svg', '.svgz'],
+                                        include_subdirs=include_subdirs)
 
-    def find_qss_paths(self, include_subdirs: Optional[bool] = True) -> None:
-        self.find_resource_paths(file_endings=['.qss'], include_subdirs=include_subdirs)
+    def find_qss_paths(self, include_subdirs: Optional[bool] = True) -> List[str]:
+        return self.find_resource_paths(file_endings=['.qss'], include_subdirs=include_subdirs)
 
-    def find_png_paths(self, include_subdirs: Optional[bool] = True) -> None:
-        self.find_resource_paths(file_endings=['.png'], include_subdirs=include_subdirs)
+    def find_png_paths(self, include_subdirs: Optional[bool] = True) -> List[str]:
+        return self.find_resource_paths(file_endings=['.png'], include_subdirs=include_subdirs)
 
     def find_resource_paths(self,
                             file_endings: Union[str, Sequence[str]],
@@ -77,11 +78,13 @@ class ResourceCompiler:
         for root, dirs, files in os.walk(self.resource_root):
             prefix = os.path.relpath(root, self.resource_root).strip('.')
             resources.extend(
-                os.path.join(prefix, f).replace('\\', '/') for f in files if f.endswith(file_endings)
+                os.path.join(prefix, f).replace('\\', '/') for f in files if
+                f.endswith(file_endings)
             )
             if not include_subdirs:
                 break
         self.resource_paths.extend(resources)
+        return resources
 
     def write_qrc_file(self) -> str:
         path = os.path.join(self.resource_root, f'{self.resource_name}.qrc')
@@ -113,6 +116,11 @@ class ResourceCompiler:
             except OSError:
                 pass
             raise
+        finally:
+            try:
+                os.remove(qrc_path)
+            except OSError:
+                pass
         return rcc_path
 
     def _compile_qrc(self) -> str:
