@@ -157,7 +157,7 @@ class Gui(QtCore.QObject):
     def _init_app_icon():
         """ Set up the Qudi application icon.
         """
-        app_icon = QtGui.QIcon(':/icons/logo-qudi')
+        app_icon = QtGui.QIcon(':/logo/logo-qudi')
         QtWidgets.QApplication.instance().setWindowIcon(app_icon)
 
     @staticmethod
