@@ -48,7 +48,7 @@ def clear_resources_appdata():
     resources_dir = get_resources_dir()
     if os.path.exists(resources_dir):
         # Remove resources files
-        resources_regex = re.compile(r'\A(.+)_rcc.py\Z')
+        resources_regex = re.compile(r'\A(.+)_rc.py\Z')
         for root, dirs, files in os.walk(resources_dir):
             for file in files:
                 if resources_regex.match(file):

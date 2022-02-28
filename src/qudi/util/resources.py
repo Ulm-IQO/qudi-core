@@ -20,13 +20,15 @@ You should have received a copy of the GNU Lesser General Public License along w
 If not, see <https://www.gnu.org/licenses/>.
 """
 
-__all__ = ['init_resources', 'ResourceCompiler']
+__all__ = ['init_resources', 'print_resource_tree', 'ResourceCompiler']
 
 import os
 import sys
 import importlib
 import subprocess
+from PySide2.QtCore import QDirIterator
 from typing import Optional, Sequence, List, Union
+
 
 from qudi.util.paths import get_resources_dir
 
@@ -43,6 +45,15 @@ def init_resources():
             importlib.import_module(mod)
 
 
+def print_resource_tree(root=':/', level=0):
+    tabs = '\t' * level
+    it = QDirIterator(root)
+    while it.hasNext():
+        item = it.next()
+        print(f'{tabs}{item}')
+        print_resource_tree(item, level=level+1)
+
+
 class ResourceCompiler:
     """ ToDo: Document
     """
@@ -53,7 +64,9 @@ class ResourceCompiler:
         if not os.path.isdir(resource_root):
             raise NotADirectoryError(f'"resource_root" path is not a directory: {resource_root}')
         self.resource_root = resource_root
-        self.resource_name = resource_name.replace('-', '_').replace(' ', '_')
+        self.resource_name = '_'.join(resource_name.replace('-', '_').split())
+        self.qrc_filename = f'{self.resource_name}.qrc'
+        self.rcc_filename = f'{self.resource_name}_rc.py'
         self.resource_paths = list()
 
     def find_svg_paths(self, include_subdirs: Optional[bool] = True) -> List[str]:
@@ -66,6 +79,9 @@ class ResourceCompiler:
     def find_png_paths(self, include_subdirs: Optional[bool] = True) -> List[str]:
         return self.find_resource_paths(file_endings=['.png'], include_subdirs=include_subdirs)
 
+    def find_cfg_paths(self, include_subdirs: Optional[bool] = True) -> List[str]:
+        return self.find_resource_paths(file_endings=['.cfg'], include_subdirs=include_subdirs)
+
     def find_resource_paths(self,
                             file_endings: Union[str, Sequence[str]],
                             include_subdirs: Optional[bool] = True) -> List[str]:
@@ -76,7 +92,7 @@ class ResourceCompiler:
             prefix = os.path.relpath(root, self.resource_root).strip('.')
             resources.extend(
                 os.path.join(prefix, f).replace('\\', '/') for f in files if
-                f.endswith(file_endings)
+                f.endswith(file_endings) and f != self.qrc_filename
             )
             if not include_subdirs:
                 break
@@ -84,7 +100,7 @@ class ResourceCompiler:
         return resources
 
     def write_qrc_file(self) -> str:
-        path = os.path.join(self.resource_root, f'{self.resource_name}.qrc')
+        path = os.path.join(self.resource_root, self.qrc_filename)
         compiled = self._compile_qrc()
         try:
             with open(path, 'w') as file:
@@ -98,8 +114,7 @@ class ResourceCompiler:
         return path
 
     def write_rcc_file(self) -> str:
-        rcc_path = os.path.join(get_resources_dir(create_missing=True),
-                                f'{self.resource_name}_rc.py')
+        rcc_path = os.path.join(get_resources_dir(create_missing=True), self.rcc_filename)
         qrc_path = os.path.join(self.resource_root, f'{self.resource_name}.qrc')
         if not os.path.exists(qrc_path):
             qrc_path = self.write_qrc_file()

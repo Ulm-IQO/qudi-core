@@ -29,16 +29,36 @@ __all__ = ['install', 'uninstall']
 import os
 import argparse
 from qudi.tools.build_resources import main as build_resources
-from qudi.util.cleanup import clear_appdata
+from qudi.util.cleanup import clear_appdata, clear_resources_appdata
 from qudi.core.qudikernel import install_kernel, uninstall_kernel
+
+try:
+    from qudi import __path__ as _qudi_ns_paths
+except ImportError:
+    _qudi_ns_paths = list()
+
+__tmp = [p.lower() for p in _qudi_ns_paths]
+_qudi_ns_paths = [p for ii, p in enumerate(_qudi_ns_paths) if p.lower() not in __tmp[:ii]]
+del __tmp
 
 
 def install():
-    print('> Setting up qudi-core...')
-    resource_root = os.path.abspath(os.path.join(os.path.dirname(__file__), 'resources'))
-    build_resources(resource_name='qudi-core', resource_root=resource_root)
+    print('> Setting up qudi...')
+    core_qudi_path = os.path.abspath(os.path.dirname(__file__))
+    qudi_paths = [p for p in _qudi_ns_paths if p.lower() != core_qudi_path.lower()]
+    qudi_paths.append(core_qudi_path)
+    clear_resources_appdata()
+    for path in reversed(qudi_paths):
+        resource_root = os.path.join(path, 'resources')
+        if os.path.exists(resource_root):
+            remainder, resource_name = os.path.split(os.path.dirname(path))
+            # in case of development install, split the name even further
+            if resource_name == 'src':
+                resource_name = os.path.split(remainder)[-1]
+            build_resources(resource_name=resource_name, resource_root=resource_root)
+
     install_kernel()
-    print(f'> qudi-core setup complete')
+    print(f'> qudi setup complete')
 
 
 def uninstall():
