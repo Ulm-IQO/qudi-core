@@ -24,7 +24,7 @@ You should have received a copy of the GNU Lesser General Public License along w
 If not, see <https://www.gnu.org/licenses/>.
 """
 
-__all__ = ['main', 'install', 'uninstall']
+__all__ = ['install', 'uninstall']
 
 import os
 import argparse
@@ -44,17 +44,6 @@ def uninstall():
     clear_appdata()
 
 
-def main(_uninstall: bool):
-    if _uninstall:
-        print('> Cleaning up qudi...')
-        uninstall()
-        print('> qudi cleanup complete')
-    else:
-        print('> Setting up qudi-core...')
-        install()
-        print(f'> qudi-core setup complete')
-
-
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='(Un-)Configure qudi.')
     parser.add_argument(
@@ -64,4 +53,11 @@ if __name__ == '__main__':
         help='Flag to undo all setup steps performed during configuration/installation.'
     )
     args = parser.parse_args()
-    main(args.uninstall)
+    if args.uninstall:
+        print('> Cleaning up qudi...')
+        uninstall()
+        print('> qudi cleanup complete')
+    else:
+        print('> Setting up qudi-core...')
+        install()
+        print(f'> qudi-core setup complete')
