@@ -51,6 +51,7 @@ def uninstall():
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='(Un-)Configure qudi.')
     parser.add_argument(
+        '-u',
         '--uninstall',
         action='store_true',
         help='Flag to undo all setup steps performed during configuration/installation.'
