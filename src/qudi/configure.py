@@ -35,7 +35,7 @@ from qudi.core.qudikernel import install_kernel, uninstall_kernel
 
 def install():
     print('> Setting up qudi-core...')
-    resource_root = os.path.abspath(os.path.join(os.path.dirname(__file__), 'artwork'))
+    resource_root = os.path.abspath(os.path.join(os.path.dirname(__file__), 'resources'))
     build_resources(resource_name='qudi-core', resource_root=resource_root)
     install_kernel()
     print(f'> qudi-core setup complete')
