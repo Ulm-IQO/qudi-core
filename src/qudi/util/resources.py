@@ -34,16 +34,13 @@ from qudi.util.paths import get_resources_dir
 def init_resources():
     resource_root = get_resources_dir(create_missing=True)
     resource_modules = [
-        f.rsplit('.', 1)[0] for f in os.listdir(resource_root) if f.endswith('_rcc.py')
+        f.rsplit('.', 1)[0] for f in os.listdir(resource_root) if f.endswith('_rc.py')
     ]
     if resource_modules:
         if resource_root not in sys.path:
             sys.path.append(resource_root)
-        try:
-            for mod in resource_modules:
-                importlib.import_module(mod)
-        finally:
-            sys.path.remove(resource_root)
+        for mod in resource_modules:
+            importlib.import_module(mod)
 
 
 class ResourceCompiler:
@@ -56,7 +53,7 @@ class ResourceCompiler:
         if not os.path.isdir(resource_root):
             raise NotADirectoryError(f'"resource_root" path is not a directory: {resource_root}')
         self.resource_root = resource_root
-        self.resource_name = resource_name
+        self.resource_name = resource_name.replace('-', '_').replace(' ', '_')
         self.resource_paths = list()
 
     def find_svg_paths(self, include_subdirs: Optional[bool] = True) -> List[str]:
@@ -102,7 +99,7 @@ class ResourceCompiler:
 
     def write_rcc_file(self) -> str:
         rcc_path = os.path.join(get_resources_dir(create_missing=True),
-                                f'{self.resource_name}_rcc.py')
+                                f'{self.resource_name}_rc.py')
         qrc_path = os.path.join(self.resource_root, f'{self.resource_name}.qrc')
         if not os.path.exists(qrc_path):
             qrc_path = self.write_qrc_file()
