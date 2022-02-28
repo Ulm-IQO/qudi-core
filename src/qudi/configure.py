@@ -34,17 +34,13 @@ from qudi.core.qudikernel import install_kernel, uninstall_kernel
 
 
 def install():
-    # Set up qudi-core resources
     resource_root = os.path.abspath(os.path.join(os.path.dirname(__file__), 'artwork'))
     build_resources(resource_name='qudi-core', resource_root=resource_root)
-    # install qudi IPython kernelspec
     install_kernel()
 
 
 def uninstall():
-    # uninstall qudi kernel
     uninstall_kernel()
-    # clear AppData
     clear_appdata()
 
 
