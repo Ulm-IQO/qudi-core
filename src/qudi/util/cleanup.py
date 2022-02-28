@@ -1,9 +1,7 @@
 # -*- coding: utf-8 -*-
 
 """
-Runnable performing the cleanup of qudi-core, i.e. deleting created AppData and uninstalling the
-qudi IPython kernelspec.
-Should be run just before uninstalling qudi-core in order to leave no orphaned data behind.
+Utility functions to clean up qudi appdata.
 
 Copyright (c) 2021, the qudi developers. See the AUTHORS.md file at the top-level directory of this
 distribution and on <https://github.com/Ulm-IQO/qudi-core/>
@@ -22,16 +20,14 @@ You should have received a copy of the GNU Lesser General Public License along w
 If not, see <https://www.gnu.org/licenses/>.
 """
 
-__all__ = ['main']
+__all__ = ['clear_appdata', 'clear_modules_appdata', 'clear_resources_appdata', 'clear_load_config']
 
 import os
 import re
 from qudi.util.paths import get_resources_dir, get_appdata_dir
-from qudi.core.qudikernel import uninstall_kernel
 
 
-def clear_module_appdata():
-    print('> Clearing qudi modules AppData...')
+def clear_modules_appdata():
     appdata_dir = get_appdata_dir()
     if os.path.exists(appdata_dir):
         # delete qudi modules appdata, i.e. StatusVars
@@ -46,11 +42,9 @@ def clear_module_appdata():
                     except OSError:
                         pass
             break
-    print('> qudi modules AppData cleared')
 
 
 def clear_resources_appdata():
-    print('> Clearing qudi resources AppData...')
     resources_dir = get_resources_dir()
     if os.path.exists(resources_dir):
         # Remove resources files
@@ -80,38 +74,22 @@ def clear_resources_appdata():
             os.rmdir(resources_dir)
         except OSError:
             pass
-    print('> qudi resources AppData cleared')
 
 
 def clear_load_config():
-    print('> Clearing qudi load config...')
     load_config_path = os.path.join(get_appdata_dir(), 'load.cfg')
     try:
         os.remove(load_config_path)
     except OSError:
         pass
-    print('> qudi load config cleared')
 
 
 def clear_appdata():
     clear_resources_appdata()
-    clear_module_appdata()
+    clear_modules_appdata()
     clear_load_config()
     # remove appdata directory if empty
     try:
         os.rmdir(get_appdata_dir())
     except OSError:
         pass
-
-
-def main():
-    print('> Cleaning up qudi...')
-    # uninstall qudi kernel
-    uninstall_kernel()
-    # clear AppData
-    clear_appdata()
-    print('> qudi cleanup complete')
-
-
-if __name__ == '__main__':
-    main()
