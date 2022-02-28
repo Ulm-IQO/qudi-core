@@ -119,6 +119,8 @@ setup(
                             'qudi-config-editor=qudi.tools.config_editor.config_editor:main',
                             'qudi-uninstall-kernel=qudi.core.qudikernel:uninstall_kernel',
                             'qudi-install-kernel=qudi.core.qudikernel:install_kernel'
+                            'qudi-configure=qudi.configure:install',
+                            'qudi-unconfigure=qudi.configure:uninstall'
                             ]
     },
     zip_safe=False

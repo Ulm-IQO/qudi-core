@@ -34,14 +34,18 @@ from qudi.core.qudikernel import install_kernel, uninstall_kernel
 
 
 def install():
+    print('> Setting up qudi-core...')
     resource_root = os.path.abspath(os.path.join(os.path.dirname(__file__), 'artwork'))
     build_resources(resource_name='qudi-core', resource_root=resource_root)
     install_kernel()
+    print(f'> qudi-core setup complete')
 
 
 def uninstall():
+    print('> Cleaning up qudi...')
     uninstall_kernel()
     clear_appdata()
+    print('> qudi cleanup complete')
 
 
 if __name__ == '__main__':
@@ -54,10 +58,6 @@ if __name__ == '__main__':
     )
     args = parser.parse_args()
     if args.uninstall:
-        print('> Cleaning up qudi...')
         uninstall()
-        print('> qudi cleanup complete')
     else:
-        print('> Setting up qudi-core...')
         install()
-        print(f'> qudi-core setup complete')
