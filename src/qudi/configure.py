@@ -24,26 +24,24 @@ You should have received a copy of the GNU Lesser General Public License along w
 If not, see <https://www.gnu.org/licenses/>.
 """
 
-__all__ = ['install', 'uninstall']
+__all__ = ['install', 'uninstall', 'main']
 
 import os
 import argparse
-from qudi.tools.build_resources import main as build_resources
+from qudi.tools.build_resources import build_resources
 from qudi.util.cleanup import clear_appdata, clear_resources_appdata
 from qudi.core.qudikernel import install_kernel, uninstall_kernel
 
-try:
-    from qudi import __path__ as _qudi_ns_paths
-except ImportError:
-    _qudi_ns_paths = list()
 
-__tmp = [p.lower() for p in _qudi_ns_paths]
-_qudi_ns_paths = [p for ii, p in enumerate(_qudi_ns_paths) if p.lower() not in __tmp[:ii]]
-del __tmp
+def install() -> None:
+    try:
+        from qudi import __path__ as _qudi_ns_paths
+    except ImportError:
+        _qudi_ns_paths = list()
 
+    __tmp = [p.lower() for p in _qudi_ns_paths]
+    _qudi_ns_paths = [p for ii, p in enumerate(_qudi_ns_paths) if p.lower() not in __tmp[:ii]]
 
-def install():
-    print('> Setting up qudi...')
     core_qudi_path = os.path.abspath(os.path.dirname(__file__))
     qudi_paths = [p for p in _qudi_ns_paths if p.lower() != core_qudi_path.lower()]
     qudi_paths.append(core_qudi_path)
@@ -55,20 +53,18 @@ def install():
             # in case of development install, split the name even further
             if resource_name == 'src':
                 resource_name = os.path.split(remainder)[-1]
+            print(f'> Building resources "{resource_name}" for qudi from {resource_root} ...')
             build_resources(resource_name=resource_name, resource_root=resource_root)
-
+            print(f'> Resources "{resource_name}" built successfully')
     install_kernel()
-    print(f'> qudi setup complete')
 
 
-def uninstall():
-    print('> Cleaning up qudi...')
+def uninstall() -> None:
     uninstall_kernel()
     clear_appdata()
-    print('> qudi cleanup complete')
 
 
-if __name__ == '__main__':
+def main() -> None:
     parser = argparse.ArgumentParser(description='(Un-)Configure qudi.')
     parser.add_argument(
         '-u',
@@ -78,6 +74,14 @@ if __name__ == '__main__':
     )
     args = parser.parse_args()
     if args.uninstall:
+        print('> Cleaning up qudi...')
         uninstall()
+        print('> qudi cleanup complete')
     else:
+        print('> Setting up qudi...')
         install()
+        print(f'> qudi setup complete')
+
+
+if __name__ == '__main__':
+    main()

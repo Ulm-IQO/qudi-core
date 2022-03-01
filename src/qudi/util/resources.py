@@ -68,6 +68,7 @@ class ResourceCompiler:
         self.qrc_filename = f'{self.resource_name}.qrc'
         self.rcc_filename = f'{self.resource_name}_rc.py'
         self.resource_paths = list()
+        self._qrc_written = os.path.exists(os.path.join(self.resource_root, self.qrc_filename))
 
     def find_svg_paths(self, include_subdirs: Optional[bool] = True) -> List[str]:
         return self.find_resource_paths(file_endings=['.svg', '.svgz'],
@@ -97,6 +98,8 @@ class ResourceCompiler:
             if not include_subdirs:
                 break
         self.resource_paths.extend(resources)
+        if resources:
+            self._qrc_written = False
         return resources
 
     def write_qrc_file(self) -> str:
@@ -105,6 +108,7 @@ class ResourceCompiler:
         try:
             with open(path, 'w') as file:
                 file.write(compiled)
+            self._qrc_written = True
         except:
             try:
                 os.remove(path)
@@ -116,7 +120,7 @@ class ResourceCompiler:
     def write_rcc_file(self) -> str:
         rcc_path = os.path.join(get_resources_dir(create_missing=True), self.rcc_filename)
         qrc_path = os.path.join(self.resource_root, f'{self.resource_name}.qrc')
-        if not os.path.exists(qrc_path):
+        if not self._qrc_written:
             qrc_path = self.write_qrc_file()
         try:
             subprocess.run(['pyside2-rcc', '-g', 'python', qrc_path, '-o', rcc_path],
