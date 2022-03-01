@@ -52,7 +52,8 @@ setup(
     packages=find_namespace_packages(where='src', exclude=['qudi.resources']),
     package_dir={'': 'src'},
     package_data={'': ['LICENSE', 'LICENSE.LESSER', 'AUTHORS.md', 'README.md', 'VERSION'],
-                  'qudi': ['resources/icons/*',
+                  'qudi': ['resources/*',
+                           'resources/icons/*',
                            'resources/icons/**/*',
                            'resources/icons/**/**/*',
                            'resources/styles/*',
@@ -60,7 +61,6 @@ setup(
                            'resources/styles/**/**/*',
                            'resources/logo/*',
                            ],
-                  'qudi.core': ['default.cfg']
                   },
     description='A modular measurement application framework',
     long_description=long_description,

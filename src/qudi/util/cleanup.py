@@ -20,11 +20,14 @@ You should have received a copy of the GNU Lesser General Public License along w
 If not, see <https://www.gnu.org/licenses/>.
 """
 
-__all__ = ['clear_appdata', 'clear_modules_appdata', 'clear_resources_appdata', 'clear_load_config']
+__all__ = ['clear_appdata', 'clear_modules_appdata', 'clear_resources_appdata', 'clear_load_config',
+           'clear_default_config', 'clear_user_data', 'clear_config_files', 'clear_log_files']
 
 import os
 import re
-from qudi.util.paths import get_resources_dir, get_appdata_dir
+from shutil import rmtree
+from qudi.util.paths import get_resources_dir, get_appdata_dir, get_userdata_dir
+from qudi.util.paths import get_default_config_dir, get_default_log_dir
 
 
 def clear_modules_appdata():
@@ -58,17 +61,10 @@ def clear_resources_appdata():
                         pass
             break
         # Remove __pycache__
-        pycache_dir = os.path.join(resources_dir, '__pycache__')
-        if os.path.exists(pycache_dir):
-            for file in os.listdir(pycache_dir):
-                try:
-                    os.remove(os.path.join(pycache_dir, file))
-                except OSError:
-                    pass
-            try:
-                os.rmdir(pycache_dir)
-            except OSError:
-                pass
+        try:
+            rmtree(os.path.join(resources_dir, '__pycache__'))
+        except OSError:
+            pass
         # Remove resources directory if empty
         try:
             os.rmdir(resources_dir)
@@ -84,10 +80,58 @@ def clear_load_config():
         pass
 
 
+def clear_default_config():
+    default_config_path = os.path.join(get_appdata_dir(), 'default.cfg')
+    try:
+        os.remove(default_config_path)
+    except OSError:
+        pass
+
+
+def clear_log_files():
+    log_dir = get_default_log_dir()
+    if os.path.isdir(log_dir):
+        log_regex = re.compile(r'\Aqudi\.log(\.\d)?\Z')
+        for path in [os.path.join(log_dir, f) for f in os.listdir(log_dir) if log_regex.match(f)]:
+            try:
+                os.remove(path)
+            except OSError:
+                pass
+        try:
+            os.rmdir(log_dir)
+        except OSError:
+            pass
+
+
+def clear_config_files():
+    config_dir = get_default_config_dir()
+    if os.path.isdir(config_dir):
+        for file in [f for f in os.listdir(config_dir) if f.endswith('.cfg')]:
+            try:
+                os.remove(os.path.join(config_dir, file))
+            except OSError:
+                pass
+        try:
+            os.rmdir(config_dir)
+        except OSError:
+            pass
+
+
+def clear_user_data():
+    clear_log_files()
+    clear_config_files()
+    # Delete qudi userdata directory in home if it is empty
+    try:
+        os.rmdir(get_userdata_dir())
+    except OSError:
+        pass
+
+
 def clear_appdata():
     clear_resources_appdata()
     clear_modules_appdata()
     clear_load_config()
+    clear_default_config()
     # remove appdata directory if empty
     try:
         os.rmdir(get_appdata_dir())

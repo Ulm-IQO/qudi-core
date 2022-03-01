@@ -535,16 +535,16 @@ class Configuration(QtCore.QObject):
     def get_default_config():
         # Try default.cfg in user home directory
         file_path = os.path.join(_paths.get_default_config_dir(), 'default.cfg')
-        if os.path.isfile(file_path):
-            return file_path
-
-        # Fall back to default.cfg in qudi core directory
-        file_path = os.path.join(_paths.get_main_dir(), 'core', 'default.cfg')
-        if os.path.isfile(file_path):
-            return file_path
-
-        # Raise error if no config file could be found
-        raise FileNotFoundError('No config file could be found in default directories.')
+        if not os.path.isfile(file_path):
+            # Fall back to default.cfg in qudi resources
+            file_path = os.path.join(_paths.get_appdata_dir(), 'default.cfg')
+            if not os.path.isfile(file_path):
+                raise FileNotFoundError(
+                    'No config file could be found in default directory or AppData folder. '
+                    'You may need to configure qudi before running it for the first time.\n'
+                    'Run "qudi-configure" and try again.'
+                )
+        return file_path
 
     @staticmethod
     def relative_to_absolute_path(path):
