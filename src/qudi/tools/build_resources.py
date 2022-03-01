@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 
 """
-Run this module in order to compile and install the qudi-core resources (most stuff in qudi/artwork)
+Run this module in order to compile and install the qudi resources (files in qudi/resources
+namespace)
 
 Copyright (c) 2021, the qudi developers. See the AUTHORS.md file at the top-level directory of this
 distribution and on <https://github.com/Ulm-IQO/qudi-core/>
