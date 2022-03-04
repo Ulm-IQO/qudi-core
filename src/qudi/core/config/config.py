@@ -28,9 +28,12 @@ import re
 import copy
 from warnings import warn
 from PySide2 import QtCore
+from typing import List, Any, Mapping, Optional
 
 import qudi.util.paths as _paths
 from qudi.util.yaml import yaml_dump, yaml_load
+from .items import *
+from .section import ConfigurationSection
 
 
 class Configuration(QtCore.QObject):
@@ -44,7 +47,7 @@ class Configuration(QtCore.QObject):
     }
     _allowed_remote_bases = {'logic', 'hardware'}  # ToDo: Should logic modules be excluded here?
 
-    _module_name_regex = re.compile(r'^\w+(\s\w+)*$')
+
 
     def __init__(self, *args, file_path=None, **kwargs):
         super().__init__(*args, **kwargs)
@@ -54,8 +57,11 @@ class Configuration(QtCore.QObject):
         self._file_path = file_path
 
         # main config fields
-        self._global_config = dict()
-        self._module_config = {'hardware': dict(), 'logic': dict(), 'gui': dict()}
+        self._global_config = GlobalConfiguration()
+        self._gui_config = dict()
+        self._logic_config = dict()
+        self._hardware_config = dict()
+        self._module_config = {'gui': dict(), 'logic': dict(), 'hardware': dict()}
         self._unhandled_config = dict()
 
     @property
@@ -99,202 +105,202 @@ class Configuration(QtCore.QObject):
                 *self._module_config['logic'],
                 *self._module_config['gui'])
 
-    @property
-    def startup_modules(self):
-        """ List of module names to automatically activate when starting qudi.
+    # @property
+    # def startup_modules(self):
+    #     """ List of module names to automatically activate when starting qudi.
+    #
+    #     @return list|None: List of module names to activate when starting qudi.
+    #     """
+    #     return self._global_config.get('startup', list()).copy()
+    #
+    # @startup_modules.setter
+    # def startup_modules(self, modules):
+    #     """ Setter for list of module names to automatically activate when starting qudi.
+    #
+    #     @param list|None modules: List of module names to activate when starting qudi.
+    #     """
+    #     if not modules:
+    #         self._global_config.pop('startup', None)
+    #         return
+    #
+    #     if isinstance(modules, str):
+    #         modules = [modules]
+    #
+    #     assert all(isinstance(mod, str) and mod for mod in modules), \
+    #         'Startup modules must be non-empty strings'
+    #     self._global_config['startup'] = list(modules)
+    #     self.sigConfigChanged.emit(self)
 
-        @return list|None: List of module names to activate when starting qudi.
-        """
-        return self._global_config.get('startup', list()).copy()
+    # @property
+    # def remote_modules_server(self):
+    #     if 'remote_modules_server' not in self._global_config:
+    #         return None
+    #     return copy.deepcopy(self._global_config['remote_modules_server'])
+    #
+    # @remote_modules_server.setter
+    # def remote_modules_server(self, server_settings):
+    #     # ToDo: Sanity checks
+    #     if not server_settings:
+    #         self._global_config.pop('remote_modules_server', None)
+    #         return
+    #     self._global_config['remote_modules_server'] = copy.deepcopy(server_settings)
+    #     self.sigConfigChanged.emit(self)
 
-    @startup_modules.setter
-    def startup_modules(self, modules):
-        """ Setter for list of module names to automatically activate when starting qudi.
+    # @property
+    # def namespace_server_port(self):
+    #     return self._global_config.get('namespace_server_port', 18861)
+    #
+    # @namespace_server_port.setter
+    # def namespace_server_port(self, port):
+    #     port = int(port)
+    #     assert 0 <= port <= 65535
+    #     self._global_config['namespace_server_port'] = port
+    #     self.sigConfigChanged.emit(self)
 
-        @param list|None modules: List of module names to activate when starting qudi.
-        """
-        if not modules:
-            self._global_config.pop('startup', None)
-            return
+    # @property
+    # def force_remote_calls_by_value(self):
+    #     return self._global_config.get('force_remote_calls_by_value', True)
+    #
+    # @force_remote_calls_by_value.setter
+    # def force_remote_calls_by_value(self, flag):
+    #     assert isinstance(flag, bool), 'force_remote_calls_by_value flag must be bool type.'
+    #     self._global_config['force_remote_calls_by_value'] = flag
+    #     self.sigConfigChanged.emit(self)
 
-        if isinstance(modules, str):
-            modules = [modules]
+    # @property
+    # def hide_manager_window(self):
+    #     """ Flag indicating if the MainWindow of the qudi manager should be shown at startup.
+    #
+    #     @return bool: Shows the MainWindow of the qudi manager at startup
+    #     """
+    #     return self._global_config.get('hide_manager_window', False)
+    #
+    # @hide_manager_window.setter
+    # def hide_manager_window(self, flag):
+    #     """ Setter for a flag to hide the Manager Window.
+    #     By using the tray icon the Manager Window can be started at a later point in time.
+    #
+    #     @param bool hide_manager_window: Shows the MainWindow of the qudi manager at startup
+    #     """
+    #     assert isinstance(flag, bool), 'hide_manager_window flag must be bool type.'
+    #     self._global_config['hide_manager_window'] = flag
+    #     self.sigConfigChanged.emit(self)
 
-        assert all(isinstance(mod, str) and mod for mod in modules), \
-            'Startup modules must be non-empty strings'
-        self._global_config['startup'] = list(modules)
-        self.sigConfigChanged.emit(self)
+    # @property
+    # def stylesheet(self):
+    #     """ Absolute .qss file path used as stylesheet for qudi Qt application.
+    #
+    #     @return str|None: Absolute file path to stylesheet file, None if not configured
+    #     """
+    #     stylesheet = self._global_config.get('stylesheet', None)
+    #     if not os.path.dirname(stylesheet):
+    #         stylesheet = os.path.join(_paths.get_artwork_dir(), 'styles', stylesheet)
+    #     return os.path.abspath(stylesheet)
+    #
+    # @stylesheet.setter
+    # def stylesheet(self, file_path):
+    #     """ Setter for .qss file path used as stylesheet for qudi Qt application.
+    #     Can either be a relative path to <qudi>/artwork/styles/ or an absolute path.
+    #
+    #     If stylesheet path is set to None, it will be removed from config. This will cause the
+    #     application to fall back to platform dependent Qt defaults.
+    #
+    #     @param str|None file_path: Absolute file path to stylesheet or file name
+    #     """
+    #     assert file_path is None or isinstance(file_path, str), 'stylesheet must be None or str'
+    #
+    #     if not file_path:
+    #         self._global_config.pop('stylesheet', None)
+    #         return
+    #
+    #     assert file_path.endswith('.qss'), 'stylesheet file must have ".qss" extension'
+    #     if not os.path.isabs(file_path):
+    #         assert not os.path.dirname(file_path), \
+    #             'stylesheet must either be file name or absolute path'
+    #
+    #     self._global_config['stylesheet'] = file_path
+    #     self.sigConfigChanged.emit(self)
 
-    @property
-    def remote_modules_server(self):
-        if 'remote_modules_server' not in self._global_config:
-            return None
-        return copy.deepcopy(self._global_config['remote_modules_server'])
+    # @property
+    # def daily_data_dirs(self):
+    #     """ Flag indicating if daily sub-directories should be used by default (True) or not (False)
+    #
+    #     @return bool|None: Use daily sub-directories flag (default is True)
+    #     """
+    #     return self._global_config.get('daily_data_dirs', None)
+    #
+    # @daily_data_dirs.setter
+    # def daily_data_dirs(self, use_daily_dirs):
+    #     """ Setter for daily data sub-directories flag.
+    #     A value of None will exclude the config parameter from the config, defaulting to True.
+    #
+    #     @param bool|None use_daily_dirs: Use daily sub-directories flag to set.
+    #     """
+    #     assert use_daily_dirs is None or isinstance(use_daily_dirs, bool), \
+    #         'daily_data_dirs must be bool type or None'
+    #
+    #     if use_daily_dirs is None:
+    #         self._global_config.pop('daily_data_dirs', None)
+    #     else:
+    #         self._global_config['daily_data_dirs'] = use_daily_dirs
+    #     self.sigConfigChanged.emit(self)
 
-    @remote_modules_server.setter
-    def remote_modules_server(self, server_settings):
-        # ToDo: Sanity checks
-        if not server_settings:
-            self._global_config.pop('remote_modules_server', None)
-            return
-        self._global_config['remote_modules_server'] = copy.deepcopy(server_settings)
-        self.sigConfigChanged.emit(self)
+    # @property
+    # def default_data_dir(self):
+    #     """ Absolute path to qudi default data root directory to save (measurement) data into.
+    #
+    #     @return str|None: Absolute file path to data directory, None if not configured
+    #     """
+    #     return self._global_config.get('default_data_dir', None)
+    #
+    # @default_data_dir.setter
+    # def default_data_dir(self, dir_path):
+    #     """ Setter for qudi default data root directory. Must be specified as absolute path.
+    #
+    #     If default_data_dir path is set to None, it will be removed from config. This will cause
+    #     qudi to fall back to <user home>/qudi/data/.
+    #
+    #     @param str|None dir_path: absolute or relative path to data directory
+    #     """
+    #     assert dir_path is None or isinstance(dir_path, str), 'default_data_dir must be None or str'
+    #
+    #     if not dir_path:
+    #         self._global_config.pop('default_data_dir', None)
+    #         return
+    #
+    #     assert os.path.isabs(dir_path), 'default_data_dir must be absolute path to directory'
+    #
+    #     self._global_config['default_data_dir'] = os.path.abspath(dir_path)
+    #     self.sigConfigChanged.emit(self)
 
-    @property
-    def namespace_server_port(self):
-        return self._global_config.get('namespace_server_port', 18861)
-
-    @namespace_server_port.setter
-    def namespace_server_port(self, port):
-        port = int(port)
-        assert 0 <= port <= 65535
-        self._global_config['namespace_server_port'] = port
-        self.sigConfigChanged.emit(self)
-
-    @property
-    def force_remote_calls_by_value(self):
-        return self._global_config.get('force_remote_calls_by_value', True)
-
-    @force_remote_calls_by_value.setter
-    def force_remote_calls_by_value(self, flag):
-        assert isinstance(flag, bool), 'force_remote_calls_by_value flag must be bool type.'
-        self._global_config['force_remote_calls_by_value'] = flag
-        self.sigConfigChanged.emit(self)
-
-    @property
-    def hide_manager_window(self):
-        """ Flag indicating if the MainWindow of the qudi manager should be shown at startup.
-
-        @return bool: Shows the MainWindow of the qudi manager at startup
-        """
-        return self._global_config.get('hide_manager_window', False)
-
-    @hide_manager_window.setter
-    def hide_manager_window(self, flag):
-        """ Setter for a flag to hide the Manager Window.
-        By using the tray icon the Manager Window can be started at a later point in time.
-
-        @param bool hide_manager_window: Shows the MainWindow of the qudi manager at startup
-        """
-        assert isinstance(flag, bool), 'hide_manager_window flag must be bool type.'
-        self._global_config['hide_manager_window'] = flag
-        self.sigConfigChanged.emit(self)
-
-    @property
-    def stylesheet(self):
-        """ Absolute .qss file path used as stylesheet for qudi Qt application.
-
-        @return str|None: Absolute file path to stylesheet file, None if not configured
-        """
-        stylesheet = self._global_config.get('stylesheet', None)
-        if not os.path.dirname(stylesheet):
-            stylesheet = os.path.join(_paths.get_artwork_dir(), 'styles', stylesheet)
-        return os.path.abspath(stylesheet)
-
-    @stylesheet.setter
-    def stylesheet(self, file_path):
-        """ Setter for .qss file path used as stylesheet for qudi Qt application.
-        Can either be a relative path to <qudi>/artwork/styles/ or an absolute path.
-
-        If stylesheet path is set to None, it will be removed from config. This will cause the
-        application to fall back to platform dependent Qt defaults.
-
-        @param str|None file_path: Absolute file path to stylesheet or file name
-        """
-        assert file_path is None or isinstance(file_path, str), 'stylesheet must be None or str'
-
-        if not file_path:
-            self._global_config.pop('stylesheet', None)
-            return
-
-        assert file_path.endswith('.qss'), 'stylesheet file must have ".qss" extension'
-        if not os.path.isabs(file_path):
-            assert not os.path.dirname(file_path), \
-                'stylesheet must either be file name or absolute path'
-
-        self._global_config['stylesheet'] = file_path
-        self.sigConfigChanged.emit(self)
-
-    @property
-    def daily_data_dirs(self):
-        """ Flag indicating if daily sub-directories should be used by default (True) or not (False)
-
-        @return bool|None: Use daily sub-directories flag (default is True)
-        """
-        return self._global_config.get('daily_data_dirs', None)
-
-    @daily_data_dirs.setter
-    def daily_data_dirs(self, use_daily_dirs):
-        """ Setter for daily data sub-directories flag.
-        A value of None will exclude the config parameter from the config, defaulting to True.
-
-        @param bool|None use_daily_dirs: Use daily sub-directories flag to set.
-        """
-        assert use_daily_dirs is None or isinstance(use_daily_dirs, bool), \
-            'daily_data_dirs must be bool type or None'
-
-        if use_daily_dirs is None:
-            self._global_config.pop('daily_data_dirs', None)
-        else:
-            self._global_config['daily_data_dirs'] = use_daily_dirs
-        self.sigConfigChanged.emit(self)
-
-    @property
-    def default_data_dir(self):
-        """ Absolute path to qudi default data root directory to save (measurement) data into.
-
-        @return str|None: Absolute file path to data directory, None if not configured
-        """
-        return self._global_config.get('default_data_dir', None)
-
-    @default_data_dir.setter
-    def default_data_dir(self, dir_path):
-        """ Setter for qudi default data root directory. Must be specified as absolute path.
-
-        If default_data_dir path is set to None, it will be removed from config. This will cause
-        qudi to fall back to <user home>/qudi/data/.
-
-        @param str|None dir_path: absolute or relative path to data directory
-        """
-        assert dir_path is None or isinstance(dir_path, str), 'default_data_dir must be None or str'
-
-        if not dir_path:
-            self._global_config.pop('default_data_dir', None)
-            return
-
-        assert os.path.isabs(dir_path), 'default_data_dir must be absolute path to directory'
-
-        self._global_config['default_data_dir'] = os.path.abspath(dir_path)
-        self.sigConfigChanged.emit(self)
-
-    @property
-    def extension_paths(self):
-        """ List of absolute paths to extend qudi module search paths with.
-
-        @return list: List of absolute directory paths to search for qudi modules.
-        """
-        return self._global_config.get('extensions', list()).copy()
-
-    @extension_paths.setter
-    def extension_paths(self, paths):
-        """ Setter for absolute paths to extend qudi module search paths with.
-
-        If extension_paths is set to None, it will be removed from config. This will cause
-        qudi to only consider modules within the qudi package.
-
-        @param list|None paths: absolute paths to extend qudi search paths with
-        """
-        if not paths:
-            self._global_config.pop('extensions', None)
-            return
-
-        if isinstance(paths, str):
-            paths = [paths]
-
-        assert all(os.path.isabs(path) for path in paths), 'extension_paths must be absolute paths'
-
-        self._global_config['extensions'] = list(paths)
-        self.sigConfigChanged.emit(self)
+    # @property
+    # def extension_paths(self):
+    #     """ List of absolute paths to extend qudi module search paths with.
+    #
+    #     @return list: List of absolute directory paths to search for qudi modules.
+    #     """
+    #     return self._global_config.get('extensions', list()).copy()
+    #
+    # @extension_paths.setter
+    # def extension_paths(self, paths):
+    #     """ Setter for absolute paths to extend qudi module search paths with.
+    #
+    #     If extension_paths is set to None, it will be removed from config. This will cause
+    #     qudi to only consider modules within the qudi package.
+    #
+    #     @param list|None paths: absolute paths to extend qudi search paths with
+    #     """
+    #     if not paths:
+    #         self._global_config.pop('extensions', None)
+    #         return
+    #
+    #     if isinstance(paths, str):
+    #         paths = [paths]
+    #
+    #     assert all(os.path.isabs(path) for path in paths), 'extension_paths must be absolute paths'
+    #
+    #     self._global_config['extensions'] = list(paths)
+    #     self.sigConfigChanged.emit(self)
 
     def add_local_module(self, name, base, module, cls):
         self.check_module_name(name)
@@ -535,12 +541,12 @@ class Configuration(QtCore.QObject):
     @staticmethod
     def get_default_config():
         # Try default.cfg in user home directory
-        file_path = os.path.join(_paths.get_default_config_dir(), 'default.cfg')
+        file_path = os.path.join(_paths.get_default_config_dir(), '../default.cfg')
         if os.path.isfile(file_path):
             return file_path
 
         # Fall back to default.cfg in qudi core directory
-        file_path = os.path.join(_paths.get_main_dir(), 'core', 'default.cfg')
+        file_path = os.path.join(_paths.get_main_dir(), 'core', '../default.cfg')
         if os.path.isfile(file_path):
             return file_path
 
