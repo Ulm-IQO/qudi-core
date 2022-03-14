@@ -355,9 +355,9 @@ class Gaussian2D(FitModelBase):
         y_range = abs(np.max(xy[1]) - np.min(xy[1]))
 
         amplitude = np.max(data)
-        max_idx = np.argmax(data)
-        center_x = xy[0].ravel()[max_idx]
-        center_y = xy[1].ravel()[max_idx]
+        amplitude = max(data)
+        center_x = x_range / 2 + np.min(xy[0])
+        center_y = y_range / 2 + np.min(xy[1])
         sigma_x = x_range / 10
         sigma_y = y_range / 10
         theta = 0
