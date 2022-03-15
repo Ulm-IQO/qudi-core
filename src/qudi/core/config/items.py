@@ -20,134 +20,105 @@ You should have received a copy of the GNU Lesser General Public License along w
 If not, see <https://www.gnu.org/licenses/>.
 """
 
-__all__ = ['AbstractConfigurationItem', 'ConfigurationItem', 'ScalarConfigurationItem',
-           'SequenceConfigurationItem', 'MappingConfigurationItem', 'StrConfigurationItem',
-           'BoolConfigurationItem', 'NumberConfigurationItem', 'RealConfigurationItem',
-           'IntConfigurationItem', 'ListConfigurationItem', 'SetConfigurationItem',
-           'StrListConfigurationItem']
+__all__ = ['ConfigurationItem', 'ScalarConfigurationItem', 'SequenceConfigurationItem',
+           'MappingConfigurationItem', 'StrConfigurationItem', 'BoolConfigurationItem',
+           'NumberConfigurationItem', 'RealConfigurationItem', 'IntConfigurationItem',
+           'ListConfigurationItem', 'SetConfigurationItem', 'StrListConfigurationItem']
 
 import copy
 from typing import Any
-from abc import ABC, abstractmethod
+from qudi.util.helpers import is_string
 
 
-class AbstractConfigurationItem(ABC):
-    """
-    """
-    public_name = '<unbound>'
-
-    def __set_name__(self, owner, name):
-        if name.startswith('_'):
-            raise ValueError(
-                f'{self.__class__.__name__} "{name}" must not be a private/protected member.'
-            )
-        self.public_name = name
-        self.private_name = f'_{name}'
-
-    def __get__(self, instance, owner):
-        return copy.deepcopy(getattr(instance, self.private_name))
-
-    def __set__(self, instance, value):
-        self.validate(value)
-        setattr(instance, self.private_name, value)
-
-    @abstractmethod
-    def validate(self, value: Any) -> None:
-        """ Checks value to set as ConfigurationItem. Raises TypeError if invalid.
-        You must overwrite this method in specialized subclasses of AbstractConfigurationItem.
-        """
-        raise NotImplementedError
-
-
-class ConfigurationItem(AbstractConfigurationItem):
+class ConfigurationItem:
     """
     """
     _leaf_types = (int, float, complex, str, bool, type(None))
     _sequence_types = (list, tuple, set, frozenset)
     _mapping_types = (dict,)
 
-    def validate(self, value: Any) -> None:
-        """ See: qudi.core.config.AbstractConfigurationItem
+    def __init__(self, name, default=None, validator=None):
+        if not is_string(name):
+            raise TypeError('Name of configuration item must be a string')
+        self.validate = self.default_validator if validator is None else validator
+        self.validate(default)
+        self._name = str(name)
+        self._default = default
 
-        Recursive validator that goes through all items of value and checks against types defined
-        in class attributes _leaf_types, _sequence_types and _mapping_types.
+    @property
+    def name(self) -> str:
+        return self._name
+
+    @property
+    def default(self) -> Any:
+        return copy.deepcopy(self._default)
+
+    @classmethod
+    def default_validator(cls, value: Any) -> None:
+        """ Checks value to set as ConfigurationItem. Raises TypeError if invalid.
+
+        Default validator that goes recursively through all items of value and checks against
+        types defined in class attributes _leaf_types, _sequence_types and _mapping_types.
         """
-        if isinstance(value, self._leaf_types):
+        if isinstance(value, cls._leaf_types):
             return
-        if isinstance(value, self._sequence_types):
+        if isinstance(value, cls._sequence_types):
             for val in value:
-                ConfigurationItem.validate(self, val)
+                ConfigurationItem.default_validator(val)
             return
-        if isinstance(value, self._mapping_types):
+        if isinstance(value, cls._mapping_types):
             for key, val in value.items():
-                if not isinstance(key, self._leaf_types):
-                    allowed_types = '(' + ', '.join(typ.__name__ for typ in self._leaf_types) + ')'
+                if not isinstance(key, cls._leaf_types):
+                    allowed_types = ', '.join(typ.__name__ for typ in cls._leaf_types)
                     raise TypeError(
-                        f'{self.__class__.__name__} mapping "{self.public_name}" keys must be one '
-                        f'of types {allowed_types}'
+                        f'{cls.__name__} mapping keys must be one of the following types: '
+                        f'[{allowed_types}]'
                     )
-                ConfigurationItem.validate(self, val)
+                ConfigurationItem.default_validator(val)
             return
-        raise TypeError(f'{self.__class__.__name__} "{self.public_name}" encountered invalid type '
-                        f'{type(value).__name__}.')
+        raise TypeError(f'{cls.__name__} encountered invalid type: {type(value).__name__}')
 
 
 class ScalarConfigurationItem(ConfigurationItem):
     """
     """
-    _sequence_types = tuple()
-    _mapping_types = tuple()
-
-    def __init__(self, validator=None) -> None:
-        self._validator = validator
-
-    def validate(self, value: Any) -> None:
-        """ See: qudi.core.config.AbstractConfigurationItem
-        """
-        super().validate(value)
-        if self._validator is not None:
-            self._validator(value)
+    _sequence_types = ()
+    _mapping_types = ()
 
 
 class SequenceConfigurationItem(ConfigurationItem):
     """
     """
-    def __init__(self, item_validator=None) -> None:
-        self._item_validator = super().validate if item_validator is None else item_validator
 
-    def validate(self, value: Any) -> None:
-        """ See: qudi.core.config.AbstractConfigurationItem
+    @classmethod
+    def default_validator(cls, value: Any) -> None:
+        """ See: qudi.core.config.ConfigurationItem
         """
         if value is None:
             return
-        if not isinstance(value, self._sequence_types):
-            allowed_types = '(' + ', '.join(typ.__name__ for typ in self._sequence_types) + ')'
-            raise TypeError(f'{self.__class__.__name__} "{self.public_name}" must be one of types '
-                            f'{allowed_types}')
+        if not isinstance(value, cls._sequence_types):
+            allowed_types = ', '.join(typ.__name__ for typ in cls._sequence_types)
+            raise TypeError(f'{cls.__name__} value must be one of the following types: '
+                            f'[{allowed_types}]')
         for it in value:
-            self._item_validator(it)
+            super().default_validator(it)
 
 
 class MappingConfigurationItem(ConfigurationItem):
     """
     """
-    def __init__(self, item_validator=None) -> None:
-        self._item_validator = item_validator
 
-    def validate(self, value: Any) -> None:
-        """ See: qudi.core.config.AbstractConfigurationItem
+    @classmethod
+    def default_validator(cls, value: Any) -> None:
+        """ See: qudi.core.config.ConfigurationItem
         """
         if value is None:
             return
-        if not isinstance(value, self._mapping_types):
-            allowed_types = '(' + ', '.join(typ.__name__ for typ in self._mapping_types) + ')'
-            raise TypeError(f'{self.__class__.__name__} "{self.public_name}" must be one of types '
-                            f'{allowed_types}')
-        if self._item_validator is None:
-            super().validate(value)
-        else:
-            for it in value.items():
-                self._item_validator(it)
+        if not isinstance(value, cls._mapping_types):
+            allowed_types = ', '.join(typ.__name__ for typ in cls._mapping_types)
+            raise TypeError(f'{cls.__name__} value must be one of the following types: '
+                            f'[{allowed_types}]')
+        super().default_validator(value)
 
 
 class StrConfigurationItem(ScalarConfigurationItem):
