@@ -47,8 +47,6 @@ class Configuration(QtCore.QObject):
     }
     _allowed_remote_bases = {'logic', 'hardware'}  # ToDo: Should logic modules be excluded here?
 
-
-
     def __init__(self, *args, file_path=None, **kwargs):
         super().__init__(*args, **kwargs)
         assert file_path is None or file_path.endswith('.cfg'), \

@@ -29,6 +29,28 @@ from typing import List, Any, Mapping, Optional, Union
 from .items import *
 
 
+class ConfigurationSectionMeta(type):
+    """ Metaclass for ConfigurationSection types. Collects all ConfigurationItem class meta
+    attributes and makes them accessible as protected "__config_items" dict member
+    """
+    def __new__(mcs, name, bases, attributes):
+        config_items = dict()
+        for base in reversed(bases):
+            base_name = base.__name__
+            base_items = base.__dict__.get(f'_{base_name}__config_items', dict())
+            tmp = {k: v for k, v in base_items.items() if not k.startswith(f'_{base_name}__')}
+            print(list(tmp))
+            config_items.update(
+                tmp
+            )
+        config_items.update(
+            {k: v for k, v in attributes.items() if isinstance(v, ConfigurationItem)}
+        )
+        attributes[f'_{name}__config_items'] = config_items
+        cls = super().__new__(mcs, name, bases, attributes)
+        return cls
+
+
 class ConfigurationSection:
     """
     """
