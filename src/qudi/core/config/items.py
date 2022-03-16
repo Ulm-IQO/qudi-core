@@ -27,7 +27,6 @@ __all__ = ['ConfigurationItem', 'ScalarConfigurationItem', 'SequenceConfiguratio
 
 import copy
 from typing import Any
-from qudi.util.helpers import is_string
 
 
 class ConfigurationItem:
@@ -37,17 +36,9 @@ class ConfigurationItem:
     _sequence_types = (list, tuple, set, frozenset)
     _mapping_types = (dict,)
 
-    def __init__(self, name, default=None, validator=None):
-        if not is_string(name):
-            raise TypeError('Name of configuration item must be a string')
+    def __init__(self, default=None, validator=None):
         self.validate = self.default_validator if validator is None else validator
-        self.validate(default)
-        self._name = str(name)
         self._default = default
-
-    @property
-    def name(self) -> str:
-        return self._name
 
     @property
     def default(self) -> Any:
