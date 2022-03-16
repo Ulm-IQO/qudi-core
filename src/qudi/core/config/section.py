@@ -21,8 +21,10 @@ You should have received a copy of the GNU Lesser General Public License along w
 If not, see <https://www.gnu.org/licenses/>.
 """
 
-__all__ = ['ConfigurationSection']
+__all__ = ['ConfigurationSection', 'GlobalConfiguration', 'LocalModuleConfiguration',
+           'RemoteModuleConfiguration']
 
+import copy
 import re
 from typing import List, Any, Mapping, Optional, Union
 
@@ -30,95 +32,75 @@ from .items import *
 
 
 class ConfigurationSectionMeta(type):
-    """ Metaclass for ConfigurationSection types. Collects all ConfigurationItem class meta
-    attributes and makes them accessible as protected "__config_items" dict member
+    """ Metaclass for ConfigurationSection types.
+    Joins all parent and current class "_config_items" member dicts.
     """
     def __new__(mcs, name, bases, attributes):
         config_items = dict()
         for base in reversed(bases):
-            base_name = base.__name__
-            base_items = base.__dict__.get(f'_{base_name}__config_items', dict())
-            tmp = {k: v for k, v in base_items.items() if not k.startswith(f'_{base_name}__')}
-            print(list(tmp))
-            config_items.update(
-                tmp
-            )
-        config_items.update(
-            {k: v for k, v in attributes.items() if isinstance(v, ConfigurationItem)}
-        )
-        attributes[f'_{name}__config_items'] = config_items
-        cls = super().__new__(mcs, name, bases, attributes)
-        return cls
+            config_items.update(base.__dict__.get('_config_items', dict()))
+        config_items.update(attributes.get('_config_items', dict()))
+        attributes['_config_items'] = config_items
+        return super().__new__(mcs, name, bases, attributes)
 
 
-class ConfigurationSection:
+class ConfigurationSection(metaclass=ConfigurationSectionMeta):
     """
     """
+    _config_items_editable = False
+    _config_items = dict()  # All _config_items from parent classes will be automatically included
 
-    def __init__(self, **kwargs) -> None:
+    def __init__(self, configuration: Optional[Mapping[str, Any]] = None) -> None:
         super().__init__()
-        for key, value in kwargs.items():
-            try:
-                setattr(self, key, value)
-            except AttributeError:
-                pass
-
-    @classmethod
-    def is_config_item(cls, name) -> bool:
-        return isinstance(cls.__dict__.get(name.lstrip('_'), None), AbstractConfigurationItem)
-
-    @classmethod
-    def config_item_names(cls) -> List[str]:
-        return [name for name, attr in cls.__dict__.items() if
-                isinstance(attr, AbstractConfigurationItem)]
-
-    def __setattr__(self, name, value):
-        if self.is_config_item(name) or hasattr(self, name) or hasattr(self, name.lstrip('_')):
-            super().__setattr__(name, value)
-        else:
-            raise AttributeError(f'No "{self.__class__.__name__}" member with name "{name}". '
-                                 f'Can not set new "{self.__class__.__name__}" items')
-
-    def __delattr__(self, name):
-        raise AttributeError(f'Can not delete "{self.__class__.__name__}" members')
+        self._config = {name: cfg_item.default for name, cfg_item in self._config_items.items()}
+        # Create a shallow copy of the _config_items class dict in this instance if it should be
+        # editable
+        if self._config_items_editable:
+            self._config_items = self._config_items.copy()
+        if configuration is not None:
+            self.update(configuration)
 
     def __getitem__(self, key):
-        if not key.startswith('_') and self.is_config_item(key):
-            return getattr(self, key)
-        raise KeyError(f'No "{self.__class__.__name__}" item with name "{key}"')
+        return self._config[key]
 
     def __setitem__(self, key, value):
-        if not key.startswith('_') and self.is_config_item(key):
-            return setattr(self, key, value)
-        raise KeyError(f'No "{self.__class__.__name__}" item with name "{key}". '
-                       f'Can not set new "{self.__class__.__name__}" items.')
+        try:
+            validate = self._config_items[key].validate
+        except KeyError:
+            if self._config_items_editable:
+                new_item = ConfigurationItem()
+                self._config_items[key] = new_item
+                self._config[key] = new_item.default
+                validate = new_item.validate
+            else:
+                raise
+        validate(value)
+        self._config[key] = value
 
     def __delitem__(self, key):
-        raise KeyError(f'Can not delete "{self.__class__.__name__}" items')
+        if self._config_items_editable and key not in self.__class__._config_items:
+            del self._config_items[key]
+            self._config.pop(key, None)
+            return
+        raise TypeError(f'Can not delete "{self.__class__.__name__}" config items')
 
     def __len__(self):
-        return len(self.config_item_names())
+        return len(self._config)
 
     def __iter__(self):
-        return self.keys()
+        return self._config.__iter__()
 
     def keys(self):
-        for key in self.config_item_names():
-            yield key
+        return self._config.keys()
 
     def values(self):
-        for key in self.config_item_names():
-            yield getattr(self, key)
+        return self._config.values()
 
     def items(self):
-        for key in self.config_item_names():
-            yield key, getattr(self, key)
+        return self._config.items()
 
     def get(self, key, default=None):
-        try:
-            return self[key]
-        except KeyError:
-            return default
+        return self._config.get(key, default)
 
     def update(self, mapping=None, /, **kwargs) -> None:
         if mapping is None:
@@ -129,76 +111,65 @@ class ConfigurationSection:
         elif kwargs:
             mapping = mapping.copy()
             mapping.update(kwargs)
-        allowed_keys = self.config_item_names()
-        if not all(key in allowed_keys for key in mapping):
-            raise KeyError(f'Invalid "{self.__class__.__name__}" item encountered.')
         for key, value in mapping.items():
             self[key] = value
 
+    def pop(self, key, /, *args):
+        if self._config_items_editable and key not in self.__class__._config_items:
+            self._config_items.pop(key, *args)
+            return self._config.pop(key, *args)
+        raise TypeError(f'Can not delete "{self.__class__.__name__}" config items')
+
+    def copy(self):
+        return ConfigurationSection(copy.deepcopy(self._config))
+
 
 class GlobalConfiguration(ConfigurationSection):
+    """ The global configuration section of qudi
     """
-    """
-
-    startup_modules = StrListConfigurationItem()
-    remote_modules_server = MappingConfigurationItem()
-    namespace_server_port = IntConfigurationItem()
-    force_remote_calls_by_value = BoolConfigurationItem()
-    hide_manager_window = BoolConfigurationItem()
-    stylesheet = StrConfigurationItem()
-    daily_data_dirs = BoolConfigurationItem()
-    default_data_dir = StrConfigurationItem()
-    extension_paths = StrListConfigurationItem()
-
-    def __init__(self, **kwargs) -> None:
-        self.startup_modules = list()
-        self.remote_modules_server = {'address': 'localhost', 'port'   : 12345}
-        self.namespace_server_port = 18861
-        self.force_remote_calls_by_value = False
-        self.hide_manager_window = False
-        self.stylesheet = 'qdark.qss'
-        self.daily_data_dirs = True
-        self.default_data_dir = None
-        self.extension_paths = None
-        super().__init__(**kwargs)
+    _config_items_editable = True
+    _config_items = {
+        'startup_modules'            : StrListConfigurationItem(default=list()),
+        'remote_modules_server'      : MappingConfigurationItem(default={'address': 'localhost',
+                                                                         'port'   : 12345}),
+        'namespace_server_port'      : IntConfigurationItem(default=18861),
+        'force_remote_calls_by_value': BoolConfigurationItem(default=False),
+        'hide_manager_window'        : BoolConfigurationItem(default=False),
+        'stylesheet'                 : StrConfigurationItem(default='qdark.qss'),
+        'daily_data_dirs'            : BoolConfigurationItem(default=True),
+        'default_data_dir'           : StrConfigurationItem(),
+        'extension_paths'            : StrListConfigurationItem()
+    }
 
 
 class LocalModuleConfiguration(ConfigurationSection):
-    """
+    """ Configuration section of a local qudi module
     """
 
     @staticmethod
     def validate_module_class(module_class: str) -> None:
         if re.match(r'^\w+(\.\w+)*$', module_class) is None:
-            raise ValueError('qudi module config "module_class" must be non-empty str containing a '
+            raise ValueError('qudi module config "module.Class" must be non-empty str containing a '
                              'valid Python "module.Class"-like path, e.g. '
                              '"my_module.my_submodule.MyClass"')
 
-    module_class = StrConfigurationItem(validator=validate_module_class)
-    allow_remote = BoolConfigurationItem()
-    connect = MappingConfigurationItem()
-    options = MappingConfigurationItem()
-
-    def __init__(self, **kwargs) -> None:
-        self.module_class = None
-        self.allow_remote = False
-        self.connect = None
-        self.options = None
-        super().__init__(**kwargs)
+    _config_items = {
+        'module.Class': StrConfigurationItem(validator=validate_module_class),
+        'allow_remote': BoolConfigurationItem(default=False),
+        'connect'     : MappingConfigurationItem(),
+        'options'     : MappingConfigurationItem()
+    }
 
 
 class RemoteModuleConfiguration(ConfigurationSection):
+    """ Configuration section of a remote qudi module
     """
-    """
-    remote_url = StrConfigurationItem()
-    keyfile = StrConfigurationItem()
-    certfile = StrConfigurationItem()
 
-    def __init__(self, **kwargs) -> None:
-        self.remote_url = None
-        self.keyfile = None
-        self.certfile = None
-        super().__init__(**kwargs)
+    _config_items = {
+        'remote_url': StrConfigurationItem(),
+        'keyfile'   : StrConfigurationItem(),
+        'certfile'  : StrConfigurationItem(),
+    }
 
 
 class ModulesConfiguration:
