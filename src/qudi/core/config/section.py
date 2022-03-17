@@ -47,7 +47,7 @@ class ConfigurationSectionMeta(type):
 class ConfigurationSection(metaclass=ConfigurationSectionMeta):
     """
     """
-    _config_items_editable = False
+    _config_items_editable = False  # ADDITIONAL items can be added and deleted again dynamically
     _config_items = dict()  # All _config_items from parent classes will be automatically included
 
     def __init__(self, configuration: Optional[Mapping[str, Any]] = None) -> None:
@@ -175,47 +175,88 @@ class RemoteModuleConfiguration(ConfigurationSection):
 class ModulesConfiguration:
     """
     """
-    _allow_remote = True
-    _module_base = ''
 
-    def __init__(self, config: Optional[Mapping[str, Mapping]] = None) -> None:
+    def __init__(self, configuration: Optional[Mapping[str, Mapping[str, Any]]] = None) -> None:
         self._local_modules = dict()
         self._remote_modules = dict()
-        if config is not None:
-            for key, module_dict in config.items():
-                if 'remote_url' in module_dict and not 'module_class' in module_dict:
-                    self[key] = RemoteModuleConfiguration(module_dict)
+        if configuration is not None:
+            for name, module_cfg in configuration.items():
+                if 'remote_url' in module_cfg:
+                    self.add_remote_module(name, module_cfg)
                 else:
-                    self[key] = LocalModuleConfiguration(module_dict)
+                    self.add_local_module(name, module_cfg)
 
     def add_local_module(self,
                          name: str,
-                         module_class: str,
-                         allow_remote: Optional[bool] = None,
-                         connect: Optional[Mapping[str, str]] = None,
-                         options: Optional[Mapping[str, Any]] = None) -> None:
-        self[name] = LocalModuleConfiguration(module_class=module_class,
-                                              allow_remote=allow_remote,
-                                              connect=connect,
-                                              options=options)
+                         module_config: Optional[Mapping[str, Any]] = None) -> None:
+        self.validate_new_module_name(name)
+        self._local_modules[name] = LocalModuleConfiguration(configuration=module_config)
 
-    def __getitem__(self, key: str) -> Union[LocalModuleConfiguration, RemoteModuleConfiguration]:
-        module_config = self._local_modules.get(key, None)
-        if module_config is None:
-            module_config = self._remote_modules.get(key, None)
-        if module_config is None:
-            raise KeyError(f'Local qudi {self._module_base} module with name "{name}" already '
-                             f'configured.')
+    def add_remote_module(self,
+                          name: str,
+                          module_config: Optional[Mapping[str, Any]] = None) -> None:
+        self.validate_new_module_name(name)
+        self._remote_modules[name] = RemoteModuleConfiguration(configuration=module_config)
 
-    def validate_name(self, name: str) -> None:
+    def remove_module(self, name: str) -> None:
+        del self[name]
+
+    def validate_new_module_name(self, name: str) -> None:
         if re.match(r'^\w+(\s\w+)*$', name) is None:
             raise ValueError('qudi module config name must be non-empty str containing only '
                              'unicode word characters and spaces.')
         if name in self._local_modules:
-            raise ValueError(f'Local qudi {self._module_base} module with name "{name}" already '
-                             f'configured.')
+            raise ValueError(f'Local qudi module with name "{name}" already configured in this '
+                             f'{self.__class__.__name__} group')
         if name in self._remote_modules:
-            raise ValueError(f'Remote qudi {self._module_base} module with name "{name}" already '
-                             f'configured.')
+            raise ValueError(f'Remote qudi module with name "{name}" already configured in this '
+                             f'{self.__class__.__name__} group')
 
+    def __getitem__(self, key: str) -> Union[LocalModuleConfiguration, RemoteModuleConfiguration]:
+        try:
+            return self._local_modules[key]
+        except KeyError:
+            try:
+                return self._remote_modules[key]
+            except KeyError:
+                pass
+        raise KeyError(
+            f'No qudi module with name "{key}" configured in this {self.__class__.__name__} group'
+        )
 
+    def __setitem__(self, key, value) -> None:
+        try:
+            module_config = self[key]
+        except KeyError:
+            pass
+        else:
+            module_config.update(value)
+            return
+        raise KeyError(f'No qudi module with name "{key}" configured in this '
+                       f'{self.__class__.__name__} group.\n'
+                       f'Use add_local_module/add_remote_module to add new modules to this group.')
+
+    def __delitem__(self, key) -> None:
+        try:
+            del self._local_modules[key]
+            return
+        except KeyError:
+            try:
+                del self._remote_modules[key]
+                return
+            except KeyError:
+                pass
+        raise KeyError(f'No qudi module with name "{key}" configured in this '
+                       f'{self.__class__.__name__} group')
+
+    def get(self, key, default=None):
+        try:
+            return self[key]
+        except KeyError:
+            return default
+
+    def pop(self, key, /, *args):
+        if self._config_items_editable and key not in self.__class__._config_items:
+            self._config_items.pop(key, *args)
+            return self._config.pop(key, *args)
+        raise TypeError(f'Can not delete "{self.__class__.__name__}" config items')
