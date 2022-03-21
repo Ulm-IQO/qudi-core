@@ -45,14 +45,14 @@ def main():
     else:
         myenv['QUDI_PARENT_PID'] = str(os.getpid())
 
+    # Configure qudi if first time startup
+    if not is_configured():
+        subprocess.run(['qudi-configure'], text=True, check=True)
+
     argv = [sys.executable, '-m', 'core'] + sys.argv[1:]
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
     while True:
-        # Configure qudi if first time startup
-        if not is_configured():
-            subprocess.run(['qudi-configure'], text=True, check=True)
-
         process = subprocess.Popen(argv,
                                    close_fds=False,
                                    env=myenv,
