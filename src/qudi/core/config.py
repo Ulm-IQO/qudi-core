@@ -553,9 +553,7 @@ class Configuration(QtCore.QObject):
             return path
 
         # relative path? Try relative to userdata dir, user home dir and relative to main dir
-        search_dirs = (_paths.get_userdata_dir(),
-                       _paths.get_home_dir(),
-                       _paths.get_main_dir())
+        search_dirs = [_paths.get_userdata_dir(), _paths.get_home_dir()]
         for search_dir in search_dirs:
             new_path = os.path.abspath(os.path.join(search_dir, path))
             if os.path.isdir(new_path):

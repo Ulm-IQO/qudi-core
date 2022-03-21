@@ -28,7 +28,7 @@ from qtconsole.manager import QtKernelManager
 
 from qudi.core.statusvariable import StatusVar
 from qudi.core.threadmanager import ThreadManager
-from qudi.util.paths import get_main_dir, get_default_config_dir
+from qudi.util.paths import get_qudi_core_dir, get_default_config_dir
 from qudi.core.gui.main_gui.errordialog import ErrorDialog
 from qudi.core.gui.main_gui.mainwindow import QudiMainWindow
 from qudi.core.module import GuiBase
@@ -388,7 +388,7 @@ class QudiMainGui(GuiBase):
         # Try to get repository information if qudi has been checked out as git repo
         if Repo is not None:
             try:
-                repo = Repo(os.path.dirname(get_main_dir()))
+                repo = Repo(os.path.dirname(get_qudi_core_dir()))
                 branch = repo.active_branch
                 rev = str(repo.head.commit)
                 return rev, str(branch)

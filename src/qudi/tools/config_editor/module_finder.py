@@ -10,7 +10,7 @@ import sys
 import importlib
 import inspect
 import logging
-from qudi.util.paths import get_main_dir
+from qudi.util.paths import get_qudi_core_dir
 from qudi.core.module import Base, LogicBase, GuiBase
 
 
@@ -36,7 +36,7 @@ class ModuleFinder:
             except ValueError:
                 pass
         try:
-            insert_index = sys.path.index(get_main_dir())
+            insert_index = sys.path.index(get_qudi_core_dir())
         except ValueError:
             insert_index = 0
         for path in reversed(module_search_paths):
@@ -95,7 +95,7 @@ class QudiModules:
 
     def __init__(self, additional_search_paths=None):
         # Import all modules available in qudi installation directory and additional search paths
-        module_search_paths = [get_main_dir()]
+        module_search_paths = [get_qudi_core_dir()]
         if additional_search_paths:
             module_search_paths.extend(module_search_paths)
 

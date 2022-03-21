@@ -20,7 +20,7 @@ ToDo: Throw errors around for non-existent directories
 """
 
 __all__ = ['get_appdata_dir', 'get_default_config_dir', 'get_default_log_dir',
-           'get_default_data_dir', 'get_daily_directory', 'get_home_dir', 'get_main_dir',
+           'get_default_data_dir', 'get_daily_directory', 'get_home_dir', 'get_qudi_core_dir',
            'get_userdata_dir', 'get_resources_dir', 'get_module_app_data_path']
 
 import datetime
@@ -29,10 +29,10 @@ import sys
 from typing import Optional
 
 
-def get_main_dir() -> str:
-    """ Returns the absolute path to the directory of the main software.
+def get_qudi_core_dir() -> str:
+    """ Returns the absolute path to the source directory of the qudi-core package.
 
-    @return string: path to the main tree of the software
+    @return str: path to qudi-core root dir
     """
     import qudi.core as core
     return os.path.abspath(os.path.join(os.path.dirname(core.__file__), '..'))
