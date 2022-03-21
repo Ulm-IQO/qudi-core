@@ -19,7 +19,8 @@ You should have received a copy of the GNU Lesser General Public License along w
 If not, see <https://www.gnu.org/licenses/>.
 """
 
-__all__ = ['StatusVar', 'ConfigOption', 'Connector', 'Base', 'LogicBase', 'GuiBase', 'get_logger']
+__all__ = ['StatusVar', 'ConfigOption', 'Connector', 'Base', 'LogicBase', 'GuiBase', 'get_logger',
+           '__version__']
 
 from importlib import metadata
 __version__ = metadata.version('qudi-core')

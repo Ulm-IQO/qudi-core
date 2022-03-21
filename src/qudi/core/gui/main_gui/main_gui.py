@@ -388,7 +388,7 @@ class QudiMainGui(GuiBase):
         # Try to get repository information if qudi has been checked out as git repo
         if Repo is not None:
             try:
-                repo = Repo(os.path.dirname(get_qudi_core_dir()))
+                repo = Repo(os.path.dirname(os.path.dirname(get_qudi_core_dir())))
                 branch = repo.active_branch
                 rev = str(repo.head.commit)
                 return rev, str(branch)
