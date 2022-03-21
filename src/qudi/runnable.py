@@ -23,6 +23,7 @@ If not, see <https://www.gnu.org/licenses/>.
 import subprocess
 import sys
 import os
+from qudi.configure import is_configured
 
 
 def main():
@@ -48,6 +49,10 @@ def main():
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
     while True:
+        # Configure qudi if first time startup
+        if not is_configured():
+            subprocess.run(['qudi-configure'], text=True, check=True)
+
         process = subprocess.Popen(argv,
                                    close_fds=False,
                                    env=myenv,

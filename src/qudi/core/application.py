@@ -26,7 +26,6 @@ import weakref
 import inspect
 import traceback
 import faulthandler
-from importlib import import_module
 from logging import DEBUG, INFO
 from PySide2 import QtCore, QtWidgets
 
@@ -266,18 +265,6 @@ class Qudi(QtCore.QObject):
             self.log.info(f'Loading startup module: {module}')
             self.module_manager.activate_module(module)
 
-    def _initialize_resources(self):
-        init_resources()
-        # import qudi.resources as _resources_ns
-        # for mod_finder in iter_modules_recursive(_resources_ns.__path__,
-        #                                          _resources_ns.__name__ + '.'):
-        #     try:
-        #         import_module(mod_finder.name)
-        #     except ImportError:
-        #         self.log.exception(
-        #             f'Exception while initializing qudi.resources sub-module "{mod_finder.name}":'
-        #         )
-
     def run(self):
         """
         """
@@ -317,7 +304,7 @@ class Qudi(QtCore.QObject):
             self.watchdog = AppWatchdog(self.interrupt_quit)
 
             # initialize Qt resources
-            self._initialize_resources()
+            init_resources()
 
             # Start module servers
             if self.remote_modules_server is not None:

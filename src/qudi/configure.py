@@ -24,15 +24,19 @@ You should have received a copy of the GNU Lesser General Public License along w
 If not, see <https://www.gnu.org/licenses/>.
 """
 
-__all__ = ['install', 'uninstall', 'main']
+__all__ = ['install', 'uninstall', 'main', 'is_configured']
 
 import os
 import argparse
 from shutil import copy2
 from qudi.tools.build_resources import build_resources
 from qudi.util.cleanup import clear_appdata, clear_user_data, clear_resources_appdata
-from qudi.util.paths import get_appdata_dir
+from qudi.util.paths import get_appdata_dir, get_qudi_core_dir
 from qudi.core.qudikernel import install_kernel, uninstall_kernel
+
+
+def is_configured() -> bool:
+    return os.path.isfile(os.path.join(get_qudi_core_dir(), '.configured'))
 
 
 def install() -> None:
@@ -69,12 +73,20 @@ def install() -> None:
     # Install qudi IPython kernel
     install_kernel()
 
+    # Flag first time setup
+    with open(os.path.join(get_qudi_core_dir(), '.configured'), 'w'):
+        pass
+
 
 def uninstall() -> None:
     uninstall_kernel()
     print(f'> Deleting qudi AppData ...')
     clear_appdata()
     print(f'> qudi AppData deleted')
+    try:
+        os.remove(os.path.join(get_qudi_core_dir(), '.configured'))
+    except OSError:
+        pass
 
 
 def main() -> None:
