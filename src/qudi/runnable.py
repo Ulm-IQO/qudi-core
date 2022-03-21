@@ -47,6 +47,7 @@ def main():
 
     # Configure qudi if first time startup
     if not is_configured():
+        print(f'> Setting up qudi for first time use...')
         subprocess.run(['qudi-configure'], text=True, check=True)
 
     argv = [sys.executable, '-m', 'core'] + sys.argv[1:]

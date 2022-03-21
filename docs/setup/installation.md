@@ -9,9 +9,9 @@ title: qudi-core
 
 # Installation
 
-## Step 1: Create a Python 3.8 environment 
+## Step 1: Create a Python 3.9 (or 3.8) environment 
 In order to install qudi as a python package and application, we strongly recommend creating an 
-isolated Python 3.8(!) environment. Qudi needs very specific package dependencies that 
+isolated Python 3.9.x (or 3.8.x) environment. Qudi needs very specific package dependencies that 
 can otherwise mess up your system Python installation.
  
 Another advantage of installing qudi in its own Python environment is, that you can easily 
@@ -38,29 +38,30 @@ environment name.
 Using the builtin `venv` module from the Python standard library we can create a Python environment 
 in the current directory.  
 The entire environment will be placed in a sub-folder with the corresponding name and can be 
-tracelessly uninstalled by simply deleting this folder again.
+uninstalled without a trace by simply deleting this folder again.
 
 While this is to our knowledge the most robust and preferred way of setting up a Python environment 
 for qudi, it has a small disadvantage.
 You can not change the Python version for the environment, meaning you can only set up an 
 environment with the same Python version you created the environment with.  
-So make sure the Python interpreter you use for calling the following commands has version `3.8.x`.
-If you are missing Python 3.8 on your system, you can download and install the right version from 
+So make sure the Python interpreter you use for calling the following commands has version `3.9.x` 
+(or `3.8.x`). 
+If you are missing Python 3.9 on your system, you can download and install the right version from 
 [https://www.python.org/](https://www.python.org/).
 
 You can find OS specific commands to create the environment below.  
-If your Python 3.8 interpreter is not found on your `PATH` (e.g. if you have multiple versions of 
+If your Python 3.9 interpreter is not found on your `PATH` (e.g. if you have multiple versions of 
 Python installed), you need to replace all `python`/`python3` calls with the full path to the 
-correct interpreter. On Windows you may also use the `py` launcher instead.
+correct interpreter. On Windows you may also use the `py` launcher instead (if installed).
 
 <details>
   <summary> <b>Windows</b> users click here to expand</summary>
 
-  Check first if you are using Python version 3.8:
+  Check first if you are using Python version 3.9:
 
   ```console
   C:\> python -V
-  Python 3.8.7
+  Python 3.9.10
   ```
 
   Change to a desired working directory to create the environment in (here: `C:\Software\qudi\`):
@@ -79,11 +80,11 @@ correct interpreter. On Windows you may also use the `py` launcher instead.
 <details>
   <summary> <b>Unix</b> users click here to expand</summary>
 
-  Check first if you are using Python version 3.8:
+  Check first if you are using Python version 3.9:
 
   ```bash
   foo@bar:~$ python3 -V
-  Python 3.8.7
+  Python 3.9.10
   ```
 
   Change to a desired working directory to create the environment in (here: `/opt/qudi`):
@@ -112,7 +113,7 @@ correct interpreter. On Windows you may also use the `py` launcher instead.
 > [variant 1](#variant-1-python-standard-library).
 
 If you are using Anaconda or Miniconda Python distributions, this is probably the way to go for you.
-This method uses `conda` to create the Python 3.8 environment.
+This method uses `conda` to create the Python 3.9 environment.
 
 You can find OS specific commands to create the environment below.
 
@@ -123,7 +124,7 @@ You can find OS specific commands to create the environment below.
   in an Anaconda/Miniconda specific default directory.
 
   ```console
-  C:\> conda create --name qudi-env python=3.8
+  C:\> conda create --name qudi-env python=3.9
   ```
 
   ---
@@ -138,7 +139,7 @@ You can find OS specific commands to create the environment below.
   in an Anaconda/Miniconda specific default directory.
 
   ```bash
-  foo@bar:~$ conda create --name qudi-env python=3.8
+  foo@bar:~$ conda create --name qudi-env python=3.9
   ```
 
   ---
@@ -273,7 +274,8 @@ The latter option enables you to contribute code and/or to pull the latest devel
 version from all branches, but it requires you to install [`git`](https://git-scm.com/) on your 
 system.
 
-NOTE: The exact directory location on your local machine does not matter as long as you keep it there and do not copy it around later on.
+NOTE: The exact directory location on your local machine does not matter as long as you keep it 
+there and do not copy it around later on.
 
 Once you have a copy of the source code on your local machine, you can change into this directory 
 (top directory containing `setup.py`) and install `qudi-core` using `pip` with the development flag 
@@ -287,21 +289,18 @@ python -m pip install -e .
 All dependencies will be installed by `pip` and it will register several entry points that are 
 executables within the Python environment:
 
-| command                 | effect                                                        |
-| ----------------------- | ------------------------------------------------------------- |
-| `qudi`                  | Starts qudi                                                   |
-| `qudi-config-editor`    | Starts a standalone graphical configuration editor for qudi   |
-| `qudi-install-kernel`   | Installs and registers the qudi IPython kernel in your system |
-| `qudi-uninstall-kernel` | Uninstalls the qudi IPython kernel from your system           |
+| command                 | effect                                                                |
+|-------------------------|-----------------------------------------------------------------------|
+| `qudi`                  | Starts qudi                                                           |
+| `qudi-config-editor`    | Starts a standalone graphical configuration editor for qudi           |
+| `qudi-install-kernel`   | Installs and registers the qudi IPython kernel in your system         |
+| `qudi-uninstall-kernel` | Uninstalls the qudi IPython kernel from your system                   |
+| `qudi-configure [-u]`   | (Un-)Installs qudi AppData and other setup steps including the kernel |
 
 > **⚠ WARNING:**
 > 
-> Installing qudi via pip will NOT automatically register the qudi IPython kernel in the system.
-> You will lack the interactive IPython console in the qudi main GUI as well as any jupyter notebook
-> support.
-> 
-> While you can use qudi without this IPython integration, we strongly recommend to call 
-> `qudi-install-kernel` after installing qudi via pip.
+> When running qudi for the first time, `qudi-configure` will be automatically run and install the 
+> qudi IPython kernel as well as some AppData setup. 
 > 
 > This has an effect on your entire system and not just the Python environment. 
 > It will overwrite any other kernels with name "qudi" registered for that user.
@@ -309,9 +308,9 @@ executables within the Python environment:
 > (in different environments). In that case you should call `qudi-install-kernel` everytime you 
 > switch qudi environments.
 > 
-> We are currently working on a full deployment of qudi including configuration of the installed 
-> application and not just a plain Python package installation to get around this minor 
-> inconvenience and some other usability issues.
+> If you change any source code related to qudi module network services, the IPython kernel or 
+> artwork (icons, stylesheets, etc.) or if you install more qudi addon packages, you should execute 
+> `qudi-configure` again manually to incorporate these changes.
 
 ## Step 4: Install measurement module addons
 Unless you have a robust deployment of measurement modules at hand that do not need to be altered 
@@ -322,8 +321,14 @@ If your measurement module package deployment is following the
 step.
 
 If you are into quantum optics measurements with colorcenters in diamond or similar semiconductors, 
-you may want to consider using the [measurement modules package `qudi-iqo-modules`](https://github.com/Ulm-IQO/qudi-iqo-modules) provided by the Institute for 
-Quantum Optics ([Ulm-IQO](https://github.com/Ulm-IQO/)) under the LGPL v3 license.
+you may want to consider using the 
+[measurement modules package `qudi-iqo-modules`](https://github.com/Ulm-IQO/qudi-iqo-modules) 
+provided by the Institute for Quantum Optics ([Ulm-IQO](https://github.com/Ulm-IQO/)) under the 
+LGPL v3 license.
+
+> **⚠ WARNING:**
+> 
+> After installing addon packages, you should execute `qudi-configure` again.
 
 ---
 
