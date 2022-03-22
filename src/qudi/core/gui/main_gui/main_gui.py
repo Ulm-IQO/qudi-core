@@ -78,7 +78,7 @@ class QudiMainGui(GuiBase):
             self.mw.about_qudi_dialog.version_label.setText('version {0}'.format(version))
             self.mw.version_label.setText(
                 '<a style=\"color: cyan;\"> version {0} </a>  configured from {1}'
-                ''.format(version, self._qudi_main.configuration.config_file))
+                ''.format(version, self._qudi_main.configuration.file_path))
         else:
             self.mw.about_qudi_dialog.version_label.setText(
                 '<a href=\"https://github.com/Ulm-IQO/qudi/commit/{0}\" style=\"color: cyan;\"> {0}'
@@ -86,7 +86,7 @@ class QudiMainGui(GuiBase):
             self.mw.version_label.setText(
                 '<a href=\"https://github.com/Ulm-IQO/qudi/commit/{0}\" style=\"color: cyan;\"> {0}'
                 ' </a>, on branch {1}, configured from {2}'
-                ''.format(version[0], version[1], self._qudi_main.configuration.config_file))
+                ''.format(version[0], version[1], self._qudi_main.configuration.file_path))
 
         self._connect_signals()
 
@@ -331,7 +331,7 @@ class QudiMainGui(GuiBase):
         if config is None:
             config = self._qudi_main.configuration
         self.mw.config_widget.clear()
-        self.fill_tree_item(self.mw.config_widget.invisibleRootItem(), config.config_dict)
+        self.fill_tree_item(self.mw.config_widget.invisibleRootItem(), config.config)
 
     def fill_tree_item(self, item, value):
         """

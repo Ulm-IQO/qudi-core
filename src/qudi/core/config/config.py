@@ -34,17 +34,19 @@ from .file_handler import FileHandlerMixin
 from ._modules import ModuleConfigMixin
 
 
-class Configuration(FileHandlerMixin, ModuleConfigMixin, AbstractMutableMapping):  #QtCore.QObject):
+class _ConfigurationSignaller(QtCore.QObject):
+    sigConfigChanged = QtCore.Signal(object)
+
+
+class Configuration(FileHandlerMixin, ModuleConfigMixin, AbstractMutableMapping, ):
     """
     """
 
-    # sigConfigChanged = QtCore.Signal(object)
-
-    def __init__(self,
-                 configuration: Optional[MutableMapping[str, Any]] = None,
-                 parent: Optional[QtCore.QObject] = None):
-        # super().__init__(parent=parent)
+    def __init__(self, configuration: Optional[MutableMapping[str, Any]] = None):
         super().__init__()
+
+        self._signaller = _ConfigurationSignaller()
+        self.sigConfigChanged = self._signaller.sigConfigChanged
 
         self._file_path = None
 
@@ -62,7 +64,7 @@ class Configuration(FileHandlerMixin, ModuleConfigMixin, AbstractMutableMapping)
         Raises qudi.core.config.validator.ValidationError if the validation fails.
         """
         validate_config(self._config)
-        # self.sigConfigChanged.emit(self)
+        self.sigConfigChanged.emit(self)
 
     @property
     def config(self) -> MappingProxy:
@@ -123,7 +125,7 @@ class Configuration(FileHandlerMixin, ModuleConfigMixin, AbstractMutableMapping)
 
         self._file_path = file_path
         self._config = config
-        # self.sigConfigChanged.emit(self)
+        self.sigConfigChanged.emit(self)
 
     def dump_config(self, file_path=None):
         file_path = self._file_path if file_path is None else file_path

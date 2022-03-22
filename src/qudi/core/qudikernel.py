@@ -32,7 +32,7 @@ import tempfile
 import warnings
 from ipykernel.ipkernel import IPythonKernel
 
-from qudi.core.config import Configuration
+from qudi.core.config import Configuration, ValidationError
 
 
 def install_kernel():
@@ -122,7 +122,7 @@ class QudiKernelClient:
         config = Configuration()
         try:
             config.load_config()
-        except ValueError:
+        except (ValueError, ValidationError):
             pass
         self.connection = rpyc.connect(host='localhost',
                                        config={'allow_all_attrs': True,
