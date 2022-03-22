@@ -25,7 +25,9 @@ __all__ = ['ModuleConfigMixin']
 
 import copy
 from numbers import Number
-from typing import Mapping, Optional, Union, Sequence, Set, List, Dict, Any
+from typing import Mapping, Optional, Union, Sequence, Set, List
+
+from .proxy import MappingProxy
 
 
 class ModuleConfigMixin:
@@ -95,10 +97,11 @@ class ModuleConfigMixin:
         return name in self._config['gui'] or name in self._config['logic'] or name in self._config[
             'hardware']
 
-    def get_module_config(self, name: str) -> Dict[str, Any]:
+    def module_config(self, name: str) -> MappingProxy:
+        config_proxy = self.config
         for base in ['gui', 'logic', 'hardware']:
             try:
-                return copy.deepcopy(self._config[base][name])
+                return config_proxy[base][name]
             except KeyError:
                 pass
         raise KeyError(f'No module with name "{name}" configured')

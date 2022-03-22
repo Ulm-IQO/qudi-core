@@ -240,13 +240,11 @@ class Qudi(QtCore.QObject):
         # Configure qudi modules
         for base in ['hardware', 'logic', 'gui']:
             # Create ManagedModule instance by adding each module to ModuleManager
-            for module_name in self.configuration[base]:
+            for module_name, module_cfg in self.configuration[base].items():
                 try:
-                    self.module_manager.add_module(
-                        name=module_name,
-                        base=base,
-                        configuration=self.configuration.get_module_config(module_name)
-                    )
+                    self.module_manager.add_module(name=module_name,
+                                                   base=base,
+                                                   configuration=module_cfg)
                 except:
                     self.module_manager.remove_module(module_name, ignore_missing=True)
                     self.log.exception(f'Unable to create ManagedModule instance for {base} '

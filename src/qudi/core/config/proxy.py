@@ -22,7 +22,8 @@ If not, see <https://www.gnu.org/licenses/>.
 
 __all__ = ['MappingProxy', 'SequenceProxy', 'SetProxy']
 
-from typing import Any, Callable
+from copy import deepcopy
+from typing import Any, Callable, Dict
 from collections.abc import MutableMapping, MutableSequence, MutableSet
 
 from .validator import ValidationError
@@ -75,6 +76,9 @@ class MappingProxy(MutableMapping):
 
     def __len__(self) -> int:
         return len(self._mapping)
+
+    def __deepcopy__(self, memo={}):
+        return deepcopy(self._mapping, memo=memo)
 
 
 class SequenceProxy(MutableSequence):
@@ -130,6 +134,9 @@ class SequenceProxy(MutableSequence):
             del self._sequence[index]
             raise
 
+    def __deepcopy__(self, memo={}):
+        return deepcopy(self._sequence, memo=memo)
+
 
 class SetProxy(MutableSet):
     """ Proxy object for set type data access with change validation.
@@ -173,3 +180,6 @@ class SetProxy(MutableSet):
         except ValidationError:
             self._set.add(value)
             raise
+
+    def __deepcopy__(self, memo={}):
+        return deepcopy(self._set, memo=memo)
