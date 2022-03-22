@@ -34,8 +34,7 @@ from qudi.core.logger import get_logger, set_log_level
 from qudi.util.paths import get_main_dir, get_default_log_dir
 from qudi.util.mutex import Mutex
 from qudi.util.colordefs import QudiMatplotlibStyle
-from qudi.core.config import Configuration
-from qudi.core.config.validator import ValidationError
+from qudi.core.config import Configuration, ValidationError
 from qudi.core.watchdog import AppWatchdog
 from qudi.core.modulemanager import ModuleManager
 from qudi.core.threadmanager import ThreadManager
@@ -114,7 +113,7 @@ class Qudi(QtCore.QObject):
         sys.excepthook = self._qudi_excepthook
 
         # Load configuration from disc if possible
-        self.configuration = Configuration(parent=self)
+        self.configuration = Configuration()
         try:
             self.configuration.load_config(config_file, set_default=True)
         except (ValueError, ValidationError):

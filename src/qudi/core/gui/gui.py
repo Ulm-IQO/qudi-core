@@ -125,6 +125,7 @@ class Gui(QtCore.QObject):
         )
 
     def __init__(self, qudi_instance, stylesheet_path=None, theme=None, use_opengl=False):
+        stylesheet_path = os.path.join(get_artwork_dir(), 'styles', stylesheet_path)
         if stylesheet_path is not None and not os.path.isfile(stylesheet_path):
             raise FileNotFoundError('stylesheet_path "{0}" not found.'.format(stylesheet_path))
         if theme is None:

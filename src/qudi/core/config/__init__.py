@@ -19,3 +19,4 @@ If not, see <https://www.gnu.org/licenses/>.
 """
 
 from .config import Configuration
+from .validator import ValidationError
