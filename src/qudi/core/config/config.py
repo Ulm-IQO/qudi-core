@@ -27,6 +27,7 @@ import copy
 from PySide2 import QtCore
 from typing import Any, Optional, MutableMapping, Union
 from collections.abc import MutableMapping as AbstractMutableMapping
+from qudi.core.meta import ABCQObjectMeta
 
 from .proxy import MappingProxy
 from .validator import validate_config
@@ -34,19 +35,13 @@ from .file_handler import FileHandlerMixin
 from ._modules import ModuleConfigMixin
 
 
-class _ConfigurationSignaller(QtCore.QObject):
+class Configuration(FileHandlerMixin, ModuleConfigMixin, AbstractMutableMapping, QtCore.QObject, metaclass=ABCQObjectMeta):
+    """
+    """
     sigConfigChanged = QtCore.Signal(object)
-
-
-class Configuration(FileHandlerMixin, ModuleConfigMixin, AbstractMutableMapping, ):
-    """
-    """
 
     def __init__(self, configuration: Optional[MutableMapping[str, Any]] = None):
         super().__init__()
-
-        self._signaller = _ConfigurationSignaller()
-        self.sigConfigChanged = self._signaller.sigConfigChanged
 
         self._file_path = None
 
@@ -73,6 +68,12 @@ class Configuration(FileHandlerMixin, ModuleConfigMixin, AbstractMutableMapping,
     @property
     def file_path(self):
         return self._file_path
+
+    def __repr__(self) -> str:
+        return repr(self._config)
+
+    def __str__(self) -> str:
+        return str(self._config)
 
     def __getitem__(self, key: str) -> Any:
         try:

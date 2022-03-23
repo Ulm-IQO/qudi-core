@@ -80,6 +80,12 @@ class MappingProxy(MutableMapping):
     def __deepcopy__(self, memo={}):
         return deepcopy(self._mapping, memo=memo)
 
+    def __repr__(self) -> str:
+        return repr(self._mapping)
+
+    def __str__(self) -> str:
+        return str(self._mapping)
+
 
 class SequenceProxy(MutableSequence):
     """ Proxy object for sequence type data access with change validation.
@@ -137,6 +143,12 @@ class SequenceProxy(MutableSequence):
     def __deepcopy__(self, memo={}):
         return deepcopy(self._sequence, memo=memo)
 
+    def __repr__(self) -> str:
+        return repr(self._sequence)
+
+    def __str__(self) -> str:
+        return str(self._sequence)
+
 
 class SetProxy(MutableSet):
     """ Proxy object for set type data access with change validation.
@@ -183,3 +195,9 @@ class SetProxy(MutableSet):
 
     def __deepcopy__(self, memo={}):
         return deepcopy(self._set, memo=memo)
+
+    def __repr__(self) -> str:
+        return repr(self._set)
+
+    def __str__(self) -> str:
+        return str(self._set)
