@@ -69,7 +69,7 @@ qudi_cfg_schema = {
                 },
                 'force_remote_calls_by_value': {
                     'type': 'boolean',
-                    'default': False
+                    'default': True
                 },
                 'hide_manager_window': {
                     'type': 'boolean',
