@@ -26,6 +26,7 @@ from qudi.core.gui.main_gui.remotewidget import RemoteWidget
 from qudi.core.gui.main_gui.aboutqudidialog import AboutQudiDialog
 from qudi.core.gui.main_gui.settingsdialog import SettingsDialog
 from qudi.core.gui.main_gui.modulewidget import ModuleWidget
+from qudi.core.gui.main_gui.configwidget import ConfigQTreeWidget
 from qudi.util.paths import get_artwork_dir
 from qudi.util.widgets.advanced_dockwidget import AdvancedDockWidget
 from qtconsole.rich_jupyter_widget import RichJupyterWidget
@@ -178,7 +179,7 @@ class QudiMainWindow(QtWidgets.QMainWindow):
         self.settings_dialog = SettingsDialog()
 
         # Create dockwidgets
-        self.config_widget = QtWidgets.QTreeWidget()
+        self.config_widget = ConfigQTreeWidget()
         self.config_dockwidget = AdvancedDockWidget('Configuration')
         self.config_dockwidget.setWidget(self.config_widget)
         self.config_dockwidget.setAllowedAreas(

@@ -25,6 +25,7 @@ import subprocess
 import jupyter_client.kernelspec
 from PySide2 import QtCore, QtWidgets
 from qtconsole.manager import QtKernelManager
+from collections.abc import Mapping, Sequence, Set
 
 from qudi.core.statusvariable import StatusVar
 from qudi.core.threadmanager import ThreadManager
@@ -330,40 +331,7 @@ class QudiMainGui(GuiBase):
         """
         if config is None:
             config = self._qudi_main.configuration
-        self.mw.config_widget.clear()
-        self.fill_tree_item(self.mw.config_widget.invisibleRootItem(), config.config)
-
-    def fill_tree_item(self, item, value):
-        """
-        Recursively fill a QTreeWidgeItem with the contents from a dictionary.
-
-        @param QTreeWidgetItem item: the widget item to fill
-        @param (dict, list, etc) value: value to fill in
-        """
-        item.setExpanded(True)
-        if isinstance(value, dict):
-            for key in value:
-                child = QtWidgets.QTreeWidgetItem()
-                child.setText(0, key)
-                item.addChild(child)
-                self.fill_tree_item(child, value[key])
-        elif isinstance(value, list):
-            for val in value:
-                child = QtWidgets.QTreeWidgetItem()
-                item.addChild(child)
-                if isinstance(val, dict):
-                    child.setText(0, '[dict]')
-                    self.fill_tree_item(child, val)
-                elif isinstance(val, list):
-                    child.setText(0, '[list]')
-                    self.fill_tree_item(child, val)
-                else:
-                    child.setText(0, str(val))
-                child.setExpanded(True)
-        else:
-            child = QtWidgets.QTreeWidgetItem()
-            child.setText(0, str(value))
-            item.addChild(child)
+        self.mw.config_widget.set_config(config.config)
 
     @QtCore.Slot(dict)
     def update_configured_modules(self, modules=None):
