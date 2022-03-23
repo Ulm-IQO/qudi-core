@@ -116,8 +116,11 @@ class Qudi(QtCore.QObject):
         self.configuration = Configuration()
         try:
             self.configuration.load_config(config_file, set_default=True)
-        except (ValueError, ValidationError):
-            pass
+        except ValueError:
+            self.log.info('No qudi configuration file specified. Using empty default config.')
+        except ValidationError:
+            self.log.exception('Invalid qudi configuration file specified. '
+                               'Falling back to default config.')
 
         # initialize thread manager and module manager
         self.thread_manager = ThreadManager(parent=self)
