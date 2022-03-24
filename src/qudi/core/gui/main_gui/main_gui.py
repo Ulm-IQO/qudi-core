@@ -324,7 +324,6 @@ class QudiMainGui(GuiBase):
         self._show_error_popups = self.error_dialog.enabled
         self.mw.settings_dialog.show_error_popups_checkbox.setChecked(self._show_error_popups)
 
-    @QtCore.Slot()
     @QtCore.Slot(object)
     def update_config_widget(self, config=None):
         """ Clear and refill the tree widget showing the configuration.
@@ -366,7 +365,6 @@ class QudiMainGui(GuiBase):
             child.setText(0, str(value))
             item.addChild(child)
 
-    @QtCore.Slot()
     @QtCore.Slot(dict)
     def update_configured_modules(self, modules=None):
         """ Clear and refill the module list widget

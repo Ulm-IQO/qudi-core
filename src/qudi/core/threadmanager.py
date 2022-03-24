@@ -105,8 +105,7 @@ class ThreadManager(QtCore.QAbstractListModel):
                 partial(self.unregister_thread, name=name), QtCore.Qt.QueuedConnection)
             self.endInsertRows()
 
-    @QtCore.Slot(str)
-    @QtCore.Slot(QtCore.QThread)
+    @QtCore.Slot(object)
     def unregister_thread(self, name):
         """ Remove thread from ThreadManager.
 
@@ -126,8 +125,7 @@ class ThreadManager(QtCore.QAbstractListModel):
                 del self._thread_names[index]
                 self.endRemoveRows()
 
-    @QtCore.Slot(str)
-    @QtCore.Slot(QtCore.QThread)
+    @QtCore.Slot(object)
     def quit_thread(self, name):
         """ Stop event loop of QThread.
 
@@ -144,10 +142,7 @@ class ThreadManager(QtCore.QAbstractListModel):
                 logger.debug('Quitting thread {0}.'.format(name))
                 thread.quit()
 
-    @QtCore.Slot(str)
-    @QtCore.Slot(str, int)
-    @QtCore.Slot(QtCore.QThread)
-    @QtCore.Slot(QtCore.QThread, int)
+    @QtCore.Slot(object, int)
     def join_thread(self, name, time=None):
         """ Wait for stop of QThread event loop.
 
@@ -168,7 +163,6 @@ class ThreadManager(QtCore.QAbstractListModel):
                 else:
                     thread.wait(time)
 
-    @QtCore.Slot()
     @QtCore.Slot(int)
     def quit_all_threads(self, thread_timeout=10000):
         """ Stop event loop of all QThreads.

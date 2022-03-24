@@ -103,7 +103,7 @@ class FitModelBase(Model, metaclass=FitModelMeta):
 
     @staticmethod
     @abstractmethod
-    def _model_function(x):
+    def _model_function(x, **kwargs):
         """ ToDo: Document
         """
         raise NotImplementedError('FitModel object must implement staticmethod "_model_function".')

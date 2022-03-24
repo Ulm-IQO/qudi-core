@@ -20,11 +20,11 @@ You should have received a copy of the GNU Lesser General Public License along w
 If not, see <https://www.gnu.org/licenses/>.
 """
 
-__all__ = (
-    'DoubleLorentzian', 'Lorentzian', 'LorentzianLinear', 'TripleLorentzian', 'multiple_lorentzian'
-)
+__all__ = ['ComplexLorentzian', 'DoubleLorentzian', 'Lorentzian', 'LorentzianLinear',
+           'TripleLorentzian', 'multiple_lorentzian', 'multiple_complex_lorentzian']
 
 import numpy as np
+from typing import Sequence
 from qudi.util.fit_models.model import FitModelBase, estimator
 from qudi.util.fit_models.helpers import correct_offset_histogram, smooth_data, sort_check_data
 from qudi.util.fit_models.helpers import estimate_double_peaks, estimate_triple_peaks
@@ -45,6 +45,22 @@ def multiple_lorentzian(x, centers, sigmas, amplitudes):
     assert len(centers) == len(sigmas) == len(amplitudes)
     return sum(amp * sig ** 2 / ((x - c) ** 2 + sig ** 2) for c, sig, amp in
                zip(centers, sigmas, amplitudes))
+
+
+def multiple_complex_lorentzian(x: float, centers: Sequence[float], sigmas: Sequence[float],
+                                amplitudes: Sequence[float], thetas: Sequence[float]):
+    """ Mathematical definition of the sum of multiple complex Lorentzian functions without any
+    bias.
+
+    WARNING: Values in "thetas" must be in deg (NOT rad).
+
+    WARNING: Sequence parameters "centers", "sigmas", "amplitudes" and "thetas" must have same
+    length.
+    """
+    assert len(centers) == len(sigmas) == len(amplitudes) == len(thetas)
+    return sum(np.exp(1j * np.deg2rad(th)) * amp * (-1j * (x - c) * sig + sig ** 2) / (
+                np.pi * sig * ((x - c) ** 2 + sig ** 2)) for c, sig, amp, th in
+               zip(centers, sigmas, amplitudes, thetas))
 
 
 class Lorentzian(FitModelBase):
@@ -323,3 +339,19 @@ class LorentzianLinear(FitModelBase):
                                   min=-estimate['amplitude'].max,
                                   max=-estimate['amplitude'].min)
         return estimate
+
+
+class ComplexLorentzian(FitModelBase):
+    """ ToDo: Implement estimators
+    """
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.set_param_hint('amplitude', value=0., min=0., max=np.inf)
+        self.set_param_hint('center', value=0., min=-np.inf, max=np.inf)
+        self.set_param_hint('sigma', value=1e-15, min=0, max=np.inf)
+        self.set_param_hint('theta', value=0., min=-180., max=180.)
+
+    @staticmethod
+    def _model_function(x, center, sigma, amplitude, theta):
+        return multiple_complex_lorentzian(x, (center,), (sigma,), (amplitude,), (theta,))

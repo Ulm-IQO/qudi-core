@@ -75,6 +75,10 @@ if sys.platform == 'win32':
         print('SetCurrentProcessExplicitAppUserModelID failed! This is probably not Microsoft '
               'Windows!')
 
+# Set default Qt locale to "C" in order to avoid surprises with number formats and other things
+# QtCore.QLocale.setDefault(QtCore.QLocale('en_US'))
+QtCore.QLocale.setDefault(QtCore.QLocale.c())
+
 
 class Qudi(QtCore.QObject):
     """
@@ -167,8 +171,10 @@ class Qudi(QtCore.QObject):
         for most_recent_frame, _ in traceback.walk_tb(ex_traceback):
             pass
         # Try to extract the module and class name in which the exception has been raised
+        msg = ''
         if most_recent_frame is None:
             logger = self.log
+            msg = 'Unhandled qudi exception:'
         else:
             try:
                 obj = most_recent_frame.f_locals['self']
@@ -181,8 +187,9 @@ class Qudi(QtCore.QObject):
                 except AttributeError:
                     # If no module and class name can be determined, use the application logger
                     logger = self.log
+                    msg = 'Unhandled qudi exception:'
         # Log exception with qudi log handler
-        logger.error('Unhandled qudi Exception:', exc_info=(ex_type, ex_value, ex_traceback))
+        logger.error(msg, exc_info=(ex_type, ex_value, ex_traceback))
 
     @classmethod
     def instance(cls):
@@ -245,7 +252,8 @@ class Qudi(QtCore.QObject):
         if self.no_gui:
             return
         self.gui = Gui(qudi_instance=self, stylesheet_path=self.configuration.stylesheet)
-        self.gui.activate_main_gui()
+        if not self.configuration.hide_manager_window:
+            self.gui.activate_main_gui()
 
     def _start_startup_modules(self):
         for module in self.configuration.startup_modules:
@@ -366,6 +374,8 @@ class Qudi(QtCore.QObject):
             QtCore.QCoreApplication.instance().processEvents()
             self.log.info('Qudi shutting down...')
             print('> Qudi shutting down...')
+            self.watchdog.terminate()
+            self.watchdog = None
             self.log.info('Stopping module server(s)...')
             print('> Stopping module server(s)...')
             if self.remote_modules_server is not None:

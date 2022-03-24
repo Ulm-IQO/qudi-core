@@ -150,7 +150,7 @@ class Gui(QtCore.QObject):
         self._configure_pyqtgraph(use_opengl)
         self.main_gui_module = QudiMainGui(qudi_main_weakref=weakref.ref(qudi_instance),
                                            name='qudi_main_gui')
-        self.system_tray_icon.managerAction.triggered.connect(self.main_gui_module.show,
+        self.system_tray_icon.managerAction.triggered.connect(self.activate_main_gui,
                                                               QtCore.Qt.QueuedConnection)
         self.system_tray_icon.quitAction.triggered.connect(qudi_instance.quit,
                                                            QtCore.Qt.QueuedConnection)
@@ -243,11 +243,12 @@ class Gui(QtCore.QObject):
                                             QtCore.Qt.BlockingQueuedConnection)
             return
 
-        logger.info('Activating main GUI module...')
-        print('> Activating main GUI module...')
         if self.main_gui_module.module_state() != 'deactivated':
             self.main_gui_module.show()
             return
+
+        logger.info('Activating main GUI module...')
+        print('> Activating main GUI module...')
 
         self.main_gui_module.module_state.activate()
         QtWidgets.QApplication.instance().processEvents()

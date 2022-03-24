@@ -112,6 +112,35 @@ class AboutQudiDialog(QtWidgets.QDialog):
                                                    | QtCore.Qt.TextBrowserInteraction)
         self.license_label.setOpenExternalLinks(True)
 
+        self.citation_label = QtWidgets.QLabel(
+            '<html><head/><body><p>'
+            'If you are publishing scientific results, mentioning Qudi in your methods decscription <br/>\n'
+            'is the least you can do as good scientific practice. You should cite our paper <br/>\n<br/>\n'
+            'Qudi: A modular python suite for experiment control and data processing.<br/>\n'
+            '</span>\n<a href="https://doi.org/10.1016/j.softx.2017.02.001"><span style=" text-decoration: '
+            'underline; color:#00ffff;">https://doi.org/10.1016/j.softx.2017.02.001</span></a><br/>\n</p>\n'
+            '@article{BINDER201785,<br/>\n'
+            'title = {Qudi: A modular python suite for experiment control and data processing},<br/>\n'
+            'journal = {SoftwareX},<br/>\n'
+            'volume = {6},<br/>\n'
+            'pages = {85-90},<br/>\n'
+            'year = {2017},<br/>\n'
+            'issn = {2352-7110},<br/>\n'
+            'doi = {https://doi.org/10.1016/j.softx.2017.02.001},<br/>\n'
+            'url = {https://www.sciencedirect.com/science/article/pii/S2352711017300055},<br/>\n'
+            'author = {Jan M. Binder and Alexander Stark and Nikolas Tomek and Jochen Scheuer and Florian Frank and Kay D. Jahnke and Christoph Müller and Simon Schmitt and Mathias H. Metsch and Thomas Unden and Tobias Gehring and Alexander Huck and Ulrik L. Andersen and Lachlan J. Rogers and Fedor Jelezko},<br/>\n'
+            'keywords = {Python 3, Qt, Experiment control, Automation, Measurement software, Framework, Modular},<br/>\n'
+            'abstract = {Qudi is a general, modular, multi-operating system suite written in Python 3 for controlling laboratory experiments. It provides a structured environment by separating functionality into hardware abstraction, experiment logic and user interface layers. The core feature set comprises a graphical user interface, live data visualization, distributed execution over networks, rapid prototyping via Jupyter notebooks, configuration management, and data recording. Currently, the included modules are focused on confocal microscopy, quantum optics and quantum information experiments, but an expansion into other fields is possible and encouraged.}<br/>\n'
+            '}<br/>\n'
+            '</p></body></html>'
+        )
+        self.citation_label.setWordWrap(True)
+        self.citation_label.setObjectName('creditsLabel')
+        self.citation_label.setTextInteractionFlags(
+            QtCore.Qt.TextSelectableByMouse | QtCore.Qt.TextBrowserInteraction
+        )
+        self.citation_label.setOpenExternalLinks(True)
+
         about_scroll_widget = QtWidgets.QScrollArea()
         about_scroll_widget.setWidgetResizable(True)
         about_scroll_widget.setWidget(self.about_label)
@@ -124,12 +153,17 @@ class AboutQudiDialog(QtWidgets.QDialog):
         license_scroll_widget.setWidgetResizable(True)
         license_scroll_widget.setWidget(self.license_label)
         license_scroll_widget.setObjectName('licenseScrollArea')
+        citation_scroll_widget = QtWidgets.QScrollArea()
+        citation_scroll_widget.setWidgetResizable(True)
+        citation_scroll_widget.setWidget(self.citation_label)
+        citation_scroll_widget.setObjectName('citationScrollArea')
 
         self.tab_widget = QtWidgets.QTabWidget()
         self.tab_widget.setObjectName('tabWidget')
         self.tab_widget.addTab(about_scroll_widget, 'About')
         self.tab_widget.addTab(credits_scroll_widget, 'Credits')
         self.tab_widget.addTab(license_scroll_widget, 'License')
+        self.tab_widget.addTab(citation_scroll_widget, 'Cite Qudi')
 
         layout = QtWidgets.QVBoxLayout()
         layout.addWidget(self.header_label)
@@ -140,3 +174,4 @@ class AboutQudiDialog(QtWidgets.QDialog):
         self.setLayout(layout)
         self.about_label.setFocus()
         return
+   

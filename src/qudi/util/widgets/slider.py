@@ -72,6 +72,10 @@ class DoubleSlider(QtWidgets.QSlider):
         super().setValue(int_val)
         return
 
+    @property
+    def granularity(self) -> int:
+        return self._step_number + 1
+
     def set_granularity(self, number_of_steps):
         """
         Set the granularity of the slider, i.e. the number of discrete steps within the value range.

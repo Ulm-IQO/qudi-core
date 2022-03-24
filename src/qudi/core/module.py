@@ -66,28 +66,6 @@ class ModuleStateMachine(Fysom, QtCore.QObject):
         # Initialise state machine:
         super().__init__(parent=parent, cfg=fsm_cfg, **kwargs)
 
-    def _build_event(self, event):
-        """
-        Overrides Fysom _build_event to wrap on_activate and on_deactivate to catch and log
-        exceptions.
-        @param str event: Event name to build the Fysom event for
-        @return function: The event handler used by Fysom for the given event
-        """
-        base_event = super()._build_event(event)
-        if event in ('activate', 'deactivate'):
-            noun = 'activation' if event == 'activate' else 'deactivation'
-
-            def wrap_event(*args, **kwargs):
-                try:
-                    base_event(*args, **kwargs)
-                except:
-                    self.parent().log.exception('Error during {0}'.format(noun))
-                    return False
-                return True
-
-            return wrap_event
-        return base_event
-
     def __call__(self) -> str:
         """
         Returns the current state.
@@ -181,8 +159,8 @@ class Base(QtCore.QObject, metaclass=ModuleMeta):
         self.__initialize_connectors()
 
         # Initialize module FSM
-        default_callbacks = {'on_before_activate': self.__activation_callback,
-                             'on_deactivate'     : self.__deactivation_callback}
+        default_callbacks = {'on_before_activate'  : self.__activation_callback,
+                             'on_before_deactivate': self.__deactivation_callback}
         default_callbacks.update(callbacks)
         self.module_state = ModuleStateMachine(parent=self, callbacks=default_callbacks)
         return
@@ -300,21 +278,29 @@ class Base(QtCore.QObject, metaclass=ModuleMeta):
         """
         return self._threaded
 
-    def __activation_callback(self, event=None) -> None:
+    def __activation_callback(self, event=None) -> bool:
         """ Restore status variables before activation and invoke on_activate method.
         """
-        self._load_status_variables()
-        self.on_activate()
+        try:
+            self._load_status_variables()
+            self.on_activate()
+        except:
+            self.log.exception('Exception during activation:')
+            return False
+        return True
 
-    def __deactivation_callback(self, event=None) -> None:
+    def __deactivation_callback(self, event=None) -> bool:
         """ Invoke on_deactivate method and save status variables afterwards even if deactivation
         fails.
         """
         try:
             self.on_deactivate()
+        except:
+            self.log.exception('Exception during deactivation:')
         finally:
             # save status variables even if deactivation failed
             self._dump_status_variables()
+        return True
 
     def _load_status_variables(self) -> None:
         """ Load status variables from app data directory on disc.
