@@ -356,20 +356,22 @@ class Gaussian2D(FitModelBase):
         x_axis = xy[0].flatten()
         y_axis = xy[1].flatten()
 
-        # TODO: Make good estimates for sigma_x, sigma_y and theta
+        # TODO: Make good estimate for theta
 
         amplitude = float(data.max() - data.min())
 
         # By calculating the log likelihood of the 2D gaussian pdf, one obtain for
         # the minimization of the center_x or center_y values the following formula
         # (which are in fact just the expectation/mean value formula):
-        center_x = np.sum(x_axis * data) / np.sum(data)
-        center_y = np.sum(y_axis * data) / np.sum(data)
-
+        norm = np.sum(data)
+        center_x = np.sum(x_axis * data) / norm
+        center_y = np.sum(y_axis * data) / norm
+        exp_of_xsquared = np.sum(x_axis ** 2 * data) / norm
+        exp_of_ysquared = np.sum(y_axis ** 2 * data) / norm
+        sigma_x = np.sqrt(exp_of_xsquared - center_x ** 2)
+        sigma_y = np.sqrt(exp_of_ysquared - center_y ** 2)
         xrange = x_axis.max() - x_axis.min()
         yrange = y_axis.max() - y_axis.min()
-        sigma_x = xrange / 3.
-        sigma_y = yrange / 3.
         theta = 0.0
         offset = float(data.min())
 
