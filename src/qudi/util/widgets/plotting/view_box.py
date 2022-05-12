@@ -25,9 +25,12 @@ __all__ = ['MouseTrackingViewBox', 'DataSelectionViewBox']
 
 from typing import Optional, Union, Any, Tuple, Mapping
 from enum import IntEnum
+
+import numpy as np
 from PySide2 import QtCore
 from pyqtgraph import ViewBox, SignalProxy, InfiniteLine, LinearRegionItem
 from pyqtgraph.GraphicsScene.mouseEvents import MouseClickEvent, MouseDragEvent
+from qudi.util.widgets.plotting.roi import RectROI, TargetItem
 
 
 class MouseTrackingViewBox(ViewBox):
@@ -78,6 +81,11 @@ class DataSelectionViewBox(MouseTrackingViewBox):
         - linear region in x or y
         - xy ROIs
         - x, y or xy data markers
+
+    Public methods will generally emit signals if they result in a selection change. The
+    corresponding "protected" methods do not emit.
+
+    ToDo: Implement XY selection mode (ROIs and points)
     """
 
     class SelectionMode(IntEnum):
@@ -111,6 +119,35 @@ class DataSelectionViewBox(MouseTrackingViewBox):
         self.__regions = list()
         self.__markers = list()
 
+    def mouseClickEvent(self, ev: MouseClickEvent) -> None:
+        selection_enabled = self._marker_selection_mode != self.SelectionMode.Disabled
+        if selection_enabled and (ev.button() == QtCore.Qt.LeftButton) and not ev.double():
+            ev.accept()
+            pos = self.mapToView(ev.pos())
+            self.add_marker_selection((pos.x(), pos.y()))
+        return super().mouseClickEvent(ev)
+
+    def mouseDragEvent(self, ev: MouseDragEvent, axis: Optional[int] = None) -> None:
+        selection_enabled = self._region_selection_mode != self.SelectionMode.Disabled
+        if selection_enabled and axis is None and (ev.button() == QtCore.Qt.LeftButton) and not ev.isAccepted():
+            ev.accept()
+            start = self.mapToView(ev.buttonDownPos())
+            end = self.mapToView(ev.pos())
+            span = ((start.x(), end.x()), (start.y(), end.y()))
+            if ev.isStart():
+                print('start:', span)
+                self._add_region_selection(span)
+            else:
+                try:
+                    print('move:', span)
+                    self._move_region_selection(span, index=-1)
+                except IndexError:
+                    pass
+            if ev.isFinish():
+                print('finished')
+                self._emit_region_change()
+        return super().mouseDragEvent(ev, axis)
+
     def region_selection_mode(self) -> SelectionMode:
         return self._region_selection_mode
 
@@ -123,8 +160,6 @@ class DataSelectionViewBox(MouseTrackingViewBox):
         return self._marker_selection_mode
 
     def set_marker_selection_mode(self, mode: Union[SelectionMode, int]) -> None:
-        if self.SelectionMode(mode) == self.SelectionMode.XY:
-            raise NotImplementedError('XY selection mode not yet implemented')
         self._marker_selection_mode = self.SelectionMode(mode)
 
     marker_selection_mode = property(marker_selection_mode, set_marker_selection_mode)
@@ -176,7 +211,14 @@ class DataSelectionViewBox(MouseTrackingViewBox):
         if mode == self.SelectionMode.Disabled:
             return
         elif mode == self.SelectionMode.XY:
-            raise NotImplementedError('XY selection mode not yet implemented')
+            item = RectROI(pos=(min(span[0]), min(span[1])),
+                           size=(max(span[0]) - min(span[0]), max(span[1]) - min(span[1])),
+                           invertible=False,
+                           movable=self._selection_movable,
+                           resizable=self._selection_movable,
+                           rotatable=False,
+                           bounds=self._selection_limits)
+            item.sigRegionChangeFinished.connect(self._emit_region_change)
         else:
             if mode == self.SelectionMode.X:
                 orientation = 'vertical'
@@ -214,7 +256,12 @@ class DataSelectionViewBox(MouseTrackingViewBox):
         if mode == self.SelectionMode.Disabled:
             return
         elif mode == self.SelectionMode.XY:
-            raise NotImplementedError('XY selection mode not yet implemented')
+            if self._selection_limits[0] is None and self._selection_limits[1] is None:
+                bounds = None
+            else:
+                bounds = self._selection_limits
+            item = TargetItem(pos=position, bounds=bounds)
+            item.sigPositionChangeFinished.connect(self._emit_marker_change)
         else:
             if mode == self.SelectionMode.X:
                 angle = 90
@@ -247,15 +294,16 @@ class DataSelectionViewBox(MouseTrackingViewBox):
                                index: int
                                ) -> None:
         item = self.__regions[index]
+        item.blockSignals(True)
         if isinstance(item, LinearRegionItem):
-            item.blockSignals(True)
             if item.orientation == 'vertical':
                 item.setRegion(span[0])
             else:
                 item.setRegion(span[1])
-            item.blockSignals(False)
-        else:
-            raise NotImplementedError('XY selection mode not yet implemented')
+        elif isinstance(item, RectROI):
+            item.setPos((min(span[0]), min(span[1])))
+            item.setSize((max(span[0]) - min(span[0]), max(span[1]) - min(span[1])))
+        item.blockSignals(False)
 
     def move_marker_selection(self,
                               position: Tuple[float, float],
@@ -269,12 +317,12 @@ class DataSelectionViewBox(MouseTrackingViewBox):
                                index: int
                                ) -> None:
         item = self.__markers[index]
+        item.blockSignals(True)
         if isinstance(item, InfiniteLine):
-            item.blockSignals(True)
             item.setPos(position[0] if item.angle == 90 else position[1])
-            item.blockSignals(False)
-        else:
-            raise NotImplementedError('XY selection mode not yet implemented')
+        elif isinstance(item, TargetItem):
+            item.setPos(position)
+        item.blockSignals(False)
 
     def clear_marker_selections(self) -> None:
         if len(self.__markers) != 0:
@@ -284,6 +332,10 @@ class DataSelectionViewBox(MouseTrackingViewBox):
             except IndexError:
                 pass
             self._emit_marker_change()
+
+    def delete_marker_selection(self, index: int) -> None:
+        self._delete_marker_selection(index)
+        self._emit_marker_change()
 
     def _delete_marker_selection(self, index: int) -> None:
         item = self.__markers.pop(index)
@@ -298,6 +350,10 @@ class DataSelectionViewBox(MouseTrackingViewBox):
             except IndexError:
                 pass
             self._emit_region_change()
+
+    def delete_region_selection(self, index: int) -> None:
+        self._delete_region_selection(index)
+        self._emit_region_change()
 
     def _delete_region_selection(self, index: int) -> None:
         item = self.__regions.pop(index)
@@ -339,29 +395,10 @@ class DataSelectionViewBox(MouseTrackingViewBox):
         for m in self.__markers:
             if isinstance(m, InfiniteLine):
                 m.setBounds(x_lim if m.angle == 90 else y_lim)
+            elif isinstance(m, TargetItem):
+                m.set_bounds((x_lim, y_lim))
         for r in self.__regions:
             if isinstance(r, LinearRegionItem):
                 r.setBounds(x_lim if r.orientation == 'vertical' else y_lim)
-
-    def mouseClickEvent(self, ev: MouseClickEvent) -> None:
-        selection_enabled = self._marker_selection_mode != self.SelectionMode.Disabled
-        if selection_enabled and (ev.button() == QtCore.Qt.LeftButton) and not ev.double():
-            ev.accept()
-            pos = self.mapToView(ev.pos())
-            self.add_marker_selection((pos.x(), pos.y()))
-        return super().mouseClickEvent(ev)
-
-    def mouseDragEvent(self, ev: MouseDragEvent, axis: Optional[int] = None) -> None:
-        selection_enabled = self._region_selection_mode != self.SelectionMode.Disabled
-        if selection_enabled and axis is None and (ev.button() == QtCore.Qt.LeftButton):
-            ev.accept()
-            start = self.mapToView(ev.buttonDownPos())
-            end = self.mapToView(ev.pos())
-            span = ((start.x(), end.x()), (start.y(), end.y()))
-            if ev.isStart():
-                self._add_region_selection(span)
-            else:
-                self._move_region_selection(span, index=-1)
-            if ev.isFinish():
-                self._emit_region_change()
-        return super().mouseDragEvent(ev, axis)
+            elif isinstance(r, RectROI):
+                r.set_bounds(self._selection_limits)
