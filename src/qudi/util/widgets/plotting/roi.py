@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 
 """
-This file contains custom pyqtgraph.ROI subclasses to be used in graphs.
+This file contains customized pyqtgraph graphics items to be used as data ROI markers in 1D and 2D plots.
+This is an attempt to provide a somewhat unified interface to these markers contrary to the
+heterogeneous interfaces of pyqtgraph items.
 
 Copyright (c) 2021, the qudi developers. See the AUTHORS.md file at the top-level directory of this
 distribution and on <https://github.com/Ulm-IQO/qudi-core/>
@@ -29,76 +31,7 @@ from pyqtgraph import ROI
 from pyqtgraph import TargetItem as _TargetItem
 
 
-class RectROI(ROI):
-    """
-    """
-    def __init__(self, pos, size, bounds=None, corner_handles=True, side_handles=True, **kwargs):
-        self.maxBounds = None
-        kwargs['maxBounds'] = self._get_maxBounds(bounds)
-        ROI.__init__(self, pos, size, **kwargs)
-        self._bounds = bounds
-        if corner_handles:
-            self.addScaleHandle([1, 1], [0, 0])
-            self.addScaleHandle([0, 0], [1, 1])
-            self.addScaleHandle([1, 0], [0, 1])
-            self.addScaleHandle([0, 1], [1, 0])
-        if side_handles:
-            self.addScaleHandle([1, 0.5], [0, 0.5])
-            self.addScaleHandle([0.5, 1], [0.5, 0])
-            self.addScaleHandle([0, 0.5], [1, 0.5])
-            self.addScaleHandle([0.5, 0], [0.5, 1])
 
-    def set_bounds(self, bounds) -> None:
-        bound_rect = self._get_maxBounds(bounds)
-        self.maxBounds = bound_rect
-        self._bounds = bounds
-        self._correct_bounds()
-
-    def get_bounds(self):
-        return self._bounds
-
-    def _correct_bounds(self):
-        if isinstance(self.maxBounds, QtCore.QRectF):
-            curr_rect = QtCore.QRectF(*self.pos(), *self.size()).normalized()
-            if not self.maxBounds.contains(curr_rect):
-                intersect = self.maxBounds.intersected(curr_rect).normalized()
-                super().setPos(intersect.x(), intersect.y())
-                super().setSize(intersect.size())
-
-    @staticmethod
-    def _get_maxBounds(bounds) -> Union[None, QtCore.QRectF]:
-        if bounds is None or (bounds[0] is None and bounds[1] is None):
-            return None
-        try:
-            x_min, x_max = bounds[0]
-        except TypeError:
-            x_min = x_max = None
-        try:
-            y_min, y_max = bounds[1]
-        except TypeError:
-            y_min = y_max = None
-
-        if x_min is x_max is y_min is y_max is None:
-            return None
-
-        if x_min is None:
-            x_min = float('-inf')
-        if x_max is None:
-            x_max = float('inf')
-        if y_min is None:
-            y_min = float('-inf')
-        if y_max is None:
-            y_max = float('inf')
-        return QtCore.QRectF(QtCore.QPointF(x_min, y_min),
-                             QtCore.QPointF(x_max, y_max)).normalized()
-
-    def setPos(self, pos, y=None, update=True, finish=True):
-        super().setPos(pos, y, update, finish)
-        self._correct_bounds()
-
-    def setSize(self, size, center=None, centerLocal=None, snap=False, update=True, finish=True):
-        super().setSize(size, center, centerLocal, snap, update, finish)
-        self._correct_bounds()
 
 
 class CrosshairROI(ROI):
