@@ -211,30 +211,77 @@ class InfiniteCrosshair(QtCore.QObject):
         self.sigPositionChanged.emit(self.position)
 
 
-class RectGraphicsItem(ROI):
+class Rectangle(QtCore.QObject):
     """
     """
-    def __init__(self, pos, size, bounds=None, corner_handles=True, side_handles=True, **kwargs):
-        self.maxBounds = None
-        kwargs['maxBounds'] = self._get_maxBounds(bounds)
-        ROI.__init__(self, pos, size, **kwargs)
-        self._bounds = bounds
+
+    _default_pen = {'color': '#00ff00', 'width': 1}
+    _default_hover_pen = {'color': '#ffff00', 'width': 1}
+
+    sigAreaChanged = QtCore.Signal(tuple, tuple)  # current_pos, current_size
+    # start_pos, current_pos, start_size, current_size, is_start, is_finished
+    sigAreaDragged = QtCore.Signal(tuple, tuple, tuple, tuple, bool, bool)
+
+    def __init__(self,
+                 viewbox: ViewBox,
+                 position: Optional[Tuple[float, float]] = (0, 0),
+                 size: Optional[Tuple[float, float]] = (1, 1),
+                 edge_handles: Optional[bool] = False,
+                 corner_handles: Optional[bool] = False,
+                 bounds: Optional[Sequence[Tuple[Union[None, float], Union[None, float]]]] = None,
+                 movable: Optional[bool] = True,
+                 pen: Optional[Any] = None,
+                 hover_pen: Optional[Any] = None):
+        super().__init__(parent=viewbox)
+        if position is None:
+            position = (0, 0)
+        if size is None:
+            size = (1, 1)
+        if movable is None:
+            movable = True
+        if pen is None:
+            pen = self._default_pen
+        if hover_pen is None:
+            hover_pen = self._default_hover_pen
+
+        self._bounds = self._normalize_bounds(bounds)
+        self._z_value = None
+        self.__is_dragged = False
+        self.__start_position = (0, 0)
+        self.__start_size = (1, 1)
+
+        self.roi = ROI(pos=self._convert_pos(position),
+                       size=size,
+                       movable=movable,
+                       resizable=movable,
+                       rotatable=False,
+                       invertible=True,
+                       pen=pen,
+                       hoverPen=hover_pen,
+                       handlePen=pen,
+                       handleHoverPen=hover_pen)
         if corner_handles:
-            self.addScaleHandle([1, 1], [0, 0])
-            self.addScaleHandle([0, 0], [1, 1])
-            self.addScaleHandle([1, 0], [0, 1])
-            self.addScaleHandle([0, 1], [1, 0])
-        if side_handles:
-            self.addScaleHandle([1, 0.5], [0, 0.5])
-            self.addScaleHandle([0.5, 1], [0.5, 0])
-            self.addScaleHandle([0, 0.5], [1, 0.5])
-            self.addScaleHandle([0.5, 0], [0.5, 1])
+            self.roi.addScaleHandle([1, 1], [0, 0])
+            self.roi.addScaleHandle([0, 0], [1, 1])
+            self.roi.addScaleHandle([1, 0], [0, 1])
+            self.roi.addScaleHandle([0, 1], [1, 0])
+        if edge_handles:
+            self.roi.addScaleHandle([1, 0.5], [0, 0.5])
+            self.roi.addScaleHandle([0.5, 1], [0.5, 0])
+            self.roi.addScaleHandle([0, 0.5], [1, 0.5])
+            self.roi.addScaleHandle([0.5, 0], [0.5, 1])
+        self.roi.sigRegionChanged.connect(self._roi_dragged)
+        self.roi.sigRegionChangeFinished.connect(self._roi_drag_finished)
+        self.roi.sigRegionChangeStarted.connect(self._roi_drag_started)
+        self.show()
 
     def movable(self) -> bool:
-        return self.translatable
+        return self.roi.translatable and self.roi.resizable
 
     def set_movable(self, movable: bool) -> None:
-        self.translatable = bool(movable)
+        movable = bool(movable)
+        self.roi.translatable = movable
+        self.roi.resizable = movable
 
     movable = property(movable, set_movable)
 
@@ -243,75 +290,136 @@ class RectGraphicsItem(ROI):
 
     def set_z_value(self, value: int) -> None:
         """ (Un-)Set the crosshair movable (draggable by mouse cursor) """
-        self.vline.setZValue(value)
-        self.hline.setZValue(value)
+        self.roi.setZValue(value)
         self._z_value = value
 
     z_value = property(z_value, set_z_value)
 
     @property
     def position(self) -> Tuple[float, float]:
-        return self.vline.value(), self.hline.value()
+        return self._roi_to_center_pos(self.roi.pos())
 
-    def set_position(self, pos: Tuple[float, float]) -> None:
-        self.vline.blockSignals(True)
-        self.hline.blockSignals(True)
+    def set_position(self, position: Tuple[float, float]) -> None:
+        new_pos, new_size = self._clip_area(position, self.size)
+        self._set_roi_area(new_pos, new_size)
+        self.sigAreaChanged.emit(self.position, self.size)
+
+    @property
+    def size(self) -> Tuple[float, float]:
+        return self.roi.size()
+
+    def set_size(self, size: Tuple[float, float]) -> None:
+        new_pos, new_size = self._clip_area(self.position, size)
+        self._set_roi_area(new_pos, new_size)
+        self.sigAreaChanged.emit(self.position, self.size)
+
+    @property
+    def bounds(self) -> List[Tuple[Union[None, float], Union[None, float]]]:
+        return self._bounds.copy()
+
+    def set_bounds(self,
+                   bounds: Union[None, Sequence[Tuple[Union[None, float], Union[None, float]]]]
+                   ) -> None:
+        self._bounds = self._normalize_bounds(bounds)
+        position, size = self.position, self.size
+        corr_position, corr_size = self._clip_area(position, size)
+        if (position != corr_position) or (size != corr_size):
+            self._set_roi_area(corr_position, corr_size)
+            self.sigAreaChanged.emit(self.position, self.size)
+
+    def show(self):
+        view = self.parent()
+        if self.roi not in view.items():
+            view.addItem(self.roi)
+            if self._z_value is not None:
+                self.roi.setZValue(self._z_value)
+
+    def hide(self):
+        view = self.parent()
+        if self.roi in view.items():
+            view.removeItem(self.roi)
+
+    def set_pen(self, pen: Any) -> None:
+        """ Given parameter must be compatible with pyqtgraph.mkPen() """
+        self.roi.setPen(pen)
+
+    def set_hover_pen(self, pen: Any) -> None:
+        """ Given parameter must be compatible with pyqtgraph.mkPen() """
+        self.roi.setHoverPen(pen)
+
+    def _clip_area(self,
+                   pos: Tuple[float, float],
+                   size: Tuple[float, float]
+                   ) -> Tuple[Tuple[float, float], Tuple[float, float]]:
+        left, bottom = self._center_to_roi_pos(pos)
+        right = left + size[0]
+        top = bottom + size[1]
+        x_min, x_max = self._bounds[0]
+        y_min, y_max = self._bounds[1]
+        if (x_min is not None) and (left < x_min):
+            left = x_min
+            right = min(left + size[0], x_max)
+        elif (x_max is not None) and (right > x_max):
+            right = x_max
+            left = max(right - size[0], x_min)
+        if (y_min is not None) and (bottom < y_min):
+            bottom = y_min
+            top = min(bottom + size[1], y_max)
+        elif (y_max is not None) and (top > y_max):
+            top = y_max
+            bottom = max(top - size[1], y_min)
+        size = (right - left, top - bottom)
+        pos = self._roi_to_center_pos((left, bottom), size)
+        return pos, size
+
+    def _set_roi_area(self,
+                      position: Tuple[float, float],
+                      size: Tuple[float, float]
+                      ) -> None:
+        self.roi.blockSignals(True)
         try:
-            self.vline.setPos(pos[0])
-            self.hline.setPos(pos[1])
+            self.roi.setSize(size)
+            self.roi.setPos(self._center_to_roi_pos(position, size))
         finally:
-            self.vline.blockSignals(False)
-            self.hline.blockSignals(False)
-        self.sigPositionChanged.emit(self.position)
+            self.roi.blockSignals(False)
 
-    def set_bounds(self, bounds) -> None:
-        bound_rect = self._get_maxBounds(bounds)
-        self.maxBounds = bound_rect
-        self._bounds = bounds
-        self._correct_bounds()
-
-    def get_bounds(self):
-        return self._bounds
-
-    def _correct_bounds(self):
-        if isinstance(self.maxBounds, QtCore.QRectF):
-            curr_rect = QtCore.QRectF(*self.pos(), *self.size()).normalized()
-            if not self.maxBounds.contains(curr_rect):
-                intersect = self.maxBounds.intersected(curr_rect).normalized()
-                super().setPos(intersect.x(), intersect.y())
-                super().setSize(intersect.size())
+    def _correct_roi_area(self) -> None:
+        position, size = self.position, self.size
+        corr_position, corr_size = self._clip_area(position, size)
+        if (position != corr_position) or (size != corr_size):
+            self._set_roi_area(corr_position, corr_size)
 
     @staticmethod
-    def _get_maxBounds(bounds) -> Union[None, QtCore.QRectF]:
-        if bounds is None or (bounds[0] is None and bounds[1] is None):
-            return None
-        try:
-            x_min, x_max = bounds[0]
-        except TypeError:
-            x_min = x_max = None
-        try:
-            y_min, y_max = bounds[1]
-        except TypeError:
-            y_min = y_max = None
+    def _center_to_roi_pos(position: Tuple[float, float],
+                           size: Tuple[float, float]
+                           ) -> Tuple[float, float]:
+        return position[0] - size[0] / 2, position[1] - size[1] / 2
 
-        if x_min is x_max is y_min is y_max is None:
-            return None
+    @staticmethod
+    def _roi_to_center_pos(position: Tuple[float, float],
+                           size: Tuple[float, float]
+                           ) -> Tuple[float, float]:
+        return position[0] + size[0] / 2, position[1] + size[1] / 2
 
-        if x_min is None:
-            x_min = float('-inf')
-        if x_max is None:
-            x_max = float('inf')
-        if y_min is None:
-            y_min = float('-inf')
-        if y_max is None:
-            y_max = float('inf')
-        return QtCore.QRectF(QtCore.QPointF(x_min, y_min),
-                             QtCore.QPointF(x_max, y_max)).normalized()
+    def _roi_drag_started(self, roi: Optional[ROI] = None) -> None:
+        self.__start_position = self.position
+        self.__start_size = self.size
 
-    def setPos(self, pos, y=None, update=True, finish=True):
-        super().setPos(pos, y, update, finish)
-        self._correct_bounds()
+    def _roi_drag_finished(self, roi: Optional[ROI] = None) -> None:
+        self.__is_dragged = False
+        self._correct_roi_area()
+        self.sigAreaChanged.emit(self.position, self.size)
 
-    def setSize(self, size, center=None, centerLocal=None, snap=False, update=True, finish=True):
-        super().setSize(size, center, centerLocal, snap, update, finish)
-        self._correct_bounds()
+    def _roi_dragged(self, roi: Optional[ROI] = None) -> None:
+        self._correct_roi_area()
+        if self.__is_dragged:
+            is_start = False
+        else:
+            self.__is_dragged = True
+            is_start = True
+        self.sigAreaDragged.emit(self.__start_position,
+                                 self.position,
+                                 self.__start_size,
+                                 self.size,
+                                 is_start,
+                                 not self.roi.isMoving)
