@@ -48,6 +48,7 @@ class TestGui(GuiBase):
         self.viewbox.set_marker_selection_mode(self.viewbox.SelectionMode.XY)
         self.viewbox.set_selection_mutable(True)
         self.viewbox.set_selection_bounds([(-0.5, 9.5), (-0.5, 9.5)])
+        self.viewbox.sigMouseClicked.connect(lambda x, y: print('ViewBox clicked:', x))
 
     def show(self) -> None:
         self._mw.show()

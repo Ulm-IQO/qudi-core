@@ -26,8 +26,8 @@ __all__ = ['MouseTrackingViewBox', 'DataSelectionViewBox']
 from typing import Optional, Union, Any, Tuple, Sequence, List
 from enum import IntEnum
 
-from PySide2 import QtCore
-from pyqtgraph import ViewBox, SignalProxy
+from PySide2 import QtCore, QtGui
+from pyqtgraph import ViewBox, SignalProxy, PlotDataItem, ImageItem, PlotCurveItem, ScatterPlotItem
 from pyqtgraph.GraphicsScene.mouseEvents import MouseClickEvent, MouseDragEvent
 from qudi.util.widgets.plotting.marker import Rectangle, InfiniteCrosshair
 from qudi.util.widgets.plotting.marker import InfiniteLine, LinearRegion
@@ -46,8 +46,13 @@ class MouseTrackingViewBox(ViewBox):
     # position (x, y), MouseClickEvent
     sigMouseClicked = QtCore.Signal(tuple, object)
 
-    def __init__(self, *args, max_mouse_pos_update_rate: Optional[float] = None, **kwargs) -> None:
+    def __init__(self,
+                 *args,
+                 allow_tracking_outside_data: Optional[bool] = False,
+                 max_mouse_pos_update_rate: Optional[float] = None,
+                 **kwargs) -> None:
         super().__init__(*args, **kwargs)
+        self.allow_tracking_outside_data = bool(allow_tracking_outside_data)
         if max_mouse_pos_update_rate is not None and max_mouse_pos_update_rate > 0.:
             self._mouse_position_signal_proxy = SignalProxy(
                 signal=self.scene().sigMouseMoved,
@@ -61,17 +66,23 @@ class MouseTrackingViewBox(ViewBox):
         self.sigMouseMoved.emit((pos.x(), pos.y()))
 
     def mouseClickEvent(self, ev: MouseClickEvent) -> None:
-        pos = self.mapToView(ev.pos())
-        self.sigMouseClicked.emit((pos.x(), pos.y()), ev)
-        if not ev.isAccepted():
-            super().mouseClickEvent(ev)
+        if self.allow_tracking_outside_data or self.pointer_on_data(ev.scenePos()):
+            pos = self.mapToView(ev.pos())
+            self.sigMouseClicked.emit((pos.x(), pos.y()), ev)
+        super().mouseClickEvent(ev)
 
     def mouseDragEvent(self, ev: MouseDragEvent, axis: Optional[int] = None) -> None:
-        start = self.mapToView(ev.buttonDownPos())
-        current = self.mapToView(ev.pos())
-        self.sigMouseDragged.emit((start.x(), start.y()), (current.x(), current.y()), ev)
-        if not ev.isAccepted():
-            super().mouseDragEvent(ev, axis)
+        if self.allow_tracking_outside_data or self.pointer_on_data(ev.buttonDownScenePos()):
+            start = self.mapToView(ev.buttonDownPos())
+            current = self.mapToView(ev.pos())
+            self.sigMouseDragged.emit((start.x(), start.y()), (current.x(), current.y()), ev)
+        super().mouseDragEvent(ev, axis)
+
+    def pointer_on_data(self, scene_pos: QtCore.QPointF) -> bool:
+        for item in self.scene().items(scene_pos):
+            if isinstance(item, (PlotDataItem, ImageItem, PlotCurveItem, ScatterPlotItem)):
+                return True
+        return False
 
 
 class DataSelectionViewBox(MouseTrackingViewBox):
@@ -120,30 +131,34 @@ class DataSelectionViewBox(MouseTrackingViewBox):
         self.__markers = list()
 
     def mouseClickEvent(self, ev: MouseClickEvent) -> None:
-        selection_enabled = self._marker_selection_mode != self.SelectionMode.Disabled
-        if selection_enabled and (ev.button() == QtCore.Qt.LeftButton) and not ev.double():
-            ev.accept()
-            pos = self.mapToView(ev.pos())
-            self.add_marker_selection((pos.x(), pos.y()))
-        return super().mouseClickEvent(ev)
+        if self.allow_tracking_outside_data or self.pointer_on_data(ev.scenePos()):
+            selection_enabled = self._marker_selection_mode != self.SelectionMode.Disabled
+            if selection_enabled and (ev.button() == QtCore.Qt.LeftButton) and not ev.double():
+                ev.accept()
+                pos = self.mapToView(ev.pos())
+                self.add_marker_selection((pos.x(), pos.y()))
+        if not ev.isAccepted():
+            return super().mouseClickEvent(ev)
 
     def mouseDragEvent(self, ev: MouseDragEvent, axis: Optional[int] = None) -> None:
-        selection_enabled = self._region_selection_mode != self.SelectionMode.Disabled
-        if selection_enabled and axis is None and (ev.button() == QtCore.Qt.LeftButton) and not ev.isAccepted():
-            ev.accept()
-            start = self.mapToView(ev.buttonDownPos())
-            end = self.mapToView(ev.pos())
-            span = ((start.x(), end.x()), (start.y(), end.y()))
-            if ev.isStart():
-                self._add_region_selection(span)
-            else:
-                try:
-                    self._move_region_selection(span, index=-1)
-                except IndexError:
-                    pass
-            if ev.isFinish():
-                self._emit_region_change()
-        return super().mouseDragEvent(ev, axis)
+        if self.allow_tracking_outside_data or self.pointer_on_data(ev.buttonDownScenePos()):
+            selection_enabled = self._region_selection_mode != self.SelectionMode.Disabled
+            if selection_enabled and axis is None and (ev.button() == QtCore.Qt.LeftButton) and not ev.isAccepted():
+                ev.accept()
+                start = self.mapToView(ev.buttonDownPos())
+                end = self.mapToView(ev.pos())
+                span = ((start.x(), end.x()), (start.y(), end.y()))
+                if ev.isStart():
+                    self._add_region_selection(span)
+                else:
+                    try:
+                        self._move_region_selection(span, index=-1)
+                    except IndexError:
+                        pass
+                if ev.isFinish():
+                    self._emit_region_change()
+        if not ev.isAccepted():
+            return super().mouseDragEvent(ev, axis)
 
     def region_selection_mode(self) -> SelectionMode:
         return self._region_selection_mode
