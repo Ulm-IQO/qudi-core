@@ -46,17 +46,8 @@ class TestGui(GuiBase):
         self._mw.setCentralWidget(self.plotwidget)
         self.viewbox.set_region_selection_mode(self.viewbox.SelectionMode.XY)
         self.viewbox.set_marker_selection_mode(self.viewbox.SelectionMode.XY)
-        self.viewbox.set_selection_movable(True)
-        self.viewbox.set_selection_limits((-0.5, 9.5), (-0.5, 9.5))
-        self.crosshair = InfiniteCrosshair(viewbox=self.viewbox, position=(5, 5))
-        self.rectangle = Rectangle(viewbox=self.viewbox,
-                                   position=(5, 5),
-                                   size=(1, 2),
-                                   bounds=[(-0.5, 9.5), (-0.5, 9.5)],
-                                   corner_handles=True,
-                                   edge_handles=True)
-        self.rectangle.sigAreaChanged.connect(lambda x: print('area changed:', x))
-        self.rectangle.sigAreaDragged.connect(lambda x, y, a, b: print('area dragged:', x, y, a, b))
+        self.viewbox.set_selection_mutable(True)
+        self.viewbox.set_selection_bounds([(-0.5, 9.5), (-0.5, 9.5)])
 
     def show(self) -> None:
         self._mw.show()
