@@ -30,7 +30,7 @@ import numpy as np
 from PySide2 import QtCore
 from pyqtgraph import ViewBox, SignalProxy, InfiniteLine, LinearRegionItem
 from pyqtgraph.GraphicsScene.mouseEvents import MouseClickEvent, MouseDragEvent
-from qudi.util.widgets.plotting.roi import RectROI, TargetItem
+from qudi.util.widgets.plotting.roi import TargetItem
 
 
 class MouseTrackingViewBox(ViewBox):

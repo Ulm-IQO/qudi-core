@@ -25,8 +25,8 @@ from pyqtgraph import PlotWidget, TargetItem
 
 from qudi.core.module import GuiBase
 from qudi.util.widgets.plotting.view_box import DataSelectionViewBox
-from qudi.util.widgets.plotting.image_item import DataImageItem
-from qudi.util.widgets.plotting.roi import CrosshairROI
+from qudi.util.widgets.plotting.plot_item import DataImageItem
+from qudi.util.widgets.plotting.marker import InfiniteCrosshair, Rectangle
 
 
 class TestGui(GuiBase):
@@ -48,11 +48,10 @@ class TestGui(GuiBase):
         self.viewbox.set_marker_selection_mode(self.viewbox.SelectionMode.XY)
         self.viewbox.set_selection_movable(True)
         self.viewbox.set_selection_limits((-0.5, 9.5), (-0.5, 9.5))
-        self.crosshair = CrosshairROI(pos=(5, 5), size=(1, 1))
-        self.viewbox.addItem(self.crosshair)
-        print(self.crosshair.position())
-        self.crosshair.set_position((1,2))
-        print(self.crosshair.position())
+        self.crosshair = InfiniteCrosshair(viewbox=self.viewbox, position=(5, 5))
+        print(self.crosshair.position)
+        self.rectangle = Rectangle(viewbox=self.viewbox, position=(5, 5), size=(1, 2), bounds=[(-0.5, 9.5), (-0.5, 9.5)])
+        print(self.rectangle.area, self.rectangle.roi.pos(), self.rectangle.roi.size())
 
     def show(self) -> None:
         self._mw.show()
