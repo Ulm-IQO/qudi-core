@@ -65,11 +65,13 @@ class InfiniteCrosshair(QtCore.QObject):
         self._z_value = None
         self.__is_dragged = False
         self.vline = _InfiniteLine(pos=position[0],
+                                   bounds=self._bounds[0],
                                    angle=90,
                                    movable=movable,
                                    pen=pen,
                                    hoverPen=hover_pen)
         self.hline = _InfiniteLine(pos=position[1],
+                                   bounds=self._bounds[1],
                                    angle=0,
                                    movable=movable,
                                    pen=pen,
