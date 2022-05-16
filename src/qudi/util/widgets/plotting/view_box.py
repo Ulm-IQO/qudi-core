@@ -69,14 +69,16 @@ class MouseTrackingViewBox(ViewBox):
         if self.allow_tracking_outside_data or self.pointer_on_data(ev.scenePos()):
             pos = self.mapToView(ev.pos())
             self.sigMouseClicked.emit((pos.x(), pos.y()), ev)
-        super().mouseClickEvent(ev)
+        if not ev.isAccepted():
+            super().mouseClickEvent(ev)
 
     def mouseDragEvent(self, ev: MouseDragEvent, axis: Optional[int] = None) -> None:
         if self.allow_tracking_outside_data or self.pointer_on_data(ev.buttonDownScenePos()):
             start = self.mapToView(ev.buttonDownPos())
             current = self.mapToView(ev.pos())
             self.sigMouseDragged.emit((start.x(), start.y()), (current.x(), current.y()), ev)
-        super().mouseDragEvent(ev, axis)
+        if not ev.isAccepted():
+            super().mouseDragEvent(ev, axis)
 
     def pointer_on_data(self, scene_pos: QtCore.QPointF) -> bool:
         for item in self.scene().items(scene_pos):
@@ -137,8 +139,7 @@ class DataSelectionViewBox(MouseTrackingViewBox):
                 ev.accept()
                 pos = self.mapToView(ev.pos())
                 self.add_marker_selection((pos.x(), pos.y()))
-        if not ev.isAccepted():
-            return super().mouseClickEvent(ev)
+        return super().mouseClickEvent(ev)
 
     def mouseDragEvent(self, ev: MouseDragEvent, axis: Optional[int] = None) -> None:
         if self.allow_tracking_outside_data or self.pointer_on_data(ev.buttonDownScenePos()):
@@ -157,8 +158,7 @@ class DataSelectionViewBox(MouseTrackingViewBox):
                         pass
                 if ev.isFinish():
                     self._emit_region_change()
-        if not ev.isAccepted():
-            return super().mouseDragEvent(ev, axis)
+        return super().mouseDragEvent(ev, axis)
 
     def region_selection_mode(self) -> SelectionMode:
         return self._region_selection_mode
