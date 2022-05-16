@@ -130,7 +130,7 @@ class InfiniteCrosshair(QtCore.QObject):
 
     def show(self):
         view = self.parent()
-        if self.vline not in view.childItems():
+        if self.vline not in view.addedItems:
             view.addItem(self.vline)
             view.addItem(self.hline)
             if self._z_value is not None:
@@ -139,9 +139,11 @@ class InfiniteCrosshair(QtCore.QObject):
 
     def hide(self):
         view = self.parent()
-        if self.vline in view.childItems():
+        try:
             view.removeItem(self.vline)
             view.removeItem(self.hline)
+        except:
+            pass
 
     def set_pen(self, pen: Any) -> None:
         """ Sets the pen to be used for drawing the crosshair lines.
@@ -242,7 +244,7 @@ class InfiniteLine(QtCore.QObject):
         self._bounds = self._normalize_bounds(bounds)
         self._z_value = None
         self.__is_dragged = False
-        self.line = _InfiniteLine(pos=position[0],
+        self.line = _InfiniteLine(pos=position,
                                   angle=0 if orientation is QtCore.Qt.Horizontal else 90,
                                   movable=movable,
                                   pen=pen,
@@ -252,6 +254,10 @@ class InfiniteLine(QtCore.QObject):
         self.line.sigPositionChangeFinished.connect(self._line_position_change_finished)
 
         self.show()
+
+    @property
+    def orientation(self) -> QtCore.Qt.Orientation:
+        return QtCore.Qt.Vertical if self.line.angle == 90 else QtCore.Qt.Horizontal
 
     def movable(self) -> bool:
         return bool(self.line.movable)
@@ -295,15 +301,16 @@ class InfiniteLine(QtCore.QObject):
 
     def show(self):
         view = self.parent()
-        if self.line not in view.childItems():
+        if self.line not in view.addedItems:
             view.addItem(self.line)
             if self._z_value is not None:
                 self.line.setZValue(self._z_value)
 
     def hide(self):
-        view = self.parent()
-        if self.line in view.childItems():
-            view.removeItem(self.line)
+        try:
+            self.parent().removeItem(self.line)
+        except:
+            pass
 
     def set_pen(self, pen: Any) -> None:
         """ Sets the pen to be used for drawing the line.
@@ -421,6 +428,10 @@ class LinearRegion(QtCore.QObject):
 
         self.show()
 
+    @property
+    def orientation(self) -> QtCore.Qt.Orientation:
+        return QtCore.Qt.Vertical if self.region.orientation == 'vertical' else QtCore.Qt.Horizontal
+
     def movable(self) -> bool:
         return self.roi.translatable
 
@@ -462,15 +473,16 @@ class LinearRegion(QtCore.QObject):
 
     def show(self):
         view = self.parent()
-        if self.region not in view.childItems():
+        if self.region not in view.addedItems:
             view.addItem(self.region)
             if self._z_value is not None:
                 self.region.setZValue(self._z_value)
 
     def hide(self):
-        view = self.parent()
-        if self.region in view.childItems():
-            view.removeItem(self.region)
+        try:
+            self.parent().removeItem(self.region)
+        except:
+            pass
 
     def set_pen(self, pen: Any) -> None:
         """ Sets the pen to be used for drawing the lines.
@@ -685,15 +697,16 @@ class Rectangle(QtCore.QObject):
 
     def show(self):
         view = self.parent()
-        if self.roi not in view.childItems():
+        if self.roi not in view.addedItems:
             view.addItem(self.roi)
             if self._z_value is not None:
                 self.roi.setZValue(self._z_value)
 
     def hide(self):
-        view = self.parent()
-        if self.roi in view.childItems():
-            view.removeItem(self.roi)
+        try:
+            self.parent().removeItem(self.roi)
+        except:
+            pass
 
     def set_pen(self, pen: Any) -> None:
         """ Given parameter must be compatible with pyqtgraph.mkPen() """

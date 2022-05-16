@@ -23,7 +23,7 @@ If not, see <https://www.gnu.org/licenses/>.
 
 __all__ = ['MouseTrackingViewBox', 'DataSelectionViewBox']
 
-from typing import Optional, Union, Any, Tuple, Mapping
+from typing import Optional, Union, Any, Tuple, Sequence, List
 from enum import IntEnum
 
 from PySide2 import QtCore
@@ -99,23 +99,23 @@ class DataSelectionViewBox(MouseTrackingViewBox):
 
     def __init__(self,
                  *args,
-                 x_selection_limits: Optional[Tuple[float, float]] = None,
-                 y_selection_limits: Optional[Tuple[float, float]] = None,
-                 selection_pens: Optional[Mapping[str, Any]] = None,
-                 selection_brushes: Optional[Mapping[str, Any]] = None,
+                 selection_bounds: Optional[Sequence[Tuple[Union[None, float], Union[None, float]]]] = None,
+                 selection_pen: Optional[Any] = None,
+                 selection_hover_pen: Optional[Any] = None,
+                 selection_brush: Optional[Any] = None,
+                 selection_hover_brush: Optional[Any] = None,
                  **kwargs
                  ) -> None:
         super().__init__(*args, **kwargs)
-        if x_selection_limits is not None:
-            x_selection_limits = (min(x_selection_limits), max(x_selection_limits))
-        if y_selection_limits is not None:
-            y_selection_limits = (min(y_selection_limits), max(y_selection_limits))
-        self._selection_pens = dict() if selection_pens is None else selection_pens.copy()
-        self._selection_brushes = dict() if selection_brushes is None else selection_brushes.copy()
+        self._selection_bounds = None if selection_bounds is None else list(selection_bounds)
+        self._selection_pen = selection_pen
+        self._selection_hover_pen = selection_hover_pen
+        self._selection_brush = selection_brush
+        self._selection_hover_brush = selection_hover_brush
         self._region_selection_mode = self.SelectionMode.Disabled
         self._marker_selection_mode = self.SelectionMode.Disabled
-        self._selection_movable = True
-        self._selection_limits = (x_selection_limits , y_selection_limits)
+        self._selection_mutable = True
+
         self.__regions = list()
         self.__markers = list()
 
@@ -135,16 +135,13 @@ class DataSelectionViewBox(MouseTrackingViewBox):
             end = self.mapToView(ev.pos())
             span = ((start.x(), end.x()), (start.y(), end.y()))
             if ev.isStart():
-                print('start:', span)
                 self._add_region_selection(span)
             else:
                 try:
-                    print('move:', span)
                     self._move_region_selection(span, index=-1)
                 except IndexError:
                     pass
             if ev.isFinish():
-                print('finished')
                 self._emit_region_change()
         return super().mouseDragEvent(ev, axis)
 
@@ -164,37 +161,42 @@ class DataSelectionViewBox(MouseTrackingViewBox):
 
     marker_selection_mode = property(marker_selection_mode, set_marker_selection_mode)
 
-    def selection_movable(self) -> bool:
-        return self._selection_movable
+    def selection_mutable(self) -> bool:
+        return self._selection_mutable
 
-    def set_selection_movable(self, movable: bool) -> None:
-        movable = bool(movable)
-        if movable is not self._selection_movable:
+    def set_selection_mutable(self, mutable: bool) -> None:
+        mutable = bool(mutable)
+        if mutable is not self._selection_mutable:
             for m in self.__markers:
-                m.setMovable(movable)
+                m.set_movable(mutable)
             for r in self.__regions:
-                r.setMovable(movable)
-            self._selection_movable = movable
+                r.set_movable(mutable)
+                try:
+                    r.set_resizable(mutable)
+                except AttributeError:
+                    pass
+            self._selection_mutable = mutable
 
-    selection_movable = property(selection_movable, set_selection_movable)
+    selection_mutable = property(selection_mutable, set_selection_mutable)
 
-    def selection_limits(self) -> Tuple[Union[None, Tuple[float, float]], Union[None, Tuple[float, float]]]:
-        return self._selection_limits
+    @property
+    def selection_bounds(self) -> Union[None, List[Union[None, Tuple[float, float]]]]:
+        try:
+            return self._selection_bounds.copy()
+        except AttributeError:
+            return self._selection_bounds
 
-    def set_selection_limits(self,
-                             x: Union[None, Tuple[float, float]],
-                             y: Union[None, Tuple[float, float]]
+    def set_selection_bounds(self,
+                             bounds: Union[None, List[Union[None, Tuple[float, float]]]]
                              ) -> None:
-        if x is not None:
-            x = (min(x), max(x))
-        if y is not None:
-            y = (min(y), max(y))
-        new_limits = (x, y)
-        if new_limits != self._selection_limits:
-            self._selection_limits = new_limits
-            self._apply_selection_limits()
-
-    selection_limits = property(selection_limits, set_selection_limits)
+        old_bounds = self.selection_bounds
+        if bounds != old_bounds:
+            self._selection_bounds = bounds
+            try:
+                self._apply_selection_bounds()
+            except:
+                self._selection_bounds = old_bounds
+                raise
 
     def add_region_selection(self,
                              span: Tuple[Tuple[float, float], Tuple[float, float]],
@@ -210,35 +212,41 @@ class DataSelectionViewBox(MouseTrackingViewBox):
         mode = self._region_selection_mode if mode is None else self.SelectionMode(mode)
         if mode == self.SelectionMode.Disabled:
             return
-        elif mode == self.SelectionMode.XY:
-            item = RectROI(pos=(min(span[0]), min(span[1])),
-                           size=(max(span[0]) - min(span[0]), max(span[1]) - min(span[1])),
-                           invertible=False,
-                           movable=self._selection_movable,
-                           resizable=self._selection_movable,
-                           rotatable=False,
-                           bounds=self._selection_limits)
-            item.sigRegionChangeFinished.connect(self._emit_region_change)
+        if mode == self.SelectionMode.XY:
+            x_min, x_max = sorted(span[0])
+            y_min, y_max = sorted(span[1])
+            x_span = x_max - x_min
+            y_span = y_max - y_min
+            item = Rectangle(viewbox=self,
+                             position=(x_min + x_span / 2, y_min + y_span / 2),
+                             size=(x_span, y_span),
+                             edge_handles=self.selection_mutable,
+                             corner_handles=False,
+                             bounds=self.selection_bounds,
+                             movable=self.selection_mutable,
+                             resizable=self.selection_mutable,
+                             pen=self._selection_pen,
+                             hover_pen=self._selection_hover_pen)
         else:
             if mode == self.SelectionMode.X:
-                orientation = 'vertical'
-                bounds = self._selection_limits[0]
+                orientation = QtCore.Qt.Vertical
+                bounds = None if self._selection_bounds is None else self._selection_bounds[0]
                 values = span[0]
             else:
-                orientation = 'horizontal'
-                bounds = self._selection_limits[1]
+                orientation = QtCore.Qt.Horizontal
+                bounds = None if self._selection_bounds is None else self._selection_bounds[1]
                 values = span[1]
-            item = LinearRegionItem(values=values,
-                                    bounds=bounds,
-                                    orientation=orientation,
-                                    movable=self._selection_movable,
-                                    span=(0, 1),
-                                    swapMode='sort',
-                                    **self._selection_pens,
-                                    **self._selection_brushes)
-            item.sigRegionChangeFinished.connect(self._emit_region_change)
-        self.addItem(item)
-        item.setZValue(1)
+            item = LinearRegion(viewbox=self,
+                                orientation=orientation,
+                                span=values,
+                                bounds=bounds,
+                                movable=self.selection_mutable,
+                                pen=self._selection_pen,
+                                hover_pen=self._selection_hover_pen,
+                                brush=self._selection_brush,
+                                hover_brush=self._selection_hover_brush)
+        item.sigAreaChanged.connect(self._emit_region_change)
+        item.set_z_value(10)
         self.__regions.append(item)
 
     def add_marker_selection(self,
@@ -256,30 +264,30 @@ class DataSelectionViewBox(MouseTrackingViewBox):
         if mode == self.SelectionMode.Disabled:
             return
         elif mode == self.SelectionMode.XY:
-            if self._selection_limits[0] is None and self._selection_limits[1] is None:
-                bounds = None
-            else:
-                bounds = self._selection_limits
-            item = TargetItem(pos=position, bounds=bounds)
-            item.sigPositionChangeFinished.connect(self._emit_marker_change)
+            item = InfiniteCrosshair(viewbox=self,
+                                     position=position,
+                                     bounds=self.selection_bounds,
+                                     movable=self.selection_mutable,
+                                     pen=self._selection_pen,
+                                     hover_pen=self._selection_hover_pen)
         else:
             if mode == self.SelectionMode.X:
-                angle = 90
-                bounds = self._selection_limits[0]
+                orientation = QtCore.Qt.Vertical
+                bounds = None if self._selection_bounds is None else self._selection_bounds[0]
                 pos = position[0]
             else:
-                angle = 0
-                bounds = self._selection_limits[1]
+                orientation = QtCore.Qt.Horizontal
+                bounds = None if self._selection_bounds is None else self._selection_bounds[1]
                 pos = position[1]
-            item = InfiniteLine(pos=pos,
+            item = InfiniteLine(viewbox=self,
+                                orientation=orientation,
+                                position=pos,
                                 bounds=bounds,
-                                angle=angle,
-                                movable=self._selection_movable,
-                                span=(0, 1),
-                                **self._selection_pens)
-            item.sigPositionChangeFinished.connect(self._emit_marker_change)
-        self.addItem(item)
-        item.setZValue(2)
+                                movable=self.selection_mutable,
+                                pen=self._selection_pen,
+                                hover_pen=self._selection_hover_pen)
+        item.sigPositionChanged.connect(self._emit_marker_change)
+        item.set_z_value(11)
         self.__markers.append(item)
 
     def move_region_selection(self,
@@ -295,14 +303,17 @@ class DataSelectionViewBox(MouseTrackingViewBox):
                                ) -> None:
         item = self.__regions[index]
         item.blockSignals(True)
-        if isinstance(item, LinearRegionItem):
-            if item.orientation == 'vertical':
-                item.setRegion(span[0])
+        if isinstance(item, LinearRegion):
+            if item.orientation == QtCore.Qt.Vertical:
+                item.set_area(sorted(span[0]))
             else:
-                item.setRegion(span[1])
-        elif isinstance(item, RectROI):
-            item.setPos((min(span[0]), min(span[1])))
-            item.setSize((max(span[0]) - min(span[0]), max(span[1]) - min(span[1])))
+                item.set_area(sorted(span[1]))
+        elif isinstance(item, Rectangle):
+            x_min, x_max = sorted(span[0])
+            y_min, y_max = sorted(span[1])
+            size = (x_max - x_min, y_max - y_min)
+            area = QtCore.QRectF(x_min, y_max, size[0], -size[1])
+            item.set_area(area)
         item.blockSignals(False)
 
     def move_marker_selection(self,
@@ -319,9 +330,9 @@ class DataSelectionViewBox(MouseTrackingViewBox):
         item = self.__markers[index]
         item.blockSignals(True)
         if isinstance(item, InfiniteLine):
-            item.setPos(position[0] if item.angle == 90 else position[1])
-        elif isinstance(item, TargetItem):
-            item.setPos(position)
+            item.set_position(position[0 if item.orientation == QtCore.Qt.Vertical else 1])
+        elif isinstance(item, InfiniteCrosshair):
+            item.set_position(position)
         item.blockSignals(False)
 
     def clear_marker_selections(self) -> None:
@@ -339,8 +350,9 @@ class DataSelectionViewBox(MouseTrackingViewBox):
 
     def _delete_marker_selection(self, index: int) -> None:
         item = self.__markers.pop(index)
-        item.sigPositionChangeFinished.disconnect()
-        self.removeItem(item)
+        item.sigPositionChanged.disconnect()
+        item.hide()
+        item.setParent(None)
 
     def clear_region_selections(self) -> None:
         if len(self.__regions) != 0:
@@ -357,48 +369,52 @@ class DataSelectionViewBox(MouseTrackingViewBox):
 
     def _delete_region_selection(self, index: int) -> None:
         item = self.__regions.pop(index)
-        item.sigRegionChangeFinished.disconnect()
-        self.removeItem(item)
+        item.sigAreaChanged.disconnect()
+        item.hide()
+        item.setParent(None)
 
     def _emit_marker_change(self) -> None:
         markers = {
-            self.SelectionMode.X : [
-                m.value() for m in self.__markers if isinstance(m, InfiniteLine) and m.angle == 90
+            self.SelectionMode.X: [
+                m.position for m in self.__markers if
+                isinstance(m, InfiniteLine) and m.orientation == QtCore.Qt.Vertical
             ],
-            self.SelectionMode.Y : [
-                m.value() for m in self.__markers if isinstance(m, InfiniteLine) and m.angle == 0
+            self.SelectionMode.Y: [
+                m.position for m in self.__markers if
+                isinstance(m, InfiniteLine) and m.orientation == QtCore.Qt.Horizontal
             ],
-            self.SelectionMode.XY: list()
+            self.SelectionMode.XY: [
+                m.position for m in self.__markers if isinstance(m, InfiniteCrosshair)
+            ]
         }
         self.sigMarkerSelectionChanged.emit(markers)
 
     def _emit_region_change(self) -> None:
         regions = {
-            self.SelectionMode.X : [
-                r.getRegion() for r in self.__regions if
-                isinstance(r, LinearRegionItem) and r.orientation == 'vertical'
+            self.SelectionMode.X: [
+                r.area for r in self.__regions if
+                isinstance(r, LinearRegion) and r.orientation == QtCore.Qt.Vertical
             ],
-            self.SelectionMode.Y : [
-                r.getRegion() for r in self.__regions if
-                isinstance(r, LinearRegionItem) and r.orientation == 'horizontal'
+            self.SelectionMode.Y: [
+                r.area for r in self.__regions if
+                isinstance(r, LinearRegion) and r.orientation == QtCore.Qt.Horizontal
             ],
-            self.SelectionMode.XY: list()
+            self.SelectionMode.XY: [r.area for r in self.__regions if isinstance(r, Rectangle)]
         }
         self.sigRegionSelectionChanged.emit(regions)
 
-    def _apply_selection_limits(self) -> None:
-        x_lim, y_lim = self._selection_limits
-        if x_lim is None:
-            x_lim = (None, None)
-        if y_lim is None:
-            y_lim = (None, None)
+    def _apply_selection_bounds(self) -> None:
+        if self._selection_bounds is None:
+            x_bounds = y_bounds = None
+        else:
+            x_bounds, y_bounds = self._selection_bounds
         for m in self.__markers:
             if isinstance(m, InfiniteLine):
-                m.setBounds(x_lim if m.angle == 90 else y_lim)
-            elif isinstance(m, TargetItem):
-                m.set_bounds((x_lim, y_lim))
+                m.set_bounds(x_bounds if m.orientation == QtCore.Qt.Vertical else y_bounds)
+            elif isinstance(m, InfiniteCrosshair):
+                m.set_bounds((x_bounds, y_bounds))
         for r in self.__regions:
-            if isinstance(r, LinearRegionItem):
-                r.setBounds(x_lim if r.orientation == 'vertical' else y_lim)
-            elif isinstance(r, RectROI):
-                r.set_bounds(self._selection_limits)
+            if isinstance(r, LinearRegion):
+                r.set_bounds(x_bounds if r.orientation == QtCore.Qt.Vertical else y_bounds)
+            elif isinstance(r, Rectangle):
+                r.set_bounds((x_bounds, y_bounds))
