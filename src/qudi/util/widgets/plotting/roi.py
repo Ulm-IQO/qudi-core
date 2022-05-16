@@ -1,10 +1,6 @@
 # -*- coding: utf-8 -*-
 
 """
-This file contains customized pyqtgraph graphics items to be used as data ROI markers in 1D and 2D plots.
-This is an attempt to provide a somewhat unified interface to these markers contrary to the
-heterogeneous interfaces of pyqtgraph items.
-
 Copyright (c) 2021, the qudi developers. See the AUTHORS.md file at the top-level directory of this
 distribution and on <https://github.com/Ulm-IQO/qudi-core/>
 
@@ -22,96 +18,155 @@ You should have received a copy of the GNU Lesser General Public License along w
 If not, see <https://www.gnu.org/licenses/>.
 """
 
-__all__ = ['RectROI', 'TargetItem']
+__all__ = ['RectangleROI']
 
-import numpy as np
-from typing import Union, Tuple, Optional
-from PySide2 import QtCore, QtGui
+from math import isinf
+from typing import Union, Tuple, Optional, Sequence, List
+from PySide2 import QtCore
 from pyqtgraph import ROI
-from pyqtgraph import TargetItem as _TargetItem
 
 
-
-
-
-class CrosshairROI(ROI):
+class RectangleROI(ROI):
     """
     """
-    def __init__(self, pos, size, bounds=None, **kwargs):
-        ROI.__init__(self, pos, size, **kwargs)
-        self.bounds = bounds
-        self._bounding_rect = None
-
-    def paint(self, p, opt, widget):
-        # Note: don't use self.boundingRect here, because subclasses may need to redefine it.
-        r = self.roi_rect
-        p.setRenderHint(QtGui.QPainter.RenderHint.Antialiasing)
-        p.setPen(self.currentPen)
-
-        # Draw crosshair infinite lines
-        vr = self.getViewBox().viewRect()
-        top_scaled = (vr.bottom() - r.top()) / r.height()
-        bottom_scaled = (r.top() - vr.top()) / r.height()
-        p.drawLine(QtCore.QPointF(0.5, -bottom_scaled), QtCore.QPointF(0.5, top_scaled))
-        right_scaled = (vr.right() - r.left()) / r.width()
-        left_scaled = (r.left() - vr.left()) / r.width()
-        p.drawLine(QtCore.QPointF(-left_scaled, 0.5), QtCore.QPointF(right_scaled, 0.5))
-
-        # Draw ROI rect
-        p.drawRect(0, 0, 1, 1)
-
-    def boundingRect(self):
-        if self._bounding_rect is None:
-            self._calc_bounding_rect()
-        return self._bounding_rect
-
-    def viewTransformChanged(self):
-        """
-        Called whenever the transformation matrix of the view has changed.
-        (eg, the view range has changed or the view was resized)
-        """
-        super().viewTransformChanged()
-        self.update()
-
-    def _calc_bounding_rect(self):
-        self._bounding_rect = QtCore.QRectF(self.getViewBox().viewRect())
-        self.prepareGeometryChange()
-
-    def position(self) -> Tuple[float, float]:
-        center = self.roi_rect.center()
-        return center.x(), center.y()
-
-    def set_position(self, pos: Tuple[float, float]) -> None:
-        shift = QtCore.QPointF(*pos) - self.roi_rect.center()
-        new_pos = self.pos() + shift
-        self.setPos(new_pos)
-
-    def set_size(self, size: Tuple[float, float]) -> None:
-        self.setSize(size, center=(0.5, 0.5))
+    def __init__(self, pos, size=(1, 1), bounds=None, parent=None, pen=None, hoverPen=None,
+                 handlePen=None, handleHoverPen=None, movable=True, resizable=True,
+                 aspectLocked=False):
+        ROI.__init__(self, pos, size=size, angle=0, invertible=True, maxBounds=None,
+                     scaleSnap=False, translateSnap=False, rotateSnap=False, parent=parent,
+                     pen=pen, hoverPen=hoverPen, handlePen=handlePen, handleHoverPen=handleHoverPen,
+                     movable=movable, rotatable=False, resizable=resizable, removable=False,
+                     aspectLocked=aspectLocked)
+        self.__drag_mode = None
+        self._bounds = self.normalize_bounds(bounds)
+        self._clip_area(update=True)
 
     @property
-    def roi_rect(self) -> QtCore.QRectF:
-        return QtCore.QRectF(self.state['pos'][0],
-                             self.state['pos'][1],
-                             self.state['size'][0],
-                             self.state['size'][1]).normalized()
+    def area(self) -> QtCore.QRectF:
+        return self.normalize_rect(self.pos(), self.size())
 
+    def set_area(self, area: QtCore.QRectF) -> None:
+        area = self.normalize_rect(area.topLeft(), area.size())
+        self.setSize(area.size(), update=False)
+        self.setPos(area.topLeft(), update=False)
+        self._clip_area(update=True, finish=True)
 
-class TargetItem(_TargetItem):
-    """
-    """
-    def __init__(self, bounds=None, **kwargs):
-        self.bounds = bounds
-        _TargetItem.__init__(self, **kwargs)
+    @property
+    def bounds(self) -> List[Tuple[Union[None, float], Union[None, float]]]:
+        return self._bounds.copy()
 
-    def setPos(self, *args):
-        if self.bounds is not None:
-            x_pos, y_pos = args[0] if len(args) == 1 else args
-            clipped_x = x_pos if self.bounds[0] is None else np.clip(x_pos, *self.bounds[0])
-            clipped_y = y_pos if self.bounds[1] is None else np.clip(y_pos, *self.bounds[1])
-            args = ((clipped_x, clipped_y),)
-        return super().setPos(*args)
+    def set_bounds(self,
+                   bounds: Union[None, Sequence[Tuple[Union[None, float], Union[None, float]]]]
+                   ) -> None:
+        self._bounds = self._normalize_bounds(bounds)
+        self._clip_area(update=True)
 
-    def set_bounds(self, bounds):
-        self.bounds = bounds
-        self.setPos(self.pos())
+    def _clip_area(self, update: Optional[bool] = True, finish: Optional[bool] = True) -> None:
+        current_area = self.area
+        clipped_area = QtCore.QRectF(current_area)
+        x_min, x_max = self._bounds[0]
+        y_min, y_max = self._bounds[1]
+        if (x_min is not None) and (current_area.left() < x_min):
+            clipped_area.setLeft(x_min)
+            clipped_area.setRight(min(x_min + current_area.width(), x_max))
+        elif (x_max is not None) and (current_area.right() > x_max):
+            clipped_area.setRight(x_max)
+            clipped_area.setLeft(max(x_max - current_area.width(), x_min))
+        if (y_min is not None) and (current_area.bottom() < y_min):
+            clipped_area.setBottom(y_min)
+            clipped_area.setTop(min(y_min + abs(current_area.height()), y_max))
+        elif (y_max is not None) and (current_area.top() > y_max):
+            clipped_area.setTop(y_max)
+            clipped_area.setBottom(max(y_max - abs(current_area.height()), y_min))
+        self.setSize(clipped_area.size(), update=False)
+        self.setPos(clipped_area.topLeft(), update=update, finish=finish)
+
+    @staticmethod
+    def normalize_bounds(bounds: Union[None, Sequence[Tuple[Union[None, float], Union[None, float]]]]
+                         ) -> List[Tuple[Union[None, float], Union[None, float]]]:
+        if bounds is None:
+            bounds = [(None, None), (None, None)]
+        else:
+            bounds = [list(span) for span in bounds]
+            # Replace inf values by None
+            for span in bounds:
+                for ii, val in enumerate(span):
+                    try:
+                        if isinf(val):
+                            span[ii] = None
+                    except TypeError:
+                        pass
+            # Sort spans in ascending order
+            try:
+                bounds[0] = tuple(sorted(bounds[0]))
+            except TypeError:
+                bounds[0] = tuple(bounds[0])
+            try:
+                bounds[1] = tuple(sorted(bounds[1]))
+            except TypeError:
+                bounds[1] = tuple(bounds[1])
+        return bounds
+
+    @staticmethod
+    def normalize_rect(pos: Tuple[float, float], size: Tuple[float, float]) -> QtCore.QRectF:
+        try:
+            pos = QtCore.QPointF(pos[0], pos[1])
+        except TypeError:
+            pass
+        try:
+            size = QtCore.QSizeF(size[0], size[1])
+        except TypeError:
+            pass
+        x_min, x_max = sorted([pos.x(), pos.x() + size.width()])
+        y_min, y_max = sorted([pos.y(), pos.y() + size.height()])
+        return QtCore.QRectF(x_min,
+                             y_max,
+                             abs(size.width()),
+                             -abs(size.height()))
+
+    def checkPointMove(self, handle, pos, modifiers):
+        pos = self.mapSceneToParent(pos)
+        x_min, x_max = self._bounds[0]
+        y_min, y_max = self._bounds[1]
+        if (x_min is not None) and pos.x() < x_min:
+            return False
+        if (x_max is not None) and pos.x() > x_max:
+            return False
+        if (y_min is not None) and pos.y() < y_min:
+            return False
+        if (y_max is not None) and pos.y() > y_max:
+            return False
+        return True
+
+    def mouseDragEvent(self, ev) -> None:
+        if ev.isStart():
+            if ev.button() == QtCore.Qt.MouseButton.LeftButton:
+                self.setSelected(True)
+                mods = ev.modifiers()
+                if self.translatable and mods == QtCore.Qt.KeyboardModifier.NoModifier:
+                    self.__drag_mode = 'translate'
+                else:
+                    self.__drag_mode = None
+
+                if self.__drag_mode is not None:
+                    self._moveStarted()
+                    ev.accept()
+                else:
+                    ev.ignore()
+            else:
+                self.__drag_mode = None
+                ev.ignore()
+
+        if ev.isFinish() and self.__drag_mode is not None:
+            self._moveFinished()
+            return
+
+        # self.isMoving becomes False if the move was cancelled by right-click
+        if not self.isMoving or self.__drag_mode is None:
+            return
+
+        if self.__drag_mode == 'translate':
+            shift = self.mapToParent(ev.pos()) - self.mapToParent(ev.buttonDownPos())
+            new_pos = self.preMoveState['pos'] + shift
+            self.setPos(new_pos, update=False, finish=False)
+            self._clip_area(update=True, finish=False)

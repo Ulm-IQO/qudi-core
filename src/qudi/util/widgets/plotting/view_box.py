@@ -26,11 +26,11 @@ __all__ = ['MouseTrackingViewBox', 'DataSelectionViewBox']
 from typing import Optional, Union, Any, Tuple, Mapping
 from enum import IntEnum
 
-import numpy as np
 from PySide2 import QtCore
-from pyqtgraph import ViewBox, SignalProxy, InfiniteLine, LinearRegionItem
+from pyqtgraph import ViewBox, SignalProxy
 from pyqtgraph.GraphicsScene.mouseEvents import MouseClickEvent, MouseDragEvent
-from qudi.util.widgets.plotting.roi import TargetItem
+from qudi.util.widgets.plotting.marker import Rectangle, InfiniteCrosshair
+from qudi.util.widgets.plotting.marker import InfiniteLine, LinearRegion
 
 
 class MouseTrackingViewBox(ViewBox):
