@@ -40,6 +40,7 @@ class DataImageItem(ImageItem):
         super().__init__(image, **kwargs)
         self._percentiles = None
 
+    @property
     def percentiles(self) -> Union[None, Tuple[float, float]]:
         return self._percentiles
 
@@ -54,8 +55,6 @@ class DataImageItem(ImageItem):
                 masked_image = np.ma.masked_invalid(self.image).compressed()
                 if masked_image.size > 0:
                     self.setLevels(self._get_percentile_levels(masked_image))
-
-    percentiles = property(percentiles, set_percentiles)
 
     def set_image_extent(self,
                          extent: Tuple[Tuple[float, float], Tuple[float, float]],

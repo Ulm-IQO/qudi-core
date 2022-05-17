@@ -26,7 +26,7 @@ import numpy as np
 from PySide2 import QtCore, QtWidgets
 from pyqtgraph import PlotWidget, ImageItem, ViewBox, InfiniteLine, ROI
 
-from qudi.util.widgets.colorbar import ColorBarWidget, ColorBarMode
+from qudi.util.widgets.plotting.colorbar import ColorBarWidget, ColorBarMode
 from qudi.util.colordefs import ColorScaleInferno
 
 
