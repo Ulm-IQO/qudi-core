@@ -20,13 +20,16 @@ You should have received a copy of the GNU Lesser General Public License along w
 If not, see <https://www.gnu.org/licenses/>.
 """
 
-__all__ = ['MouseTrackingPlotWidget', 'RubberbandZoomPlotWidget', 'DataSelectionPlotWidget']
+__all__ = ['MouseTrackingPlotWidget', 'RubberbandZoomPlotWidget', 'DataSelectionPlotWidget',
+           'ImageWidget']
 
 from typing import Union, Optional, Tuple, List
-from PySide2 import QtCore
+from PySide2 import QtCore, QtWidgets
 from pyqtgraph import PlotWidget
 from qudi.util.widgets.plotting.view_box import RubberbandZoomViewBox, MouseTrackingViewBox
 from qudi.util.widgets.plotting.view_box import DataSelectionViewBox
+from qudi.util.widgets.plotting.plot_item import DataImageItem
+from qudi.util.widgets.plotting.colorbar import ColorBarWidget
 
 
 class MouseTrackingPlotWidget(PlotWidget):
@@ -120,3 +123,86 @@ class DataSelectionPlotWidget(MouseTrackingPlotWidget):
     @property
     def selection_bounds(self) -> Union[None, List[Union[None, Tuple[float, float]]]]:
         return self.getViewBox().selection_bounds
+
+
+class ImageWidget(QtWidgets.QWidget):
+    """ Composite widget consisting of a PlotWidget and a colorbar to display 2D image data.
+    Provides a convenient image data interface and handles user colorscale interaction.
+    """
+    def __init__(self, parent: Optional[QtWidgets.QWidget] = None):
+        super().__init__(parent=parent)
+
+        self.plot_widget = PlotWidget()
+        self.image_item = DataImageItem()
+        self.plot_widget.addItem(self.image_item)
+        # self.plot_widget.setMinimumWidth(100)
+        # self.plot_widget.setMinimumHeight(100)
+        # self.plot_widget.setSizePolicy(QtWidgets.QSizePolicy.Expanding,
+        #                                 QtWidgets.QSizePolicy.Expanding)
+        # self.plot_widget.setFocusPolicy(QtCore.Qt.FocusPolicy.NoFocus)
+        self.plot_widget.setAspectLocked(lock=True, ratio=1.0)
+
+        self.colorbar_widget = ColorBarWidget()
+        if self.colorbar_widget.mode == ColorBarWidget.ColorBarMode.PERCENTILE:
+            self.image_item.set_percentiles(self.colorbar_widget.percentiles)
+        else:
+            self.image_item.set_percentiles(None)
+        self.colorbar_widget.sigModeChanged.connect(self._colorbar_mode_changed)
+        self.colorbar_widget.sigLimitsChanged.connect(self._colorbar_limits_changed)
+        self.colorbar_widget.sigPercentilesChanged.connect(self._colorbar_percentiles_changed)
+
+        layout = QtWidgets.QHBoxLayout()
+        layout.setStretch(0, 1)
+        layout.addWidget(self.plot_widget)
+        layout.addWidget(self.colorbar_widget)
+        self.setLayout(layout)
+
+        # monkey-patch attributes from PlotWidget and ImageItem for convenient access
+        self.autoRange = self.plot_widget.autoRange
+        self.set_percentiles = self.image_item.set_percentiles
+        self.set_image_extent = self.image_item.set_image_extent
+
+    @property
+    def percentiles(self) -> Union[None, Tuple[float, float]]:
+        return self.image_item.percentiles
+
+    def set_image(self, image) -> None:
+        """
+        """
+        if image is None:
+            self.image_item.set_image(image=None, autoLevels=False)
+            return
+
+        # Set image with proper colorbar limits
+        if self.colorbar_widget.mode == ColorBarWidget.ColorBarMode.PERCENTILE:
+            self.image_item.set_image(image=image, autoLevels=False)
+            levels = self.image_item.levels
+            if levels is not None:
+                self.colorbar_widget.set_limits(*levels)
+        else:
+            self.image_item.set_image(image=image,
+                                      autoLevels=False,
+                                      levels=self.colorbar_widget.limits)
+
+    def set_axis_label(self, axis, label=None, unit=None):
+        return self.plot_widget.setLabel(axis, text=label, units=unit)
+
+    def set_data_label(self, label, unit=None):
+        return self.colorbar_widget.set_label(label, unit)
+
+    def _colorbar_mode_changed(self, mode: ColorBarWidget.ColorBarMode) -> None:
+        if mode == ColorBarWidget.ColorBarMode.PERCENTILE:
+            self._colorbar_percentiles_changed(self.colorbar_widget.percentiles)
+        else:
+            self._colorbar_limits_changed(self.colorbar_widget.limits)
+
+    def _colorbar_limits_changed(self, limits: Tuple[float, float]) -> None:
+        self.image_item.set_percentiles(None)
+        self.image_item.setLevels(limits)
+
+    def _colorbar_percentiles_changed(self, percentiles: Tuple[float, float]) -> None:
+        self.image_item.set_percentiles(percentiles)
+        levels = self.image_item.levels
+        if levels is not None:
+            self.colorbar_widget.set_limits(*levels)
+
