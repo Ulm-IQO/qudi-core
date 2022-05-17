@@ -21,7 +21,7 @@ You should have received a copy of the GNU Lesser General Public License along w
 If not, see <https://www.gnu.org/licenses/>.
 """
 
-__all__ = ['MouseTrackingViewBox', 'DataSelectionViewBox']
+__all__ = ['MouseTrackingViewBox', 'DataSelectionViewBox', 'RubberbandZoomViewBox']
 
 from typing import Optional, Union, Any, Tuple, Sequence, List
 from enum import IntEnum
@@ -158,22 +158,21 @@ class DataSelectionViewBox(MouseTrackingViewBox):
                     self._emit_region_change()
         return super().mouseDragEvent(ev, axis)
 
+    @property
     def region_selection_mode(self) -> SelectionMode:
         return self._region_selection_mode
 
     def set_region_selection_mode(self, mode: Union[SelectionMode, int]) -> None:
         self._region_selection_mode = self.SelectionMode(mode)
 
-    region_selection_mode = property(region_selection_mode, set_region_selection_mode)
-
+    @property
     def marker_selection_mode(self) -> SelectionMode:
         return self._marker_selection_mode
 
     def set_marker_selection_mode(self, mode: Union[SelectionMode, int]) -> None:
         self._marker_selection_mode = self.SelectionMode(mode)
 
-    marker_selection_mode = property(marker_selection_mode, set_marker_selection_mode)
-
+    @property
     def selection_mutable(self) -> bool:
         return self._selection_mutable
 
@@ -189,8 +188,6 @@ class DataSelectionViewBox(MouseTrackingViewBox):
                 except AttributeError:
                     pass
             self._selection_mutable = mutable
-
-    selection_mutable = property(selection_mutable, set_selection_mutable)
 
     @property
     def selection_bounds(self) -> Union[None, List[Union[None, Tuple[float, float]]]]:
@@ -431,3 +428,40 @@ class DataSelectionViewBox(MouseTrackingViewBox):
                 r.set_bounds(x_bounds if r.orientation == QtCore.Qt.Vertical else y_bounds)
             elif isinstance(r, Rectangle):
                 r.set_bounds((x_bounds, y_bounds))
+
+
+class RubberbandZoomViewBox(MouseTrackingViewBox):
+    """
+    """
+
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self._rubberband_zoom = False
+
+    @property
+    def rubberband_zoom(self) -> bool:
+        return self._rubberband_zoom
+
+    def toggle_rubberband_zoom(self, enable: bool) -> None:
+        """ De-/Activate automatic zooming into a rubberband selection when dragging the mouse
+        cursor.
+        """
+        self._rubberband_zoom = bool(enable)
+
+    def mouseDragEvent(self, ev, axis=None):
+        """ Additional mouse drag event handling to implement rubber band selection and zooming.
+        """
+        if self._rubberband_zoom and ev.button() == QtCore.Qt.LeftButton and ev.modifiers() == QtCore.Qt.NoModifier:
+            ev.accept()
+            self.updateScaleBox(ev.buttonDownPos(), ev.pos())
+            if ev.isFinish():
+                self.rbScaleBox.hide()
+                start = self.mapToView(ev.buttonDownPos())
+                stop = self.mapToView(ev.pos())
+                rect = QtCore.QRectF(start, stop)
+                if self.zoom_by_selection:
+                    # AutoRange needs to be disabled by hand because of a pyqtgraph bug.
+                    # if self.autoRangeEnabled():
+                    #     self.disableAutoRange()
+                    self.setRange(rect=rect, padding=0)
+        return super().mouseDragEvent(ev, axis)
