@@ -129,10 +129,12 @@ class ImageWidget(QtWidgets.QWidget):
     """ Composite widget consisting of a PlotWidget and a colorbar to display 2D image data.
     Provides a convenient image data interface and handles user colorscale interaction.
     """
+    __plot_widget_type = PlotWidget
+
     def __init__(self, parent: Optional[QtWidgets.QWidget] = None):
         super().__init__(parent=parent)
 
-        self.plot_widget = PlotWidget()
+        self.plot_widget = self.__plot_widget_type()
         self.image_item = DataImageItem()
         self.plot_widget.addItem(self.image_item)
         # self.plot_widget.setMinimumWidth(100)
