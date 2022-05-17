@@ -21,7 +21,8 @@ If not, see <https://www.gnu.org/licenses/>.
 """
 
 __all__ = ['MouseTrackingPlotWidget', 'RubberbandZoomPlotWidget', 'DataSelectionPlotWidget',
-           'ImageWidget']
+           'ImageWidget', 'MouseTrackingImageWidget', 'RubberbandZoomImageWidget',
+           'DataSelectionImageWidget']
 
 from typing import Union, Optional, Tuple, List
 from PySide2 import QtCore, QtWidgets
@@ -129,12 +130,12 @@ class ImageWidget(QtWidgets.QWidget):
     """ Composite widget consisting of a PlotWidget and a colorbar to display 2D image data.
     Provides a convenient image data interface and handles user colorscale interaction.
     """
-    __plot_widget_type = PlotWidget
+    _plot_widget_type = PlotWidget
 
     def __init__(self, parent: Optional[QtWidgets.QWidget] = None):
         super().__init__(parent=parent)
 
-        self.plot_widget = self.__plot_widget_type()
+        self.plot_widget = self._plot_widget_type()
         self.image_item = DataImageItem()
         self.plot_widget.addItem(self.image_item)
         # self.plot_widget.setMinimumWidth(100)
@@ -207,4 +208,90 @@ class ImageWidget(QtWidgets.QWidget):
         levels = self.image_item.levels
         if levels is not None:
             self.colorbar_widget.set_limits(*levels)
+
+
+class MouseTrackingImageWidget(ImageWidget):
+    """ Extends the normal qudi ImageWidget with a custom PlotWidget type that tracks mouse
+    activity and sends signals.
+    """
+    _plot_widget_type = MouseTrackingPlotWidget
+
+    def __init__(self, parent: Optional[QtWidgets.QWidget] = None):
+        super().__init__(parent=parent)
+        self.toggle_rubberband_zoom = self.plot_widget.toggle_rubberband_zoom
+
+    @property
+    def sigMouseMoved(self) -> QtCore.Signal:
+        return self.plot_widget.sigMouseMoved
+
+    @property
+    def sigMouseDragged(self) -> QtCore.Signal:
+        return self.plot_widget.sigMouseDragged
+
+    @property
+    def sigMouseClicked(self) -> QtCore.Signal:
+        return self.plot_widget.sigMouseClicked
+
+    @property
+    def rubberband_zoom(self) -> bool:
+        return self.plot_widget.rubberband_zoom
+
+
+class RubberbandZoomImageWidget(MouseTrackingImageWidget):
+    """ Extends the qudi MouseTrackingImageWidget with a rubberband zoom tool.
+    """
+    _plot_widget_type = RubberbandZoomPlotWidget
+
+    def __init__(self, parent: Optional[QtWidgets.QWidget] = None):
+        super().__init__(parent=parent)
+        self.toggle_rubberband_zoom = self.plot_widget.toggle_rubberband_zoom
+
+    @property
+    def rubberband_zoom(self) -> bool:
+        return self.plot_widget.rubberband_zoom
+
+
+class DataSelectionImageWidget(RubberbandZoomImageWidget):
+    """ Extends the qudi MouseTrackingImageWidget with data selection tools and signals.
+    """
+    _plot_widget_type = DataSelectionPlotWidget
+
+    def __init__(self, parent: Optional[QtWidgets.QWidget] = None):
+        super().__init__(parent=parent)
+        self.set_region_selection_mode = self.plot_widget.set_region_selection_mode
+        self.set_marker_selection_mode = self.plot_widget.set_marker_selection_mode
+        self.set_selection_mutable = self.plot_widget.set_selection_mutable
+        self.set_selection_bounds = self.plot_widget.set_selection_bounds
+        self.add_region_selection = self.plot_widget.add_region_selection
+        self.add_marker_selection = self.plot_widget.add_marker_selection
+        self.move_region_selection = self.plot_widget.move_region_selection
+        self.move_marker_selection = self.plot_widget.move_marker_selection
+        self.clear_marker_selections = self.plot_widget.clear_marker_selections
+        self.delete_marker_selection = self.plot_widget.delete_marker_selection
+        self.clear_region_selections = self.plot_widget.clear_region_selections
+        self.delete_region_selection = self.plot_widget.delete_region_selection
+
+    @property
+    def sigMarkerSelectionChanged(self) -> QtCore.Signal:
+        return self.plot_widget.sigMarkerSelectionChanged
+
+    @property
+    def sigRegionSelectionChanged(self) -> QtCore.Signal:
+        return self.plot_widget.sigRegionSelectionChanged
+
+    @property
+    def region_selection_mode(self) -> DataSelectionPlotWidget.SelectionMode:
+        return self.plot_widget.region_selection_mode
+
+    @property
+    def marker_selection_mode(self) -> DataSelectionPlotWidget.SelectionMode:
+        return self.plot_widget.marker_selection_mode
+
+    @property
+    def selection_mutable(self) -> bool:
+        return self.plot_widget.selection_mutable
+
+    @property
+    def selection_bounds(self) -> Union[None, List[Union[None, Tuple[float, float]]]]:
+        return self.plot_widget.selection_bounds
 
