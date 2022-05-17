@@ -26,7 +26,7 @@ __all__ = ['MouseTrackingViewBox', 'DataSelectionViewBox']
 from typing import Optional, Union, Any, Tuple, Sequence, List
 from enum import IntEnum
 
-from PySide2 import QtCore, QtGui
+from PySide2 import QtCore
 from pyqtgraph import ViewBox, SignalProxy, PlotDataItem, ImageItem, PlotCurveItem, ScatterPlotItem
 from pyqtgraph.GraphicsScene.mouseEvents import MouseClickEvent, MouseDragEvent
 from qudi.util.widgets.plotting.marker import Rectangle, InfiniteCrosshair
@@ -97,8 +97,6 @@ class DataSelectionViewBox(MouseTrackingViewBox):
 
     Public methods will generally emit signals if they result in a selection change. The
     corresponding "protected" methods do not emit.
-
-    ToDo: Implement XY selection mode (ROIs and points)
     """
 
     class SelectionMode(IntEnum):

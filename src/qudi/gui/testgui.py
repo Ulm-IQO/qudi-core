@@ -20,7 +20,7 @@ If not, see <https://www.gnu.org/licenses/>.
 
 import numpy as np
 from typing import Union, Optional, Tuple
-from PySide2 import QtCore, QtWidgets
+from PySide2 import QtCore, QtWidgets, QtGui, QtCharts
 from pyqtgraph import PlotWidget, TargetItem
 
 from qudi.core.module import GuiBase
@@ -43,12 +43,41 @@ class TestGui(GuiBase):
         self.plotwidget.addItem(self.image)
         self._mw = QtWidgets.QMainWindow()
         self._mw.setWindowTitle('Derp Herp Inc.')
-        self._mw.setCentralWidget(self.plotwidget)
+        central_widget = QtWidgets.QWidget()
+        layout = QtWidgets.QVBoxLayout()
+        central_widget.setLayout(layout)
+        self._mw.setCentralWidget(central_widget)
+        layout.addWidget(self.plotwidget)
+        # self._mw.setCentralWidget(self.plotwidget)
         self.viewbox.set_region_selection_mode(self.viewbox.SelectionMode.XY)
         self.viewbox.set_marker_selection_mode(self.viewbox.SelectionMode.XY)
         self.viewbox.set_selection_mutable(True)
         self.viewbox.set_selection_bounds([(-0.5, 9.5), (-0.5, 9.5)])
         self.viewbox.sigMouseClicked.connect(lambda x, y: print('ViewBox clicked:', x))
+
+        self.series = QtCharts.QtCharts.QScatterSeries()
+        self.series.setName('scatter 1')
+        self.series.setMarkerShape(QtCharts.QtCharts.QScatterSeries.MarkerShapeCircle)
+        self.series.setMarkerSize(10)
+        x = np.linspace(-2*np.pi, 2*np.pi, 40)
+        y = np.sin(x)
+        data = [QtCore.QPointF(x, y) for x, y in np.vstack([x, y]).transpose()]
+        self.series.append(data)
+        self.chartview = QtCharts.QtCharts.QChartView()
+        self.chart = self.chartview.chart()
+        # self.chart.setBackgroundVisible(False)
+        self.chart.setPlotAreaBackgroundVisible(False)
+        self.series.setBorderColor('#00ff00')
+        self.series.setColor('#00ff00')
+        self.chart.addSeries(self.series)
+        self.chart.setTitle("Simple scatterchart example")
+        self.chart.createDefaultAxes()
+        self.chart.legend().hide()
+        self.chart.setDropShadowEnabled(False)
+        self.chartview.setRenderHint(QtGui.QPainter.Antialiasing)
+        layout.addWidget(self.chartview)
+        layout.setStretch(0, 1)
+        layout.setStretch(1, 1)
 
     def show(self) -> None:
         self._mw.show()
