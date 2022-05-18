@@ -21,16 +21,25 @@ You should have received a copy of the GNU Lesser General Public License along w
 If not, see <https://www.gnu.org/licenses/>.
 """
 
-__all__ = ['MouseTrackingViewBox', 'DataSelectionViewBox', 'RubberbandZoomViewBox']
+__all__ = ['MouseTrackingViewBox', 'DataSelectionViewBox', 'RubberbandZoomViewBox',
+           'RubberbandZoomSelectionViewBox', 'RubberbandZoomMixin', 'SelectionMode']
 
 from typing import Optional, Union, Any, Tuple, Sequence, List
 from enum import IntEnum
 
 from PySide2 import QtCore
 from pyqtgraph import ViewBox, SignalProxy, PlotDataItem, ImageItem, PlotCurveItem, ScatterPlotItem
+from pyqtgraph import LinearRegionItem as _LinearRegionItem
 from pyqtgraph.GraphicsScene.mouseEvents import MouseClickEvent, MouseDragEvent
 from qudi.util.widgets.plotting.marker import Rectangle, InfiniteCrosshair
 from qudi.util.widgets.plotting.marker import InfiniteLine, LinearRegion
+
+
+class SelectionMode(IntEnum):
+    Disabled = 0
+    X = 1
+    Y = 2
+    XY = 3
 
 
 class MouseTrackingViewBox(ViewBox):
@@ -99,11 +108,7 @@ class DataSelectionViewBox(MouseTrackingViewBox):
     corresponding "protected" methods do not emit.
     """
 
-    class SelectionMode(IntEnum):
-        Disabled = 0
-        X = 1
-        Y = 2
-        XY = 3
+    SelectionMode = SelectionMode
 
     sigMarkerSelectionChanged = QtCore.Signal(dict)
     sigRegionSelectionChanged = QtCore.Signal(dict)
@@ -140,9 +145,14 @@ class DataSelectionViewBox(MouseTrackingViewBox):
         return super().mouseClickEvent(ev)
 
     def mouseDragEvent(self, ev: MouseDragEvent, axis: Optional[int] = None) -> None:
-        if self.allow_tracking_outside_data or self.pointer_on_data(ev.buttonDownScenePos()):
+        if not ev.isAccepted():
             selection_enabled = self._region_selection_mode != self.SelectionMode.Disabled
-            if selection_enabled and axis is None and (ev.button() == QtCore.Qt.LeftButton) and not ev.isAccepted():
+            no_mod = ev.modifiers() == QtCore.Qt.NoModifier
+            is_left_button = ev.button() == QtCore.Qt.LeftButton
+            data_valid = self.allow_tracking_outside_data or self.pointer_on_data(
+                ev.buttonDownScenePos()
+            )
+            if selection_enabled and no_mod and (axis is None) and is_left_button and data_valid:
                 ev.accept()
                 start = self.mapToView(ev.buttonDownPos())
                 end = self.mapToView(ev.pos())
@@ -430,38 +440,77 @@ class DataSelectionViewBox(MouseTrackingViewBox):
                 r.set_bounds((x_bounds, y_bounds))
 
 
-class RubberbandZoomViewBox(MouseTrackingViewBox):
+class RubberbandZoomMixin:
     """
     """
+    SelectionMode = SelectionMode
 
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
-        self._rubberband_zoom = False
+        self._rubberband_zoom_selection_mode = self.SelectionMode.Disabled
+        self._x_zoom_region = _LinearRegionItem(orientation='vertical',
+                                                brush=kwargs.get('brush', None),
+                                                pen=kwargs.get('pen', None),
+                                                hoverBrush=kwargs.get('hover_brush', None),
+                                                hoverPen=kwargs.get('hover_pen', None),
+                                                movable=False)
+        self._y_zoom_region = _LinearRegionItem(orientation='horizontal',
+                                                brush=kwargs.get('brush', None),
+                                                pen=kwargs.get('pen', None),
+                                                hoverBrush=kwargs.get('hover_brush', None),
+                                                hoverPen=kwargs.get('hover_pen', None),
+                                                movable=False)
 
     @property
-    def rubberband_zoom(self) -> bool:
-        return self._rubberband_zoom
+    def rubberband_zoom_selection_mode(self) -> SelectionMode:
+        return self._rubberband_zoom_selection_mode
 
-    def toggle_rubberband_zoom(self, enable: bool) -> None:
-        """ De-/Activate automatic zooming into a rubberband selection when dragging the mouse
-        cursor.
+    def set_rubberband_zoom_selection_mode(self, mode: SelectionMode) -> None:
+        """ Set selection mode for automatic zooming into a rubberband selection when dragging the
+        mouse cursor.
         """
-        self._rubberband_zoom = bool(enable)
+        self._rubberband_zoom_selection_mode = self.SelectionMode(mode)
 
     def mouseDragEvent(self, ev, axis=None):
         """ Additional mouse drag event handling to implement rubber band selection and zooming.
         """
-        if self._rubberband_zoom and ev.button() == QtCore.Qt.LeftButton and ev.modifiers() == QtCore.Qt.NoModifier:
-            ev.accept()
-            self.updateScaleBox(ev.buttonDownPos(), ev.pos())
-            if ev.isFinish():
-                self.rbScaleBox.hide()
-                start = self.mapToView(ev.buttonDownPos())
-                stop = self.mapToView(ev.pos())
-                rect = QtCore.QRectF(start, stop)
-                if self.zoom_by_selection:
-                    # AutoRange needs to be disabled by hand because of a pyqtgraph bug.
-                    # if self.autoRangeEnabled():
-                    #     self.disableAutoRange()
-                    self.setRange(rect=rect, padding=0)
+        if not ev.isAccepted():
+            no_mod = ev.modifiers() == QtCore.Qt.NoModifier
+            is_left_button = ev.button() == QtCore.Qt.LeftButton
+            zoom_enabled = self._rubberband_zoom_selection_mode != self.SelectionMode.Disabled
+            if zoom_enabled and is_left_button and no_mod:
+                ev.accept()
+                start_pos = self.mapToView(ev.buttonDownPos())
+                current_pos = self.mapToView(ev.pos())
+                if self._rubberband_zoom_selection_mode == self.SelectionMode.XY:
+                    self.updateScaleBox(ev.buttonDownPos(), ev.pos())
+                    if ev.isFinish():
+                        self.rbScaleBox.hide()
+                        self.setRange(rect=QtCore.QRectF(start_pos, current_pos), padding=0)
+                elif self._rubberband_zoom_selection_mode == self.SelectionMode.X:
+                    self._x_zoom_region.setRegion((start_pos.x(), current_pos.x()))
+                    if ev.isStart():
+                        self.addItem(self._x_zoom_region)
+                    elif ev.isFinish():
+                        self.removeItem(self._x_zoom_region)
+                        self.setRange(xRange=self._x_zoom_region.getRegion(), padding=0)
+                elif self._rubberband_zoom_selection_mode == self.SelectionMode.Y:
+                    self._y_zoom_region.setRegion((start_pos.y(), current_pos.y()))
+                    if ev.isStart():
+                        self.addItem(self._y_zoom_region)
+                    elif ev.isFinish():
+                        self.removeItem(self._y_zoom_region)
+                        self.setRange(yRange=self._y_zoom_region.getRegion(), padding=0)
         return super().mouseDragEvent(ev, axis)
+
+
+class RubberbandZoomViewBox(RubberbandZoomMixin, MouseTrackingViewBox):
+    """
+    """
+    pass
+
+
+class RubberbandZoomSelectionViewBox(RubberbandZoomMixin, DataSelectionViewBox):
+    """
+    """
+    pass

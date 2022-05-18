@@ -25,7 +25,7 @@ __all__ = ['DataImageItem']
 import numpy as np
 from typing import Union, Optional, Tuple
 from PySide2 import QtCore
-from pyqtgraph import ImageItem
+from pyqtgraph import ImageItem, PlotDataItem
 
 from qudi.util.colordefs import ColorScaleInferno
 
