@@ -20,23 +20,35 @@ You should have received a copy of the GNU Lesser General Public License along w
 If not, see <https://www.gnu.org/licenses/>.
 """
 
-__all__ = ['DataImageItem']
+__all__ = ['DataImageItem', 'XYPlotItem']
 
 import numpy as np
 from typing import Union, Optional, Tuple
 from PySide2 import QtCore
-from pyqtgraph import ImageItem, PlotDataItem
+from pyqtgraph import ImageItem as _ImageItem
+from pyqtgraph import PlotDataItem as _PlotDataItem
 
-from qudi.util.colordefs import ColorScaleInferno
+from qudi.util.colordefs import ColorScaleInferno as _Colorscale
+from qudi.util.colordefs import QudiPalette as _QudiPalette
 
 
-class DataImageItem(ImageItem):
+class XYPlotItem(_PlotDataItem):
+    """ Extension of pg.PlotDataItem with default qudi style plot options """
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__()
+        self.opts['pen'] = _QudiPalette.c1
+        self.opts['symbolPen'] = _QudiPalette.c1
+        self.opts['symbolBrush'] = _QudiPalette.c1
+        self.setData(*args, **kwargs)
+
+
+class DataImageItem(_ImageItem):
     """ Extension of pg.ImageItem with percentile level scaling and image size adjustment """
 
     def __init__(self, image=None, **kwargs):
         # Change default color scale to qudi default
         if kwargs.get('lut', None) is None:
-            kwargs['lut'] = ColorScaleInferno().lut
+            kwargs['lut'] = _Colorscale().lut
         super().__init__(image, **kwargs)
         self._percentiles = None
 
