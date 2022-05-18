@@ -23,6 +23,7 @@ from PySide2 import QtCore, QtWidgets
 from qudi.core.module import GuiBase
 from qudi.util.widgets.plotting.image_widget import RubberbandZoomSelectionImageWidget
 from qudi.util.widgets.plotting.plot_widget import RubberbandZoomSelectionPlotWidget
+from qudi.util.widgets.plotting.plot_item import XYPlotItem
 
 
 class TestGui(GuiBase):
@@ -40,7 +41,8 @@ class TestGui(GuiBase):
 
         self.plotwidget = RubberbandZoomSelectionPlotWidget()
         self.plot_data = 100 * np.random.rand(10)
-        self.plotwidget.plot(self.plot_data)
+        self.plot_item = XYPlotItem(self.plot_data)
+        self.plotwidget.addItem(self.plot_item)
         layout.addWidget(self.plotwidget)
 
         self.image_widget = RubberbandZoomSelectionImageWidget()

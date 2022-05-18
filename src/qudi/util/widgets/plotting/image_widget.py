@@ -61,6 +61,7 @@ class ImageWidget(QtWidgets.QWidget):
         self.colorbar_widget.sigPercentilesChanged.connect(self._colorbar_percentiles_changed)
 
         layout = QtWidgets.QHBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
         layout.setStretch(0, 1)
         layout.addWidget(self.plot_widget)
         layout.addWidget(self.colorbar_widget)
