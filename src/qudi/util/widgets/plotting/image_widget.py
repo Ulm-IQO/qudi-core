@@ -44,11 +44,6 @@ class ImageWidget(QtWidgets.QWidget):
         self.plot_widget = self._plot_widget_type()
         self.image_item = _DataImageItem()
         self.plot_widget.addItem(self.image_item)
-        # self.plot_widget.setMinimumWidth(100)
-        # self.plot_widget.setMinimumHeight(100)
-        # self.plot_widget.setSizePolicy(QtWidgets.QSizePolicy.Expanding,
-        #                                 QtWidgets.QSizePolicy.Expanding)
-        # self.plot_widget.setFocusPolicy(QtCore.Qt.FocusPolicy.NoFocus)
         self.plot_widget.setAspectLocked(lock=True, ratio=1.0)
 
         self.colorbar_widget = _ColorBarWidget()
