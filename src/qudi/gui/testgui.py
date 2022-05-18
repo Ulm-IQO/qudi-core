@@ -19,13 +19,8 @@ If not, see <https://www.gnu.org/licenses/>.
 """
 
 import numpy as np
-from typing import Union, Optional, Tuple
-from PySide2 import QtCore, QtWidgets, QtGui, QtCharts
-from pyqtgraph import PlotWidget, TargetItem
-
+from PySide2 import QtCore, QtWidgets
 from qudi.core.module import GuiBase
-from qudi.util.widgets.plotting.view_box import RubberbandZoomSelectionViewBox
-from qudi.util.widgets.plotting.plot_item import DataImageItem
 from qudi.util.widgets.plotting.image_widget import RubberbandZoomSelectionImageWidget
 from qudi.util.widgets.plotting.plot_widget import RubberbandZoomSelectionPlotWidget
 
