@@ -22,8 +22,29 @@ import numpy as np
 from PySide2 import QtCore, QtWidgets
 from qudi.core.module import GuiBase
 from qudi.util.widgets.plotting.image_widget import RubberbandZoomSelectionImageWidget
-from qudi.util.widgets.plotting.plot_widget import RubberbandZoomSelectionPlotWidget
-from qudi.util.widgets.plotting.plot_item import XYPlotItem
+from qudi.gui.scanning.scan_widget import Scan1DWidget, Scan2DWidget
+
+
+class Test2DData:
+    def __init__(self):
+        self.data = {'derp': 1000 * np.random.rand(15, 15),
+                     'herp': 100 * np.random.rand(15, 15)}
+        self.scan_axes = ('x', 'y')
+        self.axes_units = ('m', 'mil')
+        self.scan_range = ((-7, 7), (0, 14))
+        self.channels = ('derp', 'herp')
+        self.channel_units = {'derp': 'V', 'herp': 'EUR'}
+
+
+class Test1DData:
+    def __init__(self):
+        self.data = {'derp': 1000 * np.random.rand(100),
+                     'herp': 100 * np.random.rand(100)}
+        self.scan_axes = ('z',)
+        self.axes_units = ('m',)
+        self.scan_range = ((-10, 10),)
+        self.channels = ('derp', 'herp')
+        self.channel_units = {'derp': 'V', 'herp': 'EUR'}
 
 
 class TestGui(GuiBase):
@@ -39,18 +60,19 @@ class TestGui(GuiBase):
         central_widget.setLayout(layout)
         self._mw.setCentralWidget(central_widget)
 
-        self.plotwidget = RubberbandZoomSelectionPlotWidget()
+        self.plotwidget = Scan1DWidget()
         self.plot_data = 100 * np.random.rand(10)
-        self.plot_item = XYPlotItem(self.plot_data)
-        self.plotwidget.addItem(self.plot_item)
+        self.plotwidget.plot_item.setData(self.plot_data)
         layout.addWidget(self.plotwidget)
 
-        self.image_widget = RubberbandZoomSelectionImageWidget()
-        self.image_data = 100 * np.random.rand(10, 10)
-        self.image_widget.set_image(self.image_data)
+        self.image_widget = Scan2DWidget()
+        self.image_widget.image_widget.set_image(100 * np.random.rand(10, 10))
         layout.addWidget(self.image_widget)
         layout.setStretch(0, 1)
         layout.setStretch(1, 1)
+
+        self.image_widget.set_scan_data(Test2DData())
+        self.plotwidget.set_scan_data(Test1DData())
 
     def show(self) -> None:
         self._mw.show()
