@@ -24,7 +24,7 @@ If not, see <https://www.gnu.org/licenses/>.
 __all__ = ['ImageWidget', 'MouseTrackingImageWidget', 'RubberbandZoomImageWidget',
            'DataSelectionImageWidget', 'RubberbandZoomSelectionImageWidget']
 
-from typing import Union, Optional, Tuple, List
+from typing import Union, Optional, Tuple, List, Dict
 from PySide2 import QtCore, QtWidgets
 from pyqtgraph import PlotWidget as _PlotWidget
 from qudi.util.widgets.plotting.plot_item import DataImageItem as _DataImageItem
@@ -177,6 +177,14 @@ class DataSelectionMixin:
     @property
     def sigRegionSelectionChanged(self) -> QtCore.Signal:
         return self.plot_widget.sigRegionSelectionChanged
+
+    @property
+    def marker_selection(self) -> Dict[SelectionMode, List[Tuple[float, float]]]:
+        return self.plot_widget.marker_selection
+
+    @property
+    def region_selection(self) -> Dict[SelectionMode, List[QtCore.QRectF]]:
+        return self.plot_widget.region_selection
 
     @property
     def region_selection_mode(self) -> _pw.DataSelectionPlotWidget.SelectionMode:

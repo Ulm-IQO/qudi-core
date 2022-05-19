@@ -24,7 +24,7 @@ If not, see <https://www.gnu.org/licenses/>.
 __all__ = ['MouseTrackingViewBox', 'DataSelectionViewBox', 'RubberbandZoomViewBox',
            'RubberbandZoomSelectionViewBox', 'RubberbandZoomMixin', 'SelectionMode']
 
-from typing import Optional, Union, Any, Tuple, Sequence, List
+from typing import Optional, Union, Any, Tuple, Sequence, List, Dict
 from enum import IntEnum
 
 from PySide2 import QtCore
@@ -393,8 +393,9 @@ class DataSelectionViewBox(MouseTrackingViewBox):
         item.hide()
         item.setParent(None)
 
-    def _emit_marker_change(self) -> None:
-        markers = {
+    @property
+    def marker_selection(self) -> Dict[SelectionMode, List[Union[float, Tuple[float, float]]]]:
+        return {
             self.SelectionMode.X: [
                 m.position for m in self.__markers if
                 isinstance(m, InfiniteLine) and m.orientation == QtCore.Qt.Vertical
@@ -407,10 +408,10 @@ class DataSelectionViewBox(MouseTrackingViewBox):
                 m.position for m in self.__markers if isinstance(m, InfiniteCrosshair)
             ]
         }
-        self.sigMarkerSelectionChanged.emit(markers)
 
-    def _emit_region_change(self) -> None:
-        regions = {
+    @property
+    def region_selection(self) -> Dict[SelectionMode, List[QtCore.QRectF]]:
+        return {
             self.SelectionMode.X: [
                 r.area for r in self.__regions if
                 isinstance(r, LinearRegion) and r.orientation == QtCore.Qt.Vertical
@@ -421,7 +422,12 @@ class DataSelectionViewBox(MouseTrackingViewBox):
             ],
             self.SelectionMode.XY: [r.area for r in self.__regions if isinstance(r, Rectangle)]
         }
-        self.sigRegionSelectionChanged.emit(regions)
+
+    def _emit_marker_change(self) -> None:
+        self.sigMarkerSelectionChanged.emit(self.marker_selection)
+
+    def _emit_region_change(self) -> None:
+        self.sigRegionSelectionChanged.emit(self.region_selection)
 
     def _apply_selection_bounds(self) -> None:
         if self._selection_bounds is None:

@@ -24,7 +24,7 @@ __all__ = ['MouseTrackingPlotWidget', 'RubberbandZoomPlotWidget', 'DataSelection
            'RubberbandZoomSelectionPlotWidget', 'MouseTrackingMixin', 'RubberbandZoomMixin',
            'DataSelectionMixin']
 
-from typing import Union, Tuple, List
+from typing import Union, Tuple, List, Dict
 from PySide2 import QtCore
 from pyqtgraph import PlotWidget as _PlotWidget
 import qudi.util.widgets.plotting.view_box as _vb
@@ -98,6 +98,14 @@ class DataSelectionMixin:
         return self.getViewBox().sigRegionSelectionChanged
 
     @property
+    def marker_selection(self) -> Dict[SelectionMode, List[Union[float, Tuple[float, float]]]]:
+        return self.getViewBox().marker_selection
+
+    @property
+    def region_selection(self) -> Dict[SelectionMode, List[QtCore.QRectF]]:
+        return self.getViewBox().region_selection
+
+    @property
     def region_selection_mode(self) -> SelectionMode:
         return self.getViewBox().region_selection_mode
 
@@ -114,26 +122,33 @@ class DataSelectionMixin:
         return self.getViewBox().selection_bounds
 
 
-class MouseTrackingPlotWidget(MouseTrackingMixin, _PlotWidget):
+class PlotWidget(_PlotWidget):
+    """ Make blockSignals also un-/mute signals from the viewbox """
+    def blockSignals(self, block: bool) -> None:
+        super().blockSignals(block)
+        self.getViewBox().blockSignals(block)
+
+
+class MouseTrackingPlotWidget(MouseTrackingMixin, PlotWidget):
     """ Extend the PlotWidget class with mouse tracking and signalling """
     pass
 
 
-class RubberbandZoomPlotWidget(RubberbandZoomMixin, MouseTrackingMixin, _PlotWidget):
+class RubberbandZoomPlotWidget(RubberbandZoomMixin, MouseTrackingMixin, PlotWidget):
     """ Extend the PlotWidget class with mouse tracking and signalling as well as a rubberband zoom
     tool.
     """
     pass
 
 
-class DataSelectionPlotWidget(DataSelectionMixin, MouseTrackingMixin, _PlotWidget):
+class DataSelectionPlotWidget(DataSelectionMixin, MouseTrackingMixin, PlotWidget):
     """ Extend the PlotWidget class with mouse tracking and signalling as well as mouse pointer
     data selection tools.
     """
     pass
 
 
-class RubberbandZoomSelectionPlotWidget(RubberbandZoomMixin, DataSelectionMixin, MouseTrackingMixin, _PlotWidget):
+class RubberbandZoomSelectionPlotWidget(RubberbandZoomMixin, DataSelectionMixin, MouseTrackingMixin, PlotWidget):
     """ Extend the PlotWidget class with mouse tracking and signalling as well as mouse pointer
     data selection tools and rubberband zoom feature.
     """
