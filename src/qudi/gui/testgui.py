@@ -25,12 +25,17 @@ from qudi.util.widgets.plotting.image_widget import RubberbandZoomSelectionImage
 from qudi.gui.scanning.scan_widget import Scan1DWidget, Scan2DWidget
 
 
+class TestScanAxis:
+    def __init__(self, name, unit):
+        self.unit = unit
+        self.name = name
+
+
 class Test2DData:
     def __init__(self):
         self.data = {'derp': 1000 * np.random.rand(15, 15),
                      'herp': 100 * np.random.rand(15, 15)}
-        self.scan_axes = ('x', 'y')
-        self.axes_units = ('m', 'mil')
+        self.scan_axes = (TestScanAxis('x', 'm'), TestScanAxis('y', 'mil'))
         self.scan_range = ((-7, 7), (0, 14))
         self.channels = ('derp', 'herp')
         self.channel_units = {'derp': 'V', 'herp': 'EUR'}
@@ -40,8 +45,7 @@ class Test1DData:
     def __init__(self):
         self.data = {'derp': 1000 * np.random.rand(100),
                      'herp': 100 * np.random.rand(100)}
-        self.scan_axes = ('z',)
-        self.axes_units = ('m',)
+        self.scan_axes = (TestScanAxis('z', 'm'),)
         self.scan_range = ((-10, 10),)
         self.channels = ('derp', 'herp')
         self.channel_units = {'derp': 'V', 'herp': 'EUR'}
