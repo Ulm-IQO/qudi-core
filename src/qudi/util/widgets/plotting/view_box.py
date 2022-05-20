@@ -526,25 +526,27 @@ class RubberbandZoomMixin:
         if not ev.isAccepted():
             no_mod = ev.modifiers() == QtCore.Qt.NoModifier
             is_left_button = ev.button() == QtCore.Qt.LeftButton
-            zoom_enabled = self._rubberband_zoom_selection_mode != self.SelectionMode.Disabled
+            mode = self._rubberband_zoom_selection_mode
+            zoom_enabled = mode != self.SelectionMode.Disabled
+
             if zoom_enabled and is_left_button and no_mod:
                 ev.accept()
                 super().mouseDragEvent(ev, axis)
                 start_pos = self.mapToView(ev.buttonDownPos())
                 current_pos = self.mapToView(ev.pos())
-                if self._rubberband_zoom_selection_mode == self.SelectionMode.XY:
+                if mode == self.SelectionMode.XY:
                     self.updateScaleBox(ev.buttonDownPos(), ev.pos())
                     if ev.isFinish():
                         self.rbScaleBox.hide()
                         self.setRange(rect=QtCore.QRectF(start_pos, current_pos), padding=0)
-                elif self._rubberband_zoom_selection_mode == self.SelectionMode.X:
+                elif mode == self.SelectionMode.X:
                     self._x_zoom_region.setRegion((start_pos.x(), current_pos.x()))
                     if ev.isStart():
                         self.addItem(self._x_zoom_region)
                     elif ev.isFinish():
                         self.removeItem(self._x_zoom_region)
                         self.setRange(xRange=self._x_zoom_region.getRegion(), padding=0)
-                elif self._rubberband_zoom_selection_mode == self.SelectionMode.Y:
+                elif mode == self.SelectionMode.Y:
                     self._y_zoom_region.setRegion((start_pos.y(), current_pos.y()))
                     if ev.isStart():
                         self.addItem(self._y_zoom_region)
