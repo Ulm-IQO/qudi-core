@@ -86,6 +86,7 @@ class MouseTrackingMixin:
             start = self.mapToView(ev.buttonDownPos())
             current = self.mapToView(ev.pos())
             self.sigMouseDragged.emit((start.x(), start.y()), (current.x(), current.y()), ev)
+            print((start.x(), start.y()), (current.x(), current.y()))
         if not ev.isAccepted():
             super().mouseDragEvent(ev, axis)
 
@@ -529,6 +530,7 @@ class RubberbandZoomMixin:
             zoom_enabled = self._rubberband_zoom_selection_mode != self.SelectionMode.Disabled
             if zoom_enabled and is_left_button and no_mod:
                 ev.accept()
+                super().mouseDragEvent(ev, axis)
                 start_pos = self.mapToView(ev.buttonDownPos())
                 current_pos = self.mapToView(ev.pos())
                 if self._rubberband_zoom_selection_mode == self.SelectionMode.XY:
@@ -550,7 +552,8 @@ class RubberbandZoomMixin:
                     elif ev.isFinish():
                         self.removeItem(self._y_zoom_region)
                         self.setRange(yRange=self._y_zoom_region.getRegion(), padding=0)
-        return super().mouseDragEvent(ev, axis)
+            else:
+                super().mouseDragEvent(ev, axis)
 
 
 class MouseTrackingViewBox(MouseTrackingMixin, ViewBox):
