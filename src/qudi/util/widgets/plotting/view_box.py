@@ -22,7 +22,8 @@ If not, see <https://www.gnu.org/licenses/>.
 """
 
 __all__ = ['MouseTrackingViewBox', 'DataSelectionViewBox', 'RubberbandZoomViewBox',
-           'RubberbandZoomSelectionViewBox', 'RubberbandZoomMixin', 'SelectionMode']
+           'RubberbandZoomSelectionViewBox', 'RubberbandZoomMixin', 'DataSelectionMixin',
+           'MouseTrackingMixin', 'SelectionMode']
 
 from typing import Optional, Union, Any, Tuple, Sequence, List, Dict
 from enum import IntEnum
@@ -31,8 +32,8 @@ from PySide2 import QtCore
 from pyqtgraph import ViewBox, SignalProxy, PlotDataItem, ImageItem, PlotCurveItem, ScatterPlotItem
 from pyqtgraph import LinearRegionItem as _LinearRegionItem
 from pyqtgraph.GraphicsScene.mouseEvents import MouseClickEvent, MouseDragEvent
-from qudi.util.widgets.plotting.marker import Rectangle, InfiniteCrosshair
-from qudi.util.widgets.plotting.marker import InfiniteLine, LinearRegion
+from qudi.util.widgets.plotting.marker import Rectangle, InfiniteCrosshairRectangle
+from qudi.util.widgets.plotting.marker import InfiniteLine, LinearRegion, InfiniteCrosshair
 
 
 class SelectionMode(IntEnum):
@@ -42,7 +43,7 @@ class SelectionMode(IntEnum):
     XY = 3
 
 
-class MouseTrackingViewBox(ViewBox):
+class MouseTrackingMixin:
     """ Extension for pg.ViewBox to tap into mouse move/click/drag events and emit signals.
 
     x-y-positions emitted will be in real world data coordinates.
@@ -56,11 +57,10 @@ class MouseTrackingViewBox(ViewBox):
     sigMouseClicked = QtCore.Signal(tuple, object)
 
     def __init__(self,
-                 *args,
                  allow_tracking_outside_data: Optional[bool] = False,
                  max_mouse_pos_update_rate: Optional[float] = None,
                  **kwargs) -> None:
-        super().__init__(*args, **kwargs)
+        super().__init__(**kwargs)
         self.allow_tracking_outside_data = bool(allow_tracking_outside_data)
         if max_mouse_pos_update_rate is not None and max_mouse_pos_update_rate > 0.:
             self._mouse_position_signal_proxy = SignalProxy(
@@ -96,7 +96,7 @@ class MouseTrackingViewBox(ViewBox):
         return False
 
 
-class DataSelectionViewBox(MouseTrackingViewBox):
+class DataSelectionMixin:
     """ Expands MouseTrackingViewBox with data selection functionality.
 
     You can select:
@@ -120,6 +120,8 @@ class DataSelectionViewBox(MouseTrackingViewBox):
                  selection_hover_pen: Optional[Any] = None,
                  selection_brush: Optional[Any] = None,
                  selection_hover_brush: Optional[Any] = None,
+                 xy_region_selection_crosshair: Optional[bool] = False,
+                 xy_region_selection_handles: Optional[bool] = True,
                  **kwargs
                  ) -> None:
         super().__init__(*args, **kwargs)
@@ -128,6 +130,8 @@ class DataSelectionViewBox(MouseTrackingViewBox):
         self._selection_hover_pen = selection_hover_pen
         self._selection_brush = selection_brush
         self._selection_hover_brush = selection_hover_brush
+        self._xy_region_selection_crosshair = bool(xy_region_selection_crosshair)
+        self._xy_region_selection_handles = bool(xy_region_selection_handles)
         self._region_selection_mode = self.SelectionMode.Disabled
         self._marker_selection_mode = self.SelectionMode.Disabled
         self._selection_mutable = True
@@ -237,16 +241,22 @@ class DataSelectionViewBox(MouseTrackingViewBox):
             y_min, y_max = sorted(span[1])
             x_span = x_max - x_min
             y_span = y_max - y_min
-            item = Rectangle(viewbox=self,
-                             position=(x_min + x_span / 2, y_min + y_span / 2),
-                             size=(x_span, y_span),
-                             edge_handles=self.selection_mutable,
-                             corner_handles=False,
-                             bounds=self.selection_bounds,
-                             movable=self.selection_mutable,
-                             resizable=self.selection_mutable,
-                             pen=self._selection_pen,
-                             hover_pen=self._selection_hover_pen)
+            if self._xy_region_selection_crosshair:
+                item_type = InfiniteCrosshairRectangle
+            else:
+                item_type = Rectangle
+            item = item_type(
+                viewbox=self,
+                position=(x_min + x_span / 2, y_min + y_span / 2),
+                size=(x_span, y_span),
+                edge_handles=self.selection_mutable and self._xy_region_selection_handles,
+                corner_handles=False,
+                bounds=self.selection_bounds,
+                movable=self.selection_mutable,
+                resizable=self.selection_mutable,
+                pen=self._selection_pen,
+                hover_pen=self._selection_hover_pen
+            )
         else:
             if mode == self.SelectionMode.X:
                 orientation = QtCore.Qt.Vertical
@@ -374,6 +384,20 @@ class DataSelectionViewBox(MouseTrackingViewBox):
         item.hide()
         item.setParent(None)
 
+    def hide_marker_selections(self) -> None:
+        for marker in self.__markers:
+            marker.hide()
+
+    def show_marker_selections(self) -> None:
+        for marker in self.__markers:
+            marker.show()
+
+    def hide_marker_selection(self, index: int) -> None:
+        self.__markers[index].hide()
+
+    def show_marker_selection(self, index: int) -> None:
+        self.__markers[index].show()
+
     def clear_region_selections(self) -> None:
         if len(self.__regions) != 0:
             try:
@@ -392,6 +416,20 @@ class DataSelectionViewBox(MouseTrackingViewBox):
         item.sigAreaChanged.disconnect()
         item.hide()
         item.setParent(None)
+
+    def hide_region_selections(self) -> None:
+        for region in self.__regions:
+            region.hide()
+
+    def show_region_selections(self) -> None:
+        for region in self.__regions:
+            region.show()
+
+    def hide_region_selection(self, index: int) -> None:
+        self.__regions[index].hide()
+
+    def show_region_selection(self, index: int) -> None:
+        self.__regions[index].show()
 
     @property
     def marker_selection(self) -> Dict[SelectionMode, List[Union[float, Tuple[float, float]]]]:
@@ -451,8 +489,8 @@ class RubberbandZoomMixin:
     """
     SelectionMode = SelectionMode
 
-    def __init__(self, *args, **kwargs) -> None:
-        super().__init__(*args, **kwargs)
+    def __init__(self, **kwargs) -> None:
+        super().__init__(**kwargs)
         self._rubberband_zoom_selection_mode = self.SelectionMode.Disabled
         self._x_zoom_region = _LinearRegionItem(orientation='vertical',
                                                 brush=kwargs.get('brush', None),
@@ -510,13 +548,17 @@ class RubberbandZoomMixin:
         return super().mouseDragEvent(ev, axis)
 
 
-class RubberbandZoomViewBox(RubberbandZoomMixin, MouseTrackingViewBox):
-    """
-    """
+class MouseTrackingViewBox(MouseTrackingMixin, ViewBox):
     pass
 
 
-class RubberbandZoomSelectionViewBox(RubberbandZoomMixin, DataSelectionViewBox):
-    """
-    """
+class DataSelectionViewBox(DataSelectionMixin, MouseTrackingMixin, ViewBox):
+    pass
+
+
+class RubberbandZoomViewBox(RubberbandZoomMixin, MouseTrackingMixin, ViewBox):
+    pass
+
+
+class RubberbandZoomSelectionViewBox(RubberbandZoomMixin, DataSelectionMixin, MouseTrackingMixin, ViewBox):
     pass

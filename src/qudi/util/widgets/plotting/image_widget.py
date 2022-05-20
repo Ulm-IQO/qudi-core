@@ -38,10 +38,10 @@ class ImageWidget(QtWidgets.QWidget):
     """
     _plot_widget_type = _PlotWidget
 
-    def __init__(self, parent: Optional[QtWidgets.QWidget] = None):
+    def __init__(self, parent: Optional[QtWidgets.QWidget] = None, **kwargs):
         super().__init__(parent=parent)
 
-        self.plot_widget = self._plot_widget_type()
+        self.plot_widget = self._plot_widget_type(**kwargs)
         self.image_item = _DataImageItem()
         self.plot_widget.addItem(self.image_item)
         self.plot_widget.setAspectLocked(lock=True, ratio=1.0)
@@ -118,8 +118,8 @@ class MouseTrackingMixin:
     """
     _plot_widget_type = _pw.MouseTrackingPlotWidget
 
-    def __init__(self, parent: Optional[QtWidgets.QWidget] = None):
-        super().__init__(parent=parent)
+    def __init__(self, parent: Optional[QtWidgets.QWidget] = None, **kwargs):
+        super().__init__(parent=parent, **kwargs)
 
     @property
     def sigMouseMoved(self) -> QtCore.Signal:
@@ -140,8 +140,8 @@ class RubberbandZoomMixin:
     _plot_widget_type = _pw.RubberbandZoomPlotWidget
     SelectionMode = _pw.RubberbandZoomPlotWidget.SelectionMode
 
-    def __init__(self, parent: Optional[QtWidgets.QWidget] = None):
-        super().__init__(parent=parent)
+    def __init__(self, parent: Optional[QtWidgets.QWidget] = None, **kwargs):
+        super().__init__(parent=parent, **kwargs)
         self.set_rubberband_zoom_selection_mode = self.plot_widget.set_rubberband_zoom_selection_mode
 
     @property
@@ -155,8 +155,8 @@ class DataSelectionMixin:
     _plot_widget_type = _pw.DataSelectionPlotWidget
     SelectionMode = _pw.DataSelectionPlotWidget.SelectionMode
 
-    def __init__(self, parent: Optional[QtWidgets.QWidget] = None):
-        super().__init__(parent=parent)
+    def __init__(self, parent: Optional[QtWidgets.QWidget] = None, **kwargs):
+        super().__init__(parent=parent, **kwargs)
         self.set_region_selection_mode = self.plot_widget.set_region_selection_mode
         self.set_marker_selection_mode = self.plot_widget.set_marker_selection_mode
         self.set_selection_mutable = self.plot_widget.set_selection_mutable
@@ -169,6 +169,14 @@ class DataSelectionMixin:
         self.delete_marker_selection = self.plot_widget.delete_marker_selection
         self.clear_region_selections = self.plot_widget.clear_region_selections
         self.delete_region_selection = self.plot_widget.delete_region_selection
+        self.hide_marker_selections = self.plot_widget.hide_marker_selections
+        self.show_marker_selections = self.plot_widget.show_marker_selections
+        self.hide_marker_selection = self.plot_widget.hide_marker_selection
+        self.show_marker_selection = self.plot_widget.show_marker_selection
+        self.hide_region_selections = self.plot_widget.hide_region_selections
+        self.show_region_selections = self.plot_widget.show_region_selections
+        self.hide_region_selection = self.plot_widget.hide_region_selection
+        self.show_region_selection = self.plot_widget.show_region_selection
 
     @property
     def sigMarkerSelectionChanged(self) -> QtCore.Signal:

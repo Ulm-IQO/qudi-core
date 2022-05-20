@@ -24,7 +24,7 @@ __all__ = ['MouseTrackingPlotWidget', 'RubberbandZoomPlotWidget', 'DataSelection
            'RubberbandZoomSelectionPlotWidget', 'MouseTrackingMixin', 'RubberbandZoomMixin',
            'DataSelectionMixin']
 
-from typing import Union, Tuple, List, Dict
+from typing import Union, Tuple, List, Dict, Optional, Any, Sequence
 from PySide2 import QtCore
 from pyqtgraph import PlotWidget as _PlotWidget
 import qudi.util.widgets.plotting.view_box as _vb
@@ -32,9 +32,17 @@ import qudi.util.widgets.plotting.view_box as _vb
 
 class MouseTrackingMixin:
     """ Extend the PlotWidget class with mouse tracking and signalling """
-    def __init__(self, **kwargs):
-        if not isinstance(kwargs.get('viewBox', None), _vb.MouseTrackingViewBox):
-            kwargs['viewBox'] = _vb.MouseTrackingViewBox()  # Use custom pg.ViewBox subclass
+    def __init__(self,
+                 allow_tracking_outside_data: Optional[bool] = False,
+                 max_mouse_pos_update_rate: Optional[float] = None,
+                 **kwargs
+                 ) -> None:
+        if not isinstance(kwargs.get('viewBox', None), _vb.MouseTrackingMixin):
+            # Use custom pg.ViewBox subclass
+            kwargs['viewBox'] = _vb.MouseTrackingViewBox(
+                allow_tracking_outside_data=allow_tracking_outside_data,
+                max_mouse_pos_update_rate=max_mouse_pos_update_rate
+            )
         super().__init__(**kwargs)
 
     @property
@@ -56,7 +64,8 @@ class RubberbandZoomMixin:
 
     def __init__(self, **kwargs):
         if not isinstance(kwargs.get('viewBox', None), _vb.RubberbandZoomMixin):
-            kwargs['viewBox'] = _vb.RubberbandZoomViewBox()  # Use custom pg.ViewBox subclass
+            # Use custom pg.ViewBox subclass
+            kwargs['viewBox'] = _vb.RubberbandZoomViewBox()
         super().__init__(**kwargs)
         self.set_rubberband_zoom_selection_mode = self.getViewBox().set_rubberband_zoom_selection_mode
 
@@ -71,9 +80,27 @@ class DataSelectionMixin:
     """
     SelectionMode = _vb.SelectionMode
 
-    def __init__(self, **kwargs):
-        if not isinstance(kwargs.get('viewBox', None), _vb.DataSelectionViewBox):
-            kwargs['viewBox'] = _vb.DataSelectionViewBox()  # Use custom pg.ViewBox subclass
+    def __init__(self,
+                 selection_bounds: Optional[Sequence[Tuple[Union[None, float], Union[None, float]]]] = None,
+                 selection_pen: Optional[Any] = None,
+                 selection_hover_pen: Optional[Any] = None,
+                 selection_brush: Optional[Any] = None,
+                 selection_hover_brush: Optional[Any] = None,
+                 xy_region_selection_crosshair: Optional[bool] = False,
+                 xy_region_selection_handles: Optional[bool] = True,
+                 **kwargs
+                 ) -> None:
+        if not isinstance(kwargs.get('viewBox', None), _vb.DataSelectionMixin):
+            # Use custom pg.ViewBox subclass
+            kwargs['viewBox'] = _vb.DataSelectionViewBox(
+                selection_bounds=selection_bounds,
+                selection_pen=selection_pen,
+                selection_hover_pen=selection_hover_pen,
+                selection_brush=selection_brush,
+                selection_hover_brush=selection_hover_brush,
+                xy_region_selection_crosshair=xy_region_selection_crosshair,
+                xy_region_selection_handles=xy_region_selection_handles
+            )
         super().__init__(**kwargs)
         vb = self.getViewBox()
         self.set_region_selection_mode = vb.set_region_selection_mode
@@ -88,6 +115,14 @@ class DataSelectionMixin:
         self.delete_marker_selection = vb.delete_marker_selection
         self.clear_region_selections = vb.clear_region_selections
         self.delete_region_selection = vb.delete_region_selection
+        self.hide_marker_selections = vb.hide_marker_selections
+        self.show_marker_selections = vb.show_marker_selections
+        self.hide_marker_selection = vb.hide_marker_selection
+        self.show_marker_selection = vb.show_marker_selection
+        self.hide_region_selections = vb.hide_region_selections
+        self.show_region_selections = vb.show_region_selections
+        self.hide_region_selection = vb.hide_region_selection
+        self.show_region_selection = vb.show_region_selection
 
     @property
     def sigMarkerSelectionChanged(self) -> QtCore.Signal:
@@ -152,9 +187,30 @@ class RubberbandZoomSelectionPlotWidget(RubberbandZoomMixin, DataSelectionMixin,
     """ Extend the PlotWidget class with mouse tracking and signalling as well as mouse pointer
     data selection tools and rubberband zoom feature.
     """
-    def __init__(self, **kwargs):
-        has_selection = isinstance(kwargs.get('viewBox', None), _vb.DataSelectionViewBox)
+    def __init__(self,
+                 allow_tracking_outside_data: Optional[bool] = False,
+                 max_mouse_pos_update_rate: Optional[float] = None,
+                 selection_bounds: Optional[Sequence[Tuple[Union[None, float], Union[None, float]]]] = None,
+                 selection_pen: Optional[Any] = None,
+                 selection_hover_pen: Optional[Any] = None,
+                 selection_brush: Optional[Any] = None,
+                 selection_hover_brush: Optional[Any] = None,
+                 xy_region_selection_crosshair: Optional[bool] = False,
+                 xy_region_selection_handles: Optional[bool] = True,
+                 **kwargs
+                 ) -> None:
+        has_selection = isinstance(kwargs.get('viewBox', None), _vb.DataSelectionMixin)
         has_rubberband = isinstance(kwargs.get('viewBox', None), _vb.RubberbandZoomMixin)
         if not has_selection or not has_rubberband:
-            kwargs['viewBox'] = _vb.RubberbandZoomSelectionViewBox()
+            kwargs['viewBox'] = _vb.RubberbandZoomSelectionViewBox(
+                allow_tracking_outside_data=allow_tracking_outside_data,
+                max_mouse_pos_update_rate=max_mouse_pos_update_rate,
+                selection_bounds=selection_bounds,
+                selection_pen=selection_pen,
+                selection_hover_pen=selection_hover_pen,
+                selection_brush=selection_brush,
+                selection_hover_brush=selection_hover_brush,
+                xy_region_selection_crosshair=xy_region_selection_crosshair,
+                xy_region_selection_handles=xy_region_selection_handles
+            )
         super().__init__(**kwargs)
