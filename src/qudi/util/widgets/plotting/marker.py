@@ -135,18 +135,19 @@ class InfiniteCrosshair(QtCore.QObject):
         view = self.parent()
         if self.vline not in view.addedItems:
             view.addItem(self.vline)
-            view.addItem(self.hline)
             if self._z_value is not None:
                 self.vline.setZValue(self._z_value)
+        if self.hline not in view.addedItems:
+            view.addItem(self.hline)
+            if self._z_value is not None:
                 self.hline.setZValue(self._z_value)
 
     def hide(self):
         view = self.parent()
-        try:
+        if self.vline not in view.addedItems:
             view.removeItem(self.vline)
+        if self.hline not in view.addedItems:
             view.removeItem(self.hline)
-        except:
-            pass
 
     def set_pen(self, pen: Any) -> None:
         """ Sets the pen to be used for drawing the crosshair lines.
@@ -308,10 +309,9 @@ class InfiniteLine(QtCore.QObject):
                 self.line.setZValue(self._z_value)
 
     def hide(self):
-        try:
-            self.parent().removeItem(self.line)
-        except:
-            pass
+        view = self.parent()
+        if self.line not in view.addedItems:
+            view.removeItem(self.line)
 
     def set_pen(self, pen: Any) -> None:
         """ Sets the pen to be used for drawing the line.
@@ -478,10 +478,9 @@ class LinearRegion(QtCore.QObject):
                 self.region.setZValue(self._z_value)
 
     def hide(self):
-        try:
-            self.parent().removeItem(self.region)
-        except:
-            pass
+        view = self.parent()
+        if self.region in view.addedItems:
+            view.removeItem(self.region)
 
     def set_pen(self, pen: Any) -> None:
         """ Sets the pen to be used for drawing the lines.
@@ -702,10 +701,9 @@ class Rectangle(QtCore.QObject):
                 self.roi.setZValue(self._z_value)
 
     def hide(self):
-        try:
-            self.parent().removeItem(self.roi)
-        except:
-            pass
+        view = self.parent()
+        if self.roi in view.addedItems:
+            view.removeItem(self.roi)
 
     def set_pen(self, pen: Any) -> None:
         """ Given parameter must be compatible with pyqtgraph.mkPen() """
@@ -868,18 +866,12 @@ class InfiniteCrosshairRectangle(Rectangle):
 
     def hide(self):
         view = self.parent()
-        try:
+        if self.roi in view.addedItems:
             view.removeItem(self.roi)
-        except:
-            pass
-        try:
+        if self.hline in view.addedItems:
             view.removeItem(self.hline)
-        except:
-            pass
-        try:
+        if self.vline in view.addedItems:
             view.removeItem(self.vline)
-        except:
-            pass
 
     def set_pen(self, pen: Any) -> None:
         """ Given parameter must be compatible with pyqtgraph.mkPen() """
