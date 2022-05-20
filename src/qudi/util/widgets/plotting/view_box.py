@@ -494,6 +494,8 @@ class RubberbandZoomMixin:
     """
     SelectionMode = SelectionMode
 
+    sigZoomAreaApplied = QtCore.Signal(QtCore.QRectF)
+
     def __init__(self, **kwargs) -> None:
         super().__init__(**kwargs)
         self._rubberband_zoom_selection_mode = self.SelectionMode.Disabled
@@ -534,11 +536,13 @@ class RubberbandZoomMixin:
                 super().mouseDragEvent(ev, axis)
                 start_pos = self.mapToView(ev.buttonDownPos())
                 current_pos = self.mapToView(ev.pos())
+                zoom_rect = QtCore.QRectF(start_pos, current_pos)
                 if mode == self.SelectionMode.XY:
                     self.updateScaleBox(ev.buttonDownPos(), ev.pos())
                     if ev.isFinish():
                         self.rbScaleBox.hide()
-                        self.setRange(rect=QtCore.QRectF(start_pos, current_pos), padding=0)
+                        self.setRange(rect=zoom_rect, padding=0)
+                        self.sigZoomAreaApplied.emit(zoom_rect)
                 elif mode == self.SelectionMode.X:
                     self._x_zoom_region.setRegion((start_pos.x(), current_pos.x()))
                     if ev.isStart():
@@ -546,6 +550,8 @@ class RubberbandZoomMixin:
                     elif ev.isFinish():
                         self.removeItem(self._x_zoom_region)
                         self.setRange(xRange=self._x_zoom_region.getRegion(), padding=0)
+                        zoom_rect.setHeight(0)
+                        self.sigZoomAreaApplied.emit(zoom_rect)
                 elif mode == self.SelectionMode.Y:
                     self._y_zoom_region.setRegion((start_pos.y(), current_pos.y()))
                     if ev.isStart():
@@ -553,6 +559,8 @@ class RubberbandZoomMixin:
                     elif ev.isFinish():
                         self.removeItem(self._y_zoom_region)
                         self.setRange(yRange=self._y_zoom_region.getRegion(), padding=0)
+                        zoom_rect.setWidth(0)
+                        self.sigZoomAreaApplied.emit(zoom_rect)
             else:
                 super().mouseDragEvent(ev, axis)
 

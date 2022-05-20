@@ -20,9 +20,9 @@ You should have received a copy of the GNU Lesser General Public License along w
 If not, see <https://www.gnu.org/licenses/>.
 """
 
-__all__ = ['MouseTrackingPlotWidget', 'RubberbandZoomPlotWidget', 'DataSelectionPlotWidget',
-           'RubberbandZoomSelectionPlotWidget', 'MouseTrackingMixin', 'RubberbandZoomMixin',
-           'DataSelectionMixin']
+__all__ = ['PlotWidget', 'MouseTrackingPlotWidget', 'RubberbandZoomPlotWidget',
+           'DataSelectionPlotWidget', 'RubberbandZoomSelectionPlotWidget', 'MouseTrackingMixin',
+           'RubberbandZoomMixin', 'DataSelectionMixin']
 
 from typing import Union, Tuple, List, Dict, Optional, Any, Sequence
 from PySide2 import QtCore
@@ -68,6 +68,10 @@ class RubberbandZoomMixin:
             kwargs['viewBox'] = _vb.RubberbandZoomViewBox()
         super().__init__(**kwargs)
         self.set_rubberband_zoom_selection_mode = self.getViewBox().set_rubberband_zoom_selection_mode
+
+    @property
+    def sigZoomAreaApplied(self) -> QtCore.Signal:
+        return self.getViewBox().sigZoomAreaApplied
 
     @property
     def rubberband_zoom_selection_mode(self) -> SelectionMode:

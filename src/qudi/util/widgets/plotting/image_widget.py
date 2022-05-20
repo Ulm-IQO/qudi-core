@@ -149,6 +149,10 @@ class RubberbandZoomMixin:
         self.set_rubberband_zoom_selection_mode = self.plot_widget.set_rubberband_zoom_selection_mode
 
     @property
+    def sigZoomAreaApplied(self) -> QtCore.Signal:
+        return self.plot_widget.sigZoomAreaApplied
+
+    @property
     def rubberband_zoom_selection_mode(self) -> SelectionMode:
         return self.plot_widget.rubberband_zoom_selection_mode
 
