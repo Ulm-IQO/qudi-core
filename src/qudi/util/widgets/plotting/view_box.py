@@ -86,7 +86,6 @@ class MouseTrackingMixin:
             start = self.mapToView(ev.buttonDownPos())
             current = self.mapToView(ev.pos())
             self.sigMouseDragged.emit((start.x(), start.y()), (current.x(), current.y()), ev)
-            print((start.x(), start.y()), (current.x(), current.y()))
         if not ev.isAccepted():
             super().mouseDragEvent(ev, axis)
 
