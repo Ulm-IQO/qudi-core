@@ -88,6 +88,7 @@ class DataSelectionMixin:
                  selection_hover_brush: Optional[Any] = None,
                  xy_region_selection_crosshair: Optional[bool] = False,
                  xy_region_selection_handles: Optional[bool] = True,
+                 emit_while_dragging: Optional[bool] = False,
                  **kwargs
                  ) -> None:
         if not isinstance(kwargs.get('viewBox', None), _vb.DataSelectionMixin):
@@ -99,7 +100,8 @@ class DataSelectionMixin:
                 selection_brush=selection_brush,
                 selection_hover_brush=selection_hover_brush,
                 xy_region_selection_crosshair=xy_region_selection_crosshair,
-                xy_region_selection_handles=xy_region_selection_handles
+                xy_region_selection_handles=xy_region_selection_handles,
+                emit_while_dragging=emit_while_dragging
             )
         super().__init__(**kwargs)
         vb = self.getViewBox()
@@ -197,6 +199,7 @@ class RubberbandZoomSelectionPlotWidget(RubberbandZoomMixin, DataSelectionMixin,
                  selection_hover_brush: Optional[Any] = None,
                  xy_region_selection_crosshair: Optional[bool] = False,
                  xy_region_selection_handles: Optional[bool] = True,
+                 emit_while_dragging: Optional[bool] = False,
                  **kwargs
                  ) -> None:
         has_selection = isinstance(kwargs.get('viewBox', None), _vb.DataSelectionMixin)
@@ -211,6 +214,7 @@ class RubberbandZoomSelectionPlotWidget(RubberbandZoomMixin, DataSelectionMixin,
                 selection_brush=selection_brush,
                 selection_hover_brush=selection_hover_brush,
                 xy_region_selection_crosshair=xy_region_selection_crosshair,
-                xy_region_selection_handles=xy_region_selection_handles
+                xy_region_selection_handles=xy_region_selection_handles,
+                emit_while_dragging=emit_while_dragging
             )
         super().__init__(**kwargs)
