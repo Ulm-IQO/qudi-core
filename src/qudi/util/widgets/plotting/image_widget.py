@@ -71,6 +71,10 @@ class ImageWidget(QtWidgets.QWidget):
     def percentiles(self) -> Union[None, Tuple[float, float]]:
         return self.image_item.percentiles
 
+    @property
+    def levels(self) -> Tuple[float, float]:
+        return self.image_item.levels
+
     def set_image(self, image) -> None:
         """
         """
@@ -107,7 +111,7 @@ class ImageWidget(QtWidgets.QWidget):
 
     def _colorbar_percentiles_changed(self, percentiles: Tuple[float, float]) -> None:
         self.image_item.set_percentiles(percentiles)
-        levels = self.image_item.levels
+        levels = self.levels
         if levels is not None:
             self.colorbar_widget.set_limits(*levels)
 
