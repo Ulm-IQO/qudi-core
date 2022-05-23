@@ -435,10 +435,10 @@ class LinearRegion(QtCore.QObject):
 
     @property
     def movable(self) -> bool:
-        return self.roi.translatable
+        return self.region.movable
 
     def set_movable(self, movable: bool) -> None:
-        self.roi.translatable = bool(movable)
+        self.region.setMovable(movable)
 
     @property
     def z_value(self) -> Union[None, int]:
@@ -658,10 +658,11 @@ class Rectangle(QtCore.QObject):
         return center.x(), center.y()
 
     def set_position(self, position: Tuple[float, float]) -> None:
-        old_area = self.roi.area
-        center = old_area.center()
-        new_area = old_area.translated(position[0] - center.x(), position[1] - center.y())
-        self.roi.set_area(new_area)
+        if not self._is_dragged:
+            old_area = self.roi.area
+            center = old_area.center()
+            new_area = old_area.translated(position[0] - center.x(), position[1] - center.y())
+            self.roi.set_area(new_area)
 
     @property
     def size(self) -> Tuple[float, float]:
@@ -669,20 +670,22 @@ class Rectangle(QtCore.QObject):
         return abs(area.width()), abs(area.height())
 
     def set_size(self, size: Tuple[float, float]) -> None:
-        size = abs(size[0]), abs(size[1])
-        current_pos = self.position
-        new_area = self.roi.normalize_rect(
-            pos=(current_pos[0] - size[0] / 2, current_pos[1] - size[1] / 2),
-            size=size
-        )
-        self.roi.set_area(new_area)
+        if not self._is_dragged:
+            size = abs(size[0]), abs(size[1])
+            current_pos = self.position
+            new_area = self.roi.normalize_rect(
+                pos=(current_pos[0] - size[0] / 2, current_pos[1] - size[1] / 2),
+                size=size
+            )
+            self.roi.set_area(new_area)
 
     @property
     def area(self) -> QtCore.QRectF:
         return self.roi.area
 
     def set_area(self, area: QtCore.QRectF) -> None:
-        return self.roi.set_area(area)
+        if not self._is_dragged:
+            self.roi.set_area(area)
 
     @property
     def bounds(self) -> List[Tuple[Union[None, float], Union[None, float]]]:
@@ -736,20 +739,20 @@ class Rectangle(QtCore.QObject):
         return position[0] - size[0] / 2, position[1] - size[1] / 2
 
     def _roi_change_started(self, roi: Optional[_ROI] = None) -> None:
-        self._start_area = self.area
         self._is_dragged = True
+        self._start_area = self.area
         self.sigAreaDragged.emit(self._start_area, self._start_area, True, False)
 
     def _roi_change_finished(self, roi: Optional[_ROI] = None) -> None:
-        current_area = self.area
         if self._is_dragged:
             self._is_dragged = False
-            self.sigAreaDragged.emit(self._start_area, current_area, False, True)
-        self.sigAreaChanged.emit(current_area)
+            self.sigAreaDragged.emit(self._start_area, self.area, False, True)
 
     def _roi_changed(self, roi: Optional[_ROI] = None) -> None:
+        current_area = self.area
         if self._is_dragged:
-            self.sigAreaDragged.emit(self._start_area, self.area, False, False)
+            self.sigAreaDragged.emit(self._start_area, current_area, False, False)
+        self.sigAreaChanged.emit(current_area)
 
 
 class InfiniteCrosshairRectangle(Rectangle):

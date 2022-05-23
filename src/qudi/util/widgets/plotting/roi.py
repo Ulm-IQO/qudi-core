@@ -29,17 +29,43 @@ from pyqtgraph import ROI
 class RectangleROI(ROI):
     """
     """
-    def __init__(self, pos, size=(1, 1), bounds=None, parent=None, pen=None, hoverPen=None,
-                 handlePen=None, handleHoverPen=None, movable=True, resizable=True,
-                 aspectLocked=False):
-        ROI.__init__(self, pos, size=size, angle=0, invertible=True, maxBounds=None,
-                     scaleSnap=False, translateSnap=False, rotateSnap=False, parent=parent,
-                     pen=pen, hoverPen=hoverPen, handlePen=handlePen, handleHoverPen=handleHoverPen,
-                     movable=movable, rotatable=False, resizable=resizable, removable=False,
+    def __init__(self,
+                 pos,
+                 size=(1, 1),
+                 bounds=None,
+                 parent=None,
+                 pen=None,
+                 hoverPen=None,
+                 handlePen=None,
+                 handleHoverPen=None,
+                 movable=True,
+                 resizable=True,
+                 aspectLocked=False
+                 ) -> None:
+        ROI.__init__(self,
+                     pos,
+                     size=size,
+                     angle=0,
+                     invertible=True,
+                     maxBounds=None,
+                     scaleSnap=False,
+                     translateSnap=False,
+                     rotateSnap=False,
+                     parent=parent,
+                     pen=pen,
+                     hoverPen=hoverPen,
+                     handlePen=handlePen,
+                     handleHoverPen=handleHoverPen,
+                     movable=movable,
+                     rotatable=False,
+                     resizable=resizable,
+                     removable=False,
                      aspectLocked=aspectLocked)
-        self.__drag_mode = None
         self._bounds = self.normalize_bounds(bounds)
-        self._clip_area(update=True)
+        self._clip_area(update=False)
+        self.sigRegionChanged.connect(lambda: print('sigRegionChanged'))
+        self.sigRegionChangeStarted.connect(lambda: print('sigRegionChangeStarted'))
+        self.sigRegionChangeFinished.connect(lambda: print('sigRegionChangeFinished'))
 
     @property
     def area(self) -> QtCore.QRectF:
@@ -47,8 +73,8 @@ class RectangleROI(ROI):
 
     def set_area(self, area: QtCore.QRectF) -> None:
         area = self.normalize_rect(area.topLeft(), area.size())
-        self.setSize(area.size(), update=False)
-        self.setPos(area.topLeft(), update=False)
+        self.setSize(area.size(), update=False, finish=False)
+        self.setPos(area.topLeft(), update=False, finish=False)
         self._clip_area(update=True, finish=True)
 
     @property
@@ -59,7 +85,7 @@ class RectangleROI(ROI):
                    bounds: Union[None, Sequence[Tuple[Union[None, float], Union[None, float]]]]
                    ) -> None:
         self._bounds = self._normalize_bounds(bounds)
-        self._clip_area(update=True)
+        self._clip_area(update=True, finish=True)
 
     def _clip_area(self, update: Optional[bool] = True, finish: Optional[bool] = True) -> None:
         current_area = self.area
@@ -78,7 +104,7 @@ class RectangleROI(ROI):
         elif (y_max is not None) and (current_area.top() > y_max):
             clipped_area.setTop(y_max)
             clipped_area.setBottom(max(y_max - abs(current_area.height()), y_min))
-        self.setSize(clipped_area.size(), update=False)
+        self.setSize(clipped_area.size(), update=False, finish=False)
         self.setPos(clipped_area.topLeft(), update=update, finish=finish)
 
     @staticmethod
@@ -139,34 +165,20 @@ class RectangleROI(ROI):
         return True
 
     def mouseDragEvent(self, ev) -> None:
-        if ev.isStart():
-            if ev.button() == QtCore.Qt.MouseButton.LeftButton:
-                self.setSelected(True)
-                mods = ev.modifiers()
-                if self.translatable and mods == QtCore.Qt.KeyboardModifier.NoModifier:
-                    self.__drag_mode = 'translate'
-                else:
-                    self.__drag_mode = None
-
-                if self.__drag_mode is not None:
+        if not ev.isAccepted():
+            if self.translatable and ev.button() == QtCore.Qt.LeftButton and ev.modifiers() == QtCore.Qt.NoModifier:
+                is_start = ev.isStart()
+                is_finish = ev.isFinish()
+                ev.accept()
+                if is_start:
+                    self.setSelected(True)
                     self._moveStarted()
-                    ev.accept()
-                else:
-                    ev.ignore()
+                if is_finish:
+                    self._moveFinished()
+                elif self.isMoving:
+                    shift = self.mapToParent(ev.pos()) - self.mapToParent(ev.buttonDownPos())
+                    new_pos = self.preMoveState['pos'] + shift
+                    self.setPos(new_pos, update=False, finish=False)
+                    self._clip_area(update=True, finish=False)
             else:
-                self.__drag_mode = None
                 ev.ignore()
-
-        if ev.isFinish() and self.__drag_mode is not None:
-            self._moveFinished()
-            return
-
-        # self.isMoving becomes False if the move was cancelled by right-click
-        if not self.isMoving or self.__drag_mode is None:
-            return
-
-        if self.__drag_mode == 'translate':
-            shift = self.mapToParent(ev.pos()) - self.mapToParent(ev.buttonDownPos())
-            new_pos = self.preMoveState['pos'] + shift
-            self.setPos(new_pos, update=False, finish=False)
-            self._clip_area(update=True, finish=False)
