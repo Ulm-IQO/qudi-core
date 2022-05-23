@@ -75,7 +75,11 @@ class ImageWidget(QtWidgets.QWidget):
     def levels(self) -> Tuple[float, float]:
         return self.image_item.levels
 
-    def set_image(self, image) -> None:
+    def set_image(self,
+                  image,
+                  extent: Optional[Tuple[Tuple[float, float], Tuple[float, float]]] = None,
+                  adjust_for_px_size: Optional[bool] = True
+                  ) -> None:
         """
         """
         if image is None:
@@ -92,6 +96,8 @@ class ImageWidget(QtWidgets.QWidget):
             self.image_item.set_image(image=image,
                                       autoLevels=False,
                                       levels=self.colorbar_widget.limits)
+        if extent is not None:
+            self.image_item.set_image_extent(extent, adjust_for_px_size)
 
     def set_axis_label(self, axis, label=None, unit=None):
         return self.plot_widget.setLabel(axis, text=label, units=unit)
