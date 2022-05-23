@@ -821,39 +821,22 @@ class InfiniteCrosshairRectangle(Rectangle):
             self._z_value = value
 
     def set_position(self, position: Tuple[float, float]) -> None:
-        old_area = self.roi.area
-        old_center = old_area.center()
-        new_area = old_area.translated(position[0] - old_center.x(), position[1] - old_center.y())
-        self.roi.set_area(new_area)
+        super().set_position(position)
         self._move_lines_to_roi()
 
     def set_size(self, size: Tuple[float, float]) -> None:
-        size = abs(size[0]), abs(size[1])
-        current_pos = self.position
-        new_area = self.roi.normalize_rect(
-            pos=(current_pos[0] - size[0] / 2, current_pos[1] - size[1] / 2),
-            size=size
-        )
-        self.roi.set_area(new_area)
+        super().set_size(size)
         self._move_lines_to_roi()
-
-    @property
-    def area(self) -> QtCore.QRectF:
-        return self.roi.area
 
     def set_area(self, area: QtCore.QRectF) -> None:
-        self.roi.set_area(area)
+        super().set_area(area)
         self._move_lines_to_roi()
-
-    @property
-    def bounds(self) -> List[Tuple[Union[None, float], Union[None, float]]]:
-        return self.roi.bounds
 
     def set_bounds(self,
                    bounds: Union[None, Sequence[Tuple[Union[None, float], Union[None, float]]]]
                    ) -> None:
-        self.roi.set_bounds(bounds)
-        x_bounds, y_bounds = self.roi.bounds
+        super().set_bounds(bounds)
+        x_bounds, y_bounds = self.bounds
         self.vline.setBounds(x_bounds)
         self.hline.setBounds(y_bounds)
 

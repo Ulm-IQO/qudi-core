@@ -121,7 +121,6 @@ class DataSelectionMixin:
                  selection_hover_brush: Optional[Any] = None,
                  xy_region_selection_crosshair: Optional[bool] = False,
                  xy_region_selection_handles: Optional[bool] = True,
-                 emit_while_dragging: Optional[bool] = False,
                  **kwargs
                  ) -> None:
         super().__init__(**kwargs)
@@ -132,7 +131,6 @@ class DataSelectionMixin:
         self._selection_hover_brush = selection_hover_brush
         self._xy_region_selection_crosshair = bool(xy_region_selection_crosshair)
         self._xy_region_selection_handles = bool(xy_region_selection_handles)
-        self._emit_while_dragging = bool(emit_while_dragging)
         self._region_selection_mode = self.SelectionMode.Disabled
         self._marker_selection_mode = self.SelectionMode.Disabled
         self._selection_mutable = True
@@ -277,8 +275,6 @@ class DataSelectionMixin:
                                 brush=self._selection_brush,
                                 hover_brush=self._selection_hover_brush)
         item.sigAreaChanged.connect(self._emit_region_change)
-        if self._emit_while_dragging:
-            item.sigAreaDragged.connect(self._emit_region_change)
         item.set_z_value(10)
         self.__regions.append(item)
 
@@ -320,8 +316,6 @@ class DataSelectionMixin:
                                 pen=self._selection_pen,
                                 hover_pen=self._selection_hover_pen)
         item.sigPositionChanged.connect(self._emit_marker_change)
-        if self._emit_while_dragging:
-            item.sigPositionDragged.connect(self._emit_marker_change)
         item.set_z_value(11)
         self.__markers.append(item)
 

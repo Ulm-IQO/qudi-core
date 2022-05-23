@@ -63,9 +63,6 @@ class RectangleROI(ROI):
                      aspectLocked=aspectLocked)
         self._bounds = self.normalize_bounds(bounds)
         self._clip_area(update=False)
-        self.sigRegionChanged.connect(lambda: print('sigRegionChanged'))
-        self.sigRegionChangeStarted.connect(lambda: print('sigRegionChangeStarted'))
-        self.sigRegionChangeFinished.connect(lambda: print('sigRegionChangeFinished'))
 
     @property
     def area(self) -> QtCore.QRectF:
