@@ -81,7 +81,7 @@ class RectangleROI(ROI):
     def set_bounds(self,
                    bounds: Union[None, Sequence[Tuple[Union[None, float], Union[None, float]]]]
                    ) -> None:
-        self._bounds = self._normalize_bounds(bounds)
+        self._bounds = self.normalize_bounds(bounds)
         self._clip_area(update=True, finish=True)
 
     def _clip_area(self, update: Optional[bool] = True, finish: Optional[bool] = True) -> None:
@@ -170,12 +170,12 @@ class RectangleROI(ROI):
                 if is_start:
                     self.setSelected(True)
                     self._moveStarted()
-                if is_finish:
-                    self._moveFinished()
-                elif self.isMoving:
+                if self.isMoving:
                     shift = self.mapToParent(ev.pos()) - self.mapToParent(ev.buttonDownPos())
                     new_pos = self.preMoveState['pos'] + shift
                     self.setPos(new_pos, update=False, finish=False)
                     self._clip_area(update=True, finish=False)
+                if is_finish:
+                    self._moveFinished()
             else:
                 ev.ignore()
