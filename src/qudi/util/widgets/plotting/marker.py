@@ -567,9 +567,9 @@ class Rectangle(QtCore.QObject):
     _default_pen = {'color': '#00ff00', 'width': 1}
     _default_hover_pen = {'color': '#ffff00', 'width': 1}
 
-    sigAreaChanged = QtCore.Signal(QtCore.QRectF)  # current_area
+    sigAreaChanged = QtCore.Signal(tuple)  # current_area
     # start_area, current_area, is_start, is_finished
-    sigAreaDragged = QtCore.Signal(QtCore.QRectF, QtCore.QRectF, bool, bool)
+    sigAreaDragged = QtCore.Signal(tuple, tuple, bool, bool)
 
     def __init__(self,
                  viewbox: ViewBox,
@@ -597,7 +597,7 @@ class Rectangle(QtCore.QObject):
         if hover_pen is None:
             hover_pen = self._default_hover_pen
 
-        self.roi = _RectangleROI(pos=self._center_to_roi_pos(position, size),
+        self.roi = _RectangleROI(pos=position,
                                  size=size,
                                  bounds=bounds,
                                  movable=movable,
@@ -654,38 +654,30 @@ class Rectangle(QtCore.QObject):
 
     @property
     def position(self) -> Tuple[float, float]:
-        center = self.roi.area.center()
-        return center.x(), center.y()
+        return self.roi.area[0]
 
     def set_position(self, position: Tuple[float, float]) -> None:
         if not self._is_dragged:
-            old_area = self.roi.area
-            center = old_area.center()
-            new_area = old_area.translated(position[0] - center.x(), position[1] - center.y())
-            self.roi.set_area(new_area)
+            self.roi.set_area(position=position)
 
     @property
     def size(self) -> Tuple[float, float]:
-        area = self.roi.area
-        return abs(area.width()), abs(area.height())
+        return self.roi.area[1]
 
     def set_size(self, size: Tuple[float, float]) -> None:
         if not self._is_dragged:
-            size = abs(size[0]), abs(size[1])
-            current_pos = self.position
-            new_area = self.roi.normalize_rect(
-                pos=(current_pos[0] - size[0] / 2, current_pos[1] - size[1] / 2),
-                size=size
-            )
-            self.roi.set_area(new_area)
+            self.roi.set_area(size=(abs(size[0]), abs(size[1])))
 
     @property
-    def area(self) -> QtCore.QRectF:
+    def area(self) -> Tuple[Tuple[float, float], Tuple[float, float]]:
         return self.roi.area
 
-    def set_area(self, area: QtCore.QRectF) -> None:
+    def set_area(self,
+                 position: Optional[Tuple[float, float]] = None,
+                 size: Optional[Tuple[float, float]] = None
+                 ) -> None:
         if not self._is_dragged:
-            self.roi.set_area(area)
+            self.roi.set_area(position=position, size=size)
 
     @property
     def bounds(self) -> List[Tuple[Union[None, float], Union[None, float]]]:
@@ -731,12 +723,6 @@ class Rectangle(QtCore.QObject):
     def _remove_handles(self) -> None:
         while len(self.roi.handles) > 0:
             self.roi.removeHandle(-1)
-
-    @staticmethod
-    def _center_to_roi_pos(position: Tuple[float, float],
-                           size: Tuple[float, float]
-                           ) -> Tuple[float, float]:
-        return position[0] - size[0] / 2, position[1] - size[1] / 2
 
     def _roi_change_started(self, roi: Optional[_ROI] = None) -> None:
         self._is_dragged = True
@@ -828,8 +814,11 @@ class InfiniteCrosshairRectangle(Rectangle):
         super().set_size(size)
         self._move_lines_to_roi()
 
-    def set_area(self, area: QtCore.QRectF) -> None:
-        super().set_area(area)
+    def set_area(self,
+                 position: Optional[Tuple[float, float]] = None,
+                 size: Optional[Tuple[float, float]] = None
+                 ) -> None:
+        super().set_area(position=position, size=size)
         self._move_lines_to_roi()
 
     def set_bounds(self,
@@ -898,17 +887,13 @@ class InfiniteCrosshairRectangle(Rectangle):
             is_start = True
 
         new_pos = (self.vline.value(), self.hline.value())
-        old_area = self.roi.area
-        old_center = old_area.center()
-        old_pos = (old_center.x(), old_center.y())
-        new_area = old_area.translated(new_pos[0] - old_pos[0], new_pos[1] - old_pos[1])
         self.roi.blockSignals(True)
         try:
-            self.roi.set_area(new_area)
+            self.roi.set_area(position=new_pos)
         finally:
             self.roi.blockSignals(False)
-        current_area = self.area
-        if new_area != current_area:
+        current_area = self.roi.area
+        if new_pos != current_area[0]:
             self._move_lines_to_roi()
 
         if line.moving:
@@ -924,4 +909,4 @@ class InfiniteCrosshairRectangle(Rectangle):
 
     def _roi_changed(self, roi: Optional[_ROI] = None) -> None:
         self._move_lines_to_roi()
-        return super()._roi_changed(roi)
+        super()._roi_changed(roi)
