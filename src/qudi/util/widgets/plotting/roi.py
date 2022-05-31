@@ -64,6 +64,7 @@ class RectangleROI(ROI):
                      aspectLocked=aspectLocked)
         self.__center_position = (0, 0)
         self.__norm_size = (1, 1)
+        self.__start_pos = (0, 0)
         self._apply_bounds_to_center = bool(apply_bounds_to_center)
         self._bounds = self.normalize_bounds(bounds)
         self.set_area(position=pos, size=size)
@@ -129,14 +130,10 @@ class RectangleROI(ROI):
                 position[1] = y_min + size[1] / 2
             elif (y_max is not None) and (top > y_max):
                 position[1] = y_max - size[1] / 2
-        rect_pos = self.pos()
-        current_pos = QtCore.QRectF(rect_pos, self.size()).center()
-        translate = (position[0] - current_pos.x(), position[1] - current_pos.y())
+        translate = (position[0] - self.__center_position[0],
+                     position[1] - self.__center_position[1])
         self.__center_position = tuple(position)
-        self.setPos(rect_pos.x() + translate[0],
-                    rect_pos.y() + translate[1],
-                    update=update,
-                    finish=finish)
+        self.translate(translate, update=update, finish=finish)
 
     @staticmethod
     def normalize_bounds(bounds: Union[None, Sequence[Tuple[Union[None, float], Union[None, float]]]]
@@ -164,36 +161,25 @@ class RectangleROI(ROI):
                 bounds[1] = tuple(bounds[1])
         return bounds
 
-    # @staticmethod
-    # def normalize_rect(pos: Tuple[float, float], size: Tuple[float, float]) -> QtCore.QRectF:
-    #     try:
-    #         pos = QtCore.QPointF(pos[0], pos[1])
-    #     except TypeError:
-    #         pass
-    #     try:
-    #         size = QtCore.QSizeF(size[0], size[1])
-    #     except TypeError:
-    #         pass
-    #     x_min, x_max = sorted([pos.x(), pos.x() + size.width()])
-    #     y_min, y_max = sorted([pos.y(), pos.y() + size.height()])
-    #     return QtCore.QRectF(x_min,
-    #                          y_max,
-    #                          abs(size.width()),
-    #                          -abs(size.height()))
-
     def checkPointMove(self, handle, pos, modifiers):
-        pos = self.mapSceneToParent(pos)
-        x_min, x_max = self._bounds[0]
-        y_min, y_max = self._bounds[1]
-        if (x_min is not None) and pos.x() < x_min:
-            return False
-        if (x_max is not None) and pos.x() > x_max:
-            return False
-        if (y_min is not None) and pos.y() < y_min:
-            return False
-        if (y_max is not None) and pos.y() > y_max:
-            return False
+        if not self._apply_bounds_to_center:
+            pos = self.mapSceneToParent(pos)
+            x_min, x_max = self._bounds[0]
+            y_min, y_max = self._bounds[1]
+            if (x_min is not None) and pos.x() < x_min:
+                return False
+            if (x_max is not None) and pos.x() > x_max:
+                return False
+            if (y_min is not None) and pos.y() < y_min:
+                return False
+            if (y_max is not None) and pos.y() > y_max:
+                return False
         return True
+
+    def cancelMove(self) -> None:
+        if self.isMoving:
+            self.__center_position = self.__start_pos
+        return super().cancelMove()
 
     def mouseDragEvent(self, ev) -> None:
         if not ev.isAccepted():
@@ -204,11 +190,12 @@ class RectangleROI(ROI):
                 if is_start:
                     self.setSelected(True)
                     self._moveStarted()
+                    self.__start_pos = self.__center_position
                 if self.isMoving:
-                    translate = self.mapToParent(ev.pos()) - self.mapToParent(ev.buttonDownPos())
-                    new_pos = self.preMoveState['pos'] + translate
-                    self.__center_position = (self.__center_position[0] + translate.x(),
-                                              self.__center_position[1] + translate.y())
+                    total_move = self.mapToParent(ev.pos()) - self.mapToParent(ev.buttonDownPos())
+                    self.__center_position = (self.__start_pos[0] + total_move.x(),
+                                              self.__start_pos[1] + total_move.y())
+                    new_pos = self.preMoveState['pos'] + total_move
                     self.setPos(new_pos, update=False, finish=False)
                     self._clip_area(update=True, finish=False)
                 if is_finish:

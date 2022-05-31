@@ -341,8 +341,8 @@ class DataSelectionMixin:
             x_min, x_max = sorted(span[0])
             y_min, y_max = sorted(span[1])
             size = (x_max - x_min, y_max - y_min)
-            area = QtCore.QRectF(x_min, y_max, size[0], -size[1])
-            item.set_area(area)
+            position = (x_min + size[0] / 2, y_min + size[1] / 2)
+            item.set_area(position, size)
         item.blockSignals(False)
 
     def move_marker_selection(self,
@@ -447,7 +447,7 @@ class DataSelectionMixin:
         }
 
     @property
-    def region_selection(self) -> Dict[SelectionMode, List[QtCore.QRectF]]:
+    def region_selection(self) -> Dict[SelectionMode, List[tuple]]:
         return {
             self.SelectionMode.X: [
                 r.area for r in self.__regions if
