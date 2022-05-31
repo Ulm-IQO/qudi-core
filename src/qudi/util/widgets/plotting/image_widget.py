@@ -205,7 +205,7 @@ class DataSelectionMixin:
         return self.plot_widget.marker_selection
 
     @property
-    def region_selection(self) -> Dict[SelectionMode, List[QtCore.QRectF]]:
+    def region_selection(self) -> Dict[SelectionMode, List[Tuple[Tuple[float, float], Tuple[float, float]]]]:
         return self.plot_widget.region_selection
 
     @property
