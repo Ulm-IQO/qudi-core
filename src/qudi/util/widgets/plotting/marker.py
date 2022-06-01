@@ -310,7 +310,7 @@ class InfiniteLine(QtCore.QObject):
 
     def hide(self):
         view = self.parent()
-        if self.line not in view.addedItems:
+        if self.line in view.addedItems:
             view.removeItem(self.line)
 
     def set_pen(self, pen: Any) -> None:
