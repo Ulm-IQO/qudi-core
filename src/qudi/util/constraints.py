@@ -21,7 +21,7 @@ If not, see <https://www.gnu.org/licenses/>.
 
 __all__ = ['ScalarConstraint']
 
-from typing import Union, Optional, Tuple
+from typing import Union, Optional, Tuple, Callable, Any
 from qudi.util.helpers import is_float, is_integer
 
 
@@ -31,22 +31,28 @@ class ScalarConstraint:
     def __init__(self,
                  default: Union[int, float],
                  bounds: Tuple[Union[int, float], Union[int, float]],
-                 increment: Optional[Union[int, float]] = None
+                 increment: Optional[Union[int, float]] = None,
+                 enforce_int: Optional[bool] = False,
+                 checker: Optional[Callable[[Union[int, float]], bool]] = None
                  ) -> None:
         """
         """
-        if not (is_integer(default) or is_float(default)):
-            raise TypeError('default value must be int or float type')
-        if not all(is_integer(val) or is_float(val) for val in bounds):
-            raise TypeError('bounds must contain only int or float type values')
-        if not ((increment is None) or is_integer(increment) or is_float(increment)):
-            raise TypeError('increment value must be int or float type (or None)')
+        self._enforce_int = bool(enforce_int)
+        self._check_value_type(default)
+        for value in bounds:
+            self._check_value_type(value)
+        if increment is not None:
+            self._check_value_type(increment)
+        if checker is not None and not callable(checker):
+            raise TypeError('checker must be eithe None or a callable accepting a single scalar '
+                            'and returning a bool.')
         self._default = default
         self._minimum, self._maximum = sorted(bounds)
         self._increment = increment if increment else None
-        if not self.in_range(self._default):
-            raise ValueError(f'default value ({self._default}) outside of bounds '
-                             f'[{self._minimum}, {self._maximum}]')
+        self._checker = checker
+
+        if not self.is_valid(self._default):
+            raise ValueError(f'invalid default value ({self._default}) encountered')
 
     @property
     def bounds(self) -> Tuple[Union[int, float], Union[int, float]]:
@@ -68,8 +74,26 @@ class ScalarConstraint:
     def increment(self) -> Union[None, int, float]:
         return self._increment
 
-    def in_range(self, value: Union[int, float]) -> bool:
-        return self._minimum <= value <= self._maximum
+    def is_valid(self, value: Union[int, float]) -> bool:
+        try:
+            self._check_value_type(value)
+        except TypeError:
+            return False
+
+        if self._minimum <= value <= self._maximum:
+            if self._checker is None:
+                return True
+            else:
+                return self._checker(value)
+        return False
 
     def clip(self, value: Union[int, float]) -> Union[int, float]:
         return min(self._maximum, max(self._minimum, value))
+
+    def _check_value_type(self, value: Any) -> None:
+        if self._enforce_int:
+            if not is_integer(value):
+                raise TypeError(f'values must be int type (received {value})')
+        else:
+            if not (is_integer(value) or is_float(value)):
+                raise TypeError(f'values must be int or float type (received {value})')
