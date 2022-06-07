@@ -74,6 +74,10 @@ class ScalarConstraint:
     def increment(self) -> Union[None, int, float]:
         return self._increment
 
+    @property
+    def enforce_int(self) -> bool:
+        return self._enforce_int
+
     def is_valid(self, value: Union[int, float]) -> bool:
         try:
             self._check_value_type(value)
@@ -97,3 +101,13 @@ class ScalarConstraint:
         else:
             if not (is_integer(value) or is_float(value)):
                 raise TypeError(f'values must be int or float type (received {value})')
+
+    def __repr__(self) -> str:
+        cls = self.__class__.__name__
+        module = self.__class__.__module__
+        return f'{module}.{cls}(' \
+               f'default={self.default}, ' \
+               f'bounds={self.bounds}, ' \
+               f'increment={self.increment}, ' \
+               f'enforce_int={self.enforce_int}, ' \
+               f'checker={self._checker})'
