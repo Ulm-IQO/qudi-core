@@ -144,9 +144,9 @@ class InfiniteCrosshair(QtCore.QObject):
 
     def hide(self):
         view = self.parent()
-        if self.vline not in view.addedItems:
+        if self.vline in view.addedItems:
             view.removeItem(self.vline)
-        if self.hline not in view.addedItems:
+        if self.hline in view.addedItems:
             view.removeItem(self.hline)
 
     def set_pen(self, pen: Any) -> None:
