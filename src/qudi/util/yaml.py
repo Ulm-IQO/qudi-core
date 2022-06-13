@@ -26,7 +26,7 @@ __all__ = ('SafeRepresenter', 'SafeConstructor', 'YAML', 'yaml_load', 'yaml_dump
 import os
 import numpy as np
 import ruamel.yaml as _yaml
-from enum import Enum
+from enum import Enum, IntEnum, IntFlag, Flag
 from importlib import import_module
 from collections import OrderedDict
 from io import BytesIO, TextIOWrapper
@@ -96,6 +96,20 @@ class SafeRepresenter(_yaml.SafeRepresenter):
         return self.represent_scalar(tag='tag:yaml.org,2002:enum',
                                      value=f'{module}.{class_name}[{data.name}]')
 
+    def represent_flag(self, data):
+        """ Representer for enum types with base class enum.
+        """
+        class_name = data.__class__.__name__
+        module = data.__class__.__module__
+        try:
+            mod = import_module(module)
+            cls = getattr(mod, class_name)
+            assert data == cls(data.value)
+        except (AttributeError, ImportError, AssertionError):
+            raise TypeError(f'Data can not be represented as enum.Flag')
+        return self.represent_scalar(tag='tag:yaml.org,2002:flag',
+                                     value=f'{module}.{class_name}({data.value:d})')
+
     def represent_ndarray(self, data):
         """ Representer for numpy.ndarrays.
         Will represent the array in binary representation as ASCII-encoded string by default.
@@ -133,6 +147,9 @@ SafeRepresenter.add_representer(dict, SafeRepresenter.represent_dict_no_sort)
 SafeRepresenter.add_representer(OrderedDict, SafeRepresenter.represent_dict_no_sort)
 SafeRepresenter.add_representer(np.ndarray, SafeRepresenter.represent_ndarray)
 SafeRepresenter.add_multi_representer(Enum, SafeRepresenter.represent_enum)
+SafeRepresenter.add_multi_representer(IntEnum, SafeRepresenter.represent_enum)
+SafeRepresenter.add_multi_representer(Flag, SafeRepresenter.represent_flag)
+SafeRepresenter.add_multi_representer(IntFlag, SafeRepresenter.represent_flag)
 SafeRepresenter.add_multi_representer(np.integer, SafeRepresenter.represent_numpy_int)
 SafeRepresenter.add_multi_representer(np.floating, SafeRepresenter.represent_numpy_float)
 SafeRepresenter.add_multi_representer(np.complexfloating, SafeRepresenter.represent_numpy_complex)
@@ -177,6 +194,15 @@ class SafeConstructor(_yaml.SafeConstructor):
         cls = getattr(import_module(module), cls_name)
         return cls[enum_name]
 
+    def construct_flag(self, node):
+        """ The Flag constructor.
+        """
+        enum_repr_str = self.construct_yaml_str(node)
+        enum_mod_cls, enum_value_str = enum_repr_str.rsplit(')', 1)[0].rsplit('(', 1)
+        module, cls_name = enum_mod_cls.rsplit('.', 1)
+        cls = getattr(import_module(module), cls_name)
+        return cls(int(enum_value_str))
+
 
 # register custom constructors
 SafeConstructor.add_constructor('tag:yaml.org,2002:frozenset', SafeConstructor.construct_frozenset)
@@ -185,6 +211,7 @@ SafeConstructor.add_constructor('tag:yaml.org,2002:ndarray', SafeConstructor.con
 SafeConstructor.add_constructor('tag:yaml.org,2002:extndarray',
                                 SafeConstructor.construct_extndarray)
 SafeConstructor.add_constructor('tag:yaml.org,2002:enum', SafeConstructor.construct_enum)
+SafeConstructor.add_constructor('tag:yaml.org,2002:flag', SafeConstructor.construct_flag)
 
 
 class YAML(_yaml.YAML):
