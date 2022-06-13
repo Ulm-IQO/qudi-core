@@ -81,9 +81,11 @@ class InfiniteCrosshair(QtCore.QObject):
                                    hoverPen=hover_pen)
 
         self.vline.sigDragged.connect(self._line_dragged)
-        self.vline.sigPositionChangeFinished.connect(self._line_position_change_finished)
+        self.vline.sigPositionChanged.connect(self._line_changed)
+        self.vline.sigPositionChangeFinished.connect(self._line_drag_finished)
         self.hline.sigDragged.connect(self._line_dragged)
-        self.hline.sigPositionChangeFinished.connect(self._line_position_change_finished)
+        self.hline.sigPositionChanged.connect(self._line_changed)
+        self.hline.sigPositionChangeFinished.connect(self._line_drag_finished)
         self.show()
 
     @property
@@ -212,7 +214,16 @@ class InfiniteCrosshair(QtCore.QObject):
 
         self.sigPositionDragged.emit(start_pos, current_pos, is_start, is_finished)
 
-    def _line_position_change_finished(self, line: Optional[_InfiniteLine] = None) -> None:
+    def _line_drag_finished(self, line: Optional[_InfiniteLine] = None) -> None:
+        self._is_dragged = False
+        current_pos = self.position
+        if line is self.vline:
+            start_pos = (self.vline.startPosition[0], current_pos[1])
+        else:
+            start_pos = (current_pos[0], self.hline.startPosition[1])
+        self.sigPositionDragged.emit(start_pos, current_pos, False, True)
+
+    def _line_changed(self, line: Optional[_InfiniteLine] = None) -> None:
         self.sigPositionChanged.emit(self.position)
 
 
@@ -255,7 +266,8 @@ class InfiniteLine(QtCore.QObject):
                                   hoverPen=hover_pen)
 
         self.line.sigDragged.connect(self._line_dragged)
-        self.line.sigPositionChangeFinished.connect(self._line_position_change_finished)
+        self.line.sigPositionChanged.connect(self._line_changed)
+        self.line.sigPositionChangeFinished.connect(self._line_drag_finished)
 
         self.show()
 
@@ -356,18 +368,15 @@ class InfiniteLine(QtCore.QObject):
             self._is_dragged = True
             is_start = True
 
-        current_pos = self.position
         start_pos = self.line.startPosition[0 if self.line.angle == 90 else 1]
+        self.sigPositionDragged.emit(start_pos, self.position, is_start, False)
 
-        if line.moving:
-            is_finished = False
-        else:
-            self._is_dragged = False
-            is_finished = True
+    def _line_drag_finished(self, line: Optional[_InfiniteLine] = None) -> None:
+        self._is_dragged = False
+        start_pos = self.line.startPosition[0 if self.line.angle == 90 else 1]
+        self.sigPositionDragged.emit(start_pos, self.position, False, True)
 
-        self.sigPositionDragged.emit(start_pos, current_pos, is_start, is_finished)
-
-    def _line_position_change_finished(self, line: Optional[_InfiniteLine] = None) -> None:
+    def _line_changed(self, line: Optional[_InfiniteLine] = None) -> None:
         self.sigPositionChanged.emit(self.position)
 
 
@@ -791,10 +800,14 @@ class InfiniteCrosshairRectangle(Rectangle):
                          pen=pen,
                          hover_pen=hover_pen)
 
+        self._line_is_dragged = False
+
         self.vline.sigDragged.connect(self._line_dragged)
-        self.vline.sigPositionChangeFinished.connect(self._line_position_change_finished)
+        self.vline.sigPositionChanged.connect(self._line_changed)
+        self.vline.sigPositionChangeFinished.connect(self._line_drag_finished)
         self.hline.sigDragged.connect(self._line_dragged)
-        self.hline.sigPositionChangeFinished.connect(self._line_position_change_finished)
+        self.hline.sigPositionChanged.connect(self._line_changed)
+        self.hline.sigPositionChangeFinished.connect(self._line_drag_finished)
 
     def set_movable(self, movable: bool) -> None:
         movable = bool(movable)
@@ -812,7 +825,8 @@ class InfiniteCrosshairRectangle(Rectangle):
 
     def set_position(self, position: Tuple[float, float]) -> None:
         super().set_position(position)
-        self._move_lines_to_roi()
+        if not self._line_is_dragged:
+            self._move_lines_to_roi()
 
     def set_size(self, size: Tuple[float, float]) -> None:
         super().set_size(size)
@@ -823,7 +837,8 @@ class InfiniteCrosshairRectangle(Rectangle):
                  size: Optional[Tuple[float, float]] = None
                  ) -> None:
         super().set_area(position=position, size=size)
-        self._move_lines_to_roi()
+        if not self._line_is_dragged:
+            self._move_lines_to_roi()
 
     def set_bounds(self,
                    bounds: Union[None, Sequence[Tuple[Union[None, float], Union[None, float]]]]
@@ -883,10 +898,10 @@ class InfiniteCrosshairRectangle(Rectangle):
             self.hline.blockSignals(False)
 
     def _line_dragged(self, line: Optional[_InfiniteLine] = None) -> None:
-        if self._is_dragged:
+        if self._line_is_dragged:
             is_start = False
         else:
-            self._is_dragged = True
+            self._line_is_dragged = True
             self._start_area = self.area
             is_start = True
 
@@ -897,18 +912,15 @@ class InfiniteCrosshairRectangle(Rectangle):
         finally:
             self.roi.blockSignals(False)
         current_area = self.roi.area
-        if new_pos != current_area[0]:
-            self._move_lines_to_roi()
 
-        if line.moving:
-            is_finished = False
-        else:
-            self._is_dragged = False
-            is_finished = True
+        self.sigAreaDragged.emit(self._start_area, current_area, is_start, False)
 
-        self.sigAreaDragged.emit(self._start_area, current_area, is_start, is_finished)
+    def _line_drag_finished(self, line: Optional[_InfiniteLine] = None) -> None:
+        if self._line_is_dragged:
+            self._line_is_dragged = False
+            self.sigAreaDragged.emit(self._start_area, self.area, False, True)
 
-    def _line_position_change_finished(self, line: Optional[_InfiniteLine] = None) -> None:
+    def _line_changed(self, line: Optional[_InfiniteLine] = None) -> None:
         self.sigAreaChanged.emit(self.area)
 
     def _roi_changed(self, roi: Optional[_ROI] = None) -> None:
