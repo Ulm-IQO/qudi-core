@@ -18,5 +18,7 @@ You should have received a copy of the GNU Lesser General Public License along w
 If not, see <https://www.gnu.org/licenses/>.
 """
 
+__all__ = ['Configuration', 'ValidationError']
+
 from .config import Configuration
 from .validator import ValidationError

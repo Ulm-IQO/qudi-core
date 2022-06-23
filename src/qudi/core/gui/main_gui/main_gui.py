@@ -331,7 +331,7 @@ class QudiMainGui(GuiBase):
         """
         if config is None:
             config = self._qudi_main.configuration
-        self.mw.config_widget.set_config(config.config)
+        self.mw.config_widget.set_config(config.config_map)
 
     @QtCore.Slot(dict)
     def update_configured_modules(self, modules=None):

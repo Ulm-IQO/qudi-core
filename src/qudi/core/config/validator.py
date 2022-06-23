@@ -21,13 +21,15 @@ You should have received a copy of the GNU Lesser General Public License along w
 If not, see <https://www.gnu.org/licenses/>.
 """
 
-__all__ = ['ValidationError', 'validate_config']
+__all__ = ['ValidationError', 'validate_config', 'validate_local_module_config',
+           'validate_remote_module_config']
 
 from typing import Mapping, Any
+from jsonschema import ValidationError
 from jsonschema import validators as __validators
 from jsonschema import Draft7Validator as __BaseValidator
-from jsonschema import ValidationError
-from .__schema import qudi_cfg_schema as __cfg_schema
+
+from .schema import config_schema, remote_module_config_schema, local_module_config_schema
 
 
 def __set_defaults(validator, properties, instance, schema):
@@ -55,4 +57,12 @@ DefaultInsertionValidator = __validators.extend(
 
 
 def validate_config(config: Mapping[str, Any]) -> None:
-    DefaultInsertionValidator(__cfg_schema).validate(config)
+    DefaultInsertionValidator(config_schema()).validate(config)
+
+
+def validate_local_module_config(config: Mapping[str, Any]) -> None:
+    DefaultInsertionValidator(local_module_config_schema()).validate(config)
+
+
+def validate_remote_module_config(config: Mapping[str, Any]) -> None:
+    DefaultInsertionValidator(remote_module_config_schema()).validate(config)
