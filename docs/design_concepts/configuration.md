@@ -186,6 +186,16 @@ logic:
 In this example the respective `qudi.core.module.LogicBase` subclass is called `MyModuleClass` and 
 can be imported from `qudi.logic.my_module`.
 
+If you are running a remote modules server to make a qudi module available to a remote qudi 
+instance, you need to flag each module that should be accessible from remote.  
+To do so you need to set the module config property `allow_remote` to `True` (it is `False` by default):
+```yaml
+logic:
+    my_module:  # unique custom name for this module
+        module.Class: 'my_module.MyModuleClass'
+        allow_remote: True
+```
+
 In order to interface different modules with each other, qudi modules are employing a meta-object 
 called a `Connector` ([more details here](connectors.md)).  
 If the logic module in our example needs to be connected to other modules (logic or hardware), you 
