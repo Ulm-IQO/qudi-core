@@ -33,6 +33,7 @@ import warnings
 from ipykernel.ipkernel import IPythonKernel
 
 from qudi.core.config import Configuration, ValidationError
+from qudi.util.yaml import ParserError
 
 
 def install_kernel():
@@ -122,7 +123,7 @@ class QudiKernelClient:
         config = Configuration()
         try:
             config.load_config()
-        except (ValueError, ValidationError):
+        except (ValueError, ValidationError, ParserError):
             pass
         self.connection = rpyc.connect(host='localhost',
                                        config={'allow_all_attrs': True,
