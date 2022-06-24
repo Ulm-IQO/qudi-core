@@ -87,8 +87,8 @@ def config_schema() -> Dict[str, Any]:
                         'default': True
                     },
                     'default_data_dir': {
-                        'type': 'string',
-                        'default': _get_default_data_dir(create_missing=False)
+                        'type': ['null', 'string'],
+                        'default': None
                     },
                     'extension_paths': {
                         'type': 'array',
