@@ -88,7 +88,10 @@ class Configuration(_FileHandlerMixin,
 
     def __delitem__(self, key: str) -> None:
         new_config = self.config_map
-        del new_config[key]
+        try:
+            del new_config[key]
+        except KeyError:
+            del new_config['global'][key]
         self.set_config(new_config)
 
     def __iter__(self):
