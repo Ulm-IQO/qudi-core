@@ -23,7 +23,6 @@ If not, see <https://www.gnu.org/licenses/>.
 __all__ = ['config_schema', 'local_module_config_schema', 'remote_module_config_schema']
 
 from typing import Dict, Any
-from qudi.util.paths import get_default_data_dir as _get_default_data_dir
 
 
 def config_schema() -> Dict[str, Any]:
