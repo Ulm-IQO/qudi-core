@@ -62,7 +62,6 @@ setup(
                            'artwork/styles/**/**/*',
                            'artwork/logo/*',
                            ],
-                  'qudi.core': ['default.cfg']
                   },
     description='A modular measurement application framework',
     long_description=long_description,
