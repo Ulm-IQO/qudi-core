@@ -80,7 +80,10 @@ class Configuration(_FileHandlerMixin,
 
     def __setitem__(self, key: str, value: Any) -> None:
         new_config = self.config_map
-        new_config[key] = value
+        if key in new_config:
+            new_config[key] = value
+        else:
+            new_config['global'][key] = value
         self.set_config(new_config)
 
     def __delitem__(self, key: str) -> None:
