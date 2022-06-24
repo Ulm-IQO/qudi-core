@@ -230,8 +230,12 @@ class Qudi(QtCore.QObject):
     def _configure_qudi(self):
         """
         """
-        print(f'> Applying configuration from "{self.configuration.file_path}"...')
-        self.log.info(f'Applying configuration from "{self.configuration.file_path}"...')
+        if self.configuration.file_path is None:
+            print('> Applying default configuration...')
+            self.log.info('Applying default configuration...')
+        else:
+            print(f'> Applying configuration from "{self.configuration.file_path}"...')
+            self.log.info(f'Applying configuration from "{self.configuration.file_path}"...')
 
         # Clear all qudi modules
         self.module_manager.clear()
