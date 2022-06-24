@@ -391,7 +391,7 @@ class QudiMainGui(GuiBase):
             )
             if reply == QtWidgets.QMessageBox.Cancel:
                 return
-            self._qudi_main.configuration.set_default_config_path(filename)
+            self._qudi_main.configuration.set_default_path(filename)
             if reply == QtWidgets.QMessageBox.Yes:
                 self._qudi_main.restart()
 

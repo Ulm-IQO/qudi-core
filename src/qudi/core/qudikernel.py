@@ -29,11 +29,9 @@ import json
 import shutil
 import logging
 import tempfile
-import warnings
 from ipykernel.ipkernel import IPythonKernel
 
-from qudi.core.config import Configuration, ValidationError
-from qudi.util.yaml import ParserError
+from qudi.core.config import Configuration, ValidationError, ParserError
 
 
 def install_kernel():
@@ -122,7 +120,7 @@ class QudiKernelClient:
     def connect(self):
         config = Configuration()
         try:
-            config.load_config()
+            config.load()
         except (ValueError, ValidationError, ParserError):
             pass
         self.connection = rpyc.connect(host='localhost',
