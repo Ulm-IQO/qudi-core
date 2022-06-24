@@ -33,9 +33,8 @@ from qudi.core.logger import init_rotating_file_handler, init_record_model_handl
 from qudi.core.logger import get_logger, set_log_level
 from qudi.util.paths import get_main_dir, get_default_log_dir
 from qudi.util.mutex import Mutex
-from qudi.util.yaml import ParserError
 from qudi.util.colordefs import QudiMatplotlibStyle
-from qudi.core.config import Configuration, ValidationError
+from qudi.core.config import Configuration, ValidationError, ParserError
 from qudi.core.watchdog import AppWatchdog
 from qudi.core.modulemanager import ModuleManager
 from qudi.core.threadmanager import ThreadManager
@@ -116,7 +115,7 @@ class Qudi(QtCore.QObject):
         # Load configuration from disc if possible
         self.configuration = Configuration()
         try:
-            self.configuration.load_config(config_file, set_default=True)
+            self.configuration.load(config_file, set_default=True)
         except ValueError:
             self.log.info('No qudi configuration file specified. Using empty default config.')
         except (ValidationError, ParserError):
