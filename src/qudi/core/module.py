@@ -247,10 +247,10 @@ class Base(QtCore.QObject, metaclass=ModuleMeta):
         with a very good reason.
         """
         config = self._qudi_main.configuration
-        data_root = config.default_data_dir
+        data_root = config['default_data_dir']
         if data_root is None:
             data_root = get_default_data_dir()
-        if config.daily_data_dirs or config.daily_data_dirs is None:
+        if config['daily_data_dirs']:
             data_dir = os.path.join(get_daily_directory(root=data_root), self.module_name)
         else:
             data_dir = os.path.join(data_root, self.module_name)
