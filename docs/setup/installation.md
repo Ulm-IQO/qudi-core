@@ -9,10 +9,13 @@ title: qudi-core
 
 # Installation
 
-## Step 1: Create a Python 3.8 environment 
+## Step 1: Create a Python 3.9 (or 3.8) environment 
+The following documentation will only describe the installation for Python 3.9 but you can simply 
+switch any mention of "3.9" with "3.8". 
+
 In order to install qudi as a python package and application, we strongly recommend creating an 
-isolated Python 3.8(!) environment. Qudi needs very specific package dependencies that 
-can otherwise mess up your system Python installation.
+isolated Python 3.9 (or 3.8) environment. Qudi needs very specific package dependencies that can 
+otherwise mess up your system Python installation.
  
 Another advantage of installing qudi in its own Python environment is, that you can easily 
 uninstall qudi and all dependencies again by simply deleting this environment.
@@ -44,23 +47,23 @@ While this is to our knowledge the most robust and preferred way of setting up a
 for qudi, it has a small disadvantage.
 You can not change the Python version for the environment, meaning you can only set up an 
 environment with the same Python version you created the environment with.  
-So make sure the Python interpreter you use for calling the following commands has version `3.8.x`.
-If you are missing Python 3.8 on your system, you can download and install the right version from 
+So make sure the Python interpreter you use for calling the following commands has version `3.9.x`.
+If you are missing Python 3.9 on your system, you can download and install the right version from 
 [https://www.python.org/](https://www.python.org/).
 
 You can find OS specific commands to create the environment below.  
-If your Python 3.8 interpreter is not found on your `PATH` (e.g. if you have multiple versions of 
+If your Python 3.9 interpreter is not found on your `PATH` (e.g. if you have multiple versions of 
 Python installed), you need to replace all `python`/`python3` calls with the full path to the 
 correct interpreter. On Windows you may also use the `py` launcher instead.
 
 <details>
   <summary> <b>Windows</b> users click here to expand</summary>
 
-  Check first if you are using Python version 3.8:
+  Check first if you are using Python version 3.9:
 
   ```console
   C:\> python -V
-  Python 3.8.7
+  Python 3.9.9
   ```
 
   Change to a desired working directory to create the environment in (here: `C:\Software\qudi\`):
@@ -79,11 +82,11 @@ correct interpreter. On Windows you may also use the `py` launcher instead.
 <details>
   <summary> <b>Unix</b> users click here to expand</summary>
 
-  Check first if you are using Python version 3.8:
+  Check first if you are using Python version 3.9:
 
   ```bash
   foo@bar:~$ python3 -V
-  Python 3.8.7
+  Python 3.9.9
   ```
 
   Change to a desired working directory to create the environment in (here: `/opt/qudi`):
@@ -112,7 +115,9 @@ correct interpreter. On Windows you may also use the `py` launcher instead.
 > [variant 1](#variant-1-python-standard-library).
 
 If you are using Anaconda or Miniconda Python distributions, this is probably the way to go for you.
-This method uses `conda` to create the Python 3.8 environment.
+This method uses `conda` to create the Python 3.9 environment.
+
+If you have not installed a distribution yet, you should install the latest version of [Anaconda](https://www.anaconda.com/products/distribution) or [Miniconda](https://docs.conda.io/en/latest/miniconda.html#latest-miniconda-installer-links) first.
 
 You can find OS specific commands to create the environment below.
 
@@ -123,7 +128,7 @@ You can find OS specific commands to create the environment below.
   in an Anaconda/Miniconda specific default directory.
 
   ```console
-  C:\> conda create --name qudi-env python=3.8
+  C:\> conda create --name qudi-env python=3.9
   ```
 
   ---
@@ -138,7 +143,7 @@ You can find OS specific commands to create the environment below.
   in an Anaconda/Miniconda specific default directory.
 
   ```bash
-  foo@bar:~$ conda create --name qudi-env python=3.8
+  foo@bar:~$ conda create --name qudi-env python=3.9
   ```
 
   ---
