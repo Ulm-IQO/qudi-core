@@ -38,10 +38,118 @@ from .file_handler import ParserError
 from .file_handler import FileHandlerBase as _FileHandlerBase
 
 
-class _ModuleConfigInterface:
-    """ Mixin for adding and removing qudi modules from the qudi configuration.
+_OptionType = Union[Sequence, Mapping, Set, Number, str]
+
+
+class Configuration(_FileHandlerBase,
+                    _MutableMapping,
+                    QtCore.QObject,
+                    metaclass=_ABCQObjectMeta):
     """
-    _OptionType = Union[Sequence, Mapping, Set, Number, str]
+    """
+    sigConfigChanged = QtCore.Signal(object)
+
+    def __init__(self,
+                 config: Optional[MutableMapping[str, Any]] = None,
+                 parent: Optional[QtCore.QObject] = None
+                 ) -> None:
+        super().__init__(parent=parent)
+
+        self._file_path = None
+        self._config = None
+
+        # initialize and validate config dict
+        self.set_config(config)
+
+    def __repr__(self) -> str:
+        return f'Configuration({repr(self._config)})'
+
+    def __str__(self) -> str:
+        return f'Configuration({str(self._config)})'
+
+    def __getitem__(self, key: str) -> Any:
+        try:
+            return copy.deepcopy(self._config['global'][key])
+        except KeyError:
+            return copy.deepcopy(self._config[key])
+
+    def __setitem__(self, key: str, value: Any) -> None:
+        new_config = self.config_map
+        if key in new_config:
+            new_config[key] = value
+        else:
+            new_config['global'][key] = value
+        self.set_config(new_config)
+
+    def __delitem__(self, key: str) -> None:
+        new_config = self.config_map
+        try:
+            del new_config[key]
+        except KeyError:
+            del new_config['global'][key]
+        self.set_config(new_config)
+
+    def __iter__(self):
+        for key, sub_cfg in self.config_map.items():
+            if key == 'global':
+                yield from sub_cfg
+            else:
+                yield key
+
+    def __len__(self) -> int:
+        return max(0, len(self._config) + len(self._config['global']) - 1)
+
+    @property
+    def config_map(self) -> MutableMapping[str, Any]:
+        return copy.deepcopy(self._config)
+
+    @property
+    def file_path(self):
+        return self._file_path
+
+    def set_config(self, config: Union[None, MutableMapping[str, Any]]) -> None:
+        new_config = dict() if config is None else copy.deepcopy(config)
+        _validate_config(new_config)
+        self._config = new_config
+        self.sigConfigChanged.emit(self)
+
+    def load(self, file_path=None, set_default=False):
+        file_path = self._file_path if file_path is None else file_path
+        # Try to restore last loaded config file path if possible
+        if file_path is None:
+            try:
+                file_path = self.get_saved_path()
+            except FileNotFoundError:
+                try:
+                    file_path = self.get_default_path()
+                except FileNotFoundError:
+                    pass
+        if file_path is None:
+            raise ValueError('No file path defined for configuration to load')
+
+        # Load YAML file from disk.
+        config = self._load(file_path)
+        # validate config, add missing default values and set as current config.
+        old_path = self._file_path
+        try:
+            self._file_path = file_path
+            self.set_config(config)
+        except ValidationError:
+            self._file_path = old_path
+            raise
+
+        # Write current config file path to load.cfg in AppData if requested
+        if set_default:
+            self.set_default_path(file_path)
+
+    def dump(self, file_path=None):
+        file_path = self._file_path if file_path is None else file_path
+        if file_path is None:
+            raise ValueError('No file path defined for qudi configuration to dump into')
+        config = self.config_map
+        _validate_config(config)
+        self._dump(file_path, config)
+        self._file_path = file_path
 
     def add_local_module(self,
                          base: str,
@@ -143,112 +251,3 @@ class _ModuleConfigInterface:
     def validate_module_base(base: str) -> None:
         if base not in ['gui', 'logic', 'hardware']:
             raise ValueError('qudi module base must be one of ["gui", "logic", "hardware"]')
-
-
-class Configuration(_FileHandlerBase,
-                    _ModuleConfigInterface,
-                    _MutableMapping,
-                    QtCore.QObject,
-                    metaclass=_ABCQObjectMeta):
-    """
-    """
-    sigConfigChanged = QtCore.Signal(object)
-
-    def __init__(self, config: Optional[MutableMapping[str, Any]] = None):
-        super().__init__()
-
-        self._file_path = None
-        self._config = None
-
-        # initialize and validate config dict
-        self.set_config(config)
-
-    @property
-    def config_map(self) -> MutableMapping[str, Any]:
-        return copy.deepcopy(self._config)
-
-    def set_config(self, config: Union[None, MutableMapping[str, Any]]) -> None:
-        new_config = dict() if config is None else copy.deepcopy(config)
-        _validate_config(new_config)
-        self._config = new_config
-        self.sigConfigChanged.emit(self)
-
-    @property
-    def file_path(self):
-        return self._file_path
-
-    def __repr__(self) -> str:
-        return f'Configuration({repr(self._config)})'
-
-    def __str__(self) -> str:
-        return f'Configuration({str(self._config)})'
-
-    def __getitem__(self, key: str) -> Any:
-        try:
-            return copy.deepcopy(self._config['global'][key])
-        except KeyError:
-            return copy.deepcopy(self._config[key])
-
-    def __setitem__(self, key: str, value: Any) -> None:
-        new_config = self.config_map
-        if key in new_config:
-            new_config[key] = value
-        else:
-            new_config['global'][key] = value
-        self.set_config(new_config)
-
-    def __delitem__(self, key: str) -> None:
-        new_config = self.config_map
-        try:
-            del new_config[key]
-        except KeyError:
-            del new_config['global'][key]
-        self.set_config(new_config)
-
-    def __iter__(self):
-        for key, sub_cfg in self.config_map.items():
-            if key == 'global':
-                yield from sub_cfg
-            else:
-                yield key
-
-    def __len__(self) -> int:
-        return max(0, len(self._config) + len(self._config['global']) - 1)
-
-    def load(self, file_path=None, set_default=False):
-        file_path = self._file_path if file_path is None else file_path
-        # Try to restore last loaded config file path if possible
-        if file_path is None:
-            try:
-                file_path = self.get_saved_path()
-            except FileNotFoundError:
-                try:
-                    file_path = self.get_default_path()
-                except FileNotFoundError:
-                    pass
-        if file_path is None:
-            raise ValueError('No file path defined for configuration to load')
-
-        # Load YAML file from disk.
-        config = self._load(file_path)
-        # validate config, add missing default values and set as current config.
-        old_path = self._file_path
-        try:
-            self._file_path = file_path
-            self.set_config(config)
-        except ValidationError:
-            self._file_path = old_path
-            raise
-
-        # Write current config file path to load.cfg in AppData if requested
-        if set_default:
-            self.set_default_path(file_path)
-
-    def dump(self, file_path=None):
-        file_path = self._file_path if file_path is None else file_path
-        if file_path is None:
-            raise ValueError('No file path defined for qudi configuration to dump into')
-        config = self.config_map
-        _validate_config(config)
-        self._dump(file_path, config)
-        self._file_path = file_path
