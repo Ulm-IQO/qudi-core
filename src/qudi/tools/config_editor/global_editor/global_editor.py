@@ -23,7 +23,7 @@ __all__ = ['GlobalConfigurationWidget']
 from typing import Dict, Union, Mapping
 from PySide2 import QtCore, QtWidgets
 from qudi.util.widgets.lines import HorizontalLine
-from qudi.tools.config_editor.global_editor.custom_option_editor import CustomOptionConfigurationWidget
+from qudi.tools.config_editor.custom_option_editor import CustomOptionConfigurationWidget
 from qudi.tools.config_editor.global_editor.default_global_option_editor import DefaultGlobalConfigurationWidget
 from qudi.core.config.schema import config_schema
 
@@ -67,13 +67,13 @@ class GlobalConfigurationWidget(QtWidgets.QWidget):
     @property
     def config(self) -> Dict[str, Union[None, str, int, bool, float]]:
         config = self.default_config_editor.config
-        config.update(self.custom_options_editor.config)
+        config.update(self.custom_options_editor.options)
         return config
 
     def set_config(self, config: Union[None, Mapping[str, Union[None, str, int, bool, float]]]):
         if config is None:
             self.default_config_editor.set_config(None)
-            self.custom_options_editor.set_config(None)
+            self.custom_options_editor.set_options(None)
         else:
             default_config = {name: value for name, value in config.items() if
                               name in self.default_config_editor.option_names}
@@ -81,4 +81,4 @@ class GlobalConfigurationWidget(QtWidgets.QWidget):
                 name: value for name, value in config.items() if name not in default_config
             }
             self.default_config_editor.set_config(default_config)
-            self.custom_options_editor.set_config(custom_config)
+            self.custom_options_editor.set_options(custom_config)

@@ -58,15 +58,15 @@ class CustomOptionConfigurationWidget(QtWidgets.QWidget):
         self._remove_icon = QtGui.QIcon(os.path.join(icons_dir, 'list-remove'))
         # Keep track of custom option editor widgets
         self._option_widgets = dict()
-        # forbiddeen config option names
+        # forbidden config option names
         self._forbidden_names = frozenset() if forbidden_names is None else frozenset(
             forbidden_names)
 
         # Set config if given
-        self.set_config(custom_config)
+        self.set_options(custom_config)
 
     @property
-    def config(self) -> Dict[str, Union[None, Union[None, str, int, float, bool]]]:
+    def options(self) -> Dict[str, Union[None, Union[None, str, int, float, bool]]]:
         config = {name: widgets[2].text().strip() for name, widgets in self._option_widgets.items()}
         for name, value in config.items():
             if value in ['', 'None', 'null', 'none']:
@@ -85,9 +85,9 @@ class CustomOptionConfigurationWidget(QtWidgets.QWidget):
                         pass
         return config
 
-    def set_config(self,
-                   config: Union[None, Mapping[str, Union[None, str, int, float, bool]]]
-                   ) -> None:
+    def set_options(self,
+                    config: Union[None, Mapping[str, Union[None, str, int, float, bool]]]
+                    ) -> None:
         self.clear_options()
         if config:
             for name, value in config.items():
