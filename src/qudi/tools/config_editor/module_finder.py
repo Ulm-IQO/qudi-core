@@ -65,7 +65,9 @@ class ModuleFinder:
             import qudi.hardware as _hardware_ns
         except ImportError:
             _hardware_ns = None
-        modules = dict() if _gui_ns is None else cls.get_qudi_modules_from_ns(_gui_ns)
+        modules = dict()
+        if _gui_ns is not None:
+            modules.update(cls.get_qudi_modules_from_ns(_gui_ns))
         if _logic_ns is not None:
             modules.update(cls.get_qudi_modules_from_ns(_logic_ns))
         if _hardware_ns is not None:
@@ -79,7 +81,8 @@ class QudiModules:
 
     def __init__(self):
         # import all qudi module classes if possible (log all errors upon import)
-        self._qudi_modules = ModuleFinder.get_qudi_modules()
+        self._qudi_modules = {mod[5:] if mod.startswith('qudi.') else mod: cls for mod, cls in
+                              ModuleFinder.get_qudi_modules().items()}
         # Collect all connectors for all modules
         self._module_connectors = {
             mod: list(cls._meta['connectors'].values()) for mod, cls in self._qudi_modules.items()

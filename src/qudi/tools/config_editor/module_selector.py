@@ -3,9 +3,10 @@
 
 """
 
-__all__ = ('ModuleSelector',)
+__all__ = ['ModuleSelector']
 
 from PySide2 import QtWidgets, QtCore
+from typing import Optional, Iterable, List
 from qudi.tools.config_editor.tree_widgets import AvailableModulesTreeWidget, SelectedModulesTreeWidget
 
 
@@ -13,8 +14,12 @@ class ModuleSelector(QtWidgets.QDialog):
     """
     """
 
-    def __init__(self, *args, available_modules, selected_modules=None, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self,
+                 available_modules: Iterable[str],
+                 selected_modules: Optional[Iterable[str]] = None,
+                 parent: Optional[QtWidgets.QWidget] = None
+                 ) -> None:
+        super().__init__(parent=parent)
 
         self.setWindowTitle('Qudi Config Editor: Module Selection')
         screen_size = QtWidgets.QApplication.instance().primaryScreen().availableSize()
@@ -92,19 +97,20 @@ class ModuleSelector(QtWidgets.QDialog):
         layout.setStretch(0, 1)
         self.setLayout(layout)
 
+    @property
+    def selected_modules(self) -> List[str]:
+        return self.selected_treewidget.modules
+
     @QtCore.Slot()
-    def add_remote_module(self):
+    def add_remote_module(self) -> None:
         base = self.base_selection_combobox.currentText().lower()
         if base == 'gui':
             raise ValueError('Unable to add remote module.\nGUI modules can not be remote modules.')
         self.selected_treewidget.add_module(f'{base}.<REMOTE MODULE>')
 
     @QtCore.Slot()
-    def add_custom_module(self):
+    def add_custom_module(self) -> None:
         base = self.base_selection_combobox.currentText().lower()
         module = self.custom_module_lineedit.text().strip()
         if module:
             self.selected_treewidget.add_module(f'{base}.{module}')
-
-    def get_selected_modules(self):
-        return self.selected_treewidget.get_modules()

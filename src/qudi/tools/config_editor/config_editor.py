@@ -13,7 +13,7 @@ from qudi.util.paths import get_main_dir, get_default_config_dir, get_artwork_di
 from qudi.core.config import Configuration
 
 from qudi.tools.config_editor.module_selector import ModuleSelector
-from qudi.tools.config_editor.module_editor import ModuleConfigurationWidget
+from qudi.tools.config_editor.module_editor import ModuleEditorWidget
 from qudi.tools.config_editor.global_editor import GlobalConfigurationWidget
 from qudi.tools.config_editor.tree_widgets import ConfigModulesTreeWidget
 from qudi.tools.config_editor.module_finder import QudiModules
@@ -37,9 +37,7 @@ class ConfigurationEditorMainWindow(QtWidgets.QMainWindow):
         self.qudi_environment = QudiModules()
         self.configuration = Configuration()
         self.module_tree_widget = ConfigModulesTreeWidget()
-        self.module_config_widget = ModuleConfigurationWidget(
-            available_modules=self.qudi_environment.available_modules
-        )
+        self.module_config_widget = ModuleEditorWidget(qudi_modules=self.qudi_environment)
         self.global_config_widget = GlobalConfigurationWidget()
 
         label = QtWidgets.QLabel('Included Modules')
@@ -153,7 +151,7 @@ class ConfigurationEditorMainWindow(QtWidgets.QMainWindow):
         if module in self.qudi_environment.available_modules:
             # Connectors
             compatible_targets = self.qudi_environment.module_connector_targets(module)
-            available_targets, _ = self.module_tree_widget.get_modules()
+            available_targets, _ = self.module_tree_widget.modules
             mandatory_connectors = dict()
             optional_connectors = dict()
             for conn in self.qudi_environment.module_connectors(module):
@@ -191,12 +189,12 @@ class ConfigurationEditorMainWindow(QtWidgets.QMainWindow):
     def select_modules(self):
         self.module_config_widget.close_module_editor()
         available = self.qudi_environment.available_modules
-        named_selected, unnamed_selected = self.module_tree_widget.get_modules()
+        named_selected, unnamed_selected = self.module_tree_widget.modules
         selected = list(named_selected.values())
         selected.extend(unnamed_selected)
         selector_dialog = ModuleSelector(available_modules=available, selected_modules=selected)
         if selector_dialog.exec_():
-            new_selection = selector_dialog.get_selected_modules()
+            new_selection = selector_dialog.selected_modules
             new_named_selected = dict()
             remove_modules = list()
             # Recycle old module names if identical modules are selected
