@@ -50,8 +50,6 @@ try:
 except ImportError:
     pass
 
-# Set QT_API environment variable to PySide2
-os.environ['QT_API'] = 'pyside2'
 # Enable the High DPI scaling support of Qt5
 os.environ['QT_ENABLE_HIGHDPI_SCALING'] = '1'
 

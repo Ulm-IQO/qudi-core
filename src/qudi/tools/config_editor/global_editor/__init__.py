@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
-"""
-This file contains the Qudi Manager class.
 
+"""
 Copyright (c) 2021, the qudi developers. See the AUTHORS.md file at the top-level directory of this
 distribution and on <https://github.com/Ulm-IQO/qudi-core/>
 
@@ -19,17 +18,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 If not, see <https://www.gnu.org/licenses/>.
 """
 
-__all__ = ['StatusVar', 'ConfigOption', 'Connector', 'Base', 'LogicBase', 'GuiBase', 'get_logger']
+__all__ = ['GlobalConfigurationWidget']
 
-import os
-from importlib import metadata
-__version__ = metadata.version('qudi-core')
-
-# Set QT_API environment variable to PySide2
-os.environ['QT_API'] = 'pyside2'
-
-from qudi.core.statusvariable import StatusVar
-from qudi.core.configoption import ConfigOption
-from qudi.core.connector import Connector
-from qudi.core.module import Base, LogicBase, GuiBase
-from qudi.core.logger import get_logger
+from .global_editor import GlobalConfigurationWidget
