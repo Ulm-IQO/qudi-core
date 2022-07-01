@@ -23,7 +23,7 @@ class AvailableModulesTreeWidget(QtWidgets.QTreeWidget):
         self.top_level_items = dict()
         self.clear_modules()
         if modules is not None:
-            self.set_modules(modules)
+            self.set_modules(sorted(modules))
 
     def set_modules(self, modules):
         # Clear all modules
@@ -35,7 +35,7 @@ class AvailableModulesTreeWidget(QtWidgets.QTreeWidget):
         self.resize_columns_to_content()
 
     def add_module(self, module, resize=True):
-        base, module_class = module.split('.', 1)
+        _, base, module_class = module.split('.', 2)
         item = QtWidgets.QTreeWidgetItem()
         item.setText(1, module_class)
         item.setFlags(
@@ -46,7 +46,7 @@ class AvailableModulesTreeWidget(QtWidgets.QTreeWidget):
             self.resize_columns_to_content()
 
     def remove_module(self, module, resize=True):
-        base, module_class = module.split('.', 1)
+        _, base, module_class = module.split('.', 2)
         top_level_item = self.top_level_items[base]
         for index in range(top_level_item.childCount()):
             child = top_level_item.child(index)
@@ -148,7 +148,7 @@ class ConfigModulesTreeWidget(QtWidgets.QTreeWidget):
         self.resize_columns_to_content()
 
     def add_module(self, module, name=None, resize=True):
-        base, module_class = module.split('.', 1)
+        _, base, module_class = module.split('.', 2)
         item = QtWidgets.QTreeWidgetItem()
         item.setText(1, '<enter unique name>' if name is None else name)
         item.setText(2, module_class)
