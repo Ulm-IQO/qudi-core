@@ -13,7 +13,7 @@ from qudi.util.paths import get_main_dir, get_default_config_dir, get_artwork_di
 from qudi.core.config import Configuration
 
 from qudi.tools.config_editor.module_selector import ModuleSelector
-from qudi.tools.config_editor.module_editor import ModuleEditorWidget
+from qudi.tools.config_editor.module_widgets import ModuleEditorWidget
 from qudi.tools.config_editor.global_editor import GlobalConfigurationWidget
 from qudi.tools.config_editor.tree_widgets import ConfigModulesTreeWidget
 from qudi.tools.config_editor.module_finder import QudiModules
