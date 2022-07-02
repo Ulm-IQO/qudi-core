@@ -13,8 +13,8 @@ from qudi.util.paths import get_main_dir, get_default_config_dir, get_artwork_di
 from qudi.core.config import Configuration
 
 from qudi.tools.config_editor.module_selector import ModuleSelector
-from qudi.tools.config_editor.module_widgets import ModuleEditorWidget
-from qudi.tools.config_editor.global_editor import GlobalConfigurationWidget
+from qudi.tools.config_editor.module_editor import ModuleEditorWidget
+from qudi.tools.config_editor.global_editor import GlobalEditorWidget
 from qudi.tools.config_editor.tree_widgets import ConfigModulesTreeWidget
 from qudi.tools.config_editor.module_finder import QudiModules
 
@@ -23,6 +23,19 @@ try:
     matplotlib.use('agg')
 except ImportError:
     pass
+
+# Enable the High DPI scaling support of Qt5
+os.environ['QT_ENABLE_HIGHDPI_SCALING'] = '1'
+
+if sys.platform == 'win32':
+    # Set QT_LOGGING_RULES environment variable to suppress qt.svg related warnings that otherwise
+    # spam the log due to some known Qt5 bugs, e.g. https://bugreports.qt.io/browse/QTBUG-52079
+    os.environ['QT_LOGGING_RULES'] = 'qt.svg.warning=false'
+else:
+    # The following will prevent Qt to spam the logs on X11 systems with enough messages
+    # to significantly slow the program down. Most of those warnings should have been
+    # notice level or lower. This is a known problem since Qt does not fully comply to X11.
+    os.environ['QT_LOGGING_RULES'] = '*.debug=false;*.info=false;*.notice=false;*.warning=false'
 
 
 class ConfigurationEditorMainWindow(QtWidgets.QMainWindow):
@@ -37,26 +50,26 @@ class ConfigurationEditorMainWindow(QtWidgets.QMainWindow):
         self.qudi_environment = QudiModules()
         self.configuration = Configuration()
         self.module_tree_widget = ConfigModulesTreeWidget()
-        self.module_config_widget = ModuleEditorWidget(qudi_modules=self.qudi_environment)
-        self.global_config_widget = GlobalConfigurationWidget()
+        self.module_config_editor = ModuleEditorWidget(qudi_modules=self.qudi_environment)
+        self.global_config_editor = GlobalEditorWidget()
 
         label = QtWidgets.QLabel('Included Modules')
         label.setAlignment(QtCore.Qt.AlignCenter)
         font = label.font()
         font.setBold(True)
-        font.setPointSize(10)
+        font.setPointSize(font.pointSize() + 4)
         label.setFont(font)
         layout = QtWidgets.QVBoxLayout()
         layout.addWidget(label)
         layout.addWidget(self.module_tree_widget)
-        layout.addWidget(self.global_config_widget)
+        layout.addWidget(self.global_config_editor)
         layout.setStretch(1, 1)
         widget = QtWidgets.QWidget()
         widget.setLayout(layout)
 
         splitter = QtWidgets.QSplitter(QtCore.Qt.Horizontal)
         splitter.addWidget(widget)
-        splitter.addWidget(self.module_config_widget)
+        splitter.addWidget(self.module_config_editor)
         splitter.setCollapsible(0, False)
         splitter.setCollapsible(1, False)
         splitter.setStretchFactor(0, 1)
@@ -124,14 +137,11 @@ class ConfigurationEditorMainWindow(QtWidgets.QMainWindow):
         toolbar.setFloatable(False)
         self.addToolBar(toolbar)
 
-        # Connect module editor signals
-        self.module_config_widget.sigModuleConfigFinished.connect(self.update_module_config)
-
     @QtCore.Slot()
     def module_selection_changed(self):
         selected_items = self.module_tree_widget.selectedItems()
         if not selected_items:
-            self.module_config_widget.close_module_editor()
+            self.module_config_editor.close_editor()
             return
 
         item = selected_items[0]
@@ -140,54 +150,22 @@ class ConfigurationEditorMainWindow(QtWidgets.QMainWindow):
         name = item.text(1)
 
         # Get current module config dict from Configuration object
-        try:
-            config_dict = self.configuration.get_module_config(name)
-        except (KeyError, ValueError):
-            self.module_config_widget.show_invalid_module_label()
-            self.module_tree_widget.editItem(item, 1)
-            return
+        # ToDo:
 
         # Sort out available connectors and targets as well as module config options
-        if module in self.qudi_environment.available_modules:
-            # Connectors
-            compatible_targets = self.qudi_environment.module_connector_targets(module)
-            available_targets, _ = self.module_tree_widget.modules
-            mandatory_connectors = dict()
-            optional_connectors = dict()
-            for conn in self.qudi_environment.module_connectors(module):
-                targets = compatible_targets[conn.name]
-                targets = tuple(name for name, mod in available_targets.items() if mod in targets)
-                if conn.optional:
-                    optional_connectors[conn.name] = tuple(targets)
-                else:
-                    mandatory_connectors[conn.name] = tuple(targets)
-
-            # Config Options
-            options = self.qudi_environment.module_config_options(module)
-            mandatory_options = {
-                opt.name: opt.default for opt in options if opt.missing == MissingOption.error
-            }
-            optional_options = {
-                opt.name: opt.default for opt in options if opt.name not in mandatory_options
-            }
+        if 'REMOTE' in module:
+            self.module_config_editor.open_remote_module(name)
         else:
-            mandatory_connectors = None
-            optional_connectors = None
-            mandatory_options = None
-            optional_options = None
-        self.module_config_widget.open_module_editor(
-            name,
-            config_dict=config_dict,
-            mandatory_conn_targets=mandatory_connectors,
-            optional_conn_targets=optional_connectors,
-            mandatory_options=mandatory_options,
-            optional_options=optional_options,
-            is_remote_module=self.configuration.is_remote_module(name)
-        )
+            self.module_config_editor.open_local_module(
+                module_class=module,
+                named_modules=self.module_tree_widget.modules[0],
+                name=name,
+                config=None
+            )
 
     @QtCore.Slot()
     def select_modules(self):
-        self.module_config_widget.close_module_editor()
+        self.module_config_editor.close_editor()
         available = self.qudi_environment.available_modules
         named_selected, unnamed_selected = self.module_tree_widget.modules
         selected = list(named_selected.values())
@@ -208,29 +186,25 @@ class ConfigurationEditorMainWindow(QtWidgets.QMainWindow):
             # Set modules in main window
             self.module_tree_widget.set_modules(named_modules=new_named_selected,
                                                 unnamed_modules=new_selection)
-            self.module_config_widget.set_available_modules(new_named_selected)
-            # Throw out all modules that are no longer present
-            for name in remove_modules:
-                self.configuration.remove_module(name)
 
-    @QtCore.Slot(str, dict, dict, dict)
-    def update_module_config(self, name, connections=None, options=None, meta=None):
-        if self.configuration.is_remote_module(name):
-            if meta:
-                remote_url = meta.get('remote_url', None)
-                certfile = meta.get('certfile', None)
-                keyfile = meta.get('keyfile', None)
-                if remote_url:
-                    self.configuration.set_module_remote_url(name, remote_url)
-                if certfile or keyfile:
-                    self.configuration.set_module_remote_certificate(name, keyfile, certfile)
-        else:
-            self.configuration.set_module_connections(name, connections)
-            self.configuration.set_module_options(name, options)
-            self.configuration.set_module_allow_remote(
-                name,
-                meta.get('allow_remote', False) if meta else False
-            )
+    # @QtCore.Slot(str, dict, dict, dict)
+    # def update_module_config(self, name, connections=None, options=None, meta=None):
+    #     if self.configuration.is_remote_module(name):
+    #         if meta:
+    #             remote_url = meta.get('remote_url', None)
+    #             certfile = meta.get('certfile', None)
+    #             keyfile = meta.get('keyfile', None)
+    #             if remote_url:
+    #                 self.configuration.set_module_remote_url(name, remote_url)
+    #             if certfile or keyfile:
+    #                 self.configuration.set_module_remote_certificate(name, keyfile, certfile)
+    #     else:
+    #         self.configuration.set_module_connections(name, connections)
+    #         self.configuration.set_module_options(name, options)
+    #         self.configuration.set_module_allow_remote(
+    #             name,
+    #             meta.get('allow_remote', False) if meta else False
+    #         )
 
     @QtCore.Slot(QtWidgets.QTreeWidgetItem, int)
     def module_name_changed(self, item, column):
@@ -240,7 +214,7 @@ class ConfigurationEditorMainWindow(QtWidgets.QMainWindow):
         base = item.parent().text(0).lower()
         name = item.text(1)
         module_class = item.text(2)
-        if self.module_config_widget.currently_edited_module is None:
+        if self.module_config_editor.currently_edited_module is None:
             try:
                 if module_class == '<REMOTE MODULE>':
                     self.configuration.add_remote_module(name, base, '<remote URL>')
@@ -250,9 +224,9 @@ class ConfigurationEditorMainWindow(QtWidgets.QMainWindow):
                 item.setText(1, '<enter unique name>')
                 raise
         else:
-            old_name = self.module_config_widget.currently_edited_module
+            old_name = self.module_config_editor.currently_edited_module
             try:
-                self.module_config_widget.close_module_editor()
+                self.module_config_editor.close_editor()
                 self.configuration.rename_module(old_name=old_name, new_name=name)
             except:
                 item.setText(1, old_name)
@@ -260,10 +234,9 @@ class ConfigurationEditorMainWindow(QtWidgets.QMainWindow):
         self.module_selection_changed()
 
     def new_config(self):
-        self.module_config_widget.close_module_editor()
-        self.configuration.clear_config()
+        self.module_config_editor.close_editor()
         self.module_tree_widget.set_modules(dict())
-        self.global_config_widget.set_config(self.configuration.global_config)
+        self.global_config_editor.open_editor(dict())
         self.select_modules()
 
     def prompt_load_config(self):
@@ -277,11 +250,11 @@ class ConfigurationEditorMainWindow(QtWidgets.QMainWindow):
             modules = self.get_modules_from_config()
             global_cfg = self.configuration.global_config
             self.module_tree_widget.set_modules(named_modules=modules)
-            self.module_config_widget.set_available_modules(modules)
+            self.module_config_editor.set_available_modules(modules)
             self.global_config_widget.set_config(global_cfg)
 
     def prompt_save_config(self):
-        self.module_config_widget.commit_module_config()
+        self.module_config_editor.commit_module_config()
         file_path = QtWidgets.QFileDialog.getSaveFileName(
             self,
             'Qudi Config Editor: Save Configuration...',
@@ -301,7 +274,7 @@ class ConfigurationEditorMainWindow(QtWidgets.QMainWindow):
 
     def save_config(self):
         # ToDo: Check for complete config
-        self.module_config_widget.commit_module_config()
+        self.module_config_editor.commit_module_config()
         current_path = self.configuration.config_file
         if current_path is None:
             self.prompt_save_config()

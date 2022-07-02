@@ -45,7 +45,6 @@ class CustomItemsWidget(QtWidgets.QWidget):
         self._allowed_values = [val.strip() for val in allowed_values] if allowed_values else None
 
         layout = QtWidgets.QGridLayout()
-        layout.setContentsMargins(0, 0, 0, 0)
         layout.setColumnStretch(2, 1)
         self.setLayout(layout)
 
@@ -94,6 +93,8 @@ class CustomItemsWidget(QtWidgets.QWidget):
 
         label = QtWidgets.QLabel(f'{name}:')
         label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+        label.setTextInteractionFlags(QtCore.Qt.TextSelectableByMouse)
+        label.setFocusPolicy(QtCore.Qt.FocusPolicy.NoFocus)
         if self._allowed_values:
             editor = QtWidgets.QComboBox()
             editor.addItem('')

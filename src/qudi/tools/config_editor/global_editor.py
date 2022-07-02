@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 
 """
+QWidget serving as main editor for the global configuration section
+
 Copyright (c) 2021, the qudi developers. See the AUTHORS.md file at the top-level directory of this
 distribution and on <https://github.com/Ulm-IQO/qudi-core/>
 
@@ -18,65 +20,50 @@ You should have received a copy of the GNU Lesser General Public License along w
 If not, see <https://www.gnu.org/licenses/>.
 """
 
-__all__ = ['GlobalConfigurationWidget']
+__all__ = ['GlobalEditorWidget']
 
-from typing import Dict, Union, Mapping
 from PySide2 import QtCore, QtWidgets
-from qudi.util.widgets.lines import HorizontalLine
-from qudi.core.config.schema import config_schema
+from typing import Optional, Mapping, Dict, Union, Any
+from qudi.tools.config_editor.global_widgets import GlobalConfigWidget
 
 
-class GlobalConfigurationWidget(QtWidgets.QWidget):
+class GlobalEditorWidget(QtWidgets.QStackedWidget):
     """
     """
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, parent: Optional[QtWidgets.QWidget] = None) -> None:
+        super().__init__(parent=parent)
 
-        # Create main layout
-        layout = QtWidgets.QVBoxLayout()
-        layout.setContentsMargins(0, 0, 0, 0)
-        self.setLayout(layout)
-
-        # Create header
-        header = QtWidgets.QLabel('Global Configuration')
-        header.setAlignment(QtCore.Qt.AlignCenter)
-        font = header.font()
+        self.placeholder_label = QtWidgets.QLabel('Please load configuration from file\n'
+                                                  'or create a new one.')
+        font = self.placeholder_label.font()
         font.setBold(True)
-        font.setPointSize(10)
-        header.setFont(font)
-        layout.addWidget(header)
+        font.setPointSize(font.pointSize() + 4)
+        self.placeholder_label.setFont(font)
+        self.placeholder_label.setAlignment(QtCore.Qt.AlignCenter)
+        self.placeholder_label.setSizePolicy(QtWidgets.QSizePolicy.Expanding,
+                                             QtWidgets.QSizePolicy.Expanding)
+        self.addWidget(self.placeholder_label)
 
-        # Create default config editor
-        self.default_config_editor = DefaultGlobalConfigurationWidget()
-        layout.addWidget(self.default_config_editor)
+        self.global_editor_widget = GlobalConfigWidget()
+        self.addWidget(self.global_editor_widget)
 
-        # Add separator
-        layout.addWidget(HorizontalLine())
-
-        # Create custom option editor
-        self.custom_options_editor = CustomOptionConfigurationWidget(
-            forbidden_names=list(config_schema()['properties']['global']['properties'])
-        )
-        layout.addWidget(self.custom_options_editor)
-
-        layout.addStretch(1)
+        self.setCurrentIndex(0)
 
     @property
-    def config(self) -> Dict[str, Union[None, str, int, bool, float]]:
-        config = self.default_config_editor.config
-        config.update(self.custom_options_editor.options)
-        return config
-
-    def set_config(self, config: Union[None, Mapping[str, Union[None, str, int, bool, float]]]):
-        if config is None:
-            self.default_config_editor.set_config(None)
-            self.custom_options_editor.set_options(None)
+    def config(self) -> Union[None, Dict[str, Any]]:
+        if self.currentIndex() == 0:
+            return None
         else:
-            default_config = {name: value for name, value in config.items() if
-                              name in self.default_config_editor.option_names}
-            custom_config = {
-                name: value for name, value in config.items() if name not in default_config
-            }
-            self.default_config_editor.set_config(default_config)
-            self.custom_options_editor.set_options(custom_config)
+            return self.global_editor_widget.config
+
+    def set_config(self, config: Union[None, Dict[str, Any]]) -> None:
+        if self.currentIndex() > 0:
+            self.global_editor_widget.set_config(config)
+
+    def open_editor(self, config: Union[None, Mapping[str, Any]]) -> None:
+        self.global_editor_widget.set_config(config)
+        self.setCurrentIndex(1)
+
+    def close_editor(self):
+        self.setCurrentIndex(0)
