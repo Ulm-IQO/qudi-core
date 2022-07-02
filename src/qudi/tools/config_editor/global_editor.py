@@ -23,8 +23,6 @@ __all__ = ['GlobalConfigurationWidget']
 from typing import Dict, Union, Mapping
 from PySide2 import QtCore, QtWidgets
 from qudi.util.widgets.lines import HorizontalLine
-from qudi.tools.config_editor.custom_widgets import CustomOptionConfigurationWidget
-from qudi.tools.config_editor.global_widgets import DefaultGlobalConfigurationWidget
 from qudi.core.config.schema import config_schema
 
 

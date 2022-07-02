@@ -74,7 +74,7 @@ class ModuleConnectorsWidget(QtWidgets.QWidget):
             self._connector_editors[name] = editor
 
         # Add separator
-        layout.addLayout(HorizontalLine(), len(self._connector_editors), 0, 1, 2)
+        layout.addWidget(HorizontalLine(), len(self._connector_editors), 0, 1, 2)
 
         # Create custom connector editor
         self.custom_connectors_widget = CustomConnectorsWidget(
@@ -157,7 +157,7 @@ class ModuleOptionsWidget(QtWidgets.QWidget):
             self._option_editors[name] = editor
 
         # Add separator
-        layout.addLayout(HorizontalLine(), len(self._option_editors), 0, 1, 2)
+        layout.addWidget(HorizontalLine(), len(self._option_editors), 0, 1, 2)
 
         # Create custom options editor
         self.custom_options_widget = CustomOptionsWidget(forbidden_names=list(self._option_editors))
@@ -228,12 +228,41 @@ class LocalModuleConfigWidget(QtWidgets.QWidget):
 
         # Create splitter to spread sub-widgets horizontally
         self.splitter = QtWidgets.QSplitter(QtCore.Qt.Horizontal)
+        self.splitter.setChildrenCollapsible(False)
         layout.addWidget(self.splitter)
 
-        # Create layout for left side of splitter
-        left_layout = QtWidgets.QGridLayout()
+        # Create layout and widget for left side of splitter
+        left_layout = QtWidgets.QVBoxLayout()
         left_layout.setContentsMargins(0, 0, 0, 0)
-        left_layout.setColumnStretch(1, 1)
+        left_layout.setStretch(1, 1)
+        left_widget = QtWidgets.QWidget()
+        left_widget.setLayout(left_layout)
+        # Caption
+        label = QtWidgets.QLabel('Module Connections')
+        font = label.font()
+        font.setBold(True)
+        label.setFont(font)
+        label.setAlignment(QtCore.Qt.AlignCenter)
+        left_layout.addWidget(label)
+        # Module Connectors editor
+        self.connectors_editor = ModuleConnectorsWidget()  # Fixme: arguments
+        left_layout.addWidget(self.connectors_editor)
+        left_layout.addStretch()
+        self.splitter.addWidget(left_widget)
+
+        # Create layout and widget for right side of splitter
+        right_layout = QtWidgets.QVBoxLayout()
+        right_layout.setContentsMargins(0, 0, 0, 0)
+        right_layout.setStretch(2, 1)
+        right_widget = QtWidgets.QWidget()
+        right_widget.setLayout(right_layout)
+        # Caption
+        label = QtWidgets.QLabel('Configuration Options')
+        font = label.font()
+        font.setBold(True)
+        label.setFont(font)
+        label.setAlignment(QtCore.Qt.AlignCenter)
+        right_layout.addWidget(label)
         # allow_remote flag editor
         label = QtWidgets.QLabel('Allow remote connection:')
         label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
@@ -241,18 +270,17 @@ class LocalModuleConfigWidget(QtWidgets.QWidget):
         self.allow_remote_checkbox.setToolTip(
             'Allow other qudi instances to connect to this module via remote modules server.'
         )
-        left_layout.addWidget(label, 0, 0)
-        left_layout.addWidget(self.allow_remote_checkbox, 0, 1)
-        # Module Connectors editor
-        self.connectors_editor = ModuleConnectorsWidget()  # Fixme: arguments
-        left_layout.addWidget(self.connectors_editor, 1, 0, 1, 2)
-
-        # Create layout for right side of splitter
-        right_layout = QtWidgets.QVBoxLayout()
-        right_layout.setContentsMargins(0, 0, 0, 0)
+        sub_layout = QtWidgets.QHBoxLayout()
+        sub_layout.setContentsMargins(0, 0, 0, 0)
+        sub_layout.setStretch(1, 1)
+        sub_layout.addWidget(label)
+        sub_layout.addWidget(self.allow_remote_checkbox)
+        right_layout.addLayout(sub_layout)
         # Module ConfigOptions editor
         self.options_editor = ModuleOptionsWidget()  # Fixme: arguments
         right_layout.addWidget(self.options_editor)
+        right_layout.addStretch()
+        self.splitter.addWidget(right_widget)
 
     @property
     def module_class(self) -> str:
