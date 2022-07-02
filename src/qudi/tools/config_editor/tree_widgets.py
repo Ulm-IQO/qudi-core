@@ -136,7 +136,7 @@ class ConfigModulesTreeWidget(QtWidgets.QTreeWidget):
         super().__init__(parent=parent)
 
         self.setColumnCount(3)
-        self.setHeaderLabels(('Base', 'Name', 'module.Class'))
+        self.setHeaderLabels(['Base', 'Name', 'module.Class'])
         self.setSelectionMode(self.SingleSelection)
         self.setEditTriggers(self.EditTrigger.NoEditTriggers)
         self.top_level_items = dict()

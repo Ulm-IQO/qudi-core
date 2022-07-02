@@ -42,7 +42,6 @@ class RemoteServerWidget(QtWidgets.QWidget):
 
         # Create main layout
         layout = QtWidgets.QGridLayout()
-        layout.setContentsMargins(0, 0, 0, 0)
         layout.setColumnStretch(1, 1)
         self.setLayout(layout)
 
@@ -61,7 +60,6 @@ class RemoteServerWidget(QtWidgets.QWidget):
 
         # Create server config editors in their own layout
         self._server_layout = QtWidgets.QGridLayout()
-        self._server_layout.setContentsMargins(0, 0, 0, 0)
         self._server_layout.setColumnStretch(1, 1)
         layout.addLayout(self._server_layout, 1, 0, 1, 2)
         label = QtWidgets.QLabel('Host address:')
@@ -161,7 +159,6 @@ class GlobalOptionsWidget(QtWidgets.QWidget):
 
         # Create main layout
         layout = QtWidgets.QGridLayout()
-        layout.setContentsMargins(0, 0, 0, 0)
         layout.setColumnStretch(1, 1)
         self.setLayout(layout)
 
@@ -310,12 +307,20 @@ class GlobalConfigWidget(QtWidgets.QWidget):
 
         # Create main layout
         layout = QtWidgets.QVBoxLayout()
-        layout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(layout)
+
+        # Create Caption
+        label = QtWidgets.QLabel('Global Configuration')
+        label.setAlignment(QtCore.Qt.AlignCenter)
+        font = label.font()
+        font.setBold(True)
+        font.setPointSize(font.pointSize() + 4)
+        label.setFont(font)
+        layout.addWidget(label)
 
         # Create default config editor
         self.default_options_widget = GlobalOptionsWidget()
-        layout.addWidget(self.default_config_editor)
+        layout.addWidget(self.default_options_widget)
 
         # Remember default global config option names
         self._default_option_names = frozenset(self.default_options_widget.config)
@@ -339,12 +344,12 @@ class GlobalConfigWidget(QtWidgets.QWidget):
 
     def set_config(self, config: Union[None, Mapping[str, Any]]) -> None:
         if config is None:
-            self.default_config_editor.set_config(None)
-            self.custom_options_editor.set_options(None)
+            self.default_options_widget.set_config(None)
+            self.custom_options_widget.set_config(None)
         else:
             default_config = {name: value for name, value in config.items() if
                               name in self._default_option_names}
             custom_config = {name: value for name, value in config.items() if
                              name not in self._default_option_names}
-            self.default_config_editor.set_config(default_config)
-            self.custom_options_editor.set_options(custom_config)
+            self.default_options_widget.set_config(default_config)
+            self.custom_options_widget.set_config(custom_config)

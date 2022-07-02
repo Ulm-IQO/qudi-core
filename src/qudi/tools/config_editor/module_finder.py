@@ -46,7 +46,7 @@ class ModuleFinder:
             try:
                 module = importlib.import_module(module_name)
             except:
-                log.exception(f'Error during import of module "{module_name}":')
+                log.warning(f'Error during import of module "{module_name}"')
                 continue
             qudi_modules.update(cls.get_qudi_classes_in_module(module))
         return qudi_modules

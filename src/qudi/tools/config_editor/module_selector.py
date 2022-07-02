@@ -32,9 +32,7 @@ class ModuleSelector(QtWidgets.QDialog):
 
         # Create left side of splitter widget
         left_widget = QtWidgets.QWidget()
-        left_widget.setContentsMargins(0, 0, 0, 0)
         layout = QtWidgets.QVBoxLayout()
-        layout.setContentsMargins(0, 0, 0, 0)
         label = QtWidgets.QLabel('Available Modules')
         font = label.font()
         font.setPointSize(16)
@@ -46,9 +44,7 @@ class ModuleSelector(QtWidgets.QDialog):
 
         # Create right side of splitter widget
         right_widget = QtWidgets.QWidget()
-        right_widget.setContentsMargins(0, 0, 0, 0)
         layout = QtWidgets.QGridLayout()
-        layout.setContentsMargins(0, 0, 0, 0)
         right_widget.setLayout(layout)
         label = QtWidgets.QLabel('Selected Modules')
         label.setFont(font)
