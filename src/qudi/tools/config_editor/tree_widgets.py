@@ -5,6 +5,7 @@
 
 __all__ = ['AvailableModulesTreeWidget', 'SelectedModulesTreeWidget', 'ConfigModulesTreeWidget']
 
+from re import compile
 from PySide2 import QtCore, QtWidgets, QtGui
 from typing import Optional, Iterable, Mapping, Tuple, Dict, List, Sequence
 
@@ -39,14 +40,18 @@ class AvailableModulesTreeWidget(QtWidgets.QTreeWidget):
 
     def set_modules(self, modules: Iterable[str]) -> None:
         # Clear all modules
-        self.clear_modules()
+        self._clear_modules()
         # Add new modules
         for module in modules:
-            self.add_module(module, False)
+            self._add_module(module)
         # Resize columns
         self.resize_columns_to_content()
 
-    def add_module(self, module: str, resize: Optional[bool] = True) -> None:
+    def add_module(self, module: str) -> None:
+        self._add_module(module)
+        self.resize_columns_to_content()
+
+    def _add_module(self, module: str) -> None:
         base, module_class = module.split('.', 1)
         item = QtWidgets.QTreeWidgetItem()
         item.setText(1, module_class)
@@ -54,10 +59,12 @@ class AvailableModulesTreeWidget(QtWidgets.QTreeWidget):
             QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsDragEnabled
         )
         self.top_level_items[base].addChild(item)
-        if resize:
-            self.resize_columns_to_content()
 
-    def remove_module(self, module: str, resize: Optional[bool] = True) -> None:
+    def remove_module(self, module: str) -> None:
+        self._remove_module(module)
+        self.resize_columns_to_content()
+
+    def _remove_module(self, module: str) -> None:
         base, module_class = module.split('.', 1)
         top_level_item = self.top_level_items[base]
         for index in range(top_level_item.childCount()):
@@ -65,10 +72,12 @@ class AvailableModulesTreeWidget(QtWidgets.QTreeWidget):
             if child.text(1) == module_class:
                 top_level_item.removeChild(child)
                 break
-        if resize:
-            self.resize_columns_to_content()
 
     def clear_modules(self) -> None:
+        self._clear_modules()
+        self.resize_columns_to_content()
+
+    def _clear_modules(self) -> None:
         self.clear()
         for disp_base in ('GUI', 'Logic', 'Hardware'):
             item = QtWidgets.QTreeWidgetItem()
@@ -91,39 +100,6 @@ class AvailableModulesTreeWidget(QtWidgets.QTreeWidget):
         return mime
 
 
-class SelectedModulesTreeWidget(AvailableModulesTreeWidget):
-    """
-    """
-    def __init__(self,
-                 modules: Optional[Iterable[str]] = None,
-                 parent: Optional[QtWidgets.QWidget] = None
-                 ) -> None:
-        super().__init__(modules=modules, parent=parent)
-
-        self.setDragEnabled(False)
-        self.setDropIndicatorShown(False)
-        self.setAcceptDrops(True)
-
-    def dropEvent(self, event: QtGui.QDropEvent) -> None:
-        if isinstance(event.source(), AvailableModulesTreeWidget):
-            full_text = event.mimeData().text()
-            for module in full_text.split(';'):
-                self.add_module(module, False)
-            self.resize_columns_to_content()
-            event.accept()
-        else:
-            event.ignore()
-
-    def keyPressEvent(self, event: QtGui.QKeyEvent) -> None:
-        if event.key() == QtCore.Qt.Key_Delete:
-            for item in self.selectedItems():
-                if item.parent() is not None:
-                    item.parent().removeChild(item)
-            event.accept()
-        else:
-            super().keyPressEvent(event)
-
-
 class ConfigModulesTreeWidget(QtWidgets.QTreeWidget):
     """
     """
@@ -135,14 +111,19 @@ class ConfigModulesTreeWidget(QtWidgets.QTreeWidget):
                  ) -> None:
         super().__init__(parent=parent)
 
+        self.setDragEnabled(False)
+        self.setDropIndicatorShown(False)
+        self.setAcceptDrops(True)
         self.setColumnCount(3)
         self.setHeaderLabels(['Base', 'Name', 'module.Class'])
         self.setSelectionMode(self.SingleSelection)
         self.setEditTriggers(self.EditTrigger.NoEditTriggers)
+        self.itemDoubleClicked.connect(self._edit_item_column)
+
         self.top_level_items = dict()
         self.set_modules(named_modules, unnamed_modules)
         self._valid_foreground = next(iter(self.top_level_items.values())).foreground(0)
-        self.itemDoubleClicked.connect(self.edit_item_column)
+        self._name_regex = compile(r'^[a-zA-Z_]+[a-zA-Z0-9_]*$')
 
     @property
     def modules(self) -> Tuple[Dict[str, str], List[str]]:
@@ -153,33 +134,35 @@ class ConfigModulesTreeWidget(QtWidgets.QTreeWidget):
             for it in items:
                 name = it.text(1)
                 module = f'{base}.{it.text(2)}'
-                if not name or name == '<enter unique name>' or name in named_modules:
-                    unnamed_modules.append(module)
-                else:
+                if self.is_valid_name(name) and name not in named_modules:
                     named_modules[name] = module
+                else:
+                    unnamed_modules.append(module)
         return named_modules, unnamed_modules
 
     def set_modules(self,
                     named_modules: Optional[Mapping[str, str]] = None,
                     unnamed_modules: Optional[Iterable[str]] = None
                     ) -> None:
+        if named_modules is None:
+            named_modules = dict()
+        if unnamed_modules is None:
+            unnamed_modules = list()
         # Clear all modules
-        self.clear_modules()
+        self._clear_modules()
         # Add new modules
-        if named_modules is not None:
-            for name, module in named_modules.items():
-                self.add_module(module, name, resize=False)
-        if unnamed_modules is not None:
-            for module in unnamed_modules:
-                self.add_module(module, resize=False)
+        for name, module in named_modules.items():
+            self.add_module(module, name, resize=False)
+        for module in unnamed_modules:
+            self.add_module(module, resize=False)
         # Resize columns
         self.resize_columns_to_content()
 
-    def add_module(self,
-                   module: str,
-                   name: Optional[str] = None,
-                   resize: Optional[bool] = True
-                   ) -> None:
+    def add_module(self, module: str, name: Optional[str] = None) -> None:
+        self._add_module(module, name)
+        self.resize_columns_to_content()
+
+    def _add_module(self, module: str, name: Optional[str] = None) -> None:
         base, module_class = module.split('.', 1)
         item = QtWidgets.QTreeWidgetItem()
         item.setText(1, '<enter unique name>' if name is None else name)
@@ -188,19 +171,12 @@ class ConfigModulesTreeWidget(QtWidgets.QTreeWidget):
             QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEditable
         )
         self.top_level_items[base].addChild(item)
-        if resize:
-            self.resize_columns_to_content()
 
-    # def add_remote_module(self):
-    #     item = QtWidgets.QTreeWidgetItem()
-    #     item.setText(1, 'unique name')
-    #     item.setForeground(1, self._error_foreground)
-    #     item.setText(2, 'REMOTE')
-    #     item.setFlags(
-    #         QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEditable)
-    #     self.top_level_items['remote'].addChild(item)
+    def remove_module(self, name: str) -> None:
+        self._remove_module(name)
+        self.resize_columns_to_content()
 
-    def remove_module(self, name: str, resize: Optional[bool] = True) -> None:
+    def _remove_module(self, name: str) -> None:
         found = False
         for base, top_item in self.top_level_items.items():
             for index in range(top_item.childCount()):
@@ -211,10 +187,12 @@ class ConfigModulesTreeWidget(QtWidgets.QTreeWidget):
                     break
             if found:
                 break
-        if found and resize:
-            self.resize_columns_to_content()
 
     def clear_modules(self) -> None:
+        self._clear_modules()
+        self.resize_columns_to_content()
+
+    def _clear_modules(self) -> None:
         self.clear()
         for disp_base in ['GUI', 'Logic', 'Hardware']:
             item = QtWidgets.QTreeWidgetItem()
@@ -228,7 +206,37 @@ class ConfigModulesTreeWidget(QtWidgets.QTreeWidget):
         for i in range(self.columnCount()):
             self.resizeColumnToContents(i)
 
+    def is_valid_name(self, name: str) -> bool:
+        set_names = list()
+        for base, top_item in self.top_level_items.items():
+            items = [top_item.child(index) for index in range(top_item.childCount())]
+            set_names.extend(it.text(1) for it in items)
+        return self._name_regex.match(name) is not None and set_names.count(name) <= 1
+
     @QtCore.Slot(QtWidgets.QTreeWidgetItem, int)
-    def edit_item_column(self, item: QtWidgets.QTreeWidgetItem, column: int) -> None:
+    def _edit_item_column(self, item: QtWidgets.QTreeWidgetItem, column: int) -> None:
         if item and column == 1 and item.parent() is not None:
             self.editItem(item, column)
+
+
+class SelectedModulesTreeWidget(ConfigModulesTreeWidget):
+    """
+    """
+    def dropEvent(self, event: QtGui.QDropEvent) -> None:
+        if isinstance(event.source(), AvailableModulesTreeWidget):
+            full_text = event.mimeData().text()
+            for module in full_text.split(';'):
+                self._add_module(module)
+            self.resize_columns_to_content()
+            event.accept()
+        else:
+            event.ignore()
+
+    def keyPressEvent(self, event: QtGui.QKeyEvent) -> None:
+        if event.key() == QtCore.Qt.Key_Delete:
+            for item in self.selectedItems():
+                if item.parent() is not None:
+                    item.parent().removeChild(item)
+            event.accept()
+        else:
+            super().keyPressEvent(event)

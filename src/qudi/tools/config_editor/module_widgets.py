@@ -359,7 +359,7 @@ class RemoteModuleConfigWidget(QtWidgets.QWidget):
 
         layout = QtWidgets.QGridLayout()
         layout.setColumnStretch(1, 1)
-        layout.setRowStretch(5, 1)
+        layout.setRowStretch(6, 1)
         self.setLayout(layout)
 
         # remote_url label (rpyc://{host}:{port}/)
@@ -374,6 +374,17 @@ class RemoteModuleConfigWidget(QtWidgets.QWidget):
         layout.addWidget(label, 0, 0)
         layout.addWidget(self._remote_url_label, 0, 1)
 
+        # remote name editor
+        label = QtWidgets.QLabel('* Remote name:')
+        label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+        self.remote_name_lineedit = QtWidgets.QLineEdit()
+        self.remote_name_lineedit.setToolTip('The module name as configured in the remote host '
+                                             'qudi instance to connect to.')
+        self.remote_name_lineedit.setPlaceholderText('Module name on remote host')
+        self.remote_name_lineedit.textChanged.connect(self._update_remote_url)
+        layout.addWidget(label, 1, 0)
+        layout.addWidget(self.remote_name_lineedit, 1, 1)
+
         # remote host editor
         label = QtWidgets.QLabel('* Remote host:')
         label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
@@ -382,8 +393,8 @@ class RemoteModuleConfigWidget(QtWidgets.QWidget):
                                              '"localhost" for local qudi instances.')
         self.remote_host_lineedit.setPlaceholderText('IP address or "localhost"')
         self.remote_host_lineedit.textChanged.connect(self._update_remote_url)
-        layout.addWidget(label, 1, 0)
-        layout.addWidget(self.remote_host_lineedit, 1, 1)
+        layout.addWidget(label, 2, 0)
+        layout.addWidget(self.remote_host_lineedit, 2, 1)
 
         # remote port editor
         label = QtWidgets.QLabel('* Remote port:')
@@ -393,8 +404,8 @@ class RemoteModuleConfigWidget(QtWidgets.QWidget):
         self.remote_port_spinbox.setValue(12345)
         self.remote_port_spinbox.setToolTip('Port to reach the remote host on.')
         self.remote_port_spinbox.valueChanged.connect(self._update_remote_url)
-        layout.addWidget(label, 2, 0)
-        layout.addWidget(self.remote_port_spinbox, 2, 1)
+        layout.addWidget(label, 3, 0)
+        layout.addWidget(self.remote_port_spinbox, 3, 1)
 
         # certfile editor
         label = QtWidgets.QLabel('Certificate file:')
@@ -405,8 +416,8 @@ class RemoteModuleConfigWidget(QtWidgets.QWidget):
         self.certfile_lineedit.setToolTip(
             'SSL certificate file path for the remote module connection'
         )
-        layout.addWidget(label, 3, 0)
-        layout.addWidget(self.certfile_lineedit, 3, 1)
+        layout.addWidget(label, 4, 0)
+        layout.addWidget(self.certfile_lineedit, 4, 1)
 
         # keyfile editor
         label = QtWidgets.QLabel('Key file:')
@@ -415,8 +426,8 @@ class RemoteModuleConfigWidget(QtWidgets.QWidget):
                                              follow_symlinks=True)
         self.keyfile_lineedit.setPlaceholderText('No key')
         self.keyfile_lineedit.setToolTip('SSL key file path for the remote module server')
-        layout.addWidget(label, 4, 0)
-        layout.addWidget(self.keyfile_lineedit, 4, 1)
+        layout.addWidget(label, 5, 0)
+        layout.addWidget(self.keyfile_lineedit, 5, 1)
 
         self.set_config(config)
 
@@ -443,9 +454,11 @@ class RemoteModuleConfigWidget(QtWidgets.QWidget):
                 parsed = urlparse(config['remote_url'])
                 host = 'localhost' if parsed.hostname is None else parsed.hostname
                 port = 12345 if parsed.port is None else parsed.port
+                name = parsed.path.replace('/', '')
             except:
                 host = 'localhost'
                 port = 12345
+                name = ''
             try:
                 certfile = config['certfile']
                 keyfile = config['keyfile']
@@ -455,16 +468,19 @@ class RemoteModuleConfigWidget(QtWidgets.QWidget):
                 certfile = keyfile = ''
             self.remote_host_lineedit.setText(host)
             self.remote_port_spinbox.setValue(port)
+            self.remote_name_lineedit.setText(name)
             self.certfile_lineedit.setText(certfile)
             self.certfile_lineedit.setText(keyfile)
         else:
             self.remote_host_lineedit.setText('')
             self.remote_port_spinbox.setValue(12345)
+            self.remote_name_lineedit.setText('')
             self.certfile_lineedit.setText('')
             self.certfile_lineedit.setText('')
 
     @QtCore.Slot()
     def _update_remote_url(self) -> None:
-        self._remote_url_label.setText(
-            f'rpyc://{self.remote_host_lineedit.text()}:{self.remote_port_spinbox.value():d}/'
-        )
+        host = self.remote_host_lineedit.text().strip()
+        port = self.remote_port_spinbox.value()
+        name = self.remote_name_lineedit.text().strip()
+        self._remote_url_label.setText(f'rpyc://{host}:{port:d}/{name}/')
