@@ -168,11 +168,17 @@ def local_module_config_schema() -> Dict[str, Any]:
 def remote_module_config_schema() -> Dict[str, Any]:
     return {
         'type': 'object',
-        'required': ['remote_url'],
+        'required': ['native_module_name', 'address', 'port'],
         'additionalProperties': False,
         'properties': {
-            'remote_url': {
-                'type': 'string'
+            'native_module_name': {
+                'type': 'string',
+            },
+            'address': {
+                'type': 'string',
+            },
+            'port': {
+                'type': 'integer',
             },
             'certfile': {
                 'type': ['null', 'string'],

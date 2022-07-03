@@ -176,13 +176,17 @@ class Configuration(_FileHandlerBase,
     def add_remote_module(self,
                           base: str,
                           name: str,
-                          remote_url: str,
+                          native_module_name: str,
+                          address: str,
+                          port: int,
                           certfile: Optional[str] = None,
                           keyfile: Optional[str] = None) -> None:
         if self.module_configured(name):
             raise KeyError(f'Module with name "{name}" already configured')
         self.validate_module_base(base)
-        module_config = {'remote_url': remote_url}
+        module_config = {'native_module_name': native_module_name,
+                         'address'           : address,
+                         'port'              : port}
         if certfile is not None:
             module_config['certfile'] = certfile
         if keyfile is not None:
@@ -237,7 +241,7 @@ class Configuration(_FileHandlerBase,
         raise KeyError(f'No module with name "{name}" configured')
 
     def is_remote_module(self, name):
-        return 'remote_url' in self.get_module_config(name)
+        return 'native_module_name' in self.get_module_config(name)
 
     def is_local_module(self, name):
         return 'module.Class' in self.get_module_config(name)
