@@ -6,8 +6,9 @@
 __all__ = ['ModuleSelector']
 
 from PySide2 import QtWidgets, QtCore
-from typing import Optional, Iterable, List
-from qudi.tools.config_editor.tree_widgets import AvailableModulesTreeWidget, SelectedModulesTreeWidget
+from typing import Optional, Iterable, List, Mapping, Tuple, Dict
+from qudi.tools.config_editor.tree_widgets import AvailableModulesTreeWidget
+from qudi.tools.config_editor.tree_widgets import SelectedModulesTreeWidget
 
 
 class ModuleSelector(QtWidgets.QDialog):
@@ -16,26 +17,28 @@ class ModuleSelector(QtWidgets.QDialog):
 
     def __init__(self,
                  available_modules: Iterable[str],
-                 selected_modules: Optional[Iterable[str]] = None,
+                 named_modules: Optional[Mapping[str, str]] = None,
+                 unnamed_modules: Optional[Iterable[str]] = None,
                  parent: Optional[QtWidgets.QWidget] = None
                  ) -> None:
         super().__init__(parent=parent)
 
         self.setWindowTitle('Qudi Config Editor: Module Selection')
         screen_size = QtWidgets.QApplication.instance().primaryScreen().availableSize()
-        self.resize(screen_size.width() // 2, screen_size.height() // 2)
+        self.resize(screen_size.width() // 3, screen_size.height() // 3)
 
         # Create two customized QTreeWidgets. One for all available modules to select from and one
         # for the selected modules.
         self.available_treewidget = AvailableModulesTreeWidget(modules=available_modules)
-        self.selected_treewidget = SelectedModulesTreeWidget(modules=selected_modules)
+        self.selected_treewidget = SelectedModulesTreeWidget(named_modules=named_modules,
+                                                             unnamed_modules=unnamed_modules)
 
         # Create left side of splitter widget
         left_widget = QtWidgets.QWidget()
         layout = QtWidgets.QVBoxLayout()
         label = QtWidgets.QLabel('Available Modules')
         font = label.font()
-        font.setPointSize(16)
+        font.setPointSize(font.pointSize() + 4)
         font.setBold(True)
         label.setFont(font)
         layout.addWidget(label)
@@ -53,9 +56,9 @@ class ModuleSelector(QtWidgets.QDialog):
         self.custom_module_lineedit = QtWidgets.QLineEdit()
         self.custom_module_lineedit.setPlaceholderText('Custom module name (module.Class)')
         self.base_selection_combobox = QtWidgets.QComboBox()
-        self.base_selection_combobox.addItems(('GUI', 'Logic', 'Hardware'))
-        self.add_remote_button.clicked.connect(self.add_remote_module)
-        self.add_custom_button.clicked.connect(self.add_custom_module)
+        self.base_selection_combobox.addItems(['GUI', 'Logic', 'Hardware'])
+        self.add_remote_button.clicked.connect(self._add_remote_module_clicked)
+        self.add_custom_button.clicked.connect(self._add_custom_module_clicked)
         layout.addWidget(label, 0, 0, 1, 3)
         layout.addWidget(self.selected_treewidget, 1, 0, 1, 3)
         label = QtWidgets.QLabel('Module Base:')
@@ -76,11 +79,23 @@ class ModuleSelector(QtWidgets.QDialog):
         splitter.setCollapsible(1, False)
 
         # Create buttonbox for this dialog
+
+        label = QtWidgets.QLabel(
+            'Include qudi modules by dragging them into the right field (press DEL to remove).'
+        )
+        label.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
+        font = label.font()
+        font.setBold(True)
+        label.setFont(font)
         self.button_box = QtWidgets.QDialogButtonBox(
             QtWidgets.QDialogButtonBox.Cancel | QtWidgets.QDialogButtonBox.Ok
         )
         self.button_box.accepted.connect(self.accept)
         self.button_box.rejected.connect(self.reject)
+        sub_layout = QtWidgets.QHBoxLayout()
+        sub_layout.addWidget(label)
+        sub_layout.addStretch()
+        sub_layout.addWidget(self.button_box)
 
         # Add everything to the main layout
         hline = QtWidgets.QFrame()
@@ -89,23 +104,23 @@ class ModuleSelector(QtWidgets.QDialog):
         layout = QtWidgets.QVBoxLayout()
         layout.addWidget(splitter)
         layout.addWidget(hline)
-        layout.addWidget(self.button_box)
+        layout.addLayout(sub_layout)
         layout.setStretch(0, 1)
         self.setLayout(layout)
 
     @property
-    def selected_modules(self) -> List[str]:
+    def selected_modules(self) -> Tuple[Dict[str, str], List[str]]:
         return self.selected_treewidget.modules
 
     @QtCore.Slot()
-    def add_remote_module(self) -> None:
+    def _add_remote_module_clicked(self) -> None:
         base = self.base_selection_combobox.currentText().lower()
         if base == 'gui':
             raise ValueError('Unable to add remote module.\nGUI modules can not be remote modules.')
         self.selected_treewidget.add_module(f'{base}.<REMOTE MODULE>')
 
     @QtCore.Slot()
-    def add_custom_module(self) -> None:
+    def _add_custom_module_clicked(self) -> None:
         base = self.base_selection_combobox.currentText().lower()
         module = self.custom_module_lineedit.text().strip()
         if module:

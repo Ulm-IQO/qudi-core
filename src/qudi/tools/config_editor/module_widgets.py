@@ -253,6 +253,7 @@ class LocalModuleConfigWidget(QtWidgets.QWidget):
         super().__init__(parent=parent)
 
         layout = QtWidgets.QVBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
         layout.setStretch(2, 1)
         self.setLayout(layout)
 
@@ -358,6 +359,7 @@ class RemoteModuleConfigWidget(QtWidgets.QWidget):
         super().__init__(parent=parent)
 
         layout = QtWidgets.QGridLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
         layout.setColumnStretch(1, 1)
         layout.setRowStretch(6, 1)
         self.setLayout(layout)

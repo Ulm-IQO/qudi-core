@@ -152,9 +152,9 @@ class ConfigModulesTreeWidget(QtWidgets.QTreeWidget):
         self._clear_modules()
         # Add new modules
         for name, module in named_modules.items():
-            self.add_module(module, name, resize=False)
+            self._add_module(module, name)
         for module in unnamed_modules:
-            self.add_module(module, resize=False)
+            self._add_module(module)
         # Resize columns
         self.resize_columns_to_content()
 

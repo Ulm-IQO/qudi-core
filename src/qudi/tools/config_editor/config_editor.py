@@ -1,6 +1,23 @@
 # -*- coding: utf-8 -*-
-"""
 
+"""
+Configuration editor App for creation and editing of qudi configuration files.
+
+Copyright (c) 2021, the qudi developers. See the AUTHORS.md file at the top-level directory of this
+distribution and on <https://github.com/Ulm-IQO/qudi-core/>
+
+This file is part of qudi.
+
+Qudi is free software: you can redistribute it and/or modify it under the terms of
+the GNU Lesser General Public License as published by the Free Software Foundation,
+either version 3 of the License, or (at your option) any later version.
+
+Qudi is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+See the GNU Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public License along with qudi.
+If not, see <https://www.gnu.org/licenses/>.
 """
 
 __all__ = ('main', 'ConfigurationEditorMainWindow', 'ConfigurationEditor')
@@ -8,7 +25,6 @@ __all__ = ('main', 'ConfigurationEditorMainWindow', 'ConfigurationEditor')
 import os
 import sys
 from PySide2 import QtCore, QtGui, QtWidgets
-from qudi.core.configoption import MissingOption
 from qudi.util.paths import get_main_dir, get_default_config_dir, get_artwork_dir
 from qudi.core.config import Configuration
 
@@ -64,16 +80,31 @@ class ConfigurationEditorMainWindow(QtWidgets.QMainWindow):
         layout.addWidget(self.module_tree_widget)
         layout.addWidget(self.global_config_editor)
         layout.setStretch(1, 1)
-        widget = QtWidgets.QWidget()
-        widget.setLayout(layout)
+        left_widget = QtWidgets.QWidget()
+        left_widget.setLayout(layout)
+
+        label = QtWidgets.QLabel('Module Configuration')
+        label.setAlignment(QtCore.Qt.AlignCenter)
+        label.setFont(font)
+        layout = QtWidgets.QVBoxLayout()
+        layout.addWidget(label)
+        layout.addWidget(self.module_config_editor)
+        label = QtWidgets.QLabel('Mandatory fields/options/connectors are marked with *')
+        font = label.font()
+        font.setBold(True)
+        label.setFont(font)
+        label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+        layout.addWidget(label)
+        layout.setStretch(1, 1)
+        right_widget = QtWidgets.QWidget()
+        right_widget.setLayout(layout)
 
         splitter = QtWidgets.QSplitter(QtCore.Qt.Horizontal)
-        splitter.addWidget(widget)
-        splitter.addWidget(self.module_config_editor)
-        splitter.setCollapsible(0, False)
-        splitter.setCollapsible(1, False)
-        splitter.setStretchFactor(0, 1)
-        splitter.setStretchFactor(1, 2)
+        splitter.addWidget(left_widget)
+        splitter.addWidget(right_widget)
+        splitter.setChildrenCollapsible(False)
+        splitter.setStretchFactor(0, 2)
+        splitter.setStretchFactor(1, 3)
         self.setCentralWidget(splitter)
         self.module_tree_widget.itemChanged.connect(self.module_name_changed)
         self.module_tree_widget.itemSelectionChanged.connect(self.module_selection_changed)
@@ -168,24 +199,22 @@ class ConfigurationEditorMainWindow(QtWidgets.QMainWindow):
         self.module_config_editor.close_editor()
         available = self.qudi_environment.available_modules
         named_selected, unnamed_selected = self.module_tree_widget.modules
-        selected = list(named_selected.values())
-        selected.extend(unnamed_selected)
-        selector_dialog = ModuleSelector(available_modules=available, selected_modules=selected)
+        selector_dialog = ModuleSelector(available_modules=available,
+                                         named_modules=named_selected,
+                                         unnamed_modules=unnamed_selected)
         if selector_dialog.exec_():
-            new_selection = selector_dialog.selected_modules
-            new_named_selected = dict()
-            remove_modules = list()
-            # Recycle old module names if identical modules are selected
-            for name, module in named_selected.items():
-                try:
-                    new_selection.remove(module)
-                    new_named_selected[name] = module
-                except ValueError:
-                    remove_modules.append(name)
-
+            # Recycle old module names if identical modules are selected but not named
+            new_named_selected, new_unnamed_selected = selector_dialog.selected_modules
+            recycled_named_selected = {
+                name: mod for name, mod in named_selected.items() if
+                (name not in new_named_selected) and (mod in new_unnamed_selected)
+            }
+            new_named_selected.update(recycled_named_selected)
+            for mod in recycled_named_selected.values():
+                new_unnamed_selected.remove(mod)
             # Set modules in main window
             self.module_tree_widget.set_modules(named_modules=new_named_selected,
-                                                unnamed_modules=new_selection)
+                                                unnamed_modules=new_unnamed_selected)
 
     # @QtCore.Slot(str, dict, dict, dict)
     # def update_module_config(self, name, connections=None, options=None, meta=None):
@@ -313,6 +342,13 @@ class ConfigurationEditorMainWindow(QtWidgets.QMainWindow):
                      cfg_dict.items()}
                 )
         return modules
+
+    def keyPressEvent(self, event: QtGui.QKeyEvent) -> None:
+        if event.key() == QtCore.Qt.Key_Escape:
+            self.module_tree_widget.clearSelection()
+            event.accept()
+        else:
+            super().keyPressEvent(event)
 
 
 class ConfigurationEditor(QtWidgets.QApplication):
