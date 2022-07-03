@@ -39,6 +39,7 @@ class ModuleEditorWidget(QtWidgets.QStackedWidget):
                  parent: Optional[QtWidgets.QWidget] = None
                  ) -> None:
         super().__init__(parent=parent)
+        self.setFrameShape(QtWidgets.QFrame.Shape.StyledPanel)
 
         assert isinstance(qudi_modules, QudiModules)
         self._qudi_modules = qudi_modules
@@ -63,8 +64,6 @@ class ModuleEditorWidget(QtWidgets.QStackedWidget):
         sub_layout.setStretch(1, 1)
         label = QtWidgets.QLabel('* Module Name:')
         label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
-        font.setBold(False)
-        label.setFont(font)
         self.module_name_lineedit = QtWidgets.QLineEdit()
         self.module_name_lineedit.setPlaceholderText('Enter locally unique module name')
         self.module_name_lineedit.setFont(font)
