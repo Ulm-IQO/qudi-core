@@ -24,11 +24,12 @@ __all__ = ['LocalModuleConfigWidget', 'RemoteModuleConfigWidget', 'ModuleConnect
            'ModuleOptionsWidget']
 
 import copy
-from urllib.parse import urlparse
 from PySide2 import QtCore, QtWidgets
 from typing import Optional, Iterable, Mapping, Dict, Sequence, Union, Any, Tuple, List
 
 from qudi.core import Connector, ConfigOption
+from qudi.core.config.validator import validate_remote_module_config, validate_local_module_config
+from qudi.core.config.validator import ValidationError
 from qudi.util.widgets.lines import HorizontalLine
 from qudi.util.widgets.path_line_edit import PathLineEdit
 from qudi.tools.config_editor.custom_widgets import CustomOptionsWidget, CustomConnectorsWidget
@@ -276,6 +277,7 @@ class LocalModuleConfigWidget(QtWidgets.QWidget):
         self.allow_remote_checkbox.setToolTip(
             'Allow other qudi instances to connect to this module via remote modules server.'
         )
+        self.allow_remote_checkbox.toggled.connect(self._validate_and_mark_config)
         sub_layout.addWidget(label, 1, 0)
         sub_layout.addWidget(self.allow_remote_checkbox, 1, 1)
 
@@ -306,6 +308,7 @@ class LocalModuleConfigWidget(QtWidgets.QWidget):
         self.splitter.addWidget(self.options_editor)
 
         self.set_config(config)
+        self._validate_and_mark_config()
 
     @property
     def module_class(self) -> str:
@@ -347,6 +350,16 @@ class LocalModuleConfigWidget(QtWidgets.QWidget):
                 mandatory_targets[conn.name] = targets
         return mandatory_targets, optional_targets
 
+    def validate_config(self) -> None:
+        validate_local_module_config(self.config)
+
+    @QtCore.Slot()
+    def _validate_and_mark_config(self) -> None:
+        try:
+            self.validate_config()
+        except ValidationError as err:
+            print(f'Invalid local module config. Problematic fields: {list(err.relative_path)}')
+
 
 class RemoteModuleConfigWidget(QtWidgets.QWidget):
     """
@@ -361,42 +374,30 @@ class RemoteModuleConfigWidget(QtWidgets.QWidget):
         layout = QtWidgets.QGridLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setColumnStretch(1, 1)
-        layout.setRowStretch(6, 1)
+        layout.setRowStretch(5, 1)
         self.setLayout(layout)
 
-        # remote_url label (rpyc://{host}:{port}/)
-        label = QtWidgets.QLabel('Remote URL:')
-        label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
-        self._remote_url_label = QtWidgets.QLabel('rpyc://')
-        self._remote_url_label.setTextInteractionFlags(QtCore.Qt.TextSelectableByMouse)
-        self._remote_url_label.setFocusPolicy(QtCore.Qt.FocusPolicy.NoFocus)
-        font = self._remote_url_label.font()
-        font.setBold(True)
-        self._remote_url_label.setFont(font)
-        layout.addWidget(label, 0, 0)
-        layout.addWidget(self._remote_url_label, 0, 1)
-
         # remote name editor
-        label = QtWidgets.QLabel('* Remote name:')
+        label = QtWidgets.QLabel('* Native module name:')
         label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
-        self.remote_name_lineedit = QtWidgets.QLineEdit()
-        self.remote_name_lineedit.setToolTip('The module name as configured in the remote host '
-                                             'qudi instance to connect to.')
-        self.remote_name_lineedit.setPlaceholderText('Module name on remote host')
-        self.remote_name_lineedit.textChanged.connect(self._update_remote_url)
-        layout.addWidget(label, 1, 0)
-        layout.addWidget(self.remote_name_lineedit, 1, 1)
+        self.native_name_lineedit = QtWidgets.QLineEdit()
+        self.native_name_lineedit.setToolTip('The native module name as configured on the remote '
+                                             'host qudi instance to connect to.')
+        self.native_name_lineedit.setPlaceholderText('Module name on remote host')
+        self.native_name_lineedit.textChanged.connect(self._validate_and_mark_config)
+        layout.addWidget(label, 0, 0)
+        layout.addWidget(self.native_name_lineedit, 0, 1)
 
         # remote host editor
-        label = QtWidgets.QLabel('* Remote host:')
+        label = QtWidgets.QLabel('* Remote address:')
         label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
         self.remote_host_lineedit = QtWidgets.QLineEdit('localhost')
         self.remote_host_lineedit.setToolTip('The IP address of the remote host. Can also be '
                                              '"localhost" for local qudi instances.')
         self.remote_host_lineedit.setPlaceholderText('IP address or "localhost"')
-        self.remote_host_lineedit.textChanged.connect(self._update_remote_url)
-        layout.addWidget(label, 2, 0)
-        layout.addWidget(self.remote_host_lineedit, 2, 1)
+        self.remote_host_lineedit.textChanged.connect(self._validate_and_mark_config)
+        layout.addWidget(label, 1, 0)
+        layout.addWidget(self.remote_host_lineedit, 1, 1)
 
         # remote port editor
         label = QtWidgets.QLabel('* Remote port:')
@@ -405,9 +406,9 @@ class RemoteModuleConfigWidget(QtWidgets.QWidget):
         self.remote_port_spinbox.setRange(0, 65535)
         self.remote_port_spinbox.setValue(12345)
         self.remote_port_spinbox.setToolTip('Port to reach the remote host on.')
-        self.remote_port_spinbox.valueChanged.connect(self._update_remote_url)
-        layout.addWidget(label, 3, 0)
-        layout.addWidget(self.remote_port_spinbox, 3, 1)
+        self.remote_port_spinbox.valueChanged.connect(self._validate_and_mark_config)
+        layout.addWidget(label, 2, 0)
+        layout.addWidget(self.remote_port_spinbox, 2, 1)
 
         # certfile editor
         label = QtWidgets.QLabel('Certificate file:')
@@ -418,8 +419,9 @@ class RemoteModuleConfigWidget(QtWidgets.QWidget):
         self.certfile_lineedit.setToolTip(
             'SSL certificate file path for the remote module connection'
         )
-        layout.addWidget(label, 4, 0)
-        layout.addWidget(self.certfile_lineedit, 4, 1)
+        self.certfile_lineedit.textChanged.connect(self._validate_and_mark_config)
+        layout.addWidget(label, 3, 0)
+        layout.addWidget(self.certfile_lineedit, 3, 1)
 
         # keyfile editor
         label = QtWidgets.QLabel('Key file:')
@@ -428,18 +430,20 @@ class RemoteModuleConfigWidget(QtWidgets.QWidget):
                                              follow_symlinks=True)
         self.keyfile_lineedit.setPlaceholderText('No key')
         self.keyfile_lineedit.setToolTip('SSL key file path for the remote module server')
-        layout.addWidget(label, 5, 0)
-        layout.addWidget(self.keyfile_lineedit, 5, 1)
+        self.keyfile_lineedit.textChanged.connect(self._validate_and_mark_config)
+        layout.addWidget(label, 4, 0)
+        layout.addWidget(self.keyfile_lineedit, 4, 1)
 
         self.set_config(config)
+        self._validate_and_mark_config()
 
     @property
-    def remote_url(self) -> str:
-        return self._remote_url_label.text()
-
-    @property
-    def config(self) -> Dict[str, str]:
-        cfg = {'remote_url': self.remote_url}
+    def config(self) -> Dict[str, Union[None, int, str]]:
+        native_module_name = self.native_name_lineedit.text()
+        host = self.remote_host_lineedit.text()
+        cfg = {'native_module_name': native_module_name if native_module_name else None,
+               'address'           : host if host else None,
+               'port'              : self.remote_port_spinbox.value()}
         try:
             cfg['certfile'] = self.certfile_lineedit.paths[0]
         except IndexError:
@@ -450,17 +454,11 @@ class RemoteModuleConfigWidget(QtWidgets.QWidget):
             pass
         return cfg
 
-    def set_config(self, config: Union[None, Dict[str, Union[None, str]]]) -> None:
+    def set_config(self, config: Union[None, Dict[str, Union[None, int, str]]]) -> None:
         if config:
-            try:
-                parsed = urlparse(config['remote_url'])
-                host = 'localhost' if parsed.hostname is None else parsed.hostname
-                port = 12345 if parsed.port is None else parsed.port
-                name = parsed.path.replace('/', '')
-            except:
-                host = 'localhost'
-                port = 12345
-                name = ''
+            native_module_name = config.get('native_module_name', None)
+            host = config.get('address', None)
+            port = config.get('port', None)
             try:
                 certfile = config['certfile']
                 keyfile = config['keyfile']
@@ -468,21 +466,24 @@ class RemoteModuleConfigWidget(QtWidgets.QWidget):
                 certfile = keyfile = ''
             if certfile is None or keyfile is None:
                 certfile = keyfile = ''
-            self.remote_host_lineedit.setText(host)
-            self.remote_port_spinbox.setValue(port)
-            self.remote_name_lineedit.setText(name)
+            self.remote_host_lineedit.setText(host if host else '')
+            self.remote_port_spinbox.setValue(port if isinstance(port, int) else 12345)
+            self.native_name_lineedit.setText(native_module_name if native_module_name else '')
             self.certfile_lineedit.setText(certfile)
             self.certfile_lineedit.setText(keyfile)
         else:
             self.remote_host_lineedit.setText('')
             self.remote_port_spinbox.setValue(12345)
-            self.remote_name_lineedit.setText('')
+            self.native_name_lineedit.setText('')
             self.certfile_lineedit.setText('')
             self.certfile_lineedit.setText('')
 
+    def validate_config(self) -> None:
+        validate_remote_module_config(self.config)
+
     @QtCore.Slot()
-    def _update_remote_url(self) -> None:
-        host = self.remote_host_lineedit.text().strip()
-        port = self.remote_port_spinbox.value()
-        name = self.remote_name_lineedit.text().strip()
-        self._remote_url_label.setText(f'rpyc://{host}:{port:d}/{name}/')
+    def _validate_and_mark_config(self) -> None:
+        try:
+            self.validate_config()
+        except ValidationError as err:
+            print(f'Invalid remote module config. Problematic fields: {list(err.relative_path)}')

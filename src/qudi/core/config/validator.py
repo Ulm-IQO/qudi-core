@@ -22,8 +22,9 @@ If not, see <https://www.gnu.org/licenses/>.
 """
 
 __all__ = ['ValidationError', 'validate_config', 'validate_local_module_config',
-           'validate_remote_module_config']
+           'validate_remote_module_config', 'validate_module_name']
 
+import re
 from typing import Mapping, Any
 from jsonschema import ValidationError
 from jsonschema import validators as __validators
@@ -58,6 +59,20 @@ DefaultInsertionValidator = __validators.extend(
 
 def validate_config(config: Mapping[str, Any]) -> None:
     DefaultInsertionValidator(config_schema()).validate(config)
+    for base in ['gui', 'logic', 'hardware']:
+        for ii, name in enumerate(config.get(base, dict()), 1):
+            try:
+                validate_module_name(name)
+            except ValidationError as err:
+                if ii >= 4:
+                    pos = f'{ii:d}th'
+                elif ii == 3:
+                    pos = '3rd'
+                elif ii == 2:
+                    pos = '2nd'
+                else:
+                    pos = '1st'
+                raise ValidationError(f'Invalid module name at {pos} {base} module') from err
 
 
 def validate_local_module_config(config: Mapping[str, Any]) -> None:
@@ -66,3 +81,10 @@ def validate_local_module_config(config: Mapping[str, Any]) -> None:
 
 def validate_remote_module_config(config: Mapping[str, Any]) -> None:
     DefaultInsertionValidator(remote_module_config_schema()).validate(config)
+
+
+def validate_module_name(name: str) -> None:
+    if re.match(r'^[a-zA-Z_]+[a-zA-Z0-9_]*$', name) is None:
+        raise ValidationError(
+            'Module names must only contain word characters [a-zA-Z0-9_] and not start on a number.'
+        )

@@ -288,12 +288,18 @@ class ManagedModule(QtCore.QObject):
         # See if remotemodules access to this module is allowed
         self._allow_remote_access = cfg.get('allow_remote', False)
         # Extract remote modules URL and certificate if this module is run on a remote machine
-        self._remote_url = cfg.get('remote_url', None)
+        self._remote_module_name = cfg.get('native_module_name', None)
+        self._remote_address = cfg.get('address', None)
+        self._remote_port = cfg.get('port', None)
         self._remote_certfile = cfg.get('certfile', None)
         self._remote_keyfile = cfg.get('keyfile', None)
-        # Do not propagate remotemodules access
-        if self._remote_url is not None:
+        if any(attr is None for attr in [self._remote_module_name, self._remote_address, self._remote_port]):
+            self._remote_url = None
+        else:
+            self._remote_url = f'rpyc://{self._remote_address}:{self._remote_port:d}/{self._remote_module_name}/'
+            # Do not propagate remotemodules access
             self._allow_remote_access = False
+
         # The rest are config options
         self._options = cfg.get('options', dict())
 
