@@ -4,7 +4,7 @@
 This file contains an object representing a qudi configuration.
 Qudi configurations are stored in YAML file format.
 
-Copyright (c) 2021, the qudi developers. See the AUTHORS.md file at the top-level directory of this
+Copyright (c) 2022, the qudi developers. See the AUTHORS.md file at the top-level directory of this
 distribution and on <https://github.com/Ulm-IQO/qudi-core/>
 
 This file is part of qudi.
@@ -45,9 +45,13 @@ class Configuration(_FileHandlerBase,
                     _MutableMapping,
                     QtCore.QObject,
                     metaclass=_ABCQObjectMeta):
+    """ QObject subclass representing a valid qudi configuration.
+    Handles config file loading/dumping as well as writing qudi load config to AppData.
+    Performs JSON schema validation upon file loading/dumping and mutation.
+    Includes interface methods to add/remove module configurations as well as getting/setting
+    various config items.
     """
-    """
-    sigConfigChanged = QtCore.Signal(object)
+    sigConfigChanged = QtCore.Signal(object)  # self
 
     def __init__(self,
                  config: Optional[MutableMapping[str, Any]] = None,
@@ -55,8 +59,8 @@ class Configuration(_FileHandlerBase,
                  ) -> None:
         super().__init__(parent=parent)
 
-        self._file_path = None
-        self._config = None
+        self._file_path = None  # File path for corresponding .cfg file
+        self._config = None     # The raw configuration as dict
 
         # initialize and validate config dict
         self.set_config(config)
@@ -101,19 +105,41 @@ class Configuration(_FileHandlerBase,
 
     @property
     def config_map(self) -> MutableMapping[str, Any]:
+        """ Deepcopy of the raw config dict """
         return copy.deepcopy(self._config)
 
     @property
-    def file_path(self):
+    def file_path(self) -> Union[None, str]:
+        """ File path of the associated .cfg file.
+        Will be None if no file has been associated, i.e. no load/dump has been performed on this
+        config.
+        """
         return self._file_path
 
     def set_config(self, config: Union[None, MutableMapping[str, Any]]) -> None:
+        """ Validate and reset this Configuration with the given raw config dict
+        """
         new_config = dict() if config is None else copy.deepcopy(config)
         _validate_config(new_config)
         self._config = new_config
         self.sigConfigChanged.emit(self)
 
-    def load(self, file_path=None, set_default=False):
+    def load(self, file_path: Optional[str] = None, set_default: Optional[bool] = False) -> None:
+        """ Load a config from file (.cfg), validate it (JSON schema) and reset this Configuration
+        instance.
+
+        If no "file_path" argument is given, try to determine the file path by the following
+        priority and raise ValueError if no path could be found:
+            1. Use "file_path" property if it is not None
+            2. Use file path saved in AppData from previous qudi session
+            3. Use existing "default.cfg" file in "<UserHome>/qudi/config/"
+            4. Use existing "default.cfg" file in "<AppData>/qudi/"
+        This instance is only reset on successful JSON schema validation of the loaded config.
+        Will set the "file_path" property accordingly on success.
+
+        If optional "set_default" flag is set, write the new file_path to "<AppData>/qudi/load.cfg"
+        to be the new default config at the next start of qudi.
+        """
         file_path = self._file_path if file_path is None else file_path
         # Try to restore last loaded config file path if possible
         if file_path is None:
@@ -142,7 +168,14 @@ class Configuration(_FileHandlerBase,
         if set_default:
             self.set_default_path(file_path)
 
-    def dump(self, file_path=None):
+    def dump(self, file_path: Optional[str] = None) -> None:
+        """ Dumps this Configuration instance to file (.cfg) after successful JSON schema
+        validation.
+
+        If no "file_path" argument is given, try to use the "file_path" property and raise
+        ValueError if no path could be found.
+        Will set the "file_path" property accordingly on success.
+        """
         file_path = self._file_path if file_path is None else file_path
         if file_path is None:
             raise ValueError('No file path defined for qudi configuration to dump into')
@@ -158,6 +191,22 @@ class Configuration(_FileHandlerBase,
                          allow_remote: Optional[bool] = None,
                          connect: Optional[Mapping[str, str]] = None,
                          options: Optional[Mapping[str, _OptionType]] = None) -> None:
+        """ Mutates the current configuration by validating and adding a new local qudi module
+        config with base "gui", "logic" or "hardware" of the form:
+            <name>:
+                module.Class: <module.Class>
+                allow_remote: <allow_remote>
+                options:
+                    <options_key1>: <options_value1>
+                    <options_key2>: <options_value2>
+                    ...
+                connect:
+                    <connect_key1>: <connect_value1>
+                    <connect_key2>: <connect_value1>
+                    ...
+
+        Raises KeyError if a module with the same name is already configured.
+        """
         if self.module_configured(name):
             raise KeyError(f'Module with name "{name}" already configured')
         self.validate_module_base(base)
@@ -181,6 +230,17 @@ class Configuration(_FileHandlerBase,
                           port: int,
                           certfile: Optional[str] = None,
                           keyfile: Optional[str] = None) -> None:
+        """ Mutates the current configuration by validating and adding a new remote qudi module
+        config with base "gui", "logic" or "hardware" of the form:
+            <name>:
+                native_module_name: <native_module_name>
+                address: <address>
+                port: <port>
+                certfile: <certfile>
+                keyfile: <keyfile>
+
+        Raises KeyError if a module with the same name is already configured.
+        """
         if self.module_configured(name):
             raise KeyError(f'Module with name "{name}" already configured')
         self.validate_module_base(base)
@@ -197,6 +257,12 @@ class Configuration(_FileHandlerBase,
         self.set_config(new_config)
 
     def rename_module(self, old_name: str, new_name: str) -> None:
+        """ Mutates the current configuration by validating and renaming an already configured
+        module.
+
+        Raises KeyError if a module with <new_name> is already configured or if <old_name> can not
+        be found in the current config.
+        """
         if old_name == new_name:
             return
         if not self.module_configured(old_name):
@@ -216,6 +282,10 @@ class Configuration(_FileHandlerBase,
                 return
 
     def remove_module(self, name: str) -> None:
+        """ Mutates the current configuration by deleting a configured module.
+
+        Raises KeyError if no module is configured by given <name>.
+        """
         new_config = self.config_map
         for base in ['gui', 'logic', 'hardware']:
             try:
@@ -233,6 +303,10 @@ class Configuration(_FileHandlerBase,
             'hardware']
 
     def module_config(self, name: str) -> MutableMapping[str, Any]:
+        """ Returns module configuration for given module <name>.
+
+        Raises KeyError if no module is configured by given <name>.
+        """
         for base in ['gui', 'logic', 'hardware']:
             try:
                 return copy.deepcopy(self._config[base][name])
@@ -240,18 +314,27 @@ class Configuration(_FileHandlerBase,
                 pass
         raise KeyError(f'No module with name "{name}" configured')
 
-    def is_remote_module(self, name):
+    def is_remote_module(self, name: str) -> bool:
+        """ Checks whether a configured module is a remote module and returns answer flag.
+
+        Raises KeyError if no module is configured by given <name>.
+        """
         return 'native_module_name' in self.get_module_config(name)
 
     def is_local_module(self, name):
+        """ Checks whether a configured module is a local module and returns answer flag.
+
+        Raises KeyError if no module is configured by given <name>.
+        """
         return 'module.Class' in self.get_module_config(name)
 
     @property
     def module_names(self) -> List[str]:
-        """ List of the currently configured module names. """
+        """ List of the currently configured module names """
         return [*self._config['gui'], *self._config['logic'], *self._config['hardware']]
 
     @staticmethod
     def validate_module_base(base: str) -> None:
+        """ Raises ValueError if the given string is no valid qudi module base. """
         if base not in ['gui', 'logic', 'hardware']:
             raise ValueError('qudi module base must be one of ["gui", "logic", "hardware"]')

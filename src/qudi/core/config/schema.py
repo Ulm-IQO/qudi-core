@@ -30,6 +30,7 @@ __ipv4_address_pattern = r'(?:localhost|(?:[0-9]{1,3}\.){3}[0-9]{1,3})'
 
 
 def config_schema() -> Dict[str, Any]:
+    """ Creates and returns the JSON schema for a qudi configuration """
     return {
         'type': 'object',
         'additionalProperties': False,
@@ -156,6 +157,7 @@ def config_schema() -> Dict[str, Any]:
 
 
 def local_module_config_schema() -> Dict[str, Any]:
+    """ Creates and returns the JSON schema for a single qudi local module configuration """
     return {
         'type': 'object',
         'required': ['module.Class'],
@@ -187,6 +189,7 @@ def local_module_config_schema() -> Dict[str, Any]:
 
 
 def remote_module_config_schema() -> Dict[str, Any]:
+    """ Creates and returns the JSON schema for a single qudi remote module configuration """
     return {
         'type': 'object',
         'required': ['native_module_name', 'address', 'port'],
