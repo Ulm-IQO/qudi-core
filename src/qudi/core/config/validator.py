@@ -50,6 +50,8 @@ def __is_iterable(checker, instance):
             isinstance(instance, (set, frozenset, tuple)))
 
 
+# Add custom JSON schema (draft v7) validator that accepts all Python builtin sequences as "array"
+# type
 DefaultInsertionValidator = __validators.extend(
     validator=__BaseValidator,
     validators={'properties': __set_defaults},
@@ -58,18 +60,32 @@ DefaultInsertionValidator = __validators.extend(
 
 
 def validate_config(config: Mapping[str, Any]) -> None:
+    """ JSON schema (draft v7) validator for qudi configuration.
+    Raises jsonschema.ValidationError if invalid.
+    """
     DefaultInsertionValidator(config_schema()).validate(config)
 
 
 def validate_local_module_config(config: Mapping[str, Any]) -> None:
+    """ JSON schema (draft v7) validator for single qudi local module configuration.
+    Raises jsonschema.ValidationError if invalid.
+    """
     DefaultInsertionValidator(local_module_config_schema()).validate(config)
 
 
 def validate_remote_module_config(config: Mapping[str, Any]) -> None:
+    """ JSON schema (draft v7) validator for single qudi remote module configuration.
+    Raises jsonschema.ValidationError if invalid.
+    """
     DefaultInsertionValidator(remote_module_config_schema()).validate(config)
 
 
 def validate_module_name(name: str) -> None:
+    """ Regular expression validator for qudi module names.
+    Raises jsonschema.ValidationError if invalid.
+
+    WARNING: The jsonschema.ValidationError raised does not contain any JSON schema information.
+    """
     if re.match(r'^[a-zA-Z_]+[a-zA-Z0-9_]*$', name) is None:
         raise ValidationError(
             'Module names must only contain word characters [a-zA-Z0-9_] and not start on a number.'
