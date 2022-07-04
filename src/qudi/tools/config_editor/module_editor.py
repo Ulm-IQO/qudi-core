@@ -34,6 +34,8 @@ class ModuleEditorWidget(QtWidgets.QStackedWidget):
     """
     """
 
+    sigModuleRenamed = QtCore.Signal(str)
+
     def __init__(self,
                  qudi_modules: QudiModules,
                  parent: Optional[QtWidgets.QWidget] = None
@@ -67,6 +69,7 @@ class ModuleEditorWidget(QtWidgets.QStackedWidget):
         self.module_name_lineedit = QtWidgets.QLineEdit()
         self.module_name_lineedit.setPlaceholderText('Enter locally unique module name')
         self.module_name_lineedit.setFont(font)
+        self.module_name_lineedit.textChanged.connect(self.sigModuleRenamed)
         sub_layout.addWidget(label)
         sub_layout.addWidget(self.module_name_lineedit)
         self._editor_layout.addLayout(sub_layout)
@@ -93,6 +96,17 @@ class ModuleEditorWidget(QtWidgets.QStackedWidget):
         except AttributeError:
             pass
 
+    @property
+    def module_name(self) -> str:
+        return self.module_name_lineedit.text()
+
+    def set_module_name(self, name: str) -> None:
+        self.module_name_lineedit.blockSignals(True)
+        try:
+            self.module_name_lineedit.setText(name)
+        finally:
+            self.module_name_lineedit.blockSignals(False)
+
     def open_remote_module(self,
                            name: Optional[str] = None,
                            config: Optional[Mapping[str, Union[str, None]]] = None
@@ -102,7 +116,7 @@ class ModuleEditorWidget(QtWidgets.QStackedWidget):
 
         self._current_editor = RemoteModuleConfigWidget(config=config)
         self._editor_layout.addWidget(self._current_editor)
-        self.module_name_lineedit.setText(name if name else '')
+        self.set_module_name(name if name else '')
         self.setCurrentIndex(1)
 
     def open_local_module(self,
@@ -126,7 +140,7 @@ class ModuleEditorWidget(QtWidgets.QStackedWidget):
             config=config
         )
         self._editor_layout.addWidget(self._current_editor)
-        self.module_name_lineedit.setText(name if name else '')
+        self.set_module_name(name if name else '')
         self.setCurrentIndex(1)
 
     def close_editor(self):
