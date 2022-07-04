@@ -26,6 +26,7 @@ from typing import Dict, Any
 
 
 __module_name_pattern = r'[a-zA-Z_]+[a-zA-Z0-9_]*'
+__ipv4_address_pattern = r'^(?:localhost|(?:[0-9]{1,3}\.){3}[0-9]{1,3})$'
 
 
 def config_schema() -> Dict[str, Any]:
@@ -55,6 +56,7 @@ def config_schema() -> Dict[str, Any]:
                         'properties': {
                             'address': {
                                 'type': 'string',
+                                'pattern': __ipv4_address_pattern
                             },
                             'port': {
                                 'type': 'integer',
@@ -196,6 +198,7 @@ def remote_module_config_schema() -> Dict[str, Any]:
             },
             'address': {
                 'type': 'string',
+                'pattern': __ipv4_address_pattern
             },
             'port': {
                 'type': 'integer',
