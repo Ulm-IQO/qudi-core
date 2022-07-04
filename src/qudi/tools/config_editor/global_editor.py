@@ -58,8 +58,7 @@ class GlobalEditorWidget(QtWidgets.QStackedWidget):
             return self.global_editor_widget.config
 
     def set_config(self, config: Union[None, Dict[str, Any]]) -> None:
-        if self.currentIndex() > 0:
-            self.global_editor_widget.set_config(config)
+        self.global_editor_widget.set_config(config)
 
     def open_editor(self, config: Union[None, Mapping[str, Any]]) -> None:
         self.global_editor_widget.set_config(config)

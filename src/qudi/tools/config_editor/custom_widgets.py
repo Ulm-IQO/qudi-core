@@ -80,7 +80,7 @@ class CustomItemsWidget(QtWidgets.QWidget):
         self.clear_items()
         if config:
             for name, value in config.items():
-                self.add_option(name, value)
+                self.add_item(name, value)
 
     def add_item(self, name: str, value: Optional[str] = None) -> None:
         if not name:
