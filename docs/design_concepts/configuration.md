@@ -168,7 +168,9 @@ configuring `gui`, `logic` and `hardware` modules to be available in the qudi se
 
 Each qudi module configured must be given a name which must be unique throughout the configuration.
 This name string will be the property name under the respective qudi module category 
-(`gui`, `logic`, `hardware`) containing the module-specific configuration.
+(`gui`, `logic`, `hardware`) containing the module-specific configuration.  
+Module names must not start with a number and contain only ASCII word characters (standard letters 
+a-z, number digits and underscores).
 
 The individual module configuration must follow one of two possible structures:
 
