@@ -304,7 +304,8 @@ class ConfigurationEditor(QtWidgets.QMainWindow):
         else:
             event.ignore()
 
-    def _get_modules_from_config(self, config: Mapping[str, Any]) -> Dict[str, str]:
+    @staticmethod
+    def _get_modules_from_config(config: Mapping[str, Any]) -> Dict[str, str]:
         modules = {name: 'gui.' + cfg.get('module.Class', '<REMOTE MODULE>') for name, cfg in
                    config.get('gui', dict()).items()}
         modules.update({name: 'logic.' + cfg.get('module.Class', '<REMOTE MODULE>') for name, cfg in
