@@ -58,6 +58,8 @@ def config_schema() -> Dict[str, Any]:
                             },
                             'port': {
                                 'type': 'integer',
+                                'minimum': 0,
+                                'maximum': 65535
                             },
                             'certfile': {
                                 'type': ['null', 'string'],
@@ -71,6 +73,8 @@ def config_schema() -> Dict[str, Any]:
                     },
                     'namespace_server_port': {
                         'type': 'integer',
+                        'minimum': 0,
+                        'maximum': 65535,
                         'default': 18861
                     },
                     'force_remote_calls_by_value': {
@@ -83,6 +87,7 @@ def config_schema() -> Dict[str, Any]:
                     },
                     'stylesheet': {
                         'type': 'string',
+                        'pattern': r'^[^.]+\.qss$',
                         'default': 'qdark.qss'
                     },
                     'daily_data_dirs': {
@@ -165,7 +170,8 @@ def local_module_config_schema() -> Dict[str, Any]:
             'connect': {
                 'type': 'object',
                 'additionalProperties': {
-                    'type': 'string'
+                    'type': 'string',
+                    'pattern': f'^{__module_name_pattern}$'
                 },
                 'default': dict()
             },
@@ -193,6 +199,8 @@ def remote_module_config_schema() -> Dict[str, Any]:
             },
             'port': {
                 'type': 'integer',
+                'minimum': 0,
+                'maximum': 65535
             },
             'certfile': {
                 'type': ['null', 'string'],
