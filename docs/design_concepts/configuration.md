@@ -236,17 +236,23 @@ When naming a remote qudi module you can do so without regarding the original mo
 local qudi instance configuration.
 
 Contrary to a local module you can not configure options or connections in remote modules (this is 
-done in their respective local qudi config). The only thing you have to configure is the URL of 
-the `rpyc` network connection and, in case the connection is SSL secured, also key and certificate 
-file paths:
+done in their respective local qudi config). The only thing you have to configure is the network 
+connection details (address and port), the native module name on the remote qudi instance and, in 
+case the connection is SSL secured, also key and certificate file paths:
 
 ```yaml
 hardware:
     my_remote_module:
-        remote_url: 'rpyc://192.168.1.100:12345/my_module'  # rpyc://host:port/local_module_name
+        native_module_name: 'module_name_on_remote_host'
+        address: '192.168.1.100'
+        port: 12345
         certfile: '/path/to/certfile.cert'                  # omit for unsecured
         keyfile: '/path/to/keyfile.key'                     # omit for unsecured
 ```
+
+As you can probably see, the config looks very much like the `remote_module_server` global config 
+entry [above](#remote_modules_server). In fact the `address` and `port` items must mirror the 
+`remote_module_server` config on the remote qudi instance to connect to.
 
 
 ## Validation
@@ -266,7 +272,28 @@ The schema to be used can be found in
 
 
 ## Graphical Configuration Editor
-WORK IN PROGRESS
+
+> **⚠ WARNING:**
+> 
+> The graphical configuration editor is still in an early development phase and may not be 
+> functional yet.
+> 
+> When starting the editor you will probably encounter a long series of warnings and errors coming 
+> from qudi module imports.  
+> This is expected behaviour and should not influence the functionality 
+> of the editor. In the future these errors will be properly handled behind the scenes.
+
+You can start a standalone graphical qudi configuration editor currently in two different ways:
+
+1. By running `qudi-config-editor` inside your qudi Python environment:
+   ```console
+   (qudi-venv) C:\> qudi-config-editor
+   ```
+2. By executing the runnable qudi module `qudi.tools.config_editor` inside your qudi Python 
+environment:
+   ```console
+   (qudi-venv) C:\Software\qudi-core\src\qudi\tools\> python -m config_editor
+   ```
 
 ---
 
