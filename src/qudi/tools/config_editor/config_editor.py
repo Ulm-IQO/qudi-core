@@ -24,6 +24,7 @@ __all__ = ('main', 'ConfigurationEditorMainWindow', 'ConfigurationEditor')
 
 import os
 import sys
+from typing import Optional, Mapping, Dict, Any
 from PySide2 import QtCore, QtGui, QtWidgets
 from qudi.util.paths import get_main_dir, get_default_config_dir, get_artwork_dir
 from qudi.core.config import Configuration
@@ -54,19 +55,25 @@ else:
     os.environ['QT_LOGGING_RULES'] = '*.debug=false;*.info=false;*.notice=false;*.warning=false'
 
 
-class ConfigurationEditorMainWindow(QtWidgets.QMainWindow):
+class MainWindow(QtWidgets.QMainWindow):
     """
     """
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self,
+                 qudi_modules: QudiModules,
+                 parent: Optional[QtWidgets.QWidget] = None
+                 ) -> None:
+        super().__init__(parent=parent)
         self.setWindowTitle('Qudi Config Editor')
         screen_size = QtWidgets.QApplication.instance().primaryScreen().availableSize()
         self.resize((screen_size.width() * 3) // 4, (screen_size.height() * 3) // 4)
 
-        self.qudi_environment = QudiModules()
-        self.configuration = Configuration()
         self.module_tree_widget = ConfigModulesTreeWidget()
-        self.module_config_editor = ModuleEditorWidget(qudi_modules=self.qudi_environment)
+        self.module_tree_widget.itemChanged.connect(self._module_renamed_by_tree)
+        self.module_tree_widget.itemSelectionChanged.connect(self._module_selection_changed)
+
+        self.module_config_editor = ModuleEditorWidget(qudi_modules=qudi_modules)
+        self.module_config_editor.sigModuleRenamed.connect(self._module_renamed_by_editor)
+
         self.global_config_editor = GlobalEditorWidget()
 
         label = QtWidgets.QLabel('Included Modules')
@@ -106,8 +113,6 @@ class ConfigurationEditorMainWindow(QtWidgets.QMainWindow):
         splitter.setStretchFactor(0, 2)
         splitter.setStretchFactor(1, 3)
         self.setCentralWidget(splitter)
-        self.module_tree_widget.itemChanged.connect(self.module_name_changed)
-        self.module_tree_widget.itemSelectionChanged.connect(self.module_selection_changed)
 
         # Main window actions
         icon_dir = os.path.join(get_main_dir(), 'artwork', 'icons')
@@ -168,36 +173,43 @@ class ConfigurationEditorMainWindow(QtWidgets.QMainWindow):
         toolbar.setFloatable(False)
         self.addToolBar(toolbar)
 
+        # Process variables
+        self._editor_item = None
+        self._qudi_environment = qudi_modules
+
     @QtCore.Slot()
-    def module_selection_changed(self):
+    def _module_selection_changed(self):
         selected_items = self.module_tree_widget.selectedItems()
         if not selected_items:
             self.module_config_editor.close_editor()
+            self._editor_item = None
             return
 
         item = selected_items[0]
-        base = item.parent().text(0).lower()
-        module = f'{base}.{item.text(2)}'
-        name = item.text(1)
+        if item is not self._editor_item:
+            base = item.parent().text(0).lower()
+            module = f'{base}.{item.text(2)}'
+            name = item.text(1)
 
-        # Get current module config dict from Configuration object
-        # ToDo:
+            # Get current module config dict from Configuration object
+            # ToDo:
 
-        # Sort out available connectors and targets as well as module config options
-        if 'REMOTE' in module:
-            self.module_config_editor.open_remote_module(name)
-        else:
-            self.module_config_editor.open_local_module(
-                module_class=module,
-                named_modules=self.module_tree_widget.modules[0],
-                name=name,
-                config=None
-            )
+            # Sort out available connectors and targets as well as module config options
+            if module == '<REMOTE MODULE>':
+                self.module_config_editor.open_remote_module(name)
+            else:
+                self.module_config_editor.open_local_module(
+                    module_class=module,
+                    named_modules=self.module_tree_widget.modules[0],
+                    name=name,
+                    config=None
+                )
+            self._editor_item = item
 
     @QtCore.Slot()
     def select_modules(self):
         self.module_config_editor.close_editor()
-        available = self.qudi_environment.available_modules
+        available = self._qudi_environment.available_modules
         named_selected, unnamed_selected = self.module_tree_widget.modules
         selector_dialog = ModuleSelector(available_modules=available,
                                          named_modules=named_selected,
@@ -236,31 +248,43 @@ class ConfigurationEditorMainWindow(QtWidgets.QMainWindow):
     #         )
 
     @QtCore.Slot(QtWidgets.QTreeWidgetItem, int)
-    def module_name_changed(self, item, column):
-        print('module_name_changed', item, column)
+    def _module_renamed_by_tree(self, item, column):
         if column != 1 or item is None or item.parent() is None:
             return
-        base = item.parent().text(0).lower()
+
         name = item.text(1)
-        module_class = item.text(2)
-        if self.module_config_editor.currently_edited_module is None:
-            try:
-                if module_class == '<REMOTE MODULE>':
-                    self.configuration.add_remote_module(name, base, '<remote URL>')
-                else:
-                    self.configuration.add_local_module(name, base, *module_class.rsplit('.', 1))
-            except:
-                item.setText(1, '<enter unique name>')
-                raise
-        else:
-            old_name = self.module_config_editor.currently_edited_module
-            try:
-                self.module_config_editor.close_editor()
-                self.configuration.rename_module(old_name=old_name, new_name=name)
-            except:
-                item.setText(1, old_name)
-                raise
-        self.module_selection_changed()
+        if item is self._editor_item:
+            self.module_config_editor.set_module_name(name)
+        # base = item.parent().text(0).lower()
+        # module_class = item.text(2)
+        # if self.module_config_editor.currently_edited_module is None:
+        #     try:
+        #         if module_class == '<REMOTE MODULE>':
+        #             self.configuration.add_remote_module(name, base, '<remote URL>')
+        #         else:
+        #             self.configuration.add_local_module(name, base, *module_class.rsplit('.', 1))
+        #     except:
+        #         item.setText(1, '<enter unique name>')
+        #         raise
+        # else:
+        #     old_name = self.module_config_editor.currently_edited_module
+        #     try:
+        #         self.module_config_editor.close_editor()
+        #         self.configuration.rename_module(old_name=old_name, new_name=name)
+        #     except:
+        #         item.setText(1, old_name)
+        #         raise
+        # self.module_selection_changed()
+
+    @QtCore.Slot(str)
+    def _module_renamed_by_editor(self, name: str) -> None:
+        self.module_tree_widget.blockSignals(True)
+        try:
+            self._editor_item.setText(1, name)
+        except AttributeError:
+            pass
+        finally:
+            self.module_tree_widget.blockSignals(False)
 
     def new_config(self):
         self.module_config_editor.close_editor()
@@ -351,7 +375,7 @@ class ConfigurationEditorMainWindow(QtWidgets.QMainWindow):
             super().keyPressEvent(event)
 
 
-class ConfigurationEditor(QtWidgets.QApplication):
+class ConfigurationEditorApp(QtWidgets.QApplication):
     """
     """
     def __init__(self, *args, **kwargs):
@@ -360,10 +384,21 @@ class ConfigurationEditor(QtWidgets.QApplication):
         self.setWindowIcon(app_icon)
 
 
+class ConfigurationEditor(QtCore.QObject):
+    """
+    """
+    def __init__(self, parent: Optional[QtCore.QObject] = None):
+        super().__init__(parent=parent)
+        self.qudi_environment = QudiModules()
+        self.qudi_configuration = Configuration()
+
+
 def main():
-    app = ConfigurationEditor(sys.argv)
+    app = ConfigurationEditorApp(sys.argv)
+    # init editor object
+    editor = ConfigurationEditor()
     # Init and open main window
-    mw = ConfigurationEditorMainWindow()
+    mw = MainWindow(qudi_modules=editor.qudi_environment)
     mw.show()
     # Start event loop
     sys.exit(app.exec_())
