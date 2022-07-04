@@ -1,18 +1,35 @@
 # -*- coding: utf-8 -*-
-"""
 
+"""
+Copyright (c) 2021, the qudi developers. See the AUTHORS.md file at the top-level directory of this
+distribution and on <https://github.com/Ulm-IQO/qudi-core/>
+
+This file is part of qudi.
+
+Qudi is free software: you can redistribute it and/or modify it under the terms of
+the GNU Lesser General Public License as published by the Free Software Foundation,
+either version 3 of the License, or (at your option) any later version.
+
+Qudi is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+See the GNU Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public License along with qudi.
+If not, see <https://www.gnu.org/licenses/>.
 """
 
 __all__ = ['ModuleSelector']
 
 from PySide2 import QtWidgets, QtCore
 from typing import Optional, Iterable, List, Mapping, Tuple, Dict
+
 from qudi.tools.config_editor.tree_widgets import AvailableModulesTreeWidget
 from qudi.tools.config_editor.tree_widgets import SelectedModulesTreeWidget
+from qudi.util.widgets.separator_lines import HorizontalLine
 
 
 class ModuleSelector(QtWidgets.QDialog):
-    """
+    """ QDialog representing a selection editor for qudi modules to configure
     """
 
     def __init__(self,
@@ -98,12 +115,9 @@ class ModuleSelector(QtWidgets.QDialog):
         sub_layout.addWidget(self.button_box)
 
         # Add everything to the main layout
-        hline = QtWidgets.QFrame()
-        hline.setFrameShape(QtWidgets.QFrame.HLine)
-        hline.setFrameShadow(QtWidgets.QFrame.Sunken)
         layout = QtWidgets.QVBoxLayout()
         layout.addWidget(splitter)
-        layout.addWidget(hline)
+        layout.addWidget(HorizontalLine())
         layout.addLayout(sub_layout)
         layout.setStretch(0, 1)
         self.setLayout(layout)

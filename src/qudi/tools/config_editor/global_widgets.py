@@ -25,7 +25,7 @@ __all__ = ['GlobalConfigWidget', 'GlobalOptionsWidget', 'RemoteServerWidget', 'C
 from typing import Dict, Union, Mapping, Optional, Any
 from PySide2 import QtCore, QtWidgets
 
-from qudi.util.widgets.lines import HorizontalLine
+from qudi.util.widgets.separator_lines import HorizontalLine
 from qudi.util.widgets.path_line_edit import PathLineEdit
 from qudi.tools.config_editor.custom_widgets import CustomOptionsWidget
 from qudi.core.config.schema import config_schema

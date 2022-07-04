@@ -24,7 +24,7 @@ __all__ = ['ModuleEditorWidget']
 
 from PySide2 import QtCore, QtWidgets
 from typing import Optional, Mapping, Dict, Union, Any
-from qudi.util.widgets.lines import HorizontalLine
+from qudi.util.widgets.separator_lines import HorizontalLine
 from qudi.tools.config_editor.module_finder import QudiModules
 from qudi.tools.config_editor.module_widgets import LocalModuleConfigWidget
 from qudi.tools.config_editor.module_widgets import RemoteModuleConfigWidget
