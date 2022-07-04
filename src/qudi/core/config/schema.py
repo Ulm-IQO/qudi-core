@@ -42,7 +42,8 @@ def config_schema() -> Dict[str, Any]:
                         'type': 'array',
                         'uniqueItems': True,
                         'items': {
-                            'type': 'string'
+                            'type': 'string',
+                            'pattern': f'^{__module_name_pattern}$'
                         },
                         'default': list()
                     },
