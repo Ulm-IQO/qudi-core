@@ -30,7 +30,7 @@ from typing import Optional, Iterable, Mapping, Dict, Sequence, Union, Any, Tupl
 from qudi.core import Connector, ConfigOption
 from qudi.core.config.validator import validate_remote_module_config, validate_local_module_config
 from qudi.core.config.validator import ValidationError
-from qudi.util.widgets.lines import HorizontalLine
+from qudi.util.widgets.separator_lines import HorizontalLine
 from qudi.util.widgets.path_line_edit import PathLineEdit
 from qudi.tools.config_editor.custom_widgets import CustomOptionsWidget, CustomConnectorsWidget
 
