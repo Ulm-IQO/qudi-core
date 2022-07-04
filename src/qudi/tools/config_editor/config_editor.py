@@ -55,7 +55,7 @@ else:
     os.environ['QT_LOGGING_RULES'] = '*.debug=false;*.info=false;*.notice=false;*.warning=false'
 
 
-class MainWindow(QtWidgets.QMainWindow):
+class ConfigurationEditor(QtWidgets.QMainWindow):
     """
     """
     def __init__(self,
@@ -66,6 +66,9 @@ class MainWindow(QtWidgets.QMainWindow):
         self.setWindowTitle('Qudi Config Editor')
         screen_size = QtWidgets.QApplication.instance().primaryScreen().availableSize()
         self.resize((screen_size.width() * 3) // 4, (screen_size.height() * 3) // 4)
+
+        self.qudi_environment = QudiModules()
+        self.qudi_configuration = Configuration()
 
         self.module_tree_widget = ConfigModulesTreeWidget()
         self.module_tree_widget.itemChanged.connect(self._module_renamed_by_tree)
@@ -382,15 +385,6 @@ class ConfigurationEditorApp(QtWidgets.QApplication):
         super().__init__(*args, **kwargs)
         app_icon = QtGui.QIcon(os.path.join(get_artwork_dir(), 'logo', 'logo-qudi.svg'))
         self.setWindowIcon(app_icon)
-
-
-class ConfigurationEditor(QtCore.QObject):
-    """
-    """
-    def __init__(self, parent: Optional[QtCore.QObject] = None):
-        super().__init__(parent=parent)
-        self.qudi_environment = QudiModules()
-        self.qudi_configuration = Configuration()
 
 
 def main():
