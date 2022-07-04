@@ -25,6 +25,9 @@ __all__ = ['config_schema', 'local_module_config_schema', 'remote_module_config_
 from typing import Dict, Any
 
 
+__module_name_pattern = r'[a-zA-Z_]+[a-zA-Z0-9_]*'
+
+
 def config_schema() -> Dict[str, Any]:
     return {
         'type': 'object',
@@ -101,6 +104,9 @@ def config_schema() -> Dict[str, Any]:
             },
             'gui': {
                 'type': 'object',
+                'propertyNames': {
+                    'pattern': f'^{__module_name_pattern}$'
+                },
                 'additionalProperties': {
                     '$ref': '#/$defs/local_module'
                 },
@@ -108,6 +114,9 @@ def config_schema() -> Dict[str, Any]:
             },
             'logic': {
                 'type': 'object',
+                'propertyNames': {
+                    'pattern': f'^{__module_name_pattern}$'
+                },
                 'additionalProperties': {
                     'oneOf': [
                         {'$ref': '#/$defs/local_module'},
@@ -118,6 +127,9 @@ def config_schema() -> Dict[str, Any]:
             },
             'hardware': {
                 'type': 'object',
+                'propertyNames': {
+                    'pattern': f'^{__module_name_pattern}$'
+                },
                 'additionalProperties': {
                     'oneOf': [
                         {'$ref': '#/$defs/local_module'},
@@ -143,7 +155,7 @@ def local_module_config_schema() -> Dict[str, Any]:
         'properties': {
             'module.Class': {
                 'type': 'string',
-                'pattern': r'^\w+(\.\w+)*$',
+                'pattern': f'^{__module_name_pattern}(\\.{__module_name_pattern})*$',
             },
             'allow_remote': {
                 'type': 'boolean',
@@ -173,6 +185,7 @@ def remote_module_config_schema() -> Dict[str, Any]:
         'properties': {
             'native_module_name': {
                 'type': 'string',
+                'pattern': f'^{__module_name_pattern}$'
             },
             'address': {
                 'type': 'string',

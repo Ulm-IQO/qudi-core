@@ -59,20 +59,6 @@ DefaultInsertionValidator = __validators.extend(
 
 def validate_config(config: Mapping[str, Any]) -> None:
     DefaultInsertionValidator(config_schema()).validate(config)
-    for base in ['gui', 'logic', 'hardware']:
-        for ii, name in enumerate(config.get(base, dict()), 1):
-            try:
-                validate_module_name(name)
-            except ValidationError as err:
-                if ii >= 4:
-                    pos = f'{ii:d}th'
-                elif ii == 3:
-                    pos = '3rd'
-                elif ii == 2:
-                    pos = '2nd'
-                else:
-                    pos = '1st'
-                raise ValidationError(f'Invalid module name at {pos} {base} module') from err
 
 
 def validate_local_module_config(config: Mapping[str, Any]) -> None:
