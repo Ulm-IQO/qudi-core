@@ -134,7 +134,7 @@ class RemoteServerWidget(QtWidgets.QWidget):
             if certfile is None or keyfile is None:
                 certfile = keyfile = ''
             self.host_lineedit.setText(host)
-            self.port_lineedit.setValue(port)
+            self.port_spinbox.setValue(port)
             self.certfile_lineedit.setText(certfile)
             self.keyfile_lineedit.setText(keyfile)
 
