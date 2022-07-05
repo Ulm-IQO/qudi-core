@@ -10,6 +10,9 @@ title: qudi-core
 # Installation
 
 ## Step 1: Create a Python 3.9 (or 3.8) environment 
+The following documentation will only describe the installation for Python 3.9 but you can simply 
+switch any mention of "3.9" with "3.8". 
+
 In order to install qudi as a python package and application, we strongly recommend creating an 
 isolated Python 3.9.x (or 3.8.x) environment. Qudi needs very specific package dependencies that 
 can otherwise mess up your system Python installation.
@@ -44,8 +47,7 @@ While this is to our knowledge the most robust and preferred way of setting up a
 for qudi, it has a small disadvantage.
 You can not change the Python version for the environment, meaning you can only set up an 
 environment with the same Python version you created the environment with.  
-So make sure the Python interpreter you use for calling the following commands has version `3.9.x` 
-(or `3.8.x`). 
+So make sure the Python interpreter you use for calling the following commands has version `3.9.x`.
 If you are missing Python 3.9 on your system, you can download and install the right version from 
 [https://www.python.org/](https://www.python.org/).
 
@@ -114,6 +116,8 @@ correct interpreter. On Windows you may also use the `py` launcher instead (if i
 
 If you are using Anaconda or Miniconda Python distributions, this is probably the way to go for you.
 This method uses `conda` to create the Python 3.9 environment.
+
+If you have not installed a distribution yet, you should install the latest version of [Anaconda](https://www.anaconda.com/products/distribution) or [Miniconda](https://docs.conda.io/en/latest/miniconda.html#latest-miniconda-installer-links) first.
 
 You can find OS specific commands to create the environment below.
 

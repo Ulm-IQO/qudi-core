@@ -266,24 +266,6 @@ class ManagedModule(QtCore.QObject):
             raise ValueError('Module name must be a non-empty string.')
         if base not in ('gui', 'logic', 'hardware'):
             raise ValueError('Module base must be one of ("gui", "logic", "hardware").')
-        if 'module.Class' not in configuration and 'remote_url' not in configuration:
-            raise ValueError(f'Module config entry must contain either "module.Class" or '
-                             f'"remote_url". None of them was found in config for module "{name}".')
-        if not isinstance(configuration.get('module.Class', ''), str):
-            raise TypeError(f'module.Class config entry of module "{name}" must be str type.')
-        if not isinstance(configuration.get('remote_url', ''), str):
-            raise TypeError(f'remote URL of module "{name}" must be of str type.')
-        if not isinstance(configuration.get('certfile', ''), str):
-            raise TypeError(
-                f'certfile config option of remotemodules module "{name}" must be of str type.'
-            )
-        if not isinstance(configuration.get('keyfile', ''), str):
-            raise TypeError(
-                f'keyfile config option of remotemodules module "{name}" must be of str type.'
-            )
-        if not isinstance(configuration.get('remoteaccess', False), bool):
-            raise TypeError(f'remoteaccess config option of remotemodules module "{name}" must be '
-                            f'of bool type.')
 
         super().__init__()
         if self.thread() is not QtCore.QCoreApplication.instance().thread():
@@ -294,23 +276,32 @@ class ManagedModule(QtCore.QObject):
         self._base = base  # Remember qudi module base
         self._instance = None  # Store the module instance later on
 
-        # Sort out configuration dict
         cfg = copy.deepcopy(configuration)
+
         # Extract module and class name
-        self._module, self._class = cfg.pop('module.Class', 'REMOTE.REMOTE').rsplit('.', 1)
+        self._module, self._class = cfg.get(
+            'module.Class',
+            'REMOTE.REMOTE'
+        ).rsplit('.', 1)
         # Remember connections by name
-        self._connect_cfg = cfg.pop('connect', dict())
-        # See if remotemodules access to this module is allowed (allowed by default)
-        self._allow_remote_access = cfg.pop('allow_remote', False)
+        self._connect_cfg = cfg.get('connect', dict())
+        # See if remotemodules access to this module is allowed
+        self._allow_remote_access = cfg.get('allow_remote', False)
         # Extract remote modules URL and certificate if this module is run on a remote machine
-        self._remote_url = cfg.pop('remote_url', None)
-        self._remote_certfile = cfg.pop('certfile', None)
-        self._remote_keyfile = cfg.pop('keyfile', None)
-        # Do not propagate remotemodules access
-        if self._remote_url:
+        self._remote_module_name = cfg.get('native_module_name', None)
+        self._remote_address = cfg.get('address', None)
+        self._remote_port = cfg.get('port', None)
+        self._remote_certfile = cfg.get('certfile', None)
+        self._remote_keyfile = cfg.get('keyfile', None)
+        if any(attr is None for attr in [self._remote_module_name, self._remote_address, self._remote_port]):
+            self._remote_url = None
+        else:
+            self._remote_url = f'rpyc://{self._remote_address}:{self._remote_port:d}/{self._remote_module_name}/'
+            # Do not propagate remotemodules access
             self._allow_remote_access = False
+
         # The rest are config options
-        self._options = cfg
+        self._options = cfg.get('options', dict())
 
         self._required_modules = frozenset()
         self._dependent_modules = frozenset()

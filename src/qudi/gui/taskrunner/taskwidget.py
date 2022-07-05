@@ -27,6 +27,7 @@ from PySide2 import QtCore, QtWidgets, QtGui
 from qudi.util.helpers import is_integer
 from qudi.util.parameters import ParameterWidgetMapper
 from qudi.util.widgets.loading_indicator import CircleLoadingIndicator
+from qudi.util.widgets.separator_lines import VerticalLine
 from qudi.core.scripting.moduletask import ModuleTask
 
 
@@ -103,11 +104,9 @@ class TaskWidget(QtWidgets.QWidget):
         param_layout = self.__layout_parameter_widgets(self.parameter_widgets.values(), max_rows)
 
         # Add sub-layouts to main layout
-        line = QtWidgets.QFrame()
-        line.setFrameShape(line.VLine)
         main_layout = QtWidgets.QHBoxLayout()
         main_layout.addLayout(param_layout)
-        main_layout.addWidget(line)
+        main_layout.addWidget(VerticalLine())
         main_layout.addLayout(ctrl_layout)
         self.setLayout(main_layout)
 
