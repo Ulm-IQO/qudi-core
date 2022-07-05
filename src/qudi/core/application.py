@@ -100,11 +100,29 @@ class Qudi(QtCore.QObject):
 
     def __init__(self, no_gui=False, debug=False, log_dir='', config_file=None):
         super().__init__()
+
         # CLI arguments
         self.no_gui = bool(no_gui)
         self.debug_mode = bool(debug)
         self.log_dir = str(log_dir) if os.path.isdir(log_dir) else get_default_log_dir(
             create_missing=True)
+
+        # Disable pyqtgraph "application exit workarounds" because they cause errors on exit
+        try:
+            import pyqtgraph
+            pyqtgraph.setConfigOption('exitCleanup', False)
+        except ImportError:
+            pass
+
+        # Enable stack trace output for SIGSEGV, SIGFPE, SIGABRT, SIGBUS and SIGILL signals
+        # -> e.g. for segmentation faults
+        faulthandler.disable()
+        faulthandler.enable(all_threads=True)
+
+        # install logging facility and set logging level
+        init_record_model_handler(max_records=10000)
+        init_rotating_file_handler(path=self.log_dir)
+        set_log_level(DEBUG if self.debug_mode else INFO)
 
         # Set up logger for qudi main instance
         self.log = get_logger(__class__.__name__)  # will be "qudi.Qudi" in custom logger
@@ -114,6 +132,7 @@ class Qudi(QtCore.QObject):
         self.configuration = Configuration()
         try:
             self.configuration.load(config_file, set_default=True)
+            raise ValidationError('derp')
         except ValueError:
             self.log.info('No qudi configuration file specified. Using empty default config.')
         except (ValidationError, ParserError):
@@ -281,23 +300,6 @@ class Qudi(QtCore.QObject):
         with self._run_lock:
             if self._is_running:
                 raise RuntimeError('Qudi is already running!')
-
-            # Disable pyqtgraph "application exit workarounds" because they cause errors on exit
-            try:
-                import pyqtgraph
-                pyqtgraph.setConfigOption('exitCleanup', False)
-            except ImportError:
-                pass
-
-            # Enable stack trace output for SIGSEGV, SIGFPE, SIGABRT, SIGBUS and SIGILL signals
-            # -> e.g. for segmentation faults
-            faulthandler.disable()
-            faulthandler.enable(all_threads=True)
-
-            # install logging facility and set logging level
-            init_record_model_handler(max_records=10000)
-            init_rotating_file_handler(path=self.log_dir)
-            set_log_level(DEBUG if self.debug_mode else INFO)
 
             # Notify startup
             startup_info = f'Starting qudi{" in debug mode..." if self.debug_mode else "..."}'
