@@ -20,6 +20,7 @@ unix_dep = [
     'rpyc',
     'ruamel.yaml',
     'scipy',
+    'jsonschema>=4.2.1',
 ]
 
 windows_dep = [
@@ -38,6 +39,7 @@ windows_dep = [
     'rpyc>=5.0.1',
     'ruamel.yaml>=0.17.16',
     'scipy>=1.7.1',
+    'jsonschema>=4.2.1',
 ]
 
 with open('VERSION', 'r') as file:
@@ -60,7 +62,6 @@ setup(
                            'artwork/styles/**/**/*',
                            'artwork/logo/*',
                            ],
-                  'qudi.core': ['default.cfg']
                   },
     description='A modular measurement application framework',
     long_description=long_description,

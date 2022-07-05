@@ -28,6 +28,7 @@ from PySide2 import QtCore, QtWidgets, QtGui
 from qudi.util.datafitting import FitContainer, FitConfigurationsModel, FitConfiguration
 from qudi.util.paths import get_artwork_dir
 from qudi.util.widgets.scientific_spinbox import ScienDSpinBox
+from qudi.util.widgets.separator_lines import HorizontalLine
 
 
 class FitWidget(QtWidgets.QWidget):
@@ -274,9 +275,7 @@ class _FitConfigPanel(QtWidgets.QWidget):
         hlayout.addWidget(self.remove_config_toolbutton)
 
         # add horizontal line
-        hline = QtWidgets.QFrame()
-        hline.setFrameShape(QtWidgets.QFrame.HLine)
-        main_layout.addWidget(hline)
+        main_layout.addWidget(HorizontalLine())
 
         # add parameters
         param_layout = QtWidgets.QGridLayout()

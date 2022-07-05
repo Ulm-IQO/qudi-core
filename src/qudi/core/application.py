@@ -34,7 +34,7 @@ from qudi.core.logger import get_logger, set_log_level
 from qudi.util.paths import get_main_dir, get_default_log_dir
 from qudi.util.mutex import Mutex
 from qudi.util.colordefs import QudiMatplotlibStyle
-from qudi.core.config import Configuration
+from qudi.core.config import Configuration, ValidationError, ParserError
 from qudi.core.watchdog import AppWatchdog
 from qudi.core.modulemanager import ModuleManager
 from qudi.core.threadmanager import ThreadManager
@@ -50,8 +50,6 @@ try:
 except ImportError:
     pass
 
-# Set QT_API environment variable to PySide2
-os.environ['QT_API'] = 'pyside2'
 # Enable the High DPI scaling support of Qt5
 os.environ['QT_ENABLE_HIGHDPI_SCALING'] = '1'
 
@@ -102,25 +100,51 @@ class Qudi(QtCore.QObject):
 
     def __init__(self, no_gui=False, debug=False, log_dir='', config_file=None):
         super().__init__()
+
         # CLI arguments
         self.no_gui = bool(no_gui)
         self.debug_mode = bool(debug)
         self.log_dir = str(log_dir) if os.path.isdir(log_dir) else get_default_log_dir(
             create_missing=True)
 
+        # Disable pyqtgraph "application exit workarounds" because they cause errors on exit
+        try:
+            import pyqtgraph
+            pyqtgraph.setConfigOption('exitCleanup', False)
+        except ImportError:
+            pass
+
+        # Enable stack trace output for SIGSEGV, SIGFPE, SIGABRT, SIGBUS and SIGILL signals
+        # -> e.g. for segmentation faults
+        faulthandler.disable()
+        faulthandler.enable(all_threads=True)
+
+        # install logging facility and set logging level
+        init_record_model_handler(max_records=10000)
+        init_rotating_file_handler(path=self.log_dir)
+        set_log_level(DEBUG if self.debug_mode else INFO)
+
         # Set up logger for qudi main instance
         self.log = get_logger(__class__.__name__)  # will be "qudi.Qudi" in custom logger
         sys.excepthook = self._qudi_excepthook
 
+        # Load configuration from disc if possible
+        self.configuration = Configuration()
+        try:
+            self.configuration.load(config_file, set_default=True)
+            raise ValidationError('derp')
+        except ValueError:
+            self.log.info('No qudi configuration file specified. Using empty default config.')
+        except (ValidationError, ParserError):
+            self.log.exception('Invalid qudi configuration file specified. '
+                               'Falling back to default config.')
+
+        # initialize thread manager and module manager
         self.thread_manager = ThreadManager(parent=self)
         self.module_manager = ModuleManager(qudi_main=self, parent=self)
-        self.configuration = Configuration(parent=self)
-        if config_file is None:
-            config_file = Configuration.get_saved_config()
-            if config_file is None:
-                config_file = Configuration.get_default_config()
-        self.configuration.load_config(file_path=config_file, set_default=True)
-        remote_server_config = self.configuration.remote_modules_server
+
+        # initialize remote modules server if needed
+        remote_server_config = self.configuration['remote_modules_server']
         if remote_server_config:
             self.remote_modules_server = RemoteModulesServer(
                 parent=self,
@@ -134,7 +158,7 @@ class Qudi(QtCore.QObject):
                 ssl_version=remote_server_config.get('ssl_version', None),
                 cert_reqs=remote_server_config.get('cert_reqs', None),
                 ciphers=remote_server_config.get('ciphers', None),
-                force_remote_calls_by_value=self.configuration.force_remote_calls_by_value
+                force_remote_calls_by_value=self.configuration['force_remote_calls_by_value']
             )
         else:
             self.remote_modules_server = None
@@ -142,8 +166,8 @@ class Qudi(QtCore.QObject):
             parent=self,
             qudi=self,
             name='local-namespace-server',
-            port=self.configuration.namespace_server_port,
-            force_remote_calls_by_value=self.configuration.force_remote_calls_by_value
+            port=self.configuration['namespace_server_port'],
+            force_remote_calls_by_value=self.configuration['force_remote_calls_by_value']
         )
         self.watchdog = None
         self.gui = None
@@ -212,7 +236,7 @@ class Qudi(QtCore.QObject):
                 pass
 
     def _add_extensions_to_path(self):
-        extensions = self.configuration.extension_paths
+        extensions = self.configuration['extension_paths']
         # Add qudi extension paths to sys.path
         insert_index = 1
         for ext_path in reversed(extensions):
@@ -223,8 +247,12 @@ class Qudi(QtCore.QObject):
     def _configure_qudi(self):
         """
         """
-        print(f'> Applying configuration from "{self.configuration.config_file}"...')
-        self.log.info(f'Applying configuration from "{self.configuration.config_file}"...')
+        if self.configuration.file_path is None:
+            print('> Applying default configuration...')
+            self.log.info('Applying default configuration...')
+        else:
+            print(f'> Applying configuration from "{self.configuration.file_path}"...')
+            self.log.info(f'Applying configuration from "{self.configuration.file_path}"...')
 
         # Clear all qudi modules
         self.module_manager.clear()
@@ -234,18 +262,17 @@ class Qudi(QtCore.QObject):
         self._add_extensions_to_path()
 
         # Configure qudi modules
-        for base in ('gui', 'logic', 'hardware'):
+        for base in ['hardware', 'logic', 'gui']:
             # Create ManagedModule instance by adding each module to ModuleManager
-            for module_name, module_cfg in self.configuration.module_config[base].items():
+            for module_name, module_cfg in self.configuration[base].items():
                 try:
                     self.module_manager.add_module(name=module_name,
                                                    base=base,
                                                    configuration=module_cfg)
                 except:
                     self.module_manager.remove_module(module_name, ignore_missing=True)
-                    self.log.exception(
-                        f'Unable to create ManagedModule instance for module "{base}.{module_name}"'
-                    )
+                    self.log.exception(f'Unable to create ManagedModule instance for {base} '
+                                       f'module "{module_name}"')
 
         print('> Qudi configuration complete!')
         self.log.info('Qudi configuration complete!')
@@ -253,15 +280,19 @@ class Qudi(QtCore.QObject):
     def _start_gui(self):
         if self.no_gui:
             return
-        self.gui = Gui(qudi_instance=self, stylesheet_path=self.configuration.stylesheet)
-        if not self.configuration.hide_manager_window:
+        self.gui = Gui(qudi_instance=self, stylesheet_path=self.configuration['stylesheet'])
+        if not self.configuration['hide_manager_window']:
             self.gui.activate_main_gui()
 
     def _start_startup_modules(self):
-        for module in self.configuration.startup_modules:
+        for module in self.configuration['startup_modules']:
             print(f'> Loading startup module: {module}')
             self.log.info(f'Loading startup module: {module}')
-            self.module_manager.activate_module(module)
+            # Do not crash if a module can not be started
+            try:
+                self.module_manager.activate_module(module)
+            except:
+                self.log.exception(f'Unable to activate autostart module "{module}":')
 
     def run(self):
         """
@@ -269,23 +300,6 @@ class Qudi(QtCore.QObject):
         with self._run_lock:
             if self._is_running:
                 raise RuntimeError('Qudi is already running!')
-
-            # Disable pyqtgraph "application exit workarounds" because they cause errors on exit
-            try:
-                import pyqtgraph
-                pyqtgraph.setConfigOption('exitCleanup', False)
-            except ImportError:
-                pass
-
-            # Enable stack trace output for SIGSEGV, SIGFPE, SIGABRT, SIGBUS and SIGILL signals
-            # -> e.g. for segmentation faults
-            faulthandler.disable()
-            faulthandler.enable(all_threads=True)
-
-            # install logging facility and set logging level
-            init_record_model_handler(max_records=10000)
-            init_rotating_file_handler(path=self.log_dir)
-            set_log_level(DEBUG if self.debug_mode else INFO)
 
             # Notify startup
             startup_info = f'Starting qudi{" in debug mode..." if self.debug_mode else "..."}'

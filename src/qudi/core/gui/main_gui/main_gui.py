@@ -25,6 +25,7 @@ import subprocess
 import jupyter_client.kernelspec
 from PySide2 import QtCore, QtWidgets
 from qtconsole.manager import QtKernelManager
+from collections.abc import Mapping, Sequence, Set
 
 from qudi.core.statusvariable import StatusVar
 from qudi.core.threadmanager import ThreadManager
@@ -78,7 +79,7 @@ class QudiMainGui(GuiBase):
             self.mw.about_qudi_dialog.version_label.setText('version {0}'.format(version))
             self.mw.version_label.setText(
                 '<a style=\"color: cyan;\"> version {0} </a>  configured from {1}'
-                ''.format(version, self._qudi_main.configuration.config_file))
+                ''.format(version, self._qudi_main.configuration.file_path))
         else:
             self.mw.about_qudi_dialog.version_label.setText(
                 '<a href=\"https://github.com/Ulm-IQO/qudi/commit/{0}\" style=\"color: cyan;\"> {0}'
@@ -86,7 +87,7 @@ class QudiMainGui(GuiBase):
             self.mw.version_label.setText(
                 '<a href=\"https://github.com/Ulm-IQO/qudi/commit/{0}\" style=\"color: cyan;\"> {0}'
                 ' </a>, on branch {1}, configured from {2}'
-                ''.format(version[0], version[1], self._qudi_main.configuration.config_file))
+                ''.format(version[0], version[1], self._qudi_main.configuration.file_path))
 
         self._connect_signals()
 
@@ -177,7 +178,7 @@ class QudiMainGui(GuiBase):
             self.mw.remote_dockwidget.setVisible(False)
             self.mw.action_view_remote.setVisible(False)
         else:
-            server_config = self._qudi_main.configuration.remote_modules_server
+            server_config = self._qudi_main.configuration['remote_modules_server']
             host = server_config['address']
             port = server_config['port']
             self.mw.remote_widget.setVisible(True)
@@ -330,40 +331,7 @@ class QudiMainGui(GuiBase):
         """
         if config is None:
             config = self._qudi_main.configuration
-        self.mw.config_widget.clear()
-        self.fill_tree_item(self.mw.config_widget.invisibleRootItem(), config.config_dict)
-
-    def fill_tree_item(self, item, value):
-        """
-        Recursively fill a QTreeWidgeItem with the contents from a dictionary.
-
-        @param QTreeWidgetItem item: the widget item to fill
-        @param (dict, list, etc) value: value to fill in
-        """
-        item.setExpanded(True)
-        if isinstance(value, dict):
-            for key in value:
-                child = QtWidgets.QTreeWidgetItem()
-                child.setText(0, key)
-                item.addChild(child)
-                self.fill_tree_item(child, value[key])
-        elif isinstance(value, list):
-            for val in value:
-                child = QtWidgets.QTreeWidgetItem()
-                item.addChild(child)
-                if isinstance(val, dict):
-                    child.setText(0, '[dict]')
-                    self.fill_tree_item(child, val)
-                elif isinstance(val, list):
-                    child.setText(0, '[list]')
-                    self.fill_tree_item(child, val)
-                else:
-                    child.setText(0, str(val))
-                child.setExpanded(True)
-        else:
-            child = QtWidgets.QTreeWidgetItem()
-            child.setText(0, str(value))
-            item.addChild(child)
+        self.mw.config_widget.set_config(config.config_map)
 
     @QtCore.Slot(dict)
     def update_configured_modules(self, modules=None):
@@ -423,7 +391,7 @@ class QudiMainGui(GuiBase):
             )
             if reply == QtWidgets.QMessageBox.Cancel:
                 return
-            self._qudi_main.configuration.set_default_config_path(filename)
+            self._qudi_main.configuration.set_default_path(filename)
             if reply == QtWidgets.QMessageBox.Yes:
                 self._qudi_main.restart()
 

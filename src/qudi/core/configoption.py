@@ -75,6 +75,10 @@ class ConfigOption:
     def __deepcopy__(self, memodict={}):
         return self.copy()
 
+    @property
+    def optional(self) -> bool:
+        return self.missing != MissingOption.error
+
     def copy(self, **kwargs):
         """ Create a new instance of ConfigOption with copied values and update
 
