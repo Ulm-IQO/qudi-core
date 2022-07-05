@@ -25,6 +25,7 @@ __all__ = ['FileHandler', 'FileHandlerBase', 'ParserError', 'ValidationError']
 
 import os
 from typing import Any, Dict, Mapping
+from PySide2.QtCore import QFile
 
 from qudi.util.paths import get_default_config_dir, get_appdata_dir
 from qudi.util.yaml import yaml_dump, yaml_load, ParserError
@@ -44,7 +45,9 @@ class FileHandlerBase:
     def _dump(cls, path: str, config: Mapping[str, Any]) -> None:
         if not path.endswith('.cfg'):
             raise ValueError('Configuration file must have ".cfg" file extension.')
-        path = cls._relative_to_absolute_path(path)
+        if not os.path.isabs(path) and not path.startswith(':config/'):
+            raise ValueError('Configuration path to dump must be absolute path or Qt resource path '
+                             'within ":config/"')
         os.makedirs(os.path.dirname(path), exist_ok=True)
         return yaml_dump(path, config)
 
@@ -101,18 +104,27 @@ class FileHandlerBase:
         been created:
             1. <UserHome>/qudi/config/
             2. <AppData>/qudi/
+            3. Qt resource system path root (:)
 
         Raises FileNotFoundError if no existing path could be reconstructed by the above algorithm.
         """
         # absolute or relative path? Existing?
+        if path.startswith(':'):
+            new_path = path.replace('\\', '/')
+            if QFile.exists(new_path):
+                return new_path
         if os.path.isabs(path) and os.path.exists(path):
             return path
 
-        # relative path? Try relative to userdata dir, user home dir and relative to main dir
+        # relative path? Try relative to userdata dir and user home dir.
         for search_dir in [get_default_config_dir(), get_appdata_dir()]:
             new_path = os.path.abspath(os.path.join(search_dir, path))
             if os.path.exists(new_path):
                 return new_path
+        # try also Qt resource root as last resort
+        new_path = f':{path}'.replace('\\', '/')
+        if QFile.exists(new_path):
+            return
 
         # Raise exception if no existing path can be determined
         raise FileNotFoundError(

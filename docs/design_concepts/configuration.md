@@ -43,7 +43,7 @@ global:
     namespace_server_port: 18861
     force_remote_calls_by_value: True
     hide_manager_window: False
-    stylesheet: 'qdark.qss'
+    stylesheet: ':styles/qdark.qss'
     default_data_dir: null
     daily_data_dirs: True
     extension_paths: []
@@ -131,8 +131,8 @@ Optional boolean flag to hide the qudi manager window upon startup. This can be 
 with the `startup_modules` property to restrict GUI access.
 
 #### stylesheet
-Full path or filename (`str`) to a Qt compatible QSS stylesheet to be used for this qudi session.
-If only a filename is given, qudi assumes to find this file in `qudi.artwork.styles`.
+Full path or Qt resource path to a Qt compatible QSS stylesheet to be used for this qudi session. 
+The default qudi styles can be found in the Qt resource system under `:styles/`.
 
 #### default_data_dir
 If given an absolute directory path (`str`), it overwrites the default root directory for qudi to 

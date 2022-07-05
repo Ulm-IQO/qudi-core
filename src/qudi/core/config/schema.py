@@ -90,8 +90,8 @@ def config_schema() -> Dict[str, Any]:
                     },
                     'stylesheet': {
                         'type': 'string',
-                        'pattern': r'^[^.]+\.qss$',
-                        'default': 'qdark.qss'
+                        'pattern': r'^(?:(?:\:styles/[\w\/]+(?:\.qss)?)|(?:[^.]+\.qss))$',
+                        'default': ':styles/qdark.qss'
                     },
                     'daily_data_dirs': {
                         'type': 'boolean',

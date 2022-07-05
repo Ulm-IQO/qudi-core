@@ -63,13 +63,6 @@ def install() -> None:
             build_resources(resource_name=resource_name, resource_root=resource_root)
             print(f'> Resources "{resource_name}" built successfully')
 
-    # Move default.cfg to AppData directory
-    print(f'> Copying default.cfg to AppData ...')
-    copy2(src=os.path.join(core_qudi_path, 'resources', 'default.cfg'),
-          dst=get_appdata_dir(create_missing=True),
-          follow_symlinks=False)
-    print(f'> Copied default.cfg to AppData.')
-
     # Install qudi IPython kernel
     install_kernel()
 
