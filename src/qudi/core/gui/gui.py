@@ -179,13 +179,16 @@ class Gui(QtCore.QObject):
 
         @param str stylesheet_path: path to style sheet file
         """
-        file = QtCore.QFile(stylesheet_path)
-        file.open(QtCore.QIODevice.ReadOnly)
         try:
-            stylesheet = file.readAll().data().decode('utf-8')
-        finally:
-            file.close()
-        QtWidgets.QApplication.instance().setStyleSheet(stylesheet)
+            file = QtCore.QFile(stylesheet_path)
+            file.open(QtCore.QIODevice.ReadOnly)
+            try:
+                stylesheet = file.readAll().data().decode('utf-8')
+            finally:
+                file.close()
+            QtWidgets.QApplication.instance().setStyleSheet(stylesheet)
+        except:
+            logger.exception('Exception while setting qudi stylesheet:')
 
     @staticmethod
     def close_windows():
