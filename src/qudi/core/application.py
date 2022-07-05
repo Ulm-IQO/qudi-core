@@ -132,7 +132,6 @@ class Qudi(QtCore.QObject):
         self.configuration = Configuration()
         try:
             self.configuration.load(config_file, set_default=True)
-            raise ValidationError('derp')
         except ValueError:
             self.log.info('No qudi configuration file specified. Using empty default config.')
         except (ValidationError, ParserError):
