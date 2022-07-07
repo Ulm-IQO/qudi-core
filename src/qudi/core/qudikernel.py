@@ -31,7 +31,7 @@ import logging
 import tempfile
 from ipykernel.ipkernel import IPythonKernel
 
-from qudi.core.config import Configuration, ValidationError, ParserError
+from qudi.core.config import Configuration, ValidationError, YAMLError
 
 
 def install_kernel():
@@ -121,7 +121,7 @@ class QudiKernelClient:
         config = Configuration()
         try:
             config.load()
-        except (ValueError, ValidationError, ParserError):
+        except (ValueError, ValidationError, YAMLError):
             pass
         self.connection = rpyc.connect(host='localhost',
                                        config={'allow_all_attrs': True,

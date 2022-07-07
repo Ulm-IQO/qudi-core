@@ -20,14 +20,15 @@ You should have received a copy of the GNU Lesser General Public License along w
 If not, see <https://www.gnu.org/licenses/>.
 """
 
-__all__ = ['FileHandler', 'FileHandlerBase', 'ParserError', 'ValidationError']
+__all__ = ['FileHandler', 'FileHandlerBase', 'ParserError', 'ValidationError', 'YAMLError',
+           'DuplicateKeyError']
 
 
 import os
 from typing import Any, Dict, Mapping
 
 from qudi.util.paths import get_default_config_dir, get_appdata_dir
-from qudi.util.yaml import yaml_dump, yaml_load, ParserError
+from qudi.util.yaml import yaml_dump, yaml_load, ParserError, YAMLError, DuplicateKeyError
 
 from .validator import validate_config, ValidationError
 

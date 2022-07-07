@@ -21,12 +21,16 @@ You should have received a copy of the GNU Lesser General Public License along w
 If not, see <https://www.gnu.org/licenses/>.
 """
 
-__all__ = ['SafeRepresenter', 'SafeConstructor', 'YAML', 'yaml_load', 'yaml_dump', 'ParserError']
+__all__ = ['SafeRepresenter', 'SafeConstructor', 'YAML', 'yaml_load', 'yaml_dump', 'ParserError',
+           'YAMLError', 'MarkedYAMLError', 'YAMLStreamError', 'ScannerError', 'ConstructorError',
+           'DuplicateKeyError']
 
 import os
 import numpy as np
 import ruamel.yaml as _yaml
-from ruamel.yaml.parser import ParserError
+from ruamel.yaml.error import YAMLError, MarkedYAMLError, YAMLStreamError
+from ruamel.yaml.parser import ParserError, ScannerError
+from ruamel.yaml.constructor import ConstructorError, DuplicateKeyError
 from enum import Enum, IntEnum, IntFlag, Flag
 from importlib import import_module
 from collections import OrderedDict
