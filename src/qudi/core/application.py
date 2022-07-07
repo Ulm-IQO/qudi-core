@@ -34,7 +34,7 @@ from qudi.core.logger import get_logger, set_log_level
 from qudi.util.paths import get_main_dir, get_default_log_dir
 from qudi.util.mutex import Mutex
 from qudi.util.colordefs import QudiMatplotlibStyle
-from qudi.core.config import Configuration, ValidationError, ParserError
+from qudi.core.config import Configuration, ValidationError, YAMLError
 from qudi.core.watchdog import AppWatchdog
 from qudi.core.modulemanager import ModuleManager
 from qudi.core.threadmanager import ThreadManager
@@ -134,7 +134,7 @@ class Qudi(QtCore.QObject):
             self.configuration.load(config_file, set_default=True)
         except ValueError:
             self.log.info('No qudi configuration file specified. Using empty default config.')
-        except (ValidationError, ParserError):
+        except (ValidationError, YAMLError):
             self.log.exception('Invalid qudi configuration file specified. '
                                'Falling back to default config.')
 

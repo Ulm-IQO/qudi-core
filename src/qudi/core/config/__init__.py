@@ -18,6 +18,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 If not, see <https://www.gnu.org/licenses/>.
 """
 
-__all__ = ['Configuration', 'ValidationError', 'ParserError']
+__all__ = ['Configuration', 'ValidationError', 'ParserError', 'DuplicateKeyError', 'YAMLError']
 
-from .config import Configuration, ParserError, ValidationError
+from .config import Configuration, ParserError, ValidationError, DuplicateKeyError, YAMLError
