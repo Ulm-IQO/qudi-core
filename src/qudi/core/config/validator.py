@@ -34,12 +34,18 @@ from .schema import config_schema, remote_module_config_schema, local_module_con
 
 
 def __set_defaults(validator, properties, instance, schema):
-    for property, subschema in properties.items():
-        if 'default' in subschema:
-            try:
-                instance.setdefault(property, subschema['default'])
-            except AttributeError:
-                pass
+    # Only insert default values of current schema into instance if validation passses
+    try:
+        __BaseValidator(schema).validate(instance)
+    except ValidationError:
+        pass
+    else:
+        for property, subschema in properties.items():
+            if 'default' in subschema:
+                try:
+                    instance.setdefault(property, subschema['default'])
+                except AttributeError:
+                    pass
 
     for error in __BaseValidator.VALIDATORS['properties'](validator, properties, instance, schema):
         yield error
