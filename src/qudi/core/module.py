@@ -257,6 +257,21 @@ class Base(QtCore.QObject, metaclass=ModuleMeta):
         return data_dir
 
     @property
+    def module_status_variables(self) -> Dict[str, Any]:
+        variables = dict()
+        try:
+            for attr_name, var in self._meta['status_variables'].items():
+                if hasattr(self, attr_name):
+                    value = getattr(self, attr_name)
+                    if not isinstance(value, StatusVar):
+                        if var.representer_function is not None:
+                            value = var.representer_function(self, value)
+                        variables[var.name] = value
+        except:
+            self.log.exception('Error while collecting status variables:')
+        return variables
+
+    @property
     def _qudi_main(self) -> Any:
         qudi_main = self.__qudi_main_weakref()
         if qudi_main is None:
@@ -277,21 +292,6 @@ class Base(QtCore.QObject, metaclass=ModuleMeta):
         """ Returns whether the module shall be started in its own thread.
         """
         return self._threaded
-
-    @property
-    def status_variables(self) -> Dict[str, Any]:
-        variables = dict()
-        try:
-            for attr_name, var in self._meta['status_variables'].items():
-                if hasattr(self, attr_name):
-                    value = getattr(self, attr_name)
-                    if not isinstance(value, StatusVar):
-                        if var.representer_function is not None:
-                            value = var.representer_function(self, value)
-                        variables[var.name] = value
-        except:
-            self.log.exception('Error while collecting status variables:')
-        return variables
 
     def __activation_callback(self, event=None) -> bool:
         """ Restore status variables before activation and invoke on_activate method.
@@ -350,7 +350,7 @@ class Base(QtCore.QObject, metaclass=ModuleMeta):
                                              self.module_base,
                                              self.module_name)
         # collect StatusVar values into dictionary
-        variables = self.status_variables
+        variables = self.module_status_variables
         # Save to file if any StatusVars have been found
         if variables:
             try:
