@@ -490,6 +490,14 @@ class RubberbandZoomMixin:
 
     sigZoomAreaApplied = QtCore.Signal(QtCore.QRectF)
 
+    # FIXME: Workaround for pyqtgraph. See also mouseDragEvent.
+    try:
+        from pyqtgraph import __version__ as __pyqtgraph_version
+        major, minor, revision = (int(v) for v in __pyqtgraph_version.split('.'))
+        _legacy_pyqtgraph = (major == 0) and ((minor < 12) or ((minor == 12) and (revision < 4)))
+    except (ValueError, TypeError, ImportError):
+        _legacy_pyqtgraph = True
+
     def __init__(self, **kwargs) -> None:
         super().__init__(**kwargs)
         self._rubberband_zoom_selection_mode = self.SelectionMode.Disabled
@@ -532,7 +540,14 @@ class RubberbandZoomMixin:
                 current_pos = self.mapToView(ev.pos())
                 zoom_rect = QtCore.QRectF(start_pos, current_pos)
                 if mode == self.SelectionMode.XY:
-                    self.updateScaleBox(ev.buttonDownPos(), ev.pos())
+                    # FIXME: Workaround for messed-up pyqtgraph version >= 0.12.4. Somehow the
+                    #  coordinate mapping changed unintended from 0.12.3 to 0.12.4 (not stated in
+                    #  the changelog).
+                    if self._legacy_pyqtgraph:
+                        self.updateScaleBox(ev.buttonDownPos(), ev.pos())
+                    else:
+                        self.updateScaleBox(self.mapToScene(ev.buttonDownPos()),
+                                            self.mapToScene(ev.pos()))
                     if ev.isFinish():
                         self.rbScaleBox.hide()
                         self.setRange(rect=zoom_rect, padding=0)
