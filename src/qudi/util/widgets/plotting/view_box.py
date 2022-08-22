@@ -25,6 +25,7 @@ __all__ = ['MouseTrackingViewBox', 'DataSelectionViewBox', 'RubberbandZoomViewBo
            'RubberbandZoomSelectionViewBox', 'RubberbandZoomMixin', 'DataSelectionMixin',
            'MouseTrackingMixin', 'SelectionMode']
 
+import warnings
 from typing import Optional, Union, Any, Tuple, Sequence, List, Dict
 from enum import IntEnum
 
@@ -497,6 +498,9 @@ class RubberbandZoomMixin:
         _legacy_pyqtgraph = (major == 0) and ((minor < 12) or ((minor == 12) and (revision < 4)))
     except (ValueError, TypeError, ImportError):
         _legacy_pyqtgraph = True
+    if _legacy_pyqtgraph:
+        warnings.warn('You are using an older, unsupported version of pyqtgraph. '
+                      'Please update to a newer version >= 0.12.4.')
 
     def __init__(self, **kwargs) -> None:
         super().__init__(**kwargs)
@@ -546,8 +550,7 @@ class RubberbandZoomMixin:
                     if self._legacy_pyqtgraph:
                         self.updateScaleBox(ev.buttonDownPos(), ev.pos())
                     else:
-                        self.updateScaleBox(self.mapToScene(ev.buttonDownPos()),
-                                            self.mapToScene(ev.pos()))
+                        self.updateScaleBox(ev.buttonDownScenePos(), ev.scenePos())
                     if ev.isFinish():
                         self.rbScaleBox.hide()
                         self.setRange(rect=zoom_rect, padding=0)
