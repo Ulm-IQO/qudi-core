@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-This module is provides functionality to transform coordinate systems.
+This module provides functionality for linear transformations of cartesian coordinate systems.
 
-Copyright (c) 2021, the qudi developers. See the AUTHORS.md file at the top-level directory of this
+Copyright (c) 2022, the qudi developers. See the AUTHORS.md file at the top-level directory of this
 distribution and on <https://github.com/Ulm-IQO/qudi-iqo-modules/>
 
 This file is part of qudi.
@@ -28,7 +28,7 @@ from qudi.util.helpers import is_integer
 
 
 class LinearTransformation:
-    """ """
+    """ Linear transformation for N-dimensional cartesian coordinates """
 
     def __init__(self,
                  matrix: Optional[Sequence[Sequence[float]]] = None,
@@ -54,30 +54,50 @@ class LinearTransformation:
             raise ValueError('Must either provide homogenous transformation matrix or number of '
                              'dimensions')
 
-    def __call__(self, nodes: Union[Sequence[float], Sequence[Sequence[float]]]) -> np.ndarray:
+    def __call__(self,
+                 nodes: Union[Sequence[float], Sequence[Sequence[float]]],
+                 invert: Optional[bool] = False
+                 ) -> np.ndarray:
+        """ Transforms any single node (vector) or sequence of nodes according to the
+        preconfigured matrix.
+        Tries to perform the inverse transform if the optional argument invert is True.
+        """
         nodes = np.squeeze(np.asarray(nodes))
         node_dim = np.ndim(nodes)
+        matrix = self.inverse if invert else self._matrix
         if node_dim == 2:
             nodes = np.vstack([nodes.T, np.full(nodes.shape[0], 1)])
-            return np.matmul(self._matrix, nodes)[:self.dimensions, :].T
+            return np.matmul(matrix, nodes)[:self.dimensions, :].T
         elif node_dim == 1:
             nodes = np.append(nodes, 1)
-            return np.matmul(self._matrix, nodes)[:self.dimensions]
+            return np.matmul(matrix, nodes)[:self.dimensions]
         raise ValueError('nodes to transform must either be 1D or 2D array')
 
     @property
     def matrix(self) -> np.ndarray:
+        """ Returns a copy of the currently configured homogenous transformation matrix
+        (including translation)
+        """
         return self._matrix.copy()
 
     @property
     def inverse(self) -> np.ndarray:
+        """ Returns a copy of the inverse of the currently configured homogenous transformation
+        matrix
+        """
         return np.linalg.inv(self._matrix)
 
     @property
     def dimensions(self) -> int:
+        """ Returns the number of dimensions of the coordinate system to transform.
+        The homogenous transformation matrix is a square matrix with (dimensions + 1) rows/columns
+        """
         return self._matrix.shape[0] - 1
 
     def translate(self, *args: float) -> None:
+        """ Adds a translation to the transformation. Must provide a displacement argument for
+        each dimension.
+        """
         dim = self.dimensions
         if len(args) != dim:
             raise ValueError(f'LinearTransformation.translate requires as many arguments as '
@@ -85,6 +105,9 @@ class LinearTransformation:
         self._matrix[:dim, dim] += args
 
     def scale(self, *args: float) -> None:
+        """ Adds scaling to the transformation. Must provide a scale factor argument for each
+        dimension.
+        """
         dim = self.dimensions
         if len(args) == 1:
             scale_matrix = np.eye(dim) * args[0]
@@ -96,22 +119,32 @@ class LinearTransformation:
         self._matrix[:dim, :dim] *= scale_matrix
 
     def rotate(self, *args, **kwargs) -> None:
+        """ Adds a rotation to the transformation. Must provide a rotation angle argument for each
+        axis (dimension).
+        """
         raise NotImplementedError('Arbitrary rotation transformation not implemented yet')
 
 
 class LinearTransformation3D(LinearTransformation):
-    """
-    """
+    """ Linear transformation for 3D cartesian coordinates """
+
     def __init__(self, matrix: Optional[Sequence[Sequence[float]]] = None) -> None:
         super().__init__(matrix=matrix, dimensions=3)
 
-    def rotate(self, alpha: float, beta: float, gamma: float) -> None:
-        sin_a = np.sin(alpha)
-        cos_a = np.cos(alpha)
-        sin_b = np.sin(beta)
-        cos_b = np.cos(beta)
-        sin_c = np.sin(gamma)
-        cos_c = np.cos(gamma)
+    def rotate(self,
+               x_angle: Optional[float] = 0,
+               y_angle: Optional[float] = 0,
+               z_angle: Optional[float] = 0
+               ) -> None:
+        """ Adds a rotation to the transformation. Can provide a rotation angle (in rad) around
+        each of the 3 axes (x, y, z).
+        """
+        sin_a = np.sin(x_angle)
+        cos_a = np.cos(x_angle)
+        sin_b = np.sin(y_angle)
+        cos_b = np.cos(y_angle)
+        sin_c = np.sin(z_angle)
+        cos_c = np.cos(z_angle)
         rot = np.array([
             [cos_b * cos_c, sin_a * sin_b * cos_c - cos_a * sin_c, cos_a * sin_b * cos_c + sin_a * sin_c],
             [cos_b * sin_c, sin_a * sin_b * sin_c + cos_a * cos_c, cos_a * sin_b * sin_c - sin_a * cos_c],
@@ -124,6 +157,9 @@ class LinearTransformation3D(LinearTransformation):
                   dy: Optional[float] = 0,
                   dz: Optional[float] = 0
                   ) -> None:
+        """ Adds a translation to the transformation. Can provide a displacement for each of the 3
+        axes (x, y, z).
+        """
         return super().translate(dx, dy, dz)
 
     def scale(self,
@@ -131,16 +167,22 @@ class LinearTransformation3D(LinearTransformation):
               sy: Optional[float] = 1,
               sz: Optional[float] = 1
               ) -> None:
+        """ Adds scaling to the transformation. Can provide a scale factor for each of the 3 axes
+        (x, y, z).
+        """
         return super().scale(sx, sy, sz)
 
 
 class LinearTransformation2D(LinearTransformation):
-    """
-    """
+    """ Linear transformation for 2D cartesian coordinates """
+
     def __init__(self, matrix: Optional[Sequence[Sequence[float]]] = None) -> None:
         super().__init__(matrix=matrix, dimensions=2)
 
     def rotate(self, angle: float) -> None:
+        """ Adds a rotation to the transformation. Given angle (in rad) will rotate around origin
+        counter-clockwise.
+        """
         cos = np.cos(angle)
         sin = np.sin(angle)
         rot = np.array([
@@ -150,7 +192,13 @@ class LinearTransformation2D(LinearTransformation):
         self._matrix[:2, :2] = np.matmul(rot, self._matrix[:2, :2])
 
     def translate(self, dx: Optional[float] = 0, dy: Optional[float] = 0) -> None:
+        """ Adds a translation to the transformation. Can provide a displacement for each of the 2
+        axes (x, y).
+        """
         return super().translate(dx, dy)
 
     def scale(self, sx: Optional[float] = 1, sy: Optional[float] = 1) -> None:
+        """ Adds scaling to the transformation. Can provide a scale factor for each of the 2 axes
+        (x, y).
+        """
         return super().scale(sx, sy)
