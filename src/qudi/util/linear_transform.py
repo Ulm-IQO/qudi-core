@@ -22,7 +22,7 @@ If not, see <https://www.gnu.org/licenses/>.
 __all__ = ['LinearTransformation', 'LinearTransformation3D', 'LinearTransformation2D']
 
 import numpy as np
-from typing import Sequence, Optional, Union
+from typing import Sequence, Optional, Union, Tuple
 
 from qudi.util.helpers import is_integer
 
@@ -128,7 +128,10 @@ class LinearTransformation:
 class LinearTransformation3D(LinearTransformation):
     """ Linear transformation for 3D cartesian coordinates """
 
-    def __init__(self, matrix: Optional[Sequence[Sequence[float]]] = None) -> None:
+    _Vector = Tuple[float, float, float, float]
+    _TransformationMatrix = Tuple[_Vector, _Vector, _Vector, _Vector]
+
+    def __init__(self, matrix: Optional[_TransformationMatrix] = None) -> None:
         super().__init__(matrix=matrix, dimensions=3)
 
     def rotate(self,
@@ -176,7 +179,10 @@ class LinearTransformation3D(LinearTransformation):
 class LinearTransformation2D(LinearTransformation):
     """ Linear transformation for 2D cartesian coordinates """
 
-    def __init__(self, matrix: Optional[Sequence[Sequence[float]]] = None) -> None:
+    _Vector = Tuple[float, float, float]
+    _TransformationMatrix = Tuple[_Vector, _Vector, _Vector]
+
+    def __init__(self, matrix: Optional[_TransformationMatrix] = None) -> None:
         super().__init__(matrix=matrix, dimensions=2)
 
     def rotate(self, angle: float) -> None:
