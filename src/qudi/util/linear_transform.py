@@ -167,8 +167,8 @@ class LinearTransformation3D(LinearTransformation):
         rot_matrix = np.array([
             [cos_b * cos_c, sin_a * sin_b * cos_c - cos_a * sin_c, cos_a * sin_b * cos_c + sin_a * sin_c, 0],
             [cos_b * sin_c, sin_a * sin_b * sin_c + cos_a * cos_c, cos_a * sin_b * sin_c - sin_a * cos_c, 0],
-            [-sin_b, sin_a * cos_b, cos_a * cos_b, 0],
-            [0, 0, 0, 1]
+            [-sin_b,        sin_a * cos_b,                         cos_a * cos_b,                         0],
+            [0,             0,                                     0,                                     1]
         ])
         self.add_transform(rot_matrix)
 
