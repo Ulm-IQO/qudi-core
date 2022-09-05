@@ -94,6 +94,18 @@ class LinearTransformation:
         """
         return self._matrix.shape[0] - 1
 
+    def add_transform(self, matrix: Sequence[Sequence[float]]) -> None:
+        """ Multiply a given homogenous transformation matrix (including translation) onto the
+        current trasnformation matrix.
+        """
+        matrix = np.asarray(matrix, dtype=float)
+        if matrix.shape != self._matrix.shape:
+            raise ValueError(f'LinearTransformation.add_transform expects a homogenious '
+                             f'transformation matrix with the same shape as '
+                             f'LinearTransformation.matrix {self._matrix.shape}. '
+                             f'Received {matrix.shape} instead.')
+        self._matrix = np.matmul(matrix, self._matrix)
+
     def translate(self, *args: float) -> None:
         """ Adds a translation to the transformation. Must provide a displacement argument for
         each dimension.
@@ -102,21 +114,25 @@ class LinearTransformation:
         if len(args) != dim:
             raise ValueError(f'LinearTransformation.translate requires as many arguments as '
                              f'number of dimensions ({dim:d})')
-        self._matrix[:dim, dim] += args
+        translate_matrix = np.zeros(self._matrix.shape, dtype=float)
+        translate_matrix[-1, -1] = 1
+        translate_matrix[:-1, -1] = args
+        self.add_transform(translate_matrix)
 
     def scale(self, *args: float) -> None:
         """ Adds scaling to the transformation. Must provide a scale factor argument for each
         dimension.
         """
-        dim = self.dimensions
+        diagonal = np.ones(self._matrix.shape[0], dtype=float)
         if len(args) == 1:
-            scale_matrix = np.eye(dim) * args[0]
-        elif len(args) == dim:
-            scale_matrix = np.diag(args)
+            diagonal[:-1] *= args[0]
+        elif len(args) == self.dimensions:
+            diagonal[:-1] *= args
         else:
             raise ValueError(f'LinearTransformation.scale requires either a single argument or as '
-                             f'many arguments as number of dimensions ({dim:d})')
-        self._matrix[:dim, :dim] *= scale_matrix
+                             f'many arguments as number of dimensions ({self.dimensions:d})')
+        scale_matrix = np.diag(diagonal)
+        self.add_transform(scale_matrix)
 
     def rotate(self, *args, **kwargs) -> None:
         """ Adds a rotation to the transformation. Must provide a rotation angle argument for each
@@ -148,12 +164,13 @@ class LinearTransformation3D(LinearTransformation):
         cos_b = np.cos(y_angle)
         sin_c = np.sin(z_angle)
         cos_c = np.cos(z_angle)
-        rot = np.array([
-            [cos_b * cos_c, sin_a * sin_b * cos_c - cos_a * sin_c, cos_a * sin_b * cos_c + sin_a * sin_c],
-            [cos_b * sin_c, sin_a * sin_b * sin_c + cos_a * cos_c, cos_a * sin_b * sin_c - sin_a * cos_c],
-            [-sin_b, sin_a * cos_b, cos_a * cos_b]
+        rot_matrix = np.array([
+            [cos_b * cos_c, sin_a * sin_b * cos_c - cos_a * sin_c, cos_a * sin_b * cos_c + sin_a * sin_c, 0],
+            [cos_b * sin_c, sin_a * sin_b * sin_c + cos_a * cos_c, cos_a * sin_b * sin_c - sin_a * cos_c, 0],
+            [-sin_b, sin_a * cos_b, cos_a * cos_b, 0],
+            [0, 0, 0, 1]
         ])
-        self._matrix[:3, :3] = np.matmul(rot, self._matrix[:3, :3])
+        self.add_transform(rot_matrix)
 
     def translate(self,
                   dx: Optional[float] = 0,
@@ -191,11 +208,12 @@ class LinearTransformation2D(LinearTransformation):
         """
         cos = np.cos(angle)
         sin = np.sin(angle)
-        rot = np.array([
-            [cos,  -sin],
-            [sin, cos]
+        rot_matrix = np.array([
+            [cos, -sin, 0],
+            [sin,  cos, 0],
+            [0  ,    0, 1]
         ])
-        self._matrix[:2, :2] = np.matmul(rot, self._matrix[:2, :2])
+        self.add_transform(rot_matrix)
 
     def translate(self, dx: Optional[float] = 0, dy: Optional[float] = 0) -> None:
         """ Adds a translation to the transformation. Can provide a displacement for each of the 2
