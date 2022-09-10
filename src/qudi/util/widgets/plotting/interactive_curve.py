@@ -22,7 +22,7 @@ If not, see <https://www.gnu.org/licenses/>.
 
 from PySide2 import QtCore, QtWidgets, QtGui
 from typing import Optional, Mapping, Any, Dict, Tuple, Union
-from pyqtgraph import mkColor, mkPen
+import pyqtgraph as pg
 
 from qudi.util.widgets.scientific_spinbox import ScienDSpinBox
 from qudi.util.widgets.separator_lines import VerticalLine
@@ -193,6 +193,47 @@ class PlotEditorWidget(QtWidgets.QWidget):
         self.sigUnitsChanged.emit(None, self.units[1])
 
 
+class PlotLegendIconWidget(QtWidgets.QWidget):
+    def __init__(self, item, parent: Optional[QtWidgets.QWidget] = None) -> None:
+        super().__init__(parent=parent)
+
+        self.setMouseTracking(False)
+        self.setFocusPolicy(QtCore.Qt.FocusPolicy.NoFocus)
+        self.setFixedSize(20, 20)
+
+        self._item = item
+
+    def paintEvent(self, event: QtGui.QPaintEvent) -> None:
+        p = QtGui.QPainter(self)
+
+        opts = self._item.opts
+        if opts.get('antialias'):
+            p.setRenderHint(p.RenderHint.Antialiasing)
+
+        if not isinstance(self._item, pg.ScatterPlotItem):
+            p.setPen(pg.mkPen(opts['pen']))
+            p.drawLine(0, 11, 20, 11)
+
+            if (opts.get('fillLevel', None) is not None and
+                    opts.get('fillBrush', None) is not None):
+                p.setBrush(pg.mkBrush(opts['fillBrush']))
+                p.setPen(pg.mkPen(opts['pen']))
+                p.drawPolygon(QtGui.QPolygonF(
+                    [QtCore.QPointF(2, 18), QtCore.QPointF(18, 2),
+                     QtCore.QPointF(18, 18)]))
+
+        symbol = opts.get('symbol', None)
+        if symbol is not None:
+            if isinstance(self._item, pg.PlotDataItem):
+                opts = self._item.scatter.opts
+            p.translate(10, 10)
+            pg.drawSymbol(p, symbol, opts['size'], pg.mkPen(opts['pen']), pg.mkBrush(opts['brush']))
+
+        if isinstance(self._item, pg.BarGraphItem):
+            p.setBrush(pg.mkBrush(opts['brush']))
+            p.drawRect(QtCore.QRectF(2, 2, 18, 18))
+
+
 class PlotSelectorWidget(QtWidgets.QWidget):
     """
     """
@@ -202,52 +243,69 @@ class PlotSelectorWidget(QtWidgets.QWidget):
         super().__init__(parent=parent)
 
         self._stretch = QtWidgets.QSpacerItem(
-            0, 0, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding
+            0, 0, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding
         )
-        self._selector_layout = QtWidgets.QVBoxLayout()
-        self._selector_layout.addItem(self._stretch)
+        self._selector_layout = QtWidgets.QGridLayout()
+        self._selector_layout.addItem(self._stretch, 0, 0, 1, 2)
+        self._selector_layout.setColumnStretch(0, 1)
         self.setLayout(self._selector_layout)
 
         self._selectors = dict()
 
     @property
     def selection(self) -> Dict[str, bool]:
-        return {name: selector.isChecked() for name, selector in self._selectors.items()}
+        return {name: selector.isChecked() for name, (_, selector) in self._selectors.items()}
 
     def set_selection(self, selection: Mapping[str, bool]) -> None:
         for name, select in selection.items():
-            self._selectors[name].setChecked(select)
+            self._selectors[name][1].setChecked(select)
 
     def add_selector(self,
                      name: str,
-                     color: Optional[Any] = None,
+                     item: Optional[pg.PlotDataItem] = None,
                      selected: Optional[bool] = False) -> None:
         if name in self._selectors:
             raise ValueError(f'Selector with name "{name}" already present in plot selector')
-        selector = self._create_selector(name, color)
+        selector = self._create_selector(name)
         selector.setChecked(selected)
         selector.clicked.connect(self._selection_changed)
         self._selector_layout.removeItem(self._stretch)
-        self._selector_layout.addWidget(selector)
-        self._selector_layout.addItem(self._stretch)
-        self._selectors[name] = selector
+        row = len(self._selectors)
+        if item is None:
+            self._selector_layout.addWidget(selector, row, 0, 1, 2)
+            self._selectors[name] = (None, selector)
+        else:
+            icon = PlotLegendIconWidget(item)
+            self._selector_layout.addWidget(icon, row, 0)
+            self._selector_layout.addWidget(selector, row, 1)
+            self._selectors[name] = (icon, selector)
+        self._selector_layout.addItem(self._stretch, row + 1, 0, 1, 2)
 
     def remove_selector(self, name: str) -> None:
-        widgets = list(self._selectors.values())
-        selector = self._selectors.pop(name, None)
-        if selector is None:
+        if name not in self._selectors:
             raise ValueError(f'Selector with name "{name}" not found in plot selector')
-        remove_index = widgets.index(selector)
-        widgets = widgets[remove_index + 1:]
         self._selector_layout.removeItem(self._stretch)
-        for widget in reversed(widgets):
-            self._selector_layout.removeWidget(widget)
-        self._selector_layout.removeWidget(selector)
-        for widget in widgets:
-            self._selector_layout.addWidget(widget)
-        self._selector_layout.addItem(self._stretch)
+        for sel_name, (icon, selector) in reversed(self._selectors.items()):
+            self._selector_layout.removeWidget(selector)
+            if icon is not None:
+                self._selector_layout.removeWidget(icon)
+            if sel_name == name:
+                break
+        after_remove = False
+        for row, (sel_name, (icon, selector)) in enumerate(self._selectors.items()):
+            if after_remove:
+                if icon is None:
+                    self._selector_layout.addWidget(selector, row - 1, 0, 1, 2)
+                else:
+                    self._selector_layout.addWidget(icon, row - 1, 0)
+                    self._selector_layout.addWidget(selector, row - 1, 1)
+            elif sel_name == name:
+                after_remove = True
+        icon, selector = self._selectors.pop(name)
         selector.clicked.disconnect()
         selector.setParent(None)
+        icon.setParent(None)
+        self._selector_layout.addItem(self._stretch, len(self._selectors), 0, 1, 2)
 
     def _selection_changed(self) -> None:
         self.sigSelectionChanged.emit(self.selection)
@@ -256,7 +314,7 @@ class PlotSelectorWidget(QtWidgets.QWidget):
     def _create_selector(name: str, color: Optional[Any] = None) -> QtWidgets.QCheckBox:
         checkbox = QtWidgets.QCheckBox(name)
         if color is not None:
-            color_str = mkColor(color).name()
+            color_str = pg.mkColor(color).name()
             checkbox.setStyleSheet('QCheckBox { color: ' + color_str + ' }')
         return checkbox
 
@@ -342,11 +400,7 @@ class InteractiveCurvesWidget(QtWidgets.QWidget):
         # Add new plot
         item = self.plot_widget.plot(name=name, **kwargs)
         self._plot_items[name] = item
-        try:
-            color = mkPen(item.opts['pen']).color()
-        except (KeyError, AttributeError, TypeError, ValueError):
-            color = None
-        self.plot_selector.add_selector(name=name, color=color, selected=True)
+        self.plot_selector.add_selector(name=name, item=item, selected=True)
 
     def remove_plot(self, name: str) -> None:
         item = self._plot_items.pop(name, None)
