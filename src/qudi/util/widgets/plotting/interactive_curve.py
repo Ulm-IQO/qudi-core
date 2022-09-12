@@ -21,7 +21,7 @@ If not, see <https://www.gnu.org/licenses/>.
 """
 
 from PySide2 import QtCore, QtWidgets, QtGui
-from typing import Optional, Mapping, Any, Dict, Tuple, Union
+from typing import Optional, Mapping, Any, Dict, Tuple, Union, List, Sequence
 import pyqtgraph as pg
 
 from qudi.util.widgets.scientific_spinbox import ScienDSpinBox
@@ -326,51 +326,96 @@ class InteractiveCurvesWidget(QtWidgets.QWidget):
     """
     """
 
-    def __init__(self, parent: Optional[QtWidgets.QWidget] = None) -> None:
-        super().__init__(parent=parent)
+    SelectionMode = RubberbandZoomSelectionPlotWidget.SelectionMode
 
-        self.plot_widget = PlotWidget(allow_tracking_outside_data=False,
-                                      max_mouse_pos_update_rate=10.)
-        self.plot_legend = self.plot_widget.addLegend()
-        self.plot_legend.hide()
-        self.plot_editor = PlotEditorWidget()
-        self.plot_selector = PlotSelectorWidget()
+    def __init__(self,
+                 allow_tracking_outside_data: Optional[bool] = False,
+                 max_mouse_pos_update_rate: Optional[float] = None,
+                 selection_bounds: Optional[Sequence[Tuple[Union[None, float], Union[None, float]]]] = None,
+                 selection_pen: Optional[Any] = None,
+                 selection_hover_pen: Optional[Any] = None,
+                 selection_brush: Optional[Any] = None,
+                 selection_hover_brush: Optional[Any] = None,
+                 xy_region_selection_crosshair: Optional[bool] = False,
+                 xy_region_selection_handles: Optional[bool] = True,
+                 **kwargs
+                 ) -> None:
+        super().__init__(**kwargs)
+        if max_mouse_pos_update_rate is None:
+            max_mouse_pos_update_rate = 10.
 
-        self.plot_editor.layout().setContentsMargins(0, 0, 0, 0)
-        self.plot_selector.layout().setContentsMargins(0, 0, 0, 0)
+        self._plot_widget = PlotWidget(
+            allow_tracking_outside_data=allow_tracking_outside_data,
+            max_mouse_pos_update_rate=max_mouse_pos_update_rate,
+            selection_bounds=selection_bounds,
+            selection_pen=selection_pen,
+            selection_hover_pen=selection_hover_pen,
+            selection_brush=selection_brush,
+            selection_hover_brush=selection_hover_brush,
+            xy_region_selection_crosshair=xy_region_selection_crosshair,
+            xy_region_selection_handles=xy_region_selection_handles,
+        )
+        self._plot_legend = self._plot_widget.addLegend()
+        self._plot_legend.hide()
+        self._plot_editor = PlotEditorWidget()
+        self._plot_selector = PlotSelectorWidget()
+
+        self._plot_editor.layout().setContentsMargins(0, 0, 0, 0)
+        self._plot_selector.layout().setContentsMargins(0, 0, 0, 0)
 
         layout = QtWidgets.QGridLayout()
-        layout.addWidget(self.plot_widget, 0, 0)
-        layout.addWidget(self.plot_editor, 1, 0, 1, 2)
-        layout.addWidget(self.plot_selector, 0, 1)
+        layout.addWidget(self._plot_widget, 0, 0)
+        layout.addWidget(self._plot_editor, 1, 0, 1, 2)
+        layout.addWidget(self._plot_selector, 0, 1)
         layout.setColumnStretch(0, 1)
         layout.setRowStretch(0, 1)
         self.setLayout(layout)
 
-        self.plot_selector.sigSelectionChanged.connect(self._update_plot_selection)
-        self.plot_editor.sigUnitsChanged.connect(self.__units_changed)
-        self.plot_editor.sigLabelsChanged.connect(self.__labels_changed)
-        self.plot_editor.sigLimitsChanged.connect(self.__limits_changed)
-        self.plot_editor.sigAutoRangeClicked.connect(self.set_auto_range)
-        self.plot_widget.sigRangeChanged.connect(self.__plot_widget_limits_changed)
-
-        self.set_limits = self.plot_editor.set_limits
-        self.set_units = self.plot_editor.set_units
-        self.set_labels = self.plot_editor.set_labels
+        self._plot_selector.sigSelectionChanged.connect(self._update_plot_selection)
+        self._plot_editor.sigUnitsChanged.connect(self.__units_changed)
+        self._plot_editor.sigLabelsChanged.connect(self.__labels_changed)
+        self._plot_editor.sigLimitsChanged.connect(self.__limits_changed)
+        self._plot_editor.sigAutoRangeClicked.connect(self.set_auto_range)
+        self._plot_widget.sigRangeChanged.connect(self.__plot_widget_limits_changed)
 
         self.__labels_changed(*self.labels)
         self.__units_changed(*self.units)
         self.set_auto_range(True, True)
 
-        self._plot_items = dict()
+        # patch attributes of advanced PlotWidget into this widget for easier access and
+        # auto-completion
+        self.set_limits = self._plot_editor.set_limits
+        self.set_units = self._plot_editor.set_units
+        self.set_labels = self._plot_editor.set_labels
+        self.set_rubberband_zoom_selection_mode = self._plot_widget.set_rubberband_zoom_selection_mode
+        self.set_region_selection_mode = self._plot_widget.set_region_selection_mode
+        self.set_marker_selection_mode = self._plot_widget.set_marker_selection_mode
+        self.set_selection_mutable = self._plot_widget.set_selection_mutable
+        self.set_selection_bounds = self._plot_widget.set_selection_bounds
+        self.add_region_selection = self._plot_widget.add_region_selection
+        self.add_marker_selection = self._plot_widget.add_marker_selection
+        self.move_region_selection = self._plot_widget.move_region_selection
+        self.move_marker_selection = self._plot_widget.move_marker_selection
+        self.clear_marker_selections = self._plot_widget.clear_marker_selections
+        self.delete_marker_selection = self._plot_widget.delete_marker_selection
+        self.hide_marker_selections = self._plot_widget.hide_marker_selections
+        self.show_marker_selections = self._plot_widget.show_marker_selections
+        self.hide_marker_selection = self._plot_widget.hide_marker_selection
+        self.show_marker_selection = self._plot_widget.show_marker_selection
+        self.clear_region_selections = self._plot_widget.clear_region_selections
+        self.delete_region_selection = self._plot_widget.delete_region_selection
+        self.hide_region_selections = self._plot_widget.hide_region_selections
+        self.show_region_selections = self._plot_widget.show_region_selections
+        self.hide_region_selection = self._plot_widget.hide_region_selection
+        self.show_region_selection = self._plot_widget.show_region_selection
 
         # Disable bugged pyqtgraph interactive mouse menu options to avoid a myriad of
         # user-induced errors.
-        for action in self.plot_widget.getPlotItem().ctrlMenu.actions():
+        for action in self._plot_widget.getPlotItem().ctrlMenu.actions():
             if action.text() not in ('Alpha', 'Grid', 'Points'):
                 action.setEnabled(False)
                 action.setVisible(False)
-        for axis_ctrl in self.plot_widget.getPlotItem().vb.menu.ctrl:
+        for axis_ctrl in self._plot_widget.getViewBox().menu.ctrl:
             axis_ctrl.autoPanCheck.setEnabled(False)
             axis_ctrl.visibleOnlyCheck.setEnabled(False)
             axis_ctrl.linkCombo.setEnabled(False)
@@ -380,59 +425,132 @@ class InteractiveCurvesWidget(QtWidgets.QWidget):
             axis_ctrl.linkCombo.setVisible(False)
             axis_ctrl.label.setVisible(False)
 
-    @property
-    def labels(self) -> Tuple[str, str]:
-        return self.plot_editor.labels
-
-    @property
-    def units(self) -> Tuple[str, str]:
-        return self.plot_editor.units
-
-    @property
-    def limits(self) -> Tuple[Tuple[float, float], Tuple[float, float]]:
-        return self.plot_editor.limits
-
-    @property
-    def selection(self) -> Dict[str, bool]:
-        return {name: item.isVisible() for name, item in self._plot_items.items()}
-
-    def set_selection(self, selection: Mapping[str, bool]) -> None:
-        self.plot_selector.set_selection(selection)
-        self._update_plot_selection(selection)
+        # Keep track of PlotItems plotted
+        self._plot_items = dict()
 
     def plot(self, name: str, **kwargs) -> None:
         # Delete old plot if present
         if name in self._plot_items:
             self.remove_plot(name)
         # Add new plot
-        item = self.plot_widget.plot(name=name, **kwargs)
+        item = self._plot_widget.plot(name=name, **kwargs)
         self._plot_items[name] = item
-        self.plot_selector.add_selector(name=name, item=item, selected=True)
+        self._plot_selector.add_selector(name=name, item=item, selected=True)
 
     def remove_plot(self, name: str) -> None:
         item = self._plot_items.pop(name, None)
-        if item in self.plot_widget.getViewBox().addedItems:
-            self.plot_widget.removeItem(item)
+        if item in self._plot_widget.getViewBox().addedItems:
+            self._plot_widget.removeItem(item)
         try:
-            self.plot_selector.remove_selector(name)
+            self._plot_selector.remove_selector(name)
         except ValueError:
             pass
 
-    def toggle_plot_selection(self, enable: bool) -> None:
-        # Sync legend and selector checkboxes
-        if not self.plot_selector.isVisible() and enable:
-            self.plot_selector.set_selection(self.selection)
-        self.plot_selector.setVisible(enable)
-        self.plot_legend.setVisible(not enable)
+    def set_data(self, name: str, *args, **kwargs) -> None:
+        """ See pyqtgraph.PlotDataItem.__init__ for valid arguments """
+        self._plot_items[name].setData(*args, **kwargs)
 
-    def toggle_plot_editor(self, enable: bool) -> None:
-        self.plot_editor.setVisible(enable)
+    @property
+    def plot_selection(self) -> Dict[str, bool]:
+        return {name: item.isVisible() for name, item in self._plot_items.items()}
+
+    def set_plot_selection(self, selection: Mapping[str, bool]) -> None:
+        self._plot_selector.set_selection(selection)
+        self._update_plot_selection(selection)
 
     def set_auto_range(self, x: Optional[bool] = None, y: Optional[bool] = None) -> None:
         if x is not None:
-            self.plot_widget.enableAutoRange(axis='x', enable=x)
+            self._plot_widget.enableAutoRange(axis='x', enable=x)
         if y is not None:
-            self.plot_widget.enableAutoRange(axis='y', enable=y)
+            self._plot_widget.enableAutoRange(axis='y', enable=y)
+
+    # Start of attribute/property wrapping of sub-widgets
+
+    @property
+    def sigMarkerSelectionChanged(self) -> QtCore.Signal:
+        return self._plot_widget.sigMarkerSelectionChanged
+
+    @property
+    def sigRegionSelectionChanged(self) -> QtCore.Signal:
+        return self._plot_widget.sigRegionSelectionChanged
+
+    @property
+    def sigMouseMoved(self) -> QtCore.Signal:
+        return self._plot_widget.sigMouseMoved
+
+    @property
+    def sigMouseDragged(self) -> QtCore.Signal:
+        return self._plot_widget.sigMouseDragged
+
+    @property
+    def sigMouseClicked(self) -> QtCore.Signal:
+        return self._plot_widget.sigMouseClicked
+
+    @property
+    def sigZoomAreaApplied(self) -> QtCore.Signal:
+        return self._plot_widget.sigZoomAreaApplied
+
+    @property
+    def labels(self) -> Tuple[str, str]:
+        return self._plot_editor.labels
+
+    @property
+    def units(self) -> Tuple[str, str]:
+        return self._plot_editor.units
+
+    @property
+    def limits(self) -> Tuple[Tuple[float, float], Tuple[float, float]]:
+        return self._plot_editor.limits
+
+    @property
+    def rubberband_zoom_selection_mode(self) -> SelectionMode:
+        return self._plot_widget.rubberband_zoom_selection_mode
+
+    @property
+    def marker_selection(self) -> Dict[SelectionMode, List[Union[float, Tuple[float, float]]]]:
+        return self._plot_widget.marker_selection
+
+    @property
+    def region_selection(self) -> Dict[SelectionMode, List[tuple]]:
+        return self._plot_widget.region_selection
+
+    @property
+    def region_selection_mode(self) -> SelectionMode:
+        return self._plot_widget.region_selection_mode
+
+    @property
+    def marker_selection_mode(self) -> SelectionMode:
+        return self._plot_widget.marker_selection_mode
+
+    @property
+    def selection_mutable(self) -> bool:
+        return self._plot_widget.selection_mutable
+
+    @property
+    def selection_bounds(self) -> Union[None, List[Union[None, Tuple[float, float]]]]:
+        return self._plot_widget.selection_bounds
+
+    @property
+    def allow_tracking_outside_data(self) -> bool:
+        return self._plot_widget.allow_tracking_outside_data
+
+    @allow_tracking_outside_data.setter
+    def allow_tracking_outside_data(self, allow: bool) -> None:
+        self._plot_widget.allow_tracking_outside_data = bool(allow)
+
+    # Start of methods to show/hide sub-widgets
+
+    def toggle_plot_selector(self, enable: bool) -> None:
+        # Sync legend and selector checkboxes
+        if not self._plot_selector.isVisible() and enable:
+            self._plot_selector.set_selection(self.plot_selection)
+        self._plot_selector.setVisible(enable)
+        self._plot_legend.setVisible(not enable)
+
+    def toggle_plot_editor(self, enable: bool) -> None:
+        self._plot_editor.setVisible(enable)
+
+    # Start of slots for internal updates
 
     def _update_plot_selection(self, selection: Mapping[str, bool]) -> None:
         for name, selected in selection.items():
@@ -444,30 +562,30 @@ class InteractiveCurvesWidget(QtWidgets.QWidget):
     def __units_changed(self, x: Optional[str] = None, y: Optional[str] = None) -> None:
         x_label, y_label = self.labels
         if x is not None:
-            self.plot_widget.setLabel('bottom', x_label, units=x)
+            self._plot_widget.setLabel('bottom', x_label, units=x)
         if y is not None:
-            self.plot_widget.setLabel('left', y_label, units=y)
+            self._plot_widget.setLabel('left', y_label, units=y)
 
     def __labels_changed(self, x: Optional[str] = None, y: Optional[str] = None) -> None:
         x_unit, y_unit = self.units
         if x is not None:
-            self.plot_widget.setLabel('bottom', x, units=x_unit)
+            self._plot_widget.setLabel('bottom', x, units=x_unit)
         if y is not None:
-            self.plot_widget.setLabel('left', y, units=y_unit)
+            self._plot_widget.setLabel('left', y, units=y_unit)
 
     def __limits_changed(self,
                          x: Optional[Tuple[float, float]] = None,
                          y: Optional[Tuple[float, float]] = None
                          ) -> None:
         if x is not None:
-            self.plot_widget.enableAutoRange(axis='x', enable=False)
-            self.plot_widget.setXRange(*x, padding=0)
+            self._plot_widget.enableAutoRange(axis='x', enable=False)
+            self._plot_widget.setXRange(*x, padding=0)
         if y is not None:
-            self.plot_widget.enableAutoRange(axis='y', enable=False)
-            self.plot_widget.setYRange(*y, padding=0)
+            self._plot_widget.enableAutoRange(axis='y', enable=False)
+            self._plot_widget.setYRange(*y, padding=0)
 
     def __plot_widget_limits_changed(self,
                                      _,
                                      limits: Tuple[Tuple[float, float], Tuple[float, float]]
                                      ) -> None:
-        self.plot_editor.set_limits(*limits)
+        self._plot_editor.set_limits(*limits)
