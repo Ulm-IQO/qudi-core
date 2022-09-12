@@ -322,6 +322,47 @@ class PlotSelectorWidget(QtWidgets.QWidget):
         return checkbox
 
 
+class CursorPositionLabel(QtWidgets.QLabel):
+    """
+    """
+
+    def __init__(self,
+                 units: Optional[Tuple[str, str]] = None,
+                 number_fmt: Optional[Tuple[str, str]] = None,
+                 parent: Optional[QtWidgets.QWidget] = None
+                 ) -> None:
+        super().__init__(parent=parent)
+
+        self._units = ('', '')
+        self._number_fmt = ('.6e', '.6e')
+        self._text_template = ''
+
+        self._update_text_template()
+        if units is not None:
+            self.set_units(*units)
+        if number_fmt is not None:
+            self.set_number_fmt(*number_fmt)
+
+    def set_units(self, x: str, y: str) -> None:
+        self._units = (x if x else '', y if y else '')
+        self._update_text_template()
+
+    def set_number_fmt(self, x: str, y: str) -> None:
+        self._number_fmt = (x if x else '.6e', y if y else '.6e')
+        self._update_text_template()
+
+    def update_position(self, pos: Tuple[float, float]) -> None:
+        self.setText(self._text_template.format(*pos))
+
+    def _update_text_template(self) -> None:
+        x_number = '{:' + self._number_fmt[0] + '}'
+        y_number = '{:' + self._number_fmt[1] + '}'
+        x_unit, y_unit = self._units
+        x_str = f'{x_number} {x_unit}' if x_unit else x_number
+        y_str = f'{y_number} {y_unit}' if y_unit else y_number
+        self._text_template = f'Cursor: ({x_str}, {y_str})'
+
+
 class InteractiveCurvesWidget(QtWidgets.QWidget):
     """
     """
@@ -342,7 +383,7 @@ class InteractiveCurvesWidget(QtWidgets.QWidget):
                  ) -> None:
         super().__init__(**kwargs)
         if max_mouse_pos_update_rate is None:
-            max_mouse_pos_update_rate = 10.
+            max_mouse_pos_update_rate = 20.
 
         self._plot_widget = PlotWidget(
             allow_tracking_outside_data=allow_tracking_outside_data,
@@ -359,16 +400,18 @@ class InteractiveCurvesWidget(QtWidgets.QWidget):
         self._plot_legend.hide()
         self._plot_editor = PlotEditorWidget()
         self._plot_selector = PlotSelectorWidget()
+        self._position_label = CursorPositionLabel()
 
         self._plot_editor.layout().setContentsMargins(0, 0, 0, 0)
         self._plot_selector.layout().setContentsMargins(0, 0, 0, 0)
 
         layout = QtWidgets.QGridLayout()
-        layout.addWidget(self._plot_widget, 0, 0)
-        layout.addWidget(self._plot_editor, 1, 0, 1, 2)
-        layout.addWidget(self._plot_selector, 0, 1)
+        layout.addWidget(self._position_label, 0, 0)
+        layout.addWidget(self._plot_widget, 1, 0)
+        layout.addWidget(self._plot_editor, 2, 0, 1, 2)
+        layout.addWidget(self._plot_selector, 1, 1)
         layout.setColumnStretch(0, 1)
-        layout.setRowStretch(0, 1)
+        layout.setRowStretch(1, 1)
         self.setLayout(layout)
 
         self._plot_selector.sigSelectionChanged.connect(self._update_plot_selection)
@@ -377,6 +420,7 @@ class InteractiveCurvesWidget(QtWidgets.QWidget):
         self._plot_editor.sigLimitsChanged.connect(self.__limits_changed)
         self._plot_editor.sigAutoRangeClicked.connect(self.set_auto_range)
         self._plot_widget.sigRangeChanged.connect(self.__plot_widget_limits_changed)
+        self._plot_widget.sigMouseMoved.connect(self._position_label.update_position)
 
         self.__labels_changed(*self.labels)
         self.__units_changed(*self.units)
@@ -384,9 +428,6 @@ class InteractiveCurvesWidget(QtWidgets.QWidget):
 
         # patch attributes of advanced PlotWidget into this widget for easier access and
         # auto-completion
-        self.set_limits = self._plot_editor.set_limits
-        self.set_units = self._plot_editor.set_units
-        self.set_labels = self._plot_editor.set_labels
         self.set_rubberband_zoom_selection_mode = self._plot_widget.set_rubberband_zoom_selection_mode
         self.set_region_selection_mode = self._plot_widget.set_region_selection_mode
         self.set_marker_selection_mode = self._plot_widget.set_marker_selection_mode
@@ -463,6 +504,21 @@ class InteractiveCurvesWidget(QtWidgets.QWidget):
             self._plot_widget.enableAutoRange(axis='x', enable=x)
         if y is not None:
             self._plot_widget.enableAutoRange(axis='y', enable=y)
+
+    def set_labels(self, x: Optional[str] = None, y: Optional[str] = None) -> None:
+        self._plot_editor.set_labels(x, y)
+        self.__labels_changed(*self.labels)
+
+    def set_units(self, x: Optional[str] = None, y: Optional[str] = None) -> None:
+        self._plot_editor.set_units(x, y)
+        self.__units_changed(*self.units)
+
+    def set_limits(self,
+                   x: Optional[Tuple[float, float]] = None,
+                   y: Optional[Tuple[float, float]] = None
+                   ) -> None:
+        self._plot_editor.set_limits(x, y)
+        self.__limits_changed(*self.limits)
 
     # Start of attribute/property wrapping of sub-widgets
 
@@ -550,6 +606,9 @@ class InteractiveCurvesWidget(QtWidgets.QWidget):
     def toggle_plot_editor(self, enable: bool) -> None:
         self._plot_editor.setVisible(enable)
 
+    def toggle_cursor_position(self, enable: bool) -> None:
+        self._position_label.setVisible(enable)
+
     # Start of slots for internal updates
 
     def _update_plot_selection(self, selection: Mapping[str, bool]) -> None:
@@ -565,6 +624,7 @@ class InteractiveCurvesWidget(QtWidgets.QWidget):
             self._plot_widget.setLabel('bottom', x_label, units=x)
         if y is not None:
             self._plot_widget.setLabel('left', y_label, units=y)
+        self._position_label.set_units(*self.units)
 
     def __labels_changed(self, x: Optional[str] = None, y: Optional[str] = None) -> None:
         x_unit, y_unit = self.units
