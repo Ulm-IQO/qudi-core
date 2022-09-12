@@ -607,7 +607,12 @@ class InteractiveCurvesWidget(QtWidgets.QWidget):
         self._plot_editor.setVisible(enable)
 
     def toggle_cursor_position(self, enable: bool) -> None:
+        is_enabled = self._position_label.isVisible()
         self._position_label.setVisible(enable)
+        if is_enabled and not enable:
+            self._plot_widget.sigMouseMoved.disconnect(self._position_label.update_position)
+        elif not is_enabled and enable:
+            self._plot_widget.sigMouseMoved.connect(self._position_label.update_position)
 
     # Start of slots for internal updates
 
