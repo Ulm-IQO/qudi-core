@@ -258,7 +258,10 @@ class PlotSelectorWidget(QtWidgets.QWidget):
 
     def set_selection(self, selection: Mapping[str, bool]) -> None:
         for name, select in selection.items():
-            self._selectors[name][1].setChecked(select)
+            try:
+                self._selectors[name][1].setChecked(select)
+            except KeyError:
+                pass
 
     def add_selector(self,
                      name: str,
@@ -326,7 +329,8 @@ class InteractiveCurvesWidget(QtWidgets.QWidget):
     def __init__(self, parent: Optional[QtWidgets.QWidget] = None) -> None:
         super().__init__(parent=parent)
 
-        self.plot_widget = PlotWidget()
+        self.plot_widget = PlotWidget(allow_tracking_outside_data=False,
+                                      max_mouse_pos_update_rate=10.)
         self.plot_legend = self.plot_widget.addLegend()
         self.plot_legend.hide()
         self.plot_editor = PlotEditorWidget()
@@ -353,7 +357,6 @@ class InteractiveCurvesWidget(QtWidgets.QWidget):
         self.set_limits = self.plot_editor.set_limits
         self.set_units = self.plot_editor.set_units
         self.set_labels = self.plot_editor.set_labels
-        self.set_selection = self.plot_selector.set_selection
 
         self.__labels_changed(*self.labels)
         self.__units_changed(*self.units)
@@ -391,7 +394,11 @@ class InteractiveCurvesWidget(QtWidgets.QWidget):
 
     @property
     def selection(self) -> Dict[str, bool]:
-        return self.plot_selector.selection
+        return {name: item.isVisible() for name, item in self._plot_items.items()}
+
+    def set_selection(self, selection: Mapping[str, bool]) -> None:
+        self.plot_selector.set_selection(selection)
+        self._update_plot_selection(selection)
 
     def plot(self, name: str, **kwargs) -> None:
         # Delete old plot if present
@@ -404,7 +411,7 @@ class InteractiveCurvesWidget(QtWidgets.QWidget):
 
     def remove_plot(self, name: str) -> None:
         item = self._plot_items.pop(name, None)
-        if item in self.plot_widget.items():
+        if item in self.plot_widget.getViewBox().addedItems:
             self.plot_widget.removeItem(item)
         try:
             self.plot_selector.remove_selector(name)
@@ -412,6 +419,9 @@ class InteractiveCurvesWidget(QtWidgets.QWidget):
             pass
 
     def toggle_plot_selection(self, enable: bool) -> None:
+        # Sync legend and selector checkboxes
+        if not self.plot_selector.isVisible() and enable:
+            self.plot_selector.set_selection(self.selection)
         self.plot_selector.setVisible(enable)
         self.plot_legend.setVisible(not enable)
 
@@ -427,14 +437,9 @@ class InteractiveCurvesWidget(QtWidgets.QWidget):
     def _update_plot_selection(self, selection: Mapping[str, bool]) -> None:
         for name, selected in selection.items():
             try:
-                item = self._plot_items[name]
+                self._plot_items[name].setVisible(selected)
             except KeyError:
-                continue
-            item_in_plot = item in self.plot_widget.items()
-            if selected and not item_in_plot:
-                self.plot_widget.addItem(item)
-            elif not selected and item_in_plot:
-                self.plot_widget.removeItem(item)
+                pass
 
     def __units_changed(self, x: Optional[str] = None, y: Optional[str] = None) -> None:
         x_label, y_label = self.labels
