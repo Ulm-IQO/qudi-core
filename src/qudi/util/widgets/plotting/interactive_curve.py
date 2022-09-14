@@ -473,8 +473,9 @@ class InteractiveCurvesWidget(QtWidgets.QWidget):
         # Delete old plot if present
         if name in self._plot_items:
             self.remove_plot(name)
-        # Add new plot
-        item = self._plot_widget.plot(name=name, **kwargs)
+        # Add new plot and enable antialias by default if not explicitly set
+        antialias = kwargs.pop('antialias', True)
+        item = self._plot_widget.plot(name=name, antialias=antialias, **kwargs)
         self._plot_items[name] = item
         self._plot_selector.add_selector(name=name, item=item, selected=True)
 
