@@ -512,6 +512,10 @@ class InteractiveCurvesWidget(QtWidgets.QWidget):
         self._fit_plot_items[name].setData(*args, **kwargs)
 
     @property
+    def plot_names(self) -> List[str]:
+        return list(self._plot_items)
+
+    @property
     def plot_selection(self) -> Dict[str, bool]:
         return {name: item.isVisible() for name, item in self._plot_items.items()}
 
