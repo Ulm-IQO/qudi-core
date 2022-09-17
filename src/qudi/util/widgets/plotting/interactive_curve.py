@@ -468,6 +468,7 @@ class InteractiveCurvesWidget(QtWidgets.QWidget):
 
         # Keep track of PlotItems plotted
         self._plot_items = dict()
+        self._fit_plot_items = dict()
 
     def plot(self, name: str, **kwargs) -> None:
         # Delete old plot if present
@@ -488,9 +489,27 @@ class InteractiveCurvesWidget(QtWidgets.QWidget):
         except ValueError:
             pass
 
+    def plot_fit(self, name: str, **kwargs) -> None:
+        # Delete old plot if present
+        if name in self._fit_plot_items:
+            self.remove_fit_plot(name)
+        # Add new plot and enable antialias by default if not explicitly set
+        antialias = kwargs.pop('antialias', True)
+        item = self._plot_widget.plot(name=None, antialias=antialias, **kwargs)
+        self._fit_plot_items[name] = item
+
+    def remove_fit_plot(self, name: str) -> None:
+        item = self._fit_plot_items.pop(name, None)
+        if item in self._plot_widget.getViewBox().addedItems:
+            self._plot_widget.removeItem(item)
+
     def set_data(self, name: str, *args, **kwargs) -> None:
         """ See pyqtgraph.PlotDataItem.__init__ for valid arguments """
         self._plot_items[name].setData(*args, **kwargs)
+
+    def set_fit_data(self, name: str, *args, **kwargs) -> None:
+        """ See pyqtgraph.PlotDataItem.__init__ for valid arguments """
+        self._fit_plot_items[name].setData(*args, **kwargs)
 
     @property
     def plot_selection(self) -> Dict[str, bool]:
@@ -623,6 +642,11 @@ class InteractiveCurvesWidget(QtWidgets.QWidget):
                 self._plot_items[name].setVisible(selected)
             except KeyError:
                 pass
+            else:
+                try:
+                    self._fit_plot_items[name].setVisible(selected)
+                except KeyError:
+                    pass
 
     def __units_changed(self, x: Optional[str] = None, y: Optional[str] = None) -> None:
         x_label, y_label = self.labels
