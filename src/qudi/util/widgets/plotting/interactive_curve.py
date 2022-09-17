@@ -481,6 +481,7 @@ class InteractiveCurvesWidget(QtWidgets.QWidget):
         self._plot_selector.add_selector(name=name, item=item, selected=True)
 
     def remove_plot(self, name: str) -> None:
+        self.remove_fit_plot(name)
         item = self._plot_items.pop(name, None)
         if item in self._plot_widget.getViewBox().addedItems:
             self._plot_widget.removeItem(item)
