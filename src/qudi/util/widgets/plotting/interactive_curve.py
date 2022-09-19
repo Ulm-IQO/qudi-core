@@ -227,7 +227,7 @@ class PlotLegendIconWidget(QtWidgets.QWidget):
             if isinstance(self._item, pg.PlotDataItem):
                 opts = self._item.scatter.opts
             p.translate(10, 10)
-            pg.drawSymbol(p, symbol, opts['size'], pg.mkPen(opts['pen']), pg.mkBrush(opts['brush']))
+            pg.graphicsItems.ScatterPlotItem.drawSymbol(p, symbol, opts['size'], pg.mkPen(opts['pen']), pg.mkBrush(opts['brush']))
 
         if isinstance(self._item, pg.BarGraphItem):
             p.setBrush(pg.mkBrush(opts['brush']))
@@ -342,6 +342,7 @@ class CursorPositionLabel(QtWidgets.QLabel):
             self.set_units(*units)
         if number_fmt is not None:
             self.set_number_fmt(*number_fmt)
+        self.update_position((0, 0))
 
     def set_units(self, x: str, y: str) -> None:
         self._units = (x if x else '', y if y else '')
@@ -400,7 +401,7 @@ class InteractiveCurvesWidget(QtWidgets.QWidget):
         self._plot_legend.hide()
         self._plot_editor = PlotEditorWidget()
         self._plot_selector = PlotSelectorWidget()
-        self._position_label = CursorPositionLabel()
+        self._position_label = CursorPositionLabel(units=self._plot_editor.units)
 
         self._plot_editor.layout().setContentsMargins(0, 0, 0, 0)
         self._plot_selector.layout().setContentsMargins(0, 0, 0, 0)
