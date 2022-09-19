@@ -495,6 +495,8 @@ class InteractiveCurvesWidget(QtWidgets.QWidget):
             self.remove_plot(name)
 
     def plot_fit(self, name: str, **kwargs) -> None:
+        if name not in self._plot_items:
+            raise ValueError(f'No plot with name "{name}" found to add fit to')
         # Delete old plot if present
         if name in self._fit_plot_items:
             self.remove_fit_plot(name)
@@ -514,6 +516,8 @@ class InteractiveCurvesWidget(QtWidgets.QWidget):
 
     def set_fit_data(self, name: str, *args, **kwargs) -> None:
         """ See pyqtgraph.PlotDataItem.__init__ for valid arguments """
+        if name not in self._fit_plot_items:
+            self.plot_fit(name)
         self._fit_plot_items[name].setData(*args, **kwargs)
 
     @property
