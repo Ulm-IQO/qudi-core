@@ -490,6 +490,10 @@ class InteractiveCurvesWidget(QtWidgets.QWidget):
         except ValueError:
             pass
 
+    def clear(self) -> None:
+        for name in self._plot_items:
+            self.remove_plot(name)
+
     def plot_fit(self, name: str, **kwargs) -> None:
         # Delete old plot if present
         if name in self._fit_plot_items:
