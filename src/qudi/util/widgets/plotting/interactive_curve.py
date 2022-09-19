@@ -37,7 +37,7 @@ class PlotEditorWidget(QtWidgets.QWidget):
     """
     """
 
-    sigAutoRangeClicked = QtCore.Signal(bool, bool)
+    sigAutoRangeClicked = QtCore.Signal(bool, bool)  # x- and/or y-axis
     sigLabelsChanged = QtCore.Signal(object, object)
     sigUnitsChanged = QtCore.Signal(object, object)
     sigLimitsChanged = QtCore.Signal(object, object)
@@ -369,6 +369,9 @@ class InteractiveCurvesWidget(QtWidgets.QWidget):
     """
 
     SelectionMode = RubberbandZoomSelectionPlotWidget.SelectionMode
+    
+    sigPlotParametersChanged = QtCore.Signal()
+    sigAutoLimitsApplied = QtCore.Signal(bool, bool)  # in x- and/or y-direction
 
     def __init__(self,
                  allow_tracking_outside_data: Optional[bool] = False,
@@ -538,10 +541,13 @@ class InteractiveCurvesWidget(QtWidgets.QWidget):
         self._update_plot_selection(selection)
 
     def set_auto_range(self, x: Optional[bool] = None, y: Optional[bool] = None) -> None:
+        if x is y is None:
+            return
         if x is not None:
             self._plot_widget.enableAutoRange(axis='x', enable=x)
         if y is not None:
             self._plot_widget.enableAutoRange(axis='y', enable=y)
+        self.sigAutoLimitsApplied.emit(bool(x), bool(y))
 
     def set_labels(self, x: Optional[str] = None, y: Optional[str] = None) -> None:
         self._plot_editor.set_labels(x, y)
@@ -667,33 +673,44 @@ class InteractiveCurvesWidget(QtWidgets.QWidget):
                     pass
 
     def __units_changed(self, x: Optional[str] = None, y: Optional[str] = None) -> None:
+        if x is y is None:
+            return
         x_label, y_label = self.labels
         if x is not None:
             self._plot_widget.setLabel('bottom', x_label, units=x)
         if y is not None:
             self._plot_widget.setLabel('left', y_label, units=y)
         self._position_label.set_units(*self.units)
+        self.sigPlotParametersChanged.emit()
 
     def __labels_changed(self, x: Optional[str] = None, y: Optional[str] = None) -> None:
+        if x is y is None:
+            return
         x_unit, y_unit = self.units
         if x is not None:
             self._plot_widget.setLabel('bottom', x, units=x_unit)
         if y is not None:
             self._plot_widget.setLabel('left', y, units=y_unit)
+        self.sigPlotParametersChanged.emit()
 
     def __limits_changed(self,
                          x: Optional[Tuple[float, float]] = None,
                          y: Optional[Tuple[float, float]] = None
                          ) -> None:
+        if x is y is None:
+            return
         if x is not None:
             self._plot_widget.enableAutoRange(axis='x', enable=False)
             self._plot_widget.setXRange(*x, padding=0)
         if y is not None:
             self._plot_widget.enableAutoRange(axis='y', enable=False)
             self._plot_widget.setYRange(*y, padding=0)
+        # Signal is emitted once the pyqtgraph plot has actually changed.
+        # See: self.__plot_widget_limits_changed
 
     def __plot_widget_limits_changed(self,
                                      _,
                                      limits: Tuple[Tuple[float, float], Tuple[float, float]]
                                      ) -> None:
         self._plot_editor.set_limits(*limits)
+        self.sigPlotParametersChanged.emit()
