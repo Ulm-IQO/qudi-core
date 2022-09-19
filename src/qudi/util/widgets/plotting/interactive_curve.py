@@ -491,8 +491,12 @@ class InteractiveCurvesWidget(QtWidgets.QWidget):
             pass
 
     def clear(self) -> None:
-        for name in self._plot_items:
+        for name in list(self._plot_items):
             self.remove_plot(name)
+
+    def clear_fits(self) -> None:
+        for name in list(self._fit_plot_items):
+            self.remove_fit_plot(name)
 
     def plot_fit(self, name: str, **kwargs) -> None:
         if name not in self._plot_items:
