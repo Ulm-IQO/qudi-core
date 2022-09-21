@@ -21,7 +21,7 @@ You should have received a copy of the GNU Lesser General Public License along w
 If not, see <https://www.gnu.org/licenses/>.
 """
 
-__all__ = ['Configuration', 'ValidationError', 'ParserError']
+__all__ = ['Configuration', 'ValidationError', 'ParserError', 'YAMLError', 'DuplicateKeyError']
 
 import copy
 from numbers import Number
@@ -34,7 +34,7 @@ from .validator import ValidationError
 from .validator import validate_config as _validate_config
 from .validator import validate_local_module_config as _validate_local_module_config
 from .validator import validate_remote_module_config as _validate_remote_module_config
-from .file_handler import ParserError
+from .file_handler import ParserError, YAMLError, DuplicateKeyError
 from .file_handler import FileHandlerBase as _FileHandlerBase
 
 

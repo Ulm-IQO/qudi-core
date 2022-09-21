@@ -3,6 +3,22 @@
 ## Pre-Release
 
 ### Breaking Changes
+None
+
+### Bugfixes
+None
+
+### New Features
+None
+
+### Other
+None
+
+
+## Version 1.1.0
+Released on 25.07.2022
+
+### Breaking Changes
 - Changed event handling of qudi module state machine. `on_deactivate` will be run BEFORE the state 
 machine actually changes into state `deactivated`.
 - `ConfigOption` meta-attributes of qudi modules are no longer set in config under the module name 
@@ -24,13 +40,16 @@ So something like
   ```
 
 ### Bugfixes
-None
+- Qudi logging facility active during startup procedure
+- Reduced RPyC related errors in qudi IPython kernel
 
 ### New Features
 - Support for `enum.Enum` types in `qudi.util.yaml`, enabling use of enums in qudi config and 
 status variables.
 - `qudi.util.constraints.ScalarConstraint` data class to easily define bounds for, check and clip 
 scalar values.
+- Added qudi logger object to qudi IPython kernels to give users the possibility to directly log 
+messages into qudi from e.g. a jupyter notebook.
 
 ### Other
 - Structure and type checking as well as default value handling in the qudi configuration file is 

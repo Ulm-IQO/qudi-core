@@ -31,7 +31,7 @@ import logging
 import tempfile
 from ipykernel.ipkernel import IPythonKernel
 
-from qudi.core.config import Configuration, ValidationError, ParserError
+from qudi.core.config import Configuration, ValidationError, YAMLError
 
 
 def install_kernel():
@@ -117,11 +117,14 @@ class QudiKernelClient:
             self.disconnect()
             return dict()
 
+    def get_logger(self, name: str) -> logging.Logger:
+        return self.connection.root.get_logger(name)
+
     def connect(self):
         config = Configuration()
         try:
             config.load()
-        except (ValueError, ValidationError, ParserError):
+        except (ValueError, ValidationError, YAMLError):
             pass
         self.connection = rpyc.connect(host='localhost',
                                        config={'allow_all_attrs': True,
@@ -151,6 +154,7 @@ class QudiIPythonKernel(IPythonKernel):
         self._qudi_client = QudiKernelClient()
         self._qudi_client.connect()
         self._namespace_qudi_modules = set()
+        self._qudi_logger = self._qudi_client.get_logger(f'QudiIPythonKernel_{str(self.ident)}')
         self.update_module_namespace()
         # Fixme: Dirty workaround after hours of searching on how to disable the insanely
         #  aggressive tab completion resolution of jedi that causes each descriptor (e.g. property)
@@ -171,6 +175,8 @@ class QudiIPythonKernel(IPythonKernel):
         removed = self._namespace_qudi_modules.difference(modules)
         for mod in removed:
             self.shell.user_ns.pop(mod, None)
+        self.shell.user_ns.pop('logger', None)
+        self.shell.push({'logger': self._qudi_logger})
         self.shell.push(modules)
         self._namespace_qudi_modules = set(modules)
 

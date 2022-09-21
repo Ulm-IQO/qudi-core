@@ -25,11 +25,12 @@ __all__ = ['MouseTrackingViewBox', 'DataSelectionViewBox', 'RubberbandZoomViewBo
            'RubberbandZoomSelectionViewBox', 'RubberbandZoomMixin', 'DataSelectionMixin',
            'MouseTrackingMixin', 'SelectionMode']
 
+import warnings
 from typing import Optional, Union, Any, Tuple, Sequence, List, Dict
 from enum import IntEnum
 
 from PySide2 import QtCore
-from pyqtgraph import ViewBox, SignalProxy, PlotDataItem, ImageItem, PlotCurveItem, ScatterPlotItem
+from pyqtgraph import ViewBox, PlotDataItem, ImageItem, PlotCurveItem, ScatterPlotItem
 from pyqtgraph import LinearRegionItem as _LinearRegionItem
 from pyqtgraph.GraphicsScene.mouseEvents import MouseClickEvent, MouseDragEvent
 from qudi.util.widgets.plotting.marker import Rectangle, InfiniteCrosshairRectangle
@@ -49,8 +50,6 @@ class MouseTrackingMixin:
     x-y-positions emitted will be in real world data coordinates.
     """
 
-    # position (x, y)
-    sigMouseMoved = QtCore.Signal(tuple)
     # start_position (x, y), current_position (x, y), MouseDragEvent
     sigMouseDragged = QtCore.Signal(tuple, tuple, object)
     # position (x, y), MouseClickEvent
@@ -58,21 +57,9 @@ class MouseTrackingMixin:
 
     def __init__(self,
                  allow_tracking_outside_data: Optional[bool] = False,
-                 max_mouse_pos_update_rate: Optional[float] = None,
                  **kwargs) -> None:
         super().__init__(**kwargs)
         self.allow_tracking_outside_data = bool(allow_tracking_outside_data)
-        if max_mouse_pos_update_rate is not None and max_mouse_pos_update_rate > 0.:
-            self._mouse_position_signal_proxy = SignalProxy(
-                signal=self.scene().sigMouseMoved,
-                rateLimit=max_mouse_pos_update_rate,
-                delay=2 / max_mouse_pos_update_rate,  # Must be larger than 1/rateLimit
-                slot=self.__mouse_moved
-            )
-
-    def __mouse_moved(self, args) -> None:
-        pos = self.mapSceneToView(args[0])
-        self.sigMouseMoved.emit((pos.x(), pos.y()))
 
     def mouseClickEvent(self, ev: MouseClickEvent) -> None:
         if self.allow_tracking_outside_data or self.pointer_on_data(ev.scenePos()):
@@ -90,9 +77,11 @@ class MouseTrackingMixin:
             super().mouseDragEvent(ev, axis)
 
     def pointer_on_data(self, scene_pos: QtCore.QPointF) -> bool:
-        for item in self.scene().items(scene_pos):
-            if isinstance(item, (PlotDataItem, ImageItem, PlotCurveItem, ScatterPlotItem)):
-                return True
+        scene = self.scene()
+        if scene is not None:
+            for item in scene.items(scene_pos):
+                if isinstance(item, (PlotDataItem, ImageItem, PlotCurveItem, ScatterPlotItem)):
+                    return True
         return False
 
 
@@ -490,6 +479,17 @@ class RubberbandZoomMixin:
 
     sigZoomAreaApplied = QtCore.Signal(QtCore.QRectF)
 
+    # FIXME: Workaround for pyqtgraph. See also mouseDragEvent.
+    try:
+        from pyqtgraph import __version__ as __pyqtgraph_version
+        major, minor, revision = (int(v) for v in __pyqtgraph_version.split('.'))
+        _legacy_pyqtgraph = (major == 0) and ((minor < 12) or ((minor == 12) and (revision < 4)))
+    except (ValueError, TypeError, ImportError):
+        _legacy_pyqtgraph = True
+    if _legacy_pyqtgraph:
+        warnings.warn('You are using an older, unsupported version of pyqtgraph. '
+                      'Please update to a newer version >= 0.12.4.')
+
     def __init__(self, **kwargs) -> None:
         super().__init__(**kwargs)
         self._rubberband_zoom_selection_mode = self.SelectionMode.Disabled
@@ -532,7 +532,13 @@ class RubberbandZoomMixin:
                 current_pos = self.mapToView(ev.pos())
                 zoom_rect = QtCore.QRectF(start_pos, current_pos)
                 if mode == self.SelectionMode.XY:
-                    self.updateScaleBox(ev.buttonDownPos(), ev.pos())
+                    # FIXME: Workaround for messed-up pyqtgraph version >= 0.12.4. Somehow the
+                    #  coordinate mapping changed unintended from 0.12.3 to 0.12.4 (not stated in
+                    #  the changelog).
+                    if self._legacy_pyqtgraph:
+                        self.updateScaleBox(ev.buttonDownPos(), ev.pos())
+                    else:
+                        self.updateScaleBox(ev.buttonDownScenePos(), ev.scenePos())
                     if ev.isFinish():
                         self.rbScaleBox.hide()
                         self.setRange(rect=zoom_rect, padding=0)

@@ -26,7 +26,7 @@ from abc import abstractmethod
 from uuid import uuid4
 from fysom import Fysom
 from PySide2 import QtCore, QtGui, QtWidgets
-from typing import Any, Mapping, Optional, Callable, Union
+from typing import Any, Mapping, Optional, Callable, Union, Dict
 
 from qudi.core.configoption import MissingOption
 from qudi.core.statusvariable import StatusVar
@@ -257,6 +257,21 @@ class Base(QtCore.QObject, metaclass=ModuleMeta):
         return data_dir
 
     @property
+    def module_status_variables(self) -> Dict[str, Any]:
+        variables = dict()
+        try:
+            for attr_name, var in self._meta['status_variables'].items():
+                if hasattr(self, attr_name):
+                    value = getattr(self, attr_name)
+                    if not isinstance(value, StatusVar):
+                        if var.representer_function is not None:
+                            value = var.representer_function(self, value)
+                        variables[var.name] = value
+        except:
+            self.log.exception('Error while collecting status variables:')
+        return variables
+
+    @property
     def _qudi_main(self) -> Any:
         qudi_main = self.__qudi_main_weakref()
         if qudi_main is None:
@@ -306,17 +321,14 @@ class Base(QtCore.QObject, metaclass=ModuleMeta):
         """ Load status variables from app data directory on disc.
         """
         # Load status variables from app data directory
-        class_name = self.__class__.__name__
-        name = self.module_name
-        base = self.module_base
-        file_path = get_module_app_data_path(class_name, base, name)
+        file_path = get_module_app_data_path(self.__class__.__name__,
+                                             self.module_base,
+                                             self.module_name)
         try:
             variables = yaml_load(file_path, ignore_missing=True)
         except:
             variables = dict()
-            self.log.exception(
-                f'Failed to load status variables for module "{class_name}_{base}_{name}".'
-            )
+            self.log.exception('Failed to load status variables:')
 
         # Set instance attributes according to StatusVar meta objects
         try:
@@ -326,9 +338,7 @@ class Base(QtCore.QObject, metaclass=ModuleMeta):
                     value = var.constructor_function(self, value)
                 setattr(self, attr_name, value)
         except:
-            self.log.exception(
-                f'Error while settings status variables in module "{class_name}_{base}_{name}".'
-            )
+            self.log.exception('Error while settings status variables:')
 
     def _dump_status_variables(self) -> None:
         """ Dump status variables to app data directory on disc.
@@ -336,33 +346,17 @@ class Base(QtCore.QObject, metaclass=ModuleMeta):
         This method can also be used to manually dump status variables independent of the automatic
         dump during module deactivation.
         """
-        class_name = self.__class__.__name__
-        name = self.module_name
-        base = self.module_base
-        file_path = get_module_app_data_path(class_name, base, name)
+        file_path = get_module_app_data_path(self.__class__.__name__,
+                                             self.module_base,
+                                             self.module_name)
         # collect StatusVar values into dictionary
-        variables = dict()
-        try:
-            for attr_name, var in self._meta['status_variables'].items():
-                if hasattr(self, attr_name):
-                    value = getattr(self, attr_name)
-                    if not isinstance(value, StatusVar):
-                        if var.representer_function is not None:
-                            value = var.representer_function(self, value)
-                        variables[var.name] = value
-        except:
-            self.log.exception(
-                f'Error while collecting status variables from module "{class_name}_{base}_{name}".'
-            )
-
+        variables = self.module_status_variables
         # Save to file if any StatusVars have been found
         if variables:
             try:
                 yaml_dump(file_path, variables)
             except:
-                self.log.exception(
-                    f'Failed to save status variables for module "{class_name}.{base}.{name}".'
-                )
+                self.log.exception('Failed to save status variables:')
 
     def _send_balloon_message(self, title: str, message: str, time: Optional[float] = None,
                               icon: Optional[QtGui.QIcon] = None) -> None:
@@ -425,15 +419,13 @@ class Base(QtCore.QObject, metaclass=ModuleMeta):
     def on_activate(self) -> None:
         """ Method called when module is activated. Must be implemented by actual qudi module.
         """
-        raise NotImplementedError(f'Please implement and specify the activation method for '
-                                  f'{self.__class__.__name__}.')
+        raise NotImplementedError('Please implement and specify the activation method.')
 
     @abstractmethod
     def on_deactivate(self) -> None:
         """ Method called when module is deactivated. Must be implemented by actual qudi module.
         """
-        raise NotImplementedError(f'Please implement and specify the deactivation method '
-                                  f'{self.__class__.__name__}.')
+        raise NotImplementedError('Please implement and specify the deactivation method.')
 
 
 class LogicBase(Base):
