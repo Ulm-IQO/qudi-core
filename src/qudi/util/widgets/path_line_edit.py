@@ -27,8 +27,6 @@ import os
 from PySide2 import QtCore, QtWidgets, QtGui
 from typing import Optional, Any, List
 
-from qudi.util.paths import get_artwork_dir as _get_artwork_dir
-
 
 class PathLineEdit(QtWidgets.QWidget):
     """ QLineEdit for editing file system paths directly or via QFileDialog.
@@ -51,9 +49,7 @@ class PathLineEdit(QtWidgets.QWidget):
         super().__init__(parent=parent)
         self._line_edit = QtWidgets.QLineEdit(text)
         self._tool_button = QtWidgets.QToolButton()
-        self._tool_button.setIcon(
-            QtGui.QIcon(os.path.join(os.path.join(_get_artwork_dir(), 'icons', 'document-open')))
-        )
+        self._tool_button.setIcon(QtGui.QIcon(':/icons/document-open'))
         self._tool_button.setToolTip('Open file dialog')
         self._tool_button.clicked.connect(self._exec_file_dialog)
 
