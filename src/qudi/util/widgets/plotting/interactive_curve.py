@@ -109,10 +109,10 @@ class PlotEditorWidget(QtWidgets.QWidget):
         self.y_label_lineEdit.editingFinished.connect(self.__y_label_changed)
         self.x_unit_lineEdit.editingFinished.connect(self.__x_unit_changed)
         self.y_unit_lineEdit.editingFinished.connect(self.__y_unit_changed)
-        self.x_lower_limit_spinBox.valueChanged.connect(self.__x_limits_changed)
-        self.x_upper_limit_spinBox.valueChanged.connect(self.__x_limits_changed)
-        self.y_lower_limit_spinBox.valueChanged.connect(self.__y_limits_changed)
-        self.y_upper_limit_spinBox.valueChanged.connect(self.__y_limits_changed)
+        self.x_lower_limit_spinBox.editingFinished.connect(self.__x_limits_changed)
+        self.x_upper_limit_spinBox.editingFinished.connect(self.__x_limits_changed)
+        self.y_lower_limit_spinBox.editingFinished.connect(self.__y_limits_changed)
+        self.y_upper_limit_spinBox.editingFinished.connect(self.__y_limits_changed)
         self.x_auto_button.clicked.connect(
             lambda: self.sigAutoRangeClicked.emit(True, False)
         )
@@ -134,8 +134,11 @@ class PlotEditorWidget(QtWidgets.QWidget):
 
     @property
     def limits(self) -> Tuple[Tuple[float, float], Tuple[float, float]]:
-        return (self.x_lower_limit_spinBox.value(), self.x_upper_limit_spinBox.value()), \
-               (self.y_lower_limit_spinBox.value(), self.y_upper_limit_spinBox.value())
+        x_min, x_max = sorted([self.x_lower_limit_spinBox.value(),
+                               self.x_upper_limit_spinBox.value()])
+        y_min, y_max = sorted([self.y_lower_limit_spinBox.value(),
+                               self.y_upper_limit_spinBox.value()])
+        return (x_min, x_max), (y_min, y_max)
 
     def set_labels(self, x: Optional[str] = None, y: Optional[str] = None) -> None:
         if x is not None:
@@ -155,29 +158,31 @@ class PlotEditorWidget(QtWidgets.QWidget):
                    ) -> None:
         if x is not None:
             lower, upper = sorted(x)
-            self.x_lower_limit_spinBox.blockSignals(True)
-            self.x_upper_limit_spinBox.blockSignals(True)
-            try:
-                self.x_lower_limit_spinBox.setValue(lower)
-                self.x_upper_limit_spinBox.setValue(upper)
-            finally:
-                self.x_lower_limit_spinBox.blockSignals(False)
-                self.x_upper_limit_spinBox.blockSignals(False)
+            self.x_lower_limit_spinBox.setValue(lower)
+            self.x_upper_limit_spinBox.setValue(upper)
         if y is not None:
             lower, upper = sorted(y)
-            self.y_lower_limit_spinBox.blockSignals(True)
-            self.y_upper_limit_spinBox.blockSignals(True)
-            try:
-                self.y_lower_limit_spinBox.setValue(lower)
-                self.y_upper_limit_spinBox.setValue(upper)
-            finally:
-                self.y_lower_limit_spinBox.blockSignals(False)
-                self.y_upper_limit_spinBox.blockSignals(False)
+            self.y_lower_limit_spinBox.setValue(lower)
+            self.y_upper_limit_spinBox.setValue(upper)
 
     def __x_limits_changed(self) -> None:
-        self.sigLimitsChanged.emit(self.limits[0], None)
+        lower = self.x_lower_limit_spinBox.value()
+        upper = self.x_upper_limit_spinBox.value()
+        if upper < lower:
+            lower, upper = upper, lower
+            self.x_lower_limit_spinBox.setValue(lower)
+            self.x_upper_limit_spinBox.setValue(upper)
+            self.__swap_limits_focus()
+        self.sigLimitsChanged.emit((lower, upper), None)
 
     def __y_limits_changed(self) -> None:
+        lower = self.y_lower_limit_spinBox.value()
+        upper = self.y_upper_limit_spinBox.value()
+        if upper < lower:
+            lower, upper = upper, lower
+            self.y_lower_limit_spinBox.setValue(lower)
+            self.y_upper_limit_spinBox.setValue(upper)
+            self.__swap_limits_focus()
         self.sigLimitsChanged.emit(None, self.limits[1])
 
     def __x_label_changed(self) -> None:
@@ -191,6 +196,16 @@ class PlotEditorWidget(QtWidgets.QWidget):
 
     def __y_unit_changed(self) -> None:
         self.sigUnitsChanged.emit(None, self.units[1])
+
+    def __swap_limits_focus(self) -> None:
+        if self.x_lower_limit_spinBox.hasFocus():
+            self.x_upper_limit_spinBox.setFocus()
+        elif self.x_upper_limit_spinBox.hasFocus():
+            self.x_lower_limit_spinBox.setFocus()
+        elif self.y_lower_limit_spinBox.hasFocus():
+            self.y_upper_limit_spinBox.setFocus()
+        elif self.y_upper_limit_spinBox.hasFocus():
+            self.y_lower_limit_spinBox.setFocus()
 
 
 class PlotLegendIconWidget(QtWidgets.QWidget):
