@@ -28,6 +28,7 @@ from qudi.util.widgets.scientific_spinbox import ScienDSpinBox
 from qudi.util.widgets.separator_lines import VerticalLine
 from qudi.util.widgets.plotting.axis import label_nudged_plot_widget
 from qudi.util.widgets.plotting.plot_widget import RubberbandZoomSelectionPlotWidget
+from qudi.util.units import ScaledFloat
 
 
 PlotWidget = label_nudged_plot_widget(RubberbandZoomSelectionPlotWidget)
@@ -343,40 +344,30 @@ class CursorPositionLabel(QtWidgets.QLabel):
 
     def __init__(self,
                  units: Optional[Tuple[str, str]] = None,
-                 number_fmt: Optional[Tuple[str, str]] = None,
                  parent: Optional[QtWidgets.QWidget] = None
                  ) -> None:
         super().__init__(parent=parent)
 
         self._units = ('', '')
-        self._number_fmt = ('.6e', '.6e')
         self._text_template = ''
 
         self._update_text_template()
         if units is not None:
             self.set_units(*units)
-        if number_fmt is not None:
-            self.set_number_fmt(*number_fmt)
         self.update_position((0, 0))
 
     def set_units(self, x: str, y: str) -> None:
         self._units = (x if x else '', y if y else '')
         self._update_text_template()
 
-    def set_number_fmt(self, x: str, y: str) -> None:
-        self._number_fmt = (x if x else '.6e', y if y else '.6e')
-        self._update_text_template()
-
     def update_position(self, pos: Tuple[float, float]) -> None:
-        self.setText(self._text_template.format(*pos))
+        x = ScaledFloat(pos[0])
+        y = ScaledFloat(pos[1])
+        self.setText(self._text_template.format(x, y))
 
     def _update_text_template(self) -> None:
-        x_number = '{:' + self._number_fmt[0] + '}'
-        y_number = '{:' + self._number_fmt[1] + '}'
         x_unit, y_unit = self._units
-        x_str = f'{x_number} {x_unit}' if x_unit else x_number
-        y_str = f'{y_number} {y_unit}' if y_unit else y_number
-        self._text_template = f'Cursor: ({x_str}, {y_str})'
+        self._text_template = f'Cursor: ({{:.3r}}{x_unit}, {{:.3r}}{y_unit})'
 
 
 class InteractiveCurvesWidget(QtWidgets.QWidget):
