@@ -351,22 +351,23 @@ class CursorPositionLabel(QtWidgets.QLabel):
         self._units = ('', '')
         self._text_template = ''
 
-        self._update_text_template()
-        if units is not None:
-            self.set_units(*units)
+        if units is None:
+            units = self._units
+        self.set_units(*units)
         self.update_position((0, 0))
 
     def set_units(self, x: str, y: str) -> None:
-        self._units = (x if x else '', y if y else '')
-        self._update_text_template()
+        units = (x if x else '', y if y else '')
+        self._update_text_template(units)
+        self._units = units
 
     def update_position(self, pos: Tuple[float, float]) -> None:
         x = ScaledFloat(pos[0])
         y = ScaledFloat(pos[1])
         self.setText(self._text_template.format(x, y))
 
-    def _update_text_template(self) -> None:
-        x_unit, y_unit = self._units
+    def _update_text_template(self, units: Tuple[str, str]) -> None:
+        x_unit, y_unit = units
         self._text_template = f'Cursor: ({{:.3r}}{x_unit}, {{:.3r}}{y_unit})'
 
 
