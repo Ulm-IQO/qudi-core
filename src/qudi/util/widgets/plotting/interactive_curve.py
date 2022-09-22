@@ -483,15 +483,24 @@ class InteractiveCurvesWidget(QtWidgets.QWidget):
         self._plot_items = dict()
         self._fit_plot_items = dict()
 
-    def plot(self, name: str, **kwargs) -> None:
-        # Delete old plot if present
+    def _get_valid_generic_name(self, index: Optional[int] = 1) -> str:
+        name = f'Dataset {index:d}'
         if name in self._plot_items:
+            return self._get_valid_generic_name(index + 1)
+        return name
+
+    def plot(self, name: Optional[str] = None, **kwargs) -> str:
+        # Delete old plot if present
+        if name is None:
+            name = self._get_valid_generic_name()
+        elif name in self._plot_items:
             self.remove_plot(name)
         # Add new plot and enable antialias by default if not explicitly set
         antialias = kwargs.pop('antialias', True)
         item = self._plot_widget.plot(name=name, antialias=antialias, **kwargs)
         self._plot_items[name] = item
         self._plot_selector.add_selector(name=name, item=item, selected=True)
+        return name
 
     def remove_plot(self, name: str) -> None:
         self.remove_fit_plot(name)
