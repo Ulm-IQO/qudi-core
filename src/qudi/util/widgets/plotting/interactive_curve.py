@@ -350,21 +350,23 @@ class CursorPositionLabel(QtWidgets.QLabel):
 
         self._units = ('', '')
         self._text_template = ''
+        self._pos_cache = (0, 0)
 
         if units is None:
             units = self._units
         self.set_units(*units)
-        self.update_position((0, 0))
 
     def set_units(self, x: str, y: str) -> None:
         units = (x if x else '', y if y else '')
         self._update_text_template(units)
         self._units = units
+        self.update_position(self._pos_cache)
 
     def update_position(self, pos: Tuple[float, float]) -> None:
         x = ScaledFloat(pos[0])
         y = ScaledFloat(pos[1])
         self.setText(self._text_template.format(x, y))
+        self._pos_cache = pos
 
     def _update_text_template(self, units: Tuple[str, str]) -> None:
         x_unit, y_unit = units
@@ -481,15 +483,24 @@ class InteractiveCurvesWidget(QtWidgets.QWidget):
         self._plot_items = dict()
         self._fit_plot_items = dict()
 
-    def plot(self, name: str, **kwargs) -> None:
-        # Delete old plot if present
+    def _get_valid_generic_name(self, index: Optional[int] = 1) -> str:
+        name = f'Dataset {index:d}'
         if name in self._plot_items:
+            return self._get_valid_generic_name(index + 1)
+        return name
+
+    def plot(self, name: Optional[str] = None, **kwargs) -> str:
+        # Delete old plot if present
+        if name is None:
+            name = self._get_valid_generic_name()
+        elif name in self._plot_items:
             self.remove_plot(name)
         # Add new plot and enable antialias by default if not explicitly set
         antialias = kwargs.pop('antialias', True)
         item = self._plot_widget.plot(name=name, antialias=antialias, **kwargs)
         self._plot_items[name] = item
         self._plot_selector.add_selector(name=name, item=item, selected=True)
+        return name
 
     def remove_plot(self, name: str) -> None:
         self.remove_fit_plot(name)
