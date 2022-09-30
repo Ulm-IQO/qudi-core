@@ -15,7 +15,7 @@ Create a single commit that includes two changes:
 - Rename "Pre-Release" section in `/docs/changelog.md` to "Version x.y.z" and add release date 
 below. Create new empty "Pre-Release" template (subsections) at the top of the file. 
 The head of the file should look like this:
-  ```Markdown
+  ```
   # Changelog
   
   ## Pre-Release
