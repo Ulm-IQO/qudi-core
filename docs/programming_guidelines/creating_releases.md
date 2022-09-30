@@ -6,11 +6,11 @@ title: qudi-core
 
 ---
 
-# How to create a new `qudi-core` release
+# How to create a new qudi-core release
 
 ## 1. Version bump
 
-Create a single commit that includes two changes:
+Create a single commit that includes three changes:
 - Update version number in file `/Version`. The scheme is `Major.Minor.Hotfix`.
 - Rename "Pre-Release" section in `/docs/changelog.md` to "Version x.y.z" and add release date 
 below. Create new empty "Pre-Release" template (subsections) at the top of the file. 
@@ -36,6 +36,36 @@ The head of the file should look like this:
   ## Version x.y.z
   Released on DD.MM.YYYY
   ...
+  ```
+- Add the version to be released to `/.github/ISSUE_TEMPLATE/bug_report.yml` under the body item 
+with `id: version`. Insert the new release version as new item in the dropdown item just below 
+`Development` and above the newest previous release version:
+  ```
+  name: Bug Report
+  description: File a new bug report
+  title: "[Bug] "
+  labels: ["bug"]
+  body:
+    - type: markdown
+      attributes:
+        value: |
+            Please fill out this bug report form as thorough as possible!
+            Thank you for taking the time.
+    - type: dropdown
+      id: version
+      attributes:
+        label: Version
+        description: What version of our software are you running?
+        options:
+          - Development
+          - Release vX.Y.Z   <---------------------------------------------- HERE!!!
+          - Release v1.1.0
+          - Release v1.0.1
+          - Release v1.0.0
+      validations:
+        required: true
+    - type: textarea
+    ...
   ```
 
 Push these changes to `main` via release PR.
