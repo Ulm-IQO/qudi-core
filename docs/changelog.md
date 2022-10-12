@@ -9,6 +9,22 @@ None
 None
 
 ### New Features
+None
+
+### Other
+None
+
+
+## Version 1.2.0
+Released on 30.09.2022
+
+### Breaking Changes
+None
+
+### Bugfixes
+None
+
+### New Features
 - New general-purpose interactive data display widget 
 `qudi.util.widgets.plotting.interactive_curve.InteractiveCurvesWidget` providing multiple optional 
 features:

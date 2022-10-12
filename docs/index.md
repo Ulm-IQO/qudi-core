@@ -45,6 +45,7 @@ has_children: true
 - Implementing Fit Models
 - [Data Fitting Integration](programming_guidelines/data_fitting_integration.md)
 - Contributing
+- [Creating a release](programming_guidelines/creating_releases.md)
 
 ### Graphical Config Editor
 
