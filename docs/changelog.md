@@ -15,6 +15,33 @@ None
 None
 
 
+## Version 1.2.0
+Released on 30.09.2022
+
+### Breaking Changes
+None
+
+### Bugfixes
+None
+
+### New Features
+- New general-purpose interactive data display widget 
+`qudi.util.widgets.plotting.interactive_curve.InteractiveCurvesWidget` providing multiple optional 
+features:
+  - Legend creation and generic dataset naming
+  - Linking of fit curve to dataset and synchronous handling of both
+  - Rubberband zooming in 1 and 2 dimensions
+  - Data markers in 1 and 2 dimensions
+  - Data range selections in 1 and 2 dimensions
+  - Checkbox-based toggling of dataset visibility
+  - Plot editor for setting axis labels, units and view ranges
+  - Mouse cursor tracking and display in data coordinates
+  - Various signals to interface with the above-mentioned features
+
+### Other
+None
+
+
 ## Version 1.1.0
 Released on 25.07.2022
 
