@@ -40,6 +40,7 @@ __all__ = ('clear_handlers',
 
 import os
 import logging
+import warnings
 from logging.handlers import RotatingFileHandler
 from PySide2.QtCore import qInstallMessageHandler
 
@@ -174,12 +175,31 @@ def init_rotating_file_handler(path='', filename='qudi.log', max_bytes=1024**3, 
         _file_handler = None
 
     filepath = os.path.join(path, filename)
-    # Start new file if old logfiles exist
-    do_rollover = os.path.exists(filepath) and os.stat(filepath).st_size > 0
-    _file_handler = RotatingFileHandler(filepath, maxBytes=max_bytes, backupCount=backup_count)
-    _file_handler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s %(name)s %(message)s',
-                                                 datefmt="%Y-%m-%d %H:%M:%S"))
-    _file_handler.setLevel(_qudi_root_logger.level)
-    if do_rollover:
-        _file_handler.doRollover()
-    logging.getLogger().addHandler(_file_handler)
+    session_limit = 1000
+    session_count = 1
+    while session_count <= session_limit:
+        try:
+            # Start new file if old logfiles exist
+            do_rollover = os.path.exists(filepath) and os.stat(filepath).st_size > 0
+            _file_handler = RotatingFileHandler(filepath, maxBytes=max_bytes, backupCount=backup_count)
+            _file_handler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s %(name)s %(message)s',
+                                                         datefmt="%Y-%m-%d %H:%M:%S"))
+            _file_handler.setLevel(_qudi_root_logger.level)
+            if do_rollover:
+                _file_handler.doRollover()
+        except PermissionError:
+            session_count += 1
+            if session_count > session_limit:
+                warnings.warn(f'Unable to initialize logger rotating file handler. OS denied '
+                              f'access to log file or there are more than {session_limit:d} qudi '
+                              f'sessions running.')
+                return
+            split_filename = filename.rsplit('.', 1)
+            if len(split_filename) == 2:
+                new_filename = f'{split_filename[0]}_session{session_count:d}.{split_filename[1]}'
+            else:
+                new_filename = f'{filename}_session{session_count:d}'
+            filepath = os.path.join(path, new_filename)
+        else:
+            logging.getLogger().addHandler(_file_handler)
+            break
