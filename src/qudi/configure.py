@@ -28,29 +28,43 @@ __all__ = ['install', 'uninstall', 'main', 'is_configured']
 
 import os
 import argparse
-from shutil import copy2
+import hashlib
 from qudi.tools.build_resources import build_resources
 from qudi.util.cleanup import clear_appdata, clear_user_data, clear_resources_appdata
-from qudi.util.paths import get_appdata_dir, get_qudi_core_dir
+from qudi.util.paths import get_qudi_core_dir, get_qudi_package_dirs
 from qudi.core.qudikernel import install_kernel, uninstall_kernel
 
 
 def is_configured() -> bool:
-    return os.path.isfile(os.path.join(get_qudi_core_dir(), '.configured'))
+    try:
+        with open(os.path.join(get_qudi_core_dir(), '.configured'), 'r') as fd:
+            configured_resource_hash = fd.read().strip()
+    except OSError:
+        return False
+    return configured_resource_hash == hash_resources()
+
+
+def hash_resources() -> str:
+    checksum = hashlib.md5()
+    for path in get_qudi_package_dirs():
+        resource_path = os.path.join(path, 'resources')
+        if os.path.exists(resource_path) and os.path.isdir(resource_path):
+            for root, dirs, files in os.walk(resource_path):
+                for filename in files:
+                    try:
+                        with open(os.path.join(root, filename), 'rb') as fd:
+                            checksum.update(fd.read())
+                    except OSError:
+                        pass
+    return checksum.hexdigest()
 
 
 def install() -> None:
     # compile resources from all installed qudi addon packages and qudi-core.
-    try:
-        from qudi import __path__ as _qudi_ns_paths
-    except ImportError:
-        _qudi_ns_paths = list()
-    __tmp = [p.lower() for p in _qudi_ns_paths]
-    _qudi_ns_paths = [p for ii, p in enumerate(_qudi_ns_paths) if p.lower() not in __tmp[:ii]]
-
-    core_qudi_path = os.path.abspath(os.path.dirname(__file__))
-    qudi_paths = [p for p in _qudi_ns_paths if p.lower() != core_qudi_path.lower()]
-    qudi_paths.append(core_qudi_path)
+    qudi_paths = get_qudi_package_dirs()
+    qudi_core_path = get_qudi_core_dir()
+    qudi_paths.remove(qudi_core_path)
+    qudi_paths.append(qudi_core_path)
     clear_resources_appdata()
     for path in reversed(qudi_paths):
         resource_root = os.path.join(path, 'resources')
@@ -63,12 +77,15 @@ def install() -> None:
             build_resources(resource_name=resource_name, resource_root=resource_root)
             print(f'> Resources "{resource_name}" built successfully')
 
+    # calculate hash for resources to detect future changes
+    resource_hash = hash_resources()
+
     # Install qudi IPython kernel
     install_kernel()
 
-    # Flag first time setup
-    with open(os.path.join(get_qudi_core_dir(), '.configured'), 'w'):
-        pass
+    # Flag setup complete and store resource hash
+    with open(os.path.join(qudi_core_path, '.configured'), 'w') as fd:
+        fd.write(resource_hash)
 
 
 def uninstall() -> None:

@@ -181,7 +181,10 @@ class Gui(QtCore.QObject):
         """
         try:
             file = QtCore.QFile(stylesheet_path)
-            file.open(QtCore.QIODevice.ReadOnly)
+            if not file.open(QtCore.QIODevice.ReadOnly):
+                file = QtCore.QFile(f':/styles/{stylesheet_path}')
+                if not file.open(QtCore.QIODevice.ReadOnly):
+                    raise RuntimeError(f'Stylesheet resource "{stylesheet_path}" can not be found.')
             try:
                 stylesheet = file.readAll().data().decode('utf-8')
             finally:

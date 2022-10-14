@@ -21,12 +21,13 @@ ToDo: Throw errors around for non-existent directories
 
 __all__ = ['get_appdata_dir', 'get_default_config_dir', 'get_default_log_dir',
            'get_default_data_dir', 'get_daily_directory', 'get_home_dir', 'get_qudi_core_dir',
-           'get_userdata_dir', 'get_resources_dir', 'get_module_app_data_path']
+           'get_userdata_dir', 'get_resources_dir', 'get_module_app_data_path',
+           'get_qudi_package_dirs']
 
 import datetime
 import os
 import sys
-from typing import Optional
+from typing import Optional, List
 
 
 def get_qudi_core_dir() -> str:
@@ -163,3 +164,12 @@ def get_module_app_data_path(cls_name: str, module_base: str, module_name: str) 
     """
     file_name = f'status-{cls_name}_{module_base}_{module_name}.cfg'
     return os.path.join(get_appdata_dir(), file_name)
+
+
+def get_qudi_package_dirs() -> List[str]:
+    try:
+        from qudi import __path__ as _qudi_ns_paths
+    except ImportError:
+        _qudi_ns_paths = list()
+    tmp = [p.lower() for p in _qudi_ns_paths]
+    return [p for ii, p in enumerate(_qudi_ns_paths) if p.lower() not in tmp[:ii]]
