@@ -81,7 +81,7 @@ def get_appdata_dir(create_missing: Optional[bool] = False) -> str:
     if sys.platform == 'win32':
         # resolves to "C:\Documents and Settings\<UserName>\Application Data" on XP and
         # "C:\Users\<UserName>\AppData\Roaming" on win7 and newer
-        path = os.path.join(os.environ['APPDATA'], 'qudi')
+        path = os.path.join(os.environ['LOCALAPPDATA'], 'qudi')
     elif sys.platform == 'darwin':
         path = os.path.abspath(os.path.expanduser('~/Library/Preferences/qudi'))
     else:
