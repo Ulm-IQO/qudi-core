@@ -33,9 +33,6 @@
 # Qt resource collection files
 *.qrc
 
-# is configured indicator file
-/src/qudi/.configured
-
 # pip generated files
 /src/qudi_core.egg-info/
 
