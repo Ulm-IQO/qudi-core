@@ -9,7 +9,9 @@ None
 None
 
 ### New Features
-None
+- Multiple qudi sessions can now be run in parallel locally. However, the user must ensure 
+non-conflicting socket server settings for namespace server and remote module server in the 
+configs to load.
 
 ### Other
 None
