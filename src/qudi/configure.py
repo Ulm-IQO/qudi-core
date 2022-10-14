@@ -24,18 +24,19 @@ You should have received a copy of the GNU Lesser General Public License along w
 If not, see <https://www.gnu.org/licenses/>.
 """
 
-__all__ = ['install', 'uninstall', 'main', 'is_configured']
+__all__ = ['install', 'uninstall', 'main', 'is_configured', 'hash_resources',
+           'hash_compiled_resources']
 
 import os
 import argparse
-import hashlib
-from typing import Optional, Iterable
+from typing import Optional
 
 from qudi.tools.build_resources import build_resources
 from qudi.util.cleanup import clear_appdata, clear_user_data, clear_resources_appdata
 from qudi.util.paths import get_qudi_core_dir, get_qudi_package_dirs, get_resources_dir
 from qudi.core.qudikernel import install_kernel, uninstall_kernel
 from qudi.util.yaml import yaml_dump, yaml_load
+from qudi.util.hashing import hash_directories, hash_files
 
 
 def is_configured() -> bool:
@@ -51,43 +52,10 @@ def is_configured() -> bool:
     return True
 
 
-def hash_directories(root_dirs: Iterable[str], buffer_size: Optional[int] = -1) -> str:
-    checksum = hashlib.md5()
-    for path in root_dirs:
-        for root, dirs, files in os.walk(path):
-            for filename in files:
-                filepath = os.path.join(root, filename)
-                try:
-                    with open(filepath, 'rb') as fd:
-                        while chunk := fd.read(buffer_size):
-                            checksum.update(chunk)
-                    checksum.update(filepath.encode('utf-8'))
-                except OSError:
-                    pass
-    return checksum.hexdigest()
-
-
-def hash_files(files: Iterable[str],
-               buffer_size: Optional[int] = -1,
-               root_dir: Optional[str] = None
-               ) -> str:
-    checksum = hashlib.md5()
-    for path in files:
-        if root_dir:
-            path = os.path.join(root_dir, path)
-        try:
-            with open(path, 'rb') as fd:
-                while chunk := fd.read(buffer_size):
-                    checksum.update(chunk)
-            checksum.update(path.encode('utf-8'))
-        except OSError:
-            pass
-    return checksum.hexdigest()
-
-
 def hash_resources(buffer_size: Optional[int] = -1) -> str:
     resource_dirs = [
-        os.path.join(path, 'resources') for path in get_qudi_package_dirs() if os.path.isdir(path)
+        os.path.join(path, 'resources') for path in get_qudi_package_dirs() if
+        os.path.isdir(os.path.join(path, 'resources'))
     ]
     return hash_directories(resource_dirs, buffer_size)
 
