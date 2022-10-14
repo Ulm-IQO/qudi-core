@@ -30,7 +30,7 @@ from typing import Optional, Union, Any, Tuple, Sequence, List, Dict
 from enum import IntEnum
 
 from PySide2 import QtCore
-from pyqtgraph import ViewBox, SignalProxy, PlotDataItem, ImageItem, PlotCurveItem, ScatterPlotItem
+from pyqtgraph import ViewBox, PlotDataItem, ImageItem, PlotCurveItem, ScatterPlotItem
 from pyqtgraph import LinearRegionItem as _LinearRegionItem
 from pyqtgraph.GraphicsScene.mouseEvents import MouseClickEvent, MouseDragEvent
 from qudi.util.widgets.plotting.marker import Rectangle, InfiniteCrosshairRectangle
@@ -50,8 +50,6 @@ class MouseTrackingMixin:
     x-y-positions emitted will be in real world data coordinates.
     """
 
-    # position (x, y)
-    sigMouseMoved = QtCore.Signal(tuple)
     # start_position (x, y), current_position (x, y), MouseDragEvent
     sigMouseDragged = QtCore.Signal(tuple, tuple, object)
     # position (x, y), MouseClickEvent
@@ -59,21 +57,9 @@ class MouseTrackingMixin:
 
     def __init__(self,
                  allow_tracking_outside_data: Optional[bool] = False,
-                 max_mouse_pos_update_rate: Optional[float] = None,
                  **kwargs) -> None:
         super().__init__(**kwargs)
         self.allow_tracking_outside_data = bool(allow_tracking_outside_data)
-        if max_mouse_pos_update_rate is not None and max_mouse_pos_update_rate > 0.:
-            self._mouse_position_signal_proxy = SignalProxy(
-                signal=self.scene().sigMouseMoved,
-                rateLimit=max_mouse_pos_update_rate,
-                delay=2 / max_mouse_pos_update_rate,  # Must be larger than 1/rateLimit
-                slot=self.__mouse_moved
-            )
-
-    def __mouse_moved(self, args) -> None:
-        pos = self.mapSceneToView(args[0])
-        self.sigMouseMoved.emit((pos.x(), pos.y()))
 
     def mouseClickEvent(self, ev: MouseClickEvent) -> None:
         if self.allow_tracking_outside_data or self.pointer_on_data(ev.scenePos()):
@@ -91,9 +77,11 @@ class MouseTrackingMixin:
             super().mouseDragEvent(ev, axis)
 
     def pointer_on_data(self, scene_pos: QtCore.QPointF) -> bool:
-        for item in self.scene().items(scene_pos):
-            if isinstance(item, (PlotDataItem, ImageItem, PlotCurveItem, ScatterPlotItem)):
-                return True
+        scene = self.scene()
+        if scene is not None:
+            for item in scene.items(scene_pos):
+                if isinstance(item, (PlotDataItem, ImageItem, PlotCurveItem, ScatterPlotItem)):
+                    return True
         return False
 
 
