@@ -133,7 +133,7 @@ class Configuration(_FileHandlerBase,
             1. Use "file_path" property if it is not None
             2. Use file path saved in AppData from previous qudi session
             3. Use existing "default.cfg" file in "<UserHome>/qudi/config/"
-            4. Use existing "default.cfg" file in "<AppData>/qudi/"
+            4. Use existing "default.cfg" file in the Qt resource system
         This instance is only reset on successful JSON schema validation of the loaded config.
         Will set the "file_path" property accordingly on success.
 

@@ -29,34 +29,73 @@ __all__ = ['install', 'uninstall', 'main', 'is_configured']
 import os
 import argparse
 import hashlib
+from typing import Optional, Iterable
+
 from qudi.tools.build_resources import build_resources
 from qudi.util.cleanup import clear_appdata, clear_user_data, clear_resources_appdata
-from qudi.util.paths import get_qudi_core_dir, get_qudi_package_dirs
+from qudi.util.paths import get_qudi_core_dir, get_qudi_package_dirs, get_resources_dir
 from qudi.core.qudikernel import install_kernel, uninstall_kernel
+from qudi.util.yaml import yaml_dump, yaml_load
 
 
 def is_configured() -> bool:
     try:
-        with open(os.path.join(get_qudi_core_dir(), '.configured'), 'r') as fd:
-            configured_resource_hash = fd.read().strip()
+        resource_hashes = yaml_load(os.path.join(get_resources_dir(), '.checksum'))
     except OSError:
         return False
-    return configured_resource_hash == hash_resources()
+    buf_size = 16 * 1024 * 1024
+    if resource_hashes.get('source', None) != hash_resources(buf_size):
+        return False
+    if resource_hashes.get('compiled', None) != hash_compiled_resources(buf_size):
+        return False
+    return True
 
 
-def hash_resources() -> str:
+def hash_directories(root_dirs: Iterable[str], buffer_size: Optional[int] = -1) -> str:
     checksum = hashlib.md5()
-    for path in get_qudi_package_dirs():
-        resource_path = os.path.join(path, 'resources')
-        if os.path.exists(resource_path) and os.path.isdir(resource_path):
-            for root, dirs, files in os.walk(resource_path):
-                for filename in files:
-                    try:
-                        with open(os.path.join(root, filename), 'rb') as fd:
-                            checksum.update(fd.read())
-                    except OSError:
-                        pass
+    for path in root_dirs:
+        for root, dirs, files in os.walk(path):
+            for filename in files:
+                filepath = os.path.join(root, filename)
+                try:
+                    with open(filepath, 'rb') as fd:
+                        while chunk := fd.read(buffer_size):
+                            checksum.update(chunk)
+                    checksum.update(filepath.encode('utf-8'))
+                except OSError:
+                    pass
     return checksum.hexdigest()
+
+
+def hash_files(files: Iterable[str],
+               buffer_size: Optional[int] = -1,
+               root_dir: Optional[str] = None
+               ) -> str:
+    checksum = hashlib.md5()
+    for path in files:
+        if root_dir:
+            path = os.path.join(root_dir, path)
+        try:
+            with open(path, 'rb') as fd:
+                while chunk := fd.read(buffer_size):
+                    checksum.update(chunk)
+            checksum.update(path.encode('utf-8'))
+        except OSError:
+            pass
+    return checksum.hexdigest()
+
+
+def hash_resources(buffer_size: Optional[int] = -1) -> str:
+    resource_dirs = [
+        os.path.join(path, 'resources') for path in get_qudi_package_dirs() if os.path.isdir(path)
+    ]
+    return hash_directories(resource_dirs, buffer_size)
+
+
+def hash_compiled_resources(buffer_size: Optional[int] = -1) -> str:
+    return hash_files((f for f in os.listdir(get_resources_dir()) if f.endswith('_rc.py')),
+                      buffer_size,
+                      get_resources_dir())
 
 
 def install() -> None:
@@ -77,15 +116,14 @@ def install() -> None:
             build_resources(resource_name=resource_name, resource_root=resource_root)
             print(f'> Resources "{resource_name}" built successfully')
 
-    # calculate hash for resources to detect future changes
-    resource_hash = hash_resources()
+    # resource setup complete
+    # calculate hashes for resources to detect future changes
+    resource_hashes = {'source': hash_resources(16 * 1024 * 1024),
+                       'compiled': hash_compiled_resources(16 * 1024 * 1024)}
+    yaml_dump(os.path.join(get_resources_dir(create_missing=True), '.checksum'), resource_hashes)
 
     # Install qudi IPython kernel
     install_kernel()
-
-    # Flag setup complete and store resource hash
-    with open(os.path.join(qudi_core_path, '.configured'), 'w') as fd:
-        fd.write(resource_hash)
 
 
 def uninstall() -> None:
@@ -94,7 +132,7 @@ def uninstall() -> None:
     clear_appdata()
     print(f'> qudi AppData deleted')
     try:
-        os.remove(os.path.join(get_qudi_core_dir(), '.configured'))
+        os.remove(os.path.join(get_resources_dir(), '.checksum'))
     except OSError:
         pass
 

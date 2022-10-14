@@ -132,6 +132,10 @@ class ResourceCompiler:
             except OSError:
                 pass
             raise
+        try:
+            os.remove(qrc_path)
+        except OSError:
+            pass
         return rcc_path
 
     def _compile_qrc(self) -> str:

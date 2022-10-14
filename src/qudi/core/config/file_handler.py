@@ -25,11 +25,12 @@ __all__ = ['FileHandler', 'FileHandlerBase', 'ParserError', 'ValidationError', '
 
 
 import os
+from io import StringIO
 from typing import Any, Dict, Mapping
-from PySide2.QtCore import QFile
+from PySide2.QtCore import QFile, QIODevice
 
 from qudi.util.paths import get_default_config_dir, get_appdata_dir
-from qudi.util.yaml import yaml_dump, yaml_load, ParserError, YAMLError, DuplicateKeyError
+from qudi.util.yaml import yaml_dump, yaml_load, YAML, ParserError, YAMLError, DuplicateKeyError
 
 from .validator import validate_config, ValidationError
 
@@ -40,7 +41,18 @@ class FileHandlerBase:
 
     @classmethod
     def _load(cls, path: str) -> Dict[str, Any]:
-        return yaml_load(cls._relative_to_absolute_path(path))
+        abs_path = cls._relative_to_absolute_path(path)
+        try:
+            return yaml_load(abs_path)
+        except OSError:
+            file = QFile(abs_path)
+            if not file.open(QIODevice.ReadOnly):
+                raise FileNotFoundError(
+                    f'Unable to load configuration file "{path}" from file system or Qt resource '
+                    f'system'
+                )
+            stream = StringIO(file.readAll().data().decode('utf-8'))
+            return YAML().load(stream)
 
     @classmethod
     def _dump(cls, path: str, config: Mapping[str, Any]) -> None:
@@ -123,9 +135,9 @@ class FileHandlerBase:
             if os.path.exists(new_path):
                 return new_path
         # try also Qt resource root as last resort
-        new_path = f':{path}'.replace('\\', '/')
+        new_path = f':/{path}'.replace('\\', '/')
         if QFile.exists(new_path):
-            return
+            return new_path
 
         # Raise exception if no existing path can be determined
         raise FileNotFoundError(

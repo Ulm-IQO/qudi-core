@@ -60,6 +60,11 @@ def clear_resources_appdata():
                     except OSError:
                         pass
             break
+        # Remove .checksum
+        try:
+            os.remove(os.path.join(resources_dir, '.checksum'))
+        except OSError:
+            pass
         # Remove __pycache__
         try:
             rmtree(os.path.join(resources_dir, '__pycache__'))

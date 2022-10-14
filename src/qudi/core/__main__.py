@@ -48,5 +48,8 @@ parser.add_argument(
 )
 args = parser.parse_args()
 
-app = Qudi(no_gui=args.no_gui, debug=args.debug, log_dir=args.logdir, config_file=args.config)
+app = Qudi(no_gui=args.no_gui,
+           debug=args.debug,
+           log_dir=args.logdir,
+           config_file=args.config if args.config else None)
 app.run()

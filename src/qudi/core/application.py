@@ -130,6 +130,9 @@ class Qudi(QtCore.QObject):
         self.log = get_logger(__class__.__name__)  # will be "qudi.Qudi" in custom logger
         sys.excepthook = self._qudi_excepthook
 
+        # initialize Qt resources
+        init_resources()
+
         # Load configuration from disc if possible
         self.configuration = Configuration()
         try:
@@ -315,9 +318,6 @@ class Qudi(QtCore.QObject):
 
             # Install app watchdog
             self.watchdog = AppWatchdog(self.interrupt_quit)
-
-            # initialize Qt resources
-            init_resources()
 
             # Start module servers
             if self.remote_modules_server is not None:
