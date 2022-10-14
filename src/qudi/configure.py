@@ -93,11 +93,15 @@ def install() -> None:
     install_kernel()
 
 
-def uninstall() -> None:
+def uninstall(userdata: Optional[bool] = False) -> None:
     uninstall_kernel()
     print(f'> Deleting qudi AppData ...')
     clear_appdata()
     print(f'> qudi AppData deleted')
+    if userdata:
+        print(f'> Cleaning up qudi userdata ...')
+        clear_user_data()
+        print(f'> qudi userdata cleaned up')
     try:
         os.remove(os.path.join(get_resources_dir(), '.checksum'))
     except OSError:
@@ -121,11 +125,7 @@ def main() -> None:
     args = parser.parse_args()
     if args.uninstall:
         print('> Cleaning up qudi...')
-        uninstall()
-        if args.userdata:
-            print(f'> Deleting qudi user data...')
-            clear_user_data()
-            print(f'> qudi user data deleted')
+        uninstall(args.userdata)
         print('> qudi cleanup complete')
     else:
         print('> Setting up qudi...')
