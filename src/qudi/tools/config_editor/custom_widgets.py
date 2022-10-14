@@ -22,11 +22,8 @@ If not, see <https://www.gnu.org/licenses/>.
 
 __all__ = ['CustomItemsWidget', 'CustomOptionsWidget', 'CustomConnectorsWidget']
 
-import os
 from PySide2 import QtCore, QtWidgets, QtGui
 from typing import Optional, Mapping, Union, Dict, Iterable, Any
-
-from qudi.util.paths import get_artwork_dir
 
 
 class CustomItemsWidget(QtWidgets.QWidget):
@@ -48,16 +45,15 @@ class CustomItemsWidget(QtWidgets.QWidget):
         layout.setColumnStretch(2, 1)
         self.setLayout(layout)
 
-        icons_dir = os.path.join(get_artwork_dir(), 'icons')
         self.add_item_button = QtWidgets.QToolButton()
-        self.add_item_button.setIcon(QtGui.QIcon(os.path.join(icons_dir, 'list-add')))
+        self.add_item_button.setIcon(QtGui.QIcon(':/icons/list-add'))
         self.add_item_button.clicked.connect(self._add_item_clicked)
         self.item_name_lineedit = QtWidgets.QLineEdit()
         layout.addWidget(self.add_item_button, 0, 0, 1, 1)
         layout.addWidget(self.item_name_lineedit, 0, 1, 1, 2)
 
         # Remove icons reused for each custom item
-        self._remove_icon = QtGui.QIcon(os.path.join(icons_dir, 'list-remove'))
+        self._remove_icon = QtGui.QIcon(':/icons/list-remove')
         # Keep track of custom item widgets
         self._item_widgets = dict()
 

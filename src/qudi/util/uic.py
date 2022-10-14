@@ -104,7 +104,7 @@ def loadUi(file_path, base_widget):
 
 def _convert_ui_to_absolute_paths(file_path):
     """ Converts the .ui file in order to change all relative path declarations containing the
-    keyword "/artwork/" into absolute paths pointing to the qudi artwork data directory.
+    keyword "/artwork/" into absolute paths pointing to the qudi QResource system root ":/".
 
     @param str file_path: The path to the .ui file to convert
     @return str|NoneType: Converted file content of the .ui file, None if conversion is not needed

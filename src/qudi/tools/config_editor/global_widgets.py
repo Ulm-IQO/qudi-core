@@ -240,7 +240,7 @@ class GlobalOptionsWidget(QtWidgets.QWidget):
         self.stylesheet_lineedit.setPlaceholderText('Platform dependent Qt default')
         self.stylesheet_lineedit.setToolTip(
             'File path for qudi QSS stylesheet to use.\nIf just a file name is given, the file '
-            'must be found in the qudi artwork resources.'
+            'must be found in the qudi QResource system under ":/styles/".'
         )
         layout.addWidget(label, 8, 0)
         layout.addWidget(self.stylesheet_lineedit, 8, 1)
