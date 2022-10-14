@@ -93,7 +93,8 @@ class FileHandlerBase:
         """ Tries to find config file named "default.cfg" in several locations with the following,
         non-recursive search directory priority:
             1. <UserHome>/qudi/config/
-            2. <AppData>/qudi/
+            2. Qt resource system root ":/default.cfg"
+
 
         Raises FileNotFoundError if no "default.cfg" file could be found in the above locations.
         """
@@ -102,9 +103,9 @@ class FileHandlerBase:
         if os.path.exists(file_path):
             return file_path
 
-        # Fall back to default.cfg in qudi AppData directory if possible
-        file_path = os.path.join(get_appdata_dir(create_missing=False), 'default.cfg')
-        if os.path.exists(file_path):
+        # Fall back to default.cfg in Qt resource system
+        file_path = ':/default.cfg'
+        if QFile.exists(file_path):
             return file_path
 
         # Raise error if no config file could be found
@@ -117,7 +118,7 @@ class FileHandlerBase:
         been created:
             1. <UserHome>/qudi/config/
             2. <AppData>/qudi/
-            3. Qt resource system path root (:)
+            3. Qt resource system path root ":/"
 
         Raises FileNotFoundError if no existing path could be reconstructed by the above algorithm.
         """

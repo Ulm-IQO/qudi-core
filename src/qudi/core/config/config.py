@@ -140,7 +140,9 @@ class Configuration(_FileHandlerBase,
         If optional "set_default" flag is set, write the new file_path to "<AppData>/qudi/load.cfg"
         to be the new default config at the next start of qudi.
         """
-        file_path = self._file_path if file_path is None else file_path
+        if file_path is None:
+            set_default = False
+            file_path = self._file_path
         # Try to restore last loaded config file path if possible
         if file_path is None:
             try:

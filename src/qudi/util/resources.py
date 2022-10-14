@@ -35,13 +35,13 @@ from qudi.util.paths import get_resources_dir
 
 def init_resources():
     resource_root = get_resources_dir(create_missing=True)
-    resource_modules = [
+    resource_modules = sorted(
         f.rsplit('.', 1)[0] for f in os.listdir(resource_root) if f.endswith('_rc.py')
-    ]
+    )
     if resource_modules:
         if resource_root not in sys.path:
             sys.path.append(resource_root)
-        for mod in resource_modules:
+        for mod in reversed(resource_modules):
             importlib.import_module(mod)
 
 

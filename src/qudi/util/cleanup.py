@@ -21,7 +21,7 @@ If not, see <https://www.gnu.org/licenses/>.
 """
 
 __all__ = ['clear_appdata', 'clear_modules_appdata', 'clear_resources_appdata', 'clear_load_config',
-           'clear_default_config', 'clear_user_data', 'clear_config_files', 'clear_log_files']
+           'clear_user_data', 'clear_config_files', 'clear_log_files']
 
 import os
 import re
@@ -85,18 +85,10 @@ def clear_load_config():
         pass
 
 
-def clear_default_config():
-    default_config_path = os.path.join(get_appdata_dir(), 'default.cfg')
-    try:
-        os.remove(default_config_path)
-    except OSError:
-        pass
-
-
 def clear_log_files():
     log_dir = get_default_log_dir()
     if os.path.isdir(log_dir):
-        log_regex = re.compile(r'\Aqudi\.log(\.\d)?\Z')
+        log_regex = re.compile(r'\Aqudi(_session\d+)?\.log(\.\d)?\Z')
         for path in [os.path.join(log_dir, f) for f in os.listdir(log_dir) if log_regex.match(f)]:
             try:
                 os.remove(path)
@@ -136,7 +128,6 @@ def clear_appdata():
     clear_resources_appdata()
     clear_modules_appdata()
     clear_load_config()
-    clear_default_config()
     # remove appdata directory if empty
     try:
         os.rmdir(get_appdata_dir())
