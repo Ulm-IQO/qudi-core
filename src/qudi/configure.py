@@ -32,7 +32,8 @@ import argparse
 from typing import Optional
 
 from qudi.tools.build_resources import build_resources
-from qudi.util.cleanup import clear_appdata, clear_user_data, clear_resources_appdata
+from qudi.util.cleanup import clear_appdata, clear_resources_appdata
+from qudi.util.cleanup import clear_user_data, clear_log_files
 from qudi.util.paths import get_qudi_core_dir, get_qudi_package_dirs, get_resources_dir
 from qudi.core.qudikernel import install_kernel, uninstall_kernel
 from qudi.util.yaml import yaml_dump, yaml_load
@@ -99,9 +100,13 @@ def uninstall(userdata: Optional[bool] = False) -> None:
     clear_appdata()
     print(f'> qudi AppData deleted')
     if userdata:
-        print(f'> Cleaning up qudi userdata ...')
+        print(f'> Deleting qudi userdata ...')
         clear_user_data()
-        print(f'> qudi userdata cleaned up')
+        print(f'> qudi userdata deleted')
+    else:
+        print(f'> Deleting qudi logs ...')
+        clear_log_files()
+        print(f'> qudi logs deleted')
     try:
         os.remove(os.path.join(get_resources_dir(), '.checksum'))
     except OSError:
