@@ -46,11 +46,11 @@ def init_resources():
 
 
 def print_resource_tree(root=':/', level=0):
-    tabs = '\t' * level
+    ident = '  ' * level
     it = QDirIterator(root)
     while it.hasNext():
         item = it.next()
-        print(f'{tabs}{item}')
+        print(f'{ident}{item}')
         print_resource_tree(item, level=level+1)
 
 

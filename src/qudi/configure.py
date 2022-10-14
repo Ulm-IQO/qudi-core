@@ -54,7 +54,7 @@ def install() -> None:
     clear_resources_appdata()
     for path in reversed(qudi_paths):
         resource_root = os.path.join(path, 'resources')
-        if os.path.exists(resource_root):
+        if os.path.exists(resource_root) and os.path.isdir(resource_root):
             remainder, resource_name = os.path.split(os.path.dirname(path))
             # in case of development install, split the name even further
             if resource_name == 'src':
