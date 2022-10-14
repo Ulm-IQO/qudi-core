@@ -26,12 +26,12 @@ __all__ = ['clear_appdata', 'clear_modules_appdata', 'clear_resources_appdata', 
 import os
 import re
 from shutil import rmtree
-from qudi.util.paths import get_resources_dir, get_appdata_dir, get_userdata_dir
-from qudi.util.paths import get_default_config_dir, get_default_log_dir
+from qudi.util.paths import get_resources_dir, get_user_appdata_dir, get_global_appdata_dir
+from qudi.util.paths import get_default_config_dir, get_default_log_dir, get_userdata_dir
 
 
 def clear_modules_appdata():
-    appdata_dir = get_appdata_dir()
+    appdata_dir = get_user_appdata_dir()
     if os.path.exists(appdata_dir):
         # delete qudi modules appdata, i.e. StatusVars
         status_regex = re.compile(
@@ -78,7 +78,7 @@ def clear_resources_appdata():
 
 
 def clear_load_config():
-    load_config_path = os.path.join(get_appdata_dir(), 'load.cfg')
+    load_config_path = os.path.join(get_user_appdata_dir(), 'load.cfg')
     try:
         os.remove(load_config_path)
     except OSError:
@@ -128,8 +128,12 @@ def clear_appdata():
     clear_resources_appdata()
     clear_modules_appdata()
     clear_load_config()
-    # remove appdata directory if empty
+    # remove appdata directories if empty
     try:
-        os.rmdir(get_appdata_dir())
+        os.rmdir(get_user_appdata_dir())
+    except OSError:
+        pass
+    try:
+        os.rmdir(get_global_appdata_dir())
     except OSError:
         pass

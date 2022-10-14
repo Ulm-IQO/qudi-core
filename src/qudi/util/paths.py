@@ -19,9 +19,9 @@ If not, see <https://www.gnu.org/licenses/>.
 ToDo: Throw errors around for non-existent directories
 """
 
-__all__ = ['get_appdata_dir', 'get_default_config_dir', 'get_default_log_dir',
-           'get_default_data_dir', 'get_daily_directory', 'get_home_dir', 'get_qudi_core_dir',
-           'get_userdata_dir', 'get_resources_dir', 'get_module_app_data_path',
+__all__ = ['get_user_appdata_dir', 'get_global_appdata_dir', 'get_default_config_dir',
+           'get_default_log_dir', 'get_default_data_dir', 'get_daily_directory', 'get_home_dir',
+           'get_qudi_core_dir', 'get_userdata_dir', 'get_resources_dir', 'get_module_app_data_path',
            'get_qudi_package_dirs']
 
 import datetime
@@ -40,12 +40,12 @@ def get_qudi_core_dir() -> str:
 
 
 def get_resources_dir(create_missing: Optional[bool] = False) -> str:
-    """ Returns the absolute path to the qudi resources directory. Usually a sub-directory of the
-    appdata directory (see: get_appdata_dir)
+    """ Returns the absolute path to the qudi resources directory. Usually a subdirectory of the
+    appdata directory (see: get_global_appdata_dir)
 
     @return string: path to the resources directory of qudi
     """
-    path = os.path.join(get_appdata_dir(create_missing=create_missing), 'resources')
+    path = os.path.join(get_global_appdata_dir(create_missing=create_missing), 'resources')
     if create_missing and not os.path.exists(path):
         os.mkdir(path)
     return path
@@ -73,15 +73,27 @@ def get_userdata_dir(create_missing: Optional[bool] = False) -> str:
     return path
 
 
-def get_appdata_dir(create_missing: Optional[bool] = False) -> str:
-    """ Get the system specific application data directory.
-
-    @return str: path to appdata directory
-    """
+def get_user_appdata_dir(create_missing: Optional[bool] = False) -> str:
+    """ Get the user specific application data directory """
     if sys.platform == 'win32':
-        # resolves to "C:\Documents and Settings\<UserName>\Application Data" on XP and
-        # "C:\Users\<UserName>\AppData\Roaming" on win7 and newer
+        # resolves to "C:\Users\<UserName>\AppData\Local" on win7 and newer
         path = os.path.join(os.environ['LOCALAPPDATA'], 'qudi')
+    elif sys.platform == 'darwin':
+        path = os.path.abspath(os.path.expanduser('~/Library/Preferences/qudi'))
+    else:
+        path = os.path.abspath(os.path.expanduser('~/.local/qudi'))
+
+    # Create path if desired.
+    if create_missing and not os.path.exists(path):
+        os.makedirs(path)
+    return path
+
+
+def get_global_appdata_dir(create_missing: Optional[bool] = False) -> str:
+    """ Get the user specific application data directory """
+    if sys.platform == 'win32':
+        # resolves to "C:\Users\<UserName>\AppData\Roaming" on win7 and newer
+        path = os.path.join(os.environ['APPDATA'], 'qudi')
     elif sys.platform == 'darwin':
         path = os.path.abspath(os.path.expanduser('~/Library/Preferences/qudi'))
     else:
@@ -163,7 +175,7 @@ def get_module_app_data_path(cls_name: str, module_base: str, module_name: str) 
     """ Constructs the appData file path for the given qudi module
     """
     file_name = f'status-{cls_name}_{module_base}_{module_name}.cfg'
-    return os.path.join(get_appdata_dir(), file_name)
+    return os.path.join(get_user_appdata_dir(), file_name)
 
 
 def get_qudi_package_dirs() -> List[str]:
