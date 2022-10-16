@@ -28,6 +28,7 @@ import re
 from shutil import rmtree
 from qudi.util.paths import get_resources_dir, get_user_appdata_dir, get_global_appdata_dir
 from qudi.util.paths import get_default_config_dir, get_default_log_dir, get_userdata_dir
+from qudi.util.paths import get_qudi_package_dirs
 
 
 def clear_modules_appdata():
@@ -73,6 +74,19 @@ def clear_resources_appdata():
         # Remove resources directory if empty
         try:
             os.rmdir(resources_dir)
+        except OSError:
+            pass
+
+    # Also clean up all generated .qrc resource files from qudi source folders
+    for qudi_dir in get_qudi_package_dirs():
+        resources_dir = os.path.join(qudi_dir, 'resources')
+        try:
+            for filename in os.listdir(resources_dir):
+                if filename.endswith('.qrc'):
+                    try:
+                        os.remove(os.path.join(resources_dir, filename))
+                    except OSError:
+                        pass
         except OSError:
             pass
 

@@ -29,14 +29,11 @@ If not, see <https://www.gnu.org/licenses/>.
 
 __all__ = ['loadUi']
 
-import os
 import re
-import tempfile
 import subprocess
 from importlib.util import spec_from_loader, module_from_spec
 
 __ui_class_pattern = re.compile(r'class (Ui_.*?)\(')
-__artwork_path_pattern = re.compile(r'>(.*?/artwork/.*?)</')
 
 
 def loadUi(file_path, base_widget):
@@ -51,29 +48,12 @@ def loadUi(file_path, base_widget):
     @param str file_path: The full path to the .ui-file to load
     @param object base_widget: Instance of the base widget represented by the .ui-file
     """
-    # This step is a workaround because Qt Designer will only specify relative paths which is very
-    # error prone if the user changes the cwd (e.g. os.chdir)
-    converted = _convert_ui_to_absolute_paths(file_path)
-
-    # Compile (converted) .ui-file into python code
-    # If file needed conversion, write temporary file to be used in subprocess
-    if converted is not None:
-        fd, file_path = tempfile.mkstemp(text=True)
-        try:
-            with open(fd, mode='w', closefd=True) as tmp_file:
-                tmp_file.write(converted)
-        except:
-            os.remove(file_path)
-            raise
-    try:
-        result = subprocess.run(['pyside2-uic', file_path],
-                                capture_output=True,
-                                text=True,
-                                check=True)
-        compiled = result.stdout
-    finally:
-        if converted is not None:
-            os.remove(file_path)
+    # Compile .ui-file into python code
+    result = subprocess.run(['pyside2-uic', file_path],
+                            capture_output=True,
+                            text=True,
+                            check=True)
+    compiled = result.stdout
 
     # Find class name
     match = __ui_class_pattern.search(compiled)
@@ -100,26 +80,3 @@ def loadUi(file_path, base_widget):
     for key in ignore:
         del to_merge[key]
     base_widget.__dict__.update(to_merge)
-
-
-def _convert_ui_to_absolute_paths(file_path):
-    """ Converts the .ui file in order to change all relative path declarations containing the
-    keyword "/artwork/" into absolute paths pointing to the qudi QResource system root ":/".
-
-    @param str file_path: The path to the .ui file to convert
-    @return str|NoneType: Converted file content of the .ui file, None if conversion is not needed
-    """
-    path_prefix = ':/'
-    with open(file_path, 'r') as file:
-        ui_content = file.read()
-    chunks = __artwork_path_pattern.split(ui_content)
-    # Iterate over odd indices. Remember if changes were needed
-    has_changed = False
-    for ii in range(1, len(chunks), 2):
-        path_suffix = chunks[ii].split('/artwork/', 1)[-1]
-        chunks[ii] = '>{0}</'.format(os.path.join(path_prefix, path_suffix).replace('\\', '/'))
-        has_changed = True
-    # Join into single string and return if something has changed
-    if has_changed:
-        return ''.join(chunks)
-    return None

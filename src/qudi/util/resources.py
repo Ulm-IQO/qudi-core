@@ -27,10 +27,10 @@ import sys
 import importlib
 import subprocess
 from PySide2.QtCore import QDirIterator
-from typing import Optional, Sequence, List, Union
+from typing import Optional, Sequence, List, Union, Dict, Tuple
 
 
-from qudi.util.paths import get_resources_dir
+from qudi.util.paths import get_resources_dir, get_qudi_package_dirs
 
 
 def init_resources():
@@ -41,8 +41,18 @@ def init_resources():
     if resource_modules:
         if resource_root not in sys.path:
             sys.path.append(resource_root)
-        for mod in reversed(resource_modules):
-            importlib.import_module(mod)
+        for path in reversed(get_qudi_package_dirs()):
+            resource_root = os.path.join(path, 'resources')
+            rcc_module_name = ''
+            try:
+                for filename in os.listdir(resource_root):
+                    if filename.endswith('.qrc'):
+                        rcc_module_name = filename.rsplit('.qrc', 1)[0] + '_rc'
+                        break
+            except OSError:
+                pass
+            if rcc_module_name in resource_modules:
+                importlib.import_module(rcc_module_name)
 
 
 def print_resource_tree(root=':/', level=0):
@@ -67,37 +77,25 @@ class ResourceCompiler:
         self.resource_name = '_'.join(resource_name.replace('-', '_').split())
         self.qrc_filename = f'{self.resource_name}.qrc'
         self.rcc_filename = f'{self.resource_name}_rc.py'
-        self.resource_paths = list()
+        self.resource_paths = dict()
         self._qrc_written = os.path.exists(os.path.join(self.resource_root, self.qrc_filename))
-
-    def find_svg_paths(self, include_subdirs: Optional[bool] = True) -> List[str]:
-        return self.find_resource_paths(file_endings=['.svg', '.svgz'],
-                                        include_subdirs=include_subdirs)
-
-    def find_qss_paths(self, include_subdirs: Optional[bool] = True) -> List[str]:
-        return self.find_resource_paths(file_endings=['.qss'], include_subdirs=include_subdirs)
-
-    def find_png_paths(self, include_subdirs: Optional[bool] = True) -> List[str]:
-        return self.find_resource_paths(file_endings=['.png'], include_subdirs=include_subdirs)
-
-    def find_cfg_paths(self, include_subdirs: Optional[bool] = True) -> List[str]:
-        return self.find_resource_paths(file_endings=['.cfg'], include_subdirs=include_subdirs)
 
     def find_resource_paths(self,
                             file_endings: Union[str, Sequence[str]],
-                            include_subdirs: Optional[bool] = True) -> List[str]:
+                            include_subdirs: Optional[bool] = True
+                            ) -> Dict[str, List[Tuple[str, str]]]:
         if not isinstance(file_endings, str):
             file_endings = tuple(file_endings)
-        resources = list()
+        resources = dict()
         for root, dirs, files in os.walk(self.resource_root):
-            prefix = os.path.relpath(root, self.resource_root).strip('.')
-            resources.extend(
-                os.path.join(prefix, f).replace('\\', '/') for f in files if
+            prefix = os.path.relpath(root, self.resource_root).strip('.').replace('\\', '/')
+            resources[prefix] = list(
+                (f, os.path.join(root, f).replace('\\', '/')) for f in files if
                 f.endswith(file_endings) and f != self.qrc_filename
             )
             if not include_subdirs:
                 break
-        self.resource_paths.extend(resources)
+        self.resource_paths.update(resources)
         if resources:
             self._qrc_written = False
         return resources
@@ -119,7 +117,7 @@ class ResourceCompiler:
 
     def write_rcc_file(self) -> str:
         rcc_path = os.path.join(get_resources_dir(create_missing=True), self.rcc_filename)
-        qrc_path = os.path.join(self.resource_root, f'{self.resource_name}.qrc')
+        qrc_path = os.path.join(self.resource_root, self.qrc_filename)
         if not self._qrc_written:
             qrc_path = self.write_qrc_file()
         try:
@@ -132,18 +130,17 @@ class ResourceCompiler:
             except OSError:
                 pass
             raise
-        try:
-            os.remove(qrc_path)
-        except OSError:
-            pass
         return rcc_path
 
     def _compile_qrc(self) -> str:
         qrc_lines = ['<!DOCTYPE RCC><RCC version="1.0">']
-        resource_paths = set(self.resource_paths)
-        if resource_paths:
-            qrc_lines.append(f'<qresource>')
-            qrc_lines.extend(f'\t<file>{p}</file>' for p in resource_paths)
-            qrc_lines.append('</qresource>')
+        for prefix, alias_path_list in self.resource_paths.items():
+            if alias_path_list:
+                if prefix:
+                    qrc_lines.append(f'<qresource prefix="/{prefix}">')
+                else:
+                    qrc_lines.append('<qresource>')
+                qrc_lines.extend(f'\t<file alias="{a}">{p}</file>' for a, p in alias_path_list)
+                qrc_lines.append('</qresource>')
         qrc_lines.append('</RCC>')
         return '\n'.join(qrc_lines)

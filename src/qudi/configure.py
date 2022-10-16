@@ -68,12 +68,11 @@ def hash_compiled_resources(buffer_size: Optional[int] = -1) -> str:
 
 
 def install() -> None:
-    # compile resources from all installed qudi addon packages and qudi-core.
-    qudi_paths = [get_qudi_core_dir()]
-    tmp = qudi_paths[0].lower()
-    qudi_paths.extend(path for path in get_qudi_package_dirs() if path.lower() != tmp)
+    # clear all old resources
     clear_resources_appdata()
-    for ii, path in enumerate(qudi_paths):
+
+    # compile resources from all installed qudi addon packages and qudi-core.
+    for ii, path in enumerate(get_qudi_package_dirs()):
         resource_root = os.path.join(path, 'resources')
         if os.path.exists(resource_root) and os.path.isdir(resource_root):
             remainder, resource_name = os.path.split(os.path.dirname(path))
@@ -81,7 +80,7 @@ def install() -> None:
             if resource_name == 'src':
                 resource_name = os.path.split(remainder)[-1]
             print(f'> Building resources for "{resource_name}" for qudi from {resource_root} ...')
-            build_resources(resource_name=f'{ii:d}_{resource_name}', resource_root=resource_root)
+            build_resources(resource_name=resource_name, resource_root=resource_root)
             print(f'> Resources for "{resource_name}" built successfully')
 
     # resource setup complete

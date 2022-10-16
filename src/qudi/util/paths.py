@@ -144,8 +144,10 @@ def get_default_data_dir(create_missing: Optional[bool] = False) -> str:
     return path
 
 
-def get_daily_directory(timestamp: Optional[datetime.datetime] = None, root: Optional[str] = None,
-                        create_missing: Optional[bool] = False) -> str:
+def get_daily_directory(timestamp: Optional[datetime.datetime] = None,
+                        root: Optional[str] = None,
+                        create_missing: Optional[bool] = False
+                        ) -> str:
     """ Returns a path tree according to the timestamp given.
 
     The directory structure will have the form: root/<YYYY>/<MM>/<YYYY-MM-DD>
@@ -184,4 +186,11 @@ def get_qudi_package_dirs() -> List[str]:
     except ImportError:
         _qudi_ns_paths = list()
     tmp = [p.lower() for p in _qudi_ns_paths]
-    return [p for ii, p in enumerate(_qudi_ns_paths) if p.lower() not in tmp[:ii]]
+    directories = [p for ii, p in enumerate(_qudi_ns_paths) if p.lower() not in tmp[:ii]]
+    try:
+        core_dir = get_qudi_core_dir()
+        directories.remove(core_dir)
+        directories = [core_dir, *directories]
+    except ValueError:
+        pass
+    return directories
