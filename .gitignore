@@ -31,8 +31,8 @@
 *.log.*
 
 # Qt resource collection files
-*.qrc
+/src/qudi/resources/*.qrc
+/qudi/resources/*.qrc
 
 # pip generated files
 /src/qudi_core.egg-info/
-
