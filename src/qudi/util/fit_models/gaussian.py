@@ -28,6 +28,8 @@ from qudi.util.fit_models.helpers import correct_offset_histogram, smooth_data, 
 from qudi.util.fit_models.helpers import estimate_double_peaks, estimate_triple_peaks
 from qudi.util.fit_models.linear import Linear
 
+from qudi.core.logger import get_logger
+logger = get_logger(__name__)
 
 def multiple_gaussian(x, centers, sigmas, amplitudes):
     """ Mathematical definition of the sum of multiple gaussian functions without any bias.
@@ -351,8 +353,11 @@ class Gaussian2D(FitModelBase):
     @estimator('Peak')
     def estimate_peak(self, data, xy):
         # ToDo: Not properly implemented, yet
+        logger.info(f'have a look at the input: {xy[0]}')
         stepsize_x = xy[0][1,0] - xy[0][0,0]
-        stepsize_y = xy[0][0,1] - xy[0][0,0]
+        stepsize_y = xy[1][0,1] - xy[1][0,0]
+        logger.info(f'stepsize_x {stepsize_x} stepsize_y {stepsize_y}')
+        logger.info(f"length of xy {len(xy)}")
         x_axis = xy[0].flatten()
         y_axis = xy[1].flatten()
 
