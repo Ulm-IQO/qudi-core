@@ -6,7 +6,8 @@
 None
 
 ### Bugfixes
-None
+- NULL bytes in log messages are handled now and no longer lead to crashes of qudi. They are 
+replaced by the corresponding hex literal "\x00".
 
 ### New Features
 - Multiple qudi sessions can now be run in parallel locally. However, the user must ensure 
