@@ -8,6 +8,8 @@ None
 ### Bugfixes
 - NULL bytes in log messages are handled now and no longer lead to crashes of qudi. They are 
 replaced by the corresponding hex literal "\x00".
+- Rubberband selection of utility plot widgets now works for `pyqtgraph != 0.12.4`. This specific 
+version is broken in that regard and a comprehensive error is thrown if it is detected.
 
 ### New Features
 - Multiple qudi sessions can now be run in parallel locally. However, the user must ensure 
@@ -15,7 +17,7 @@ non-conflicting socket server settings for namespace server and remote module se
 configs to load.
 
 ### Other
-None
+- Bumped minimum package requirement `pyqtgraph >= 0.13.0`.
 
 
 ## Version 1.2.0
