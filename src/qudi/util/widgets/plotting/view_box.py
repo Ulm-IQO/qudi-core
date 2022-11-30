@@ -110,6 +110,7 @@ class DataSelectionMixin:
                  selection_hover_brush: Optional[Any] = None,
                  xy_region_selection_crosshair: Optional[bool] = False,
                  xy_region_selection_handles: Optional[bool] = True,
+                 xy_region_min_size_percentile: Optional[float] = None,
                  **kwargs
                  ) -> None:
         super().__init__(**kwargs)
@@ -123,9 +124,21 @@ class DataSelectionMixin:
         self._region_selection_mode = self.SelectionMode.Disabled
         self._marker_selection_mode = self.SelectionMode.Disabled
         self._selection_mutable = True
+        if (xy_region_min_size_percentile is not None) and (xy_region_min_size_percentile > 0):
+            self._xy_region_min_size_percentile = xy_region_min_size_percentile
+            self.sigRangeChanged.connect(self._update_xy_region_min_size)
+        else:
+            self._xy_region_min_size_percentile = None
 
         self.__regions = list()
         self.__markers = list()
+
+    def _update_xy_region_min_size(self, viewbox, new_range, changed) -> None:
+        min_size = [
+            self._xy_region_min_size_percentile * abs(rang[1] - rang[0]) for rang in new_range
+        ]
+        for region in self.__regions:
+            region.set_min_size(min_size)
 
     def mouseClickEvent(self, ev: MouseClickEvent) -> None:
         if self.allow_tracking_outside_data or self.pointer_on_data(ev.scenePos()):
