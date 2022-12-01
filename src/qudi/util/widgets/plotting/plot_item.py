@@ -103,7 +103,7 @@ class DataImageItem(_ImageItem):
         else:
             masked_image = np.ma.masked_invalid(image).compressed()
             if masked_image.size > 0:
-                kwargs['levels'] = self._get_percentile_levels(masked_image)
+                kwargs['levels'] = kwargs.get('levels', self._get_percentile_levels(masked_image))
                 self.setImage(image=image, **kwargs)
             else:
                 self.clear()
