@@ -28,6 +28,8 @@ from qudi.util.fit_models.helpers import correct_offset_histogram, smooth_data, 
 from qudi.util.fit_models.helpers import estimate_double_peaks, estimate_triple_peaks
 from qudi.util.fit_models.linear import Linear
 
+from qudi.core.logger import get_logger
+logger = get_logger(__name__)
 
 def multiple_gaussian(x, centers, sigmas, amplitudes):
     """ Mathematical definition of the sum of multiple gaussian functions without any bias.
@@ -351,29 +353,46 @@ class Gaussian2D(FitModelBase):
     @estimator('Peak')
     def estimate_peak(self, data, xy):
         # ToDo: Not properly implemented, yet
-        x_range = abs(np.max(xy[0]) - np.min(xy[0]))
-        y_range = abs(np.max(xy[1]) - np.min(xy[1]))
+        stepsize_x = xy[0][1,0] - xy[0][0,0]
+        stepsize_y = xy[1][0,1] - xy[1][0,0]
+        x_axis = xy[0].flatten()
+        y_axis = xy[1].flatten()
 
-        amplitude = np.max(data)
-        center_x = x_range / 2 + np.min(xy[0])
-        center_y = y_range / 2 + np.min(xy[1])
-        sigma_x = x_range / 10
-        sigma_y = y_range / 10
-        theta = 0
+        # TODO: Make good estimate for theta
 
-        estimate = self.make_params()
-        estimate['offset'].set(value=np.mean(data), min=-np.inf, max=np.max(data))
-        estimate['amplitude'].set(value=amplitude, min=0, max=amplitude * 2)
-        estimate['center_x'].set(value=center_x,
-                                 min=np.min(xy[0]) - x_range / 2,
-                                 max=np.max(xy[0]) + x_range / 2)
-        estimate['center_y'].set(value=center_y,
-                                 min=np.min(xy[1]) - y_range / 2,
-                                 max=np.max(xy[1]) + y_range / 2)
-        estimate['sigma_x'].set(value=sigma_x, min=x_range / (xy[0].shape[0] - 1), max=x_range)
-        estimate['sigma_y'].set(value=sigma_y, min=y_range / (xy[0].shape[1] - 1), max=y_range)
-        estimate['theta'].set(value=theta, min=-np.pi, max=np.pi)
-        return estimate
+        amplitude = float(data.max() - data.min())
+
+        # By calculating the log likelihood of the 2D gaussian pdf, one obtain for
+        # the minimization of the center_x or center_y values the following formula
+        # (which are in fact just the expectation/mean value formula):
+        norm = np.sum(data)
+        center_x = np.sum(x_axis * data) / norm
+        center_y = np.sum(y_axis * data) / norm
+        exp_of_xsquared = np.sum(x_axis ** 2 * data) / norm
+        exp_of_ysquared = np.sum(y_axis ** 2 * data) / norm
+        sigma_x = np.sqrt(exp_of_xsquared - center_x ** 2)
+        sigma_y = np.sqrt(exp_of_ysquared - center_y ** 2)
+        xrange = x_axis.max() - x_axis.min()
+        yrange = y_axis.max() - y_axis.min()
+        theta = 0.0
+        offset = float(data.min())
+
+        # populate the parameter container:
+        params = self.make_params()
+        params['amplitude'].set(value=amplitude, min=100, max=1e7)
+        params['sigma_x'].set(value=sigma_x, min=1*stepsize_x,
+                              max=3*xrange)
+        params['sigma_y'].set(value=sigma_y, min=1*stepsize_y,
+                              max=3*yrange)
+        params['center_x'].set(value=center_x, min=center_x - xrange,
+                               max=center_x + xrange)
+        params['center_y'].set(value=center_y, min=center_y - yrange,
+                               max=center_y + yrange)
+        params['theta'].set(value=theta, min=0, max=np.pi)
+        params['offset'].set(value=offset, min=0, max=1e7)
+        return params
+
+
 
     @estimator('Dip')
     def estimate_dip(self, data, xy):
