@@ -10,7 +10,7 @@ None
 replaced by the corresponding hex literal "\x00".
 - Rubberband selection of utility plot widgets now works for `pyqtgraph != 0.12.4`. This specific 
 version is broken in that regard and a comprehensive error is thrown if it is detected.
-
+- Adjusted 2D gaussian fit arguments to be compatible with the datafitting toolchain.
 ### New Features
 - Multiple qudi sessions can now be run in parallel locally. However, the user must ensure 
 non-conflicting socket server settings for namespace server and remote module server in the 
