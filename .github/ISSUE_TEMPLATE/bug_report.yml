@@ -16,9 +16,11 @@ body:
       label: Version
       description: What version of our software are you running?
       options:
-        - current main
-        - v1.0.1
-        - v1.0.0
+        - Development
+        - Release v1.2.0
+        - Release v1.1.0
+        - Release v1.0.1
+        - Release v1.0.0
     validations:
       required: true
   - type: textarea

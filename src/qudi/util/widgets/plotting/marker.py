@@ -680,6 +680,14 @@ class Rectangle(QtCore.QObject):
             self.roi.set_area(size=(abs(size[0]), abs(size[1])))
 
     @property
+    def min_size(self) -> Tuple[float, float]:
+        return self.roi.min_size
+
+    def set_min_size(self, size: Tuple[float, float]) -> None:
+        if not self._is_dragged:
+            self.roi.set_min_size(size)
+
+    @property
     def area(self) -> Tuple[Tuple[float, float], Tuple[float, float]]:
         return self.roi.area
 

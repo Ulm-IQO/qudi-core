@@ -27,11 +27,16 @@ __all__ = ['PlotWidget', 'MouseTrackingPlotWidget', 'RubberbandZoomPlotWidget',
 from typing import Union, Tuple, List, Dict, Optional, Any, Sequence
 from PySide2 import QtCore
 from pyqtgraph import PlotWidget as _PlotWidget
+from pyqtgraph import SignalProxy as _SignalProxy
 import qudi.util.widgets.plotting.view_box as _vb
 
 
 class MouseTrackingMixin:
     """ Extend the PlotWidget class with mouse tracking and signalling """
+
+    # position (x, y)
+    sigMouseMoved = QtCore.Signal(tuple)
+
     def __init__(self,
                  allow_tracking_outside_data: Optional[bool] = False,
                  max_mouse_pos_update_rate: Optional[float] = None,
@@ -40,14 +45,22 @@ class MouseTrackingMixin:
         if not isinstance(kwargs.get('viewBox', None), _vb.MouseTrackingMixin):
             # Use custom pg.ViewBox subclass
             kwargs['viewBox'] = _vb.MouseTrackingViewBox(
-                allow_tracking_outside_data=allow_tracking_outside_data,
-                max_mouse_pos_update_rate=max_mouse_pos_update_rate
+                allow_tracking_outside_data=allow_tracking_outside_data
             )
+
         super().__init__(**kwargs)
 
-    @property
-    def sigMouseMoved(self) -> QtCore.Signal:
-        return self.getViewBox().sigMouseMoved
+        if max_mouse_pos_update_rate is not None and max_mouse_pos_update_rate > 0.:
+            self._mouse_position_signal_proxy = _SignalProxy(
+                signal=self.scene().sigMouseMoved,
+                rateLimit=max_mouse_pos_update_rate,
+                delay=2 / max_mouse_pos_update_rate,  # Must be larger than 1/rateLimit
+                slot=self.__mouse_moved
+            )
+
+    def __mouse_moved(self, args) -> None:
+        pos = self.getViewBox().mapSceneToView(args[0])
+        self.sigMouseMoved.emit((pos.x(), pos.y()))
 
     @property
     def sigMouseDragged(self) -> QtCore.Signal:
@@ -92,6 +105,7 @@ class DataSelectionMixin:
                  selection_hover_brush: Optional[Any] = None,
                  xy_region_selection_crosshair: Optional[bool] = False,
                  xy_region_selection_handles: Optional[bool] = True,
+                 xy_region_min_size_percentile: Optional[float] = None,
                  **kwargs
                  ) -> None:
         if not isinstance(kwargs.get('viewBox', None), _vb.DataSelectionMixin):
@@ -103,7 +117,8 @@ class DataSelectionMixin:
                 selection_brush=selection_brush,
                 selection_hover_brush=selection_hover_brush,
                 xy_region_selection_crosshair=xy_region_selection_crosshair,
-                xy_region_selection_handles=xy_region_selection_handles
+                xy_region_selection_handles=xy_region_selection_handles,
+                xy_region_min_size_percentile=xy_region_min_size_percentile
             )
         super().__init__(**kwargs)
         vb = self.getViewBox()
@@ -193,7 +208,6 @@ class RubberbandZoomSelectionPlotWidget(RubberbandZoomMixin, DataSelectionMixin,
     """
     def __init__(self,
                  allow_tracking_outside_data: Optional[bool] = False,
-                 max_mouse_pos_update_rate: Optional[float] = None,
                  selection_bounds: Optional[Sequence[Tuple[Union[None, float], Union[None, float]]]] = None,
                  selection_pen: Optional[Any] = None,
                  selection_hover_pen: Optional[Any] = None,
@@ -201,6 +215,7 @@ class RubberbandZoomSelectionPlotWidget(RubberbandZoomMixin, DataSelectionMixin,
                  selection_hover_brush: Optional[Any] = None,
                  xy_region_selection_crosshair: Optional[bool] = False,
                  xy_region_selection_handles: Optional[bool] = True,
+                 xy_region_min_size_percentile: Optional[float] = None,
                  **kwargs
                  ) -> None:
         has_selection = isinstance(kwargs.get('viewBox', None), _vb.DataSelectionMixin)
@@ -208,13 +223,13 @@ class RubberbandZoomSelectionPlotWidget(RubberbandZoomMixin, DataSelectionMixin,
         if not has_selection or not has_rubberband:
             kwargs['viewBox'] = _vb.RubberbandZoomSelectionViewBox(
                 allow_tracking_outside_data=allow_tracking_outside_data,
-                max_mouse_pos_update_rate=max_mouse_pos_update_rate,
                 selection_bounds=selection_bounds,
                 selection_pen=selection_pen,
                 selection_hover_pen=selection_hover_pen,
                 selection_brush=selection_brush,
                 selection_hover_brush=selection_hover_brush,
                 xy_region_selection_crosshair=xy_region_selection_crosshair,
-                xy_region_selection_handles=xy_region_selection_handles
+                xy_region_selection_handles=xy_region_selection_handles,
+                xy_region_min_size_percentile=xy_region_min_size_percentile
             )
         super().__init__(**kwargs)
