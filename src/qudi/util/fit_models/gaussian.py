@@ -335,28 +335,28 @@ class Gaussian2D(FitModelBase):
         self.set_param_hint('theta', value=0., min=-np.pi, max=np.pi)
 
     @staticmethod
-    def _model_function(xy, offset, amplitude, center_x, center_y, sigma_x, sigma_y, theta):
+    def _model_function(x, offset, amplitude, center_x, center_y, sigma_x, sigma_y, theta):
         try:
             a = np.cos(-theta) ** 2 / (2 * sigma_x ** 2) + np.sin(-theta) ** 2 / (2 * sigma_y ** 2)
             b = np.sin(2 * -theta) / (4 * sigma_y ** 2) - np.sin(2 * -theta) / (4 * sigma_x ** 2)
             c = np.sin(-theta) ** 2 / (2 * sigma_x ** 2) + np.cos(-theta) ** 2 / (2 * sigma_y ** 2)
         except ZeroDivisionError:
-            return np.full(xy[0].shape, offset)
-        x_prime = xy[0] - center_x
-        y_prime = xy[1] - center_y
+            return np.full(x[0].shape, offset)
+        x_prime = x[0] - center_x
+        y_prime = x[1] - center_y
         gauss = offset + amplitude * np.exp(
             -(a * x_prime ** 2 + 2 * b * x_prime * y_prime + c * y_prime ** 2))
         return gauss.ravel()
 
     @estimator('Peak')
-    def estimate_peak(self, data, xy):
+    def estimate_peak(self, data, x):
         # ToDo: Not properly implemented, yet
-        x_range = abs(np.max(xy[0]) - np.min(xy[0]))
-        y_range = abs(np.max(xy[1]) - np.min(xy[1]))
+        x_range = abs(np.max(x[0]) - np.min(x[0]))
+        y_range = abs(np.max(x[1]) - np.min(x[1]))
 
         amplitude = np.max(data)
-        center_x = x_range / 2 + np.min(xy[0])
-        center_y = y_range / 2 + np.min(xy[1])
+        center_x = x_range / 2 + np.min(x[0])
+        center_y = y_range / 2 + np.min(x[1])
         sigma_x = x_range / 10
         sigma_y = y_range / 10
         theta = 0
@@ -365,19 +365,19 @@ class Gaussian2D(FitModelBase):
         estimate['offset'].set(value=np.mean(data), min=-np.inf, max=np.max(data))
         estimate['amplitude'].set(value=amplitude, min=0, max=amplitude * 2)
         estimate['center_x'].set(value=center_x,
-                                 min=np.min(xy[0]) - x_range / 2,
-                                 max=np.max(xy[0]) + x_range / 2)
+                                 min=np.min(x[0]) - x_range / 2,
+                                 max=np.max(x[0]) + x_range / 2)
         estimate['center_y'].set(value=center_y,
-                                 min=np.min(xy[1]) - y_range / 2,
-                                 max=np.max(xy[1]) + y_range / 2)
-        estimate['sigma_x'].set(value=sigma_x, min=x_range / (xy[0].shape[0] - 1), max=x_range)
-        estimate['sigma_y'].set(value=sigma_y, min=y_range / (xy[0].shape[1] - 1), max=y_range)
+                                 min=np.min(x[1]) - y_range / 2,
+                                 max=np.max(x[1]) + y_range / 2)
+        estimate['sigma_x'].set(value=sigma_x, min=x_range / (x[0].shape[0] - 1), max=x_range)
+        estimate['sigma_y'].set(value=sigma_y, min=y_range / (x[0].shape[1] - 1), max=y_range)
         estimate['theta'].set(value=theta, min=-np.pi, max=np.pi)
         return estimate
 
     @estimator('Dip')
-    def estimate_dip(self, data, xy):
-        estimate = self.estimate_peak(-data, xy)
+    def estimate_dip(self, data, x):
+        estimate = self.estimate_peak(-data, x)
         estimate['offset'].set(value=-estimate['offset'].value,
                                min=-estimate['offset'].max,
                                max=-estimate['offset'].min)
