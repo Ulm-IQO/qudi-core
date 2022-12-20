@@ -128,6 +128,12 @@ class ScalarConstraint:
         return new_obj
 
     # Backwards compatibility properties:
+    @default.setter
+    def default(self, value: Union[int, float]):
+        if not self.is_valid(value):
+            raise ValueError(f'invalid default value ({value}) encountered')
+        self._default = value
+
     @property
     def min(self) -> Union[int, float]:
         return self._minimum
