@@ -111,3 +111,8 @@ class ScalarConstraint:
                f'increment={self.increment}, ' \
                f'enforce_int={self.enforce_int}, ' \
                f'checker={self._checker})'
+
+    # Backwards compatibility properties:
+    min = minimum
+    max = maximum
+    step = increment
