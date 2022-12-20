@@ -48,7 +48,7 @@ class ScalarConstraint:
                             'and returning a bool.')
         self._default = default
         self._minimum, self._maximum = sorted(bounds)
-        self._increment = increment if increment else None
+        self._increment = increment
         self._checker = checker
 
         if not self.is_valid(self._default):
@@ -128,6 +128,26 @@ class ScalarConstraint:
         return new_obj
 
     # Backwards compatibility properties:
-    min = minimum
-    max = maximum
-    step = increment
+    @property
+    def min(self) -> Union[int, float]:
+        return self._minimum
+
+    @min.setter
+    def min(self, value: Union[int, float]):
+        self._minimum = value
+
+    @property
+    def max(self) -> Union[int, float]:
+        return self._maximum
+
+    @max.setter
+    def max(self, value: Union[int, float]):
+        self._maximum = value
+
+    @property
+    def step(self) -> Union[None, int, float]:
+        return self._increment
+
+    @step.setter
+    def step(self, value: Union[None, int, float]):
+        self._increment = value
