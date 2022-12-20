@@ -94,6 +94,13 @@ class ScalarConstraint:
     def clip(self, value: Union[int, float]) -> Union[int, float]:
         return min(self._maximum, max(self._minimum, value))
 
+    def copy(self) -> object:
+        return ScalarConstraint(default=self.default,
+                                bounds=self.bounds,
+                                increment=self.increment,
+                                enforce_int=self.enforce_int,
+                                checker=self._checker)
+
     def _check_value_type(self, value: Any) -> None:
         if self._enforce_int:
             if not is_integer(value):
@@ -111,6 +118,14 @@ class ScalarConstraint:
                f'increment={self.increment}, ' \
                f'enforce_int={self.enforce_int}, ' \
                f'checker={self._checker})'
+
+    def __copy__(self):
+        return self.copy()
+
+    def __deepcopy__(self, memodict={}):
+        new_obj = self.copy()
+        memodict[id(self)] = new_obj
+        return new_obj
 
     # Backwards compatibility properties:
     min = minimum
