@@ -24,7 +24,7 @@ __all__ = ['LocalModuleConfigWidget', 'RemoteModuleConfigWidget', 'ModuleConnect
            'ModuleOptionsWidget']
 
 import copy
-from PySide2 import QtCore, QtWidgets
+from PySide6 import QtCore, QtWidgets
 from typing import Optional, Iterable, Mapping, Dict, Sequence, Union, Any, Tuple, List
 
 from qudi.core import Connector, ConfigOption

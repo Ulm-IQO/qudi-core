@@ -24,7 +24,7 @@ __all__ = ['DataImageItem', 'XYPlotItem']
 
 import numpy as np
 from typing import Union, Optional, Tuple
-from PySide2 import QtCore
+from PySide6 import QtCore
 from pyqtgraph import ImageItem as _ImageItem
 from pyqtgraph import PlotDataItem as _PlotDataItem
 

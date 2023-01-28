@@ -23,7 +23,7 @@ If not, see <https://www.gnu.org/licenses/>.
 __all__ = ['CustomItemsWidget', 'CustomOptionsWidget', 'CustomConnectorsWidget']
 
 import os
-from PySide2 import QtCore, QtWidgets, QtGui
+from PySide6 import QtCore, QtWidgets, QtGui
 from typing import Optional, Mapping, Union, Dict, Iterable, Any
 
 from qudi.util.paths import get_artwork_dir
