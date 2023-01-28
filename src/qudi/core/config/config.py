@@ -42,7 +42,6 @@ _OptionType = Union[Sequence, Mapping, Set, Number, str]
 
 
 class Configuration(_FileHandlerBase,
-                    _MutableMapping,
                     QtCore.QObject,
                     metaclass=_ABCQObjectMeta):
     """ QObject subclass representing a valid qudi configuration.
