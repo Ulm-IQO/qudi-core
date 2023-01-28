@@ -31,9 +31,8 @@ class AboutQudiDialog(QtWidgets.QDialog):
 
         self.setWindowFlags(QtCore.Qt.WindowTitleHint | QtCore.Qt.WindowCloseButtonHint)
 
-        buttonbox = QtWidgets.QDialogButtonBox(QtWidgets.QDialogButtonBox.Ok)
-        buttonbox.setOrientation(QtCore.Qt.Horizontal)
-        self.ok_button = buttonbox.button(buttonbox.Ok)
+        self.ok_button = QtWidgets.QDialogButtonBox(QtWidgets.QDialogButtonBox.Ok)
+        self.ok_button.setOrientation(QtCore.Qt.Horizontal)
         self.ok_button.clicked.connect(self.accept)
 
         self.header_label = QtWidgets.QLabel('qudi')
@@ -169,7 +168,7 @@ class AboutQudiDialog(QtWidgets.QDialog):
         layout.addWidget(self.header_label)
         layout.addWidget(self.version_label)
         layout.addWidget(self.tab_widget)
-        layout.addWidget(buttonbox)
+        layout.addWidget(self.ok_button)
 
         self.setLayout(layout)
         self.about_label.setFocus()

@@ -57,12 +57,10 @@ class SettingsDialog(QtWidgets.QDialog):
         layout.addWidget(self.show_error_popups_checkbox, 1, 1)
 
         buttonbox = QtWidgets.QDialogButtonBox(QtWidgets.QDialogButtonBox.Ok
-                                               | QtWidgets.QDialogButtonBox.Cancel
-                                               | QtWidgets.QDialogButtonBox.Apply)
+                                               | QtWidgets.QDialogButtonBox.Cancel)
         buttonbox.setOrientation(QtCore.Qt.Horizontal)
         layout.addWidget(buttonbox, 2, 0, 1, 2)
 
         # Add internal signals
         buttonbox.accepted.connect(self.accept)
         buttonbox.rejected.connect(self.reject)
-        buttonbox.button(buttonbox.Apply).clicked.connect(self.accepted)
