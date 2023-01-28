@@ -23,7 +23,7 @@ __all__ = ['TaskWidget']
 
 import os
 from typing import Type, Optional, Dict, Tuple, Any, Iterable
-from PySide2 import QtCore, QtWidgets, QtGui
+from PySide6 import QtCore, QtWidgets, QtGui
 
 from qudi.util.helpers import is_integer
 from qudi.util.paths import get_artwork_dir

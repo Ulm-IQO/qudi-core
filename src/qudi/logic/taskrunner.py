@@ -20,7 +20,7 @@ If not, see <https://www.gnu.org/licenses/>.
 """
 
 from functools import partial
-from PySide2 import QtCore
+from PySide6 import QtCore
 from typing import Any, Type, Mapping, List, Dict
 
 from qudi.util.mutex import Mutex

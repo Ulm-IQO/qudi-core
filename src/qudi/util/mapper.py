@@ -21,16 +21,16 @@ If not, see <https://www.gnu.org/licenses/>.
 
 __all__ = ['Converter', 'Mapper']
 
-from PySide2.QtCore import QCoreApplication
-from PySide2.QtCore import QThread
-from PySide2.QtCore import QTimer
-from PySide2.QtWidgets import QAbstractButton
-from PySide2.QtWidgets import QAbstractSlider
-from PySide2.QtWidgets import QComboBox
-from PySide2.QtWidgets import QDoubleSpinBox
-from PySide2.QtWidgets import QLineEdit
-from PySide2.QtWidgets import QPlainTextEdit
-from PySide2.QtWidgets import QSpinBox
+from PySide6.QtCore import QCoreApplication
+from PySide6.QtCore import QThread
+from PySide6.QtCore import QTimer
+from PySide6.QtWidgets import QAbstractButton
+from PySide6.QtWidgets import QAbstractSlider
+from PySide6.QtWidgets import QComboBox
+from PySide6.QtWidgets import QDoubleSpinBox
+from PySide6.QtWidgets import QLineEdit
+from PySide6.QtWidgets import QPlainTextEdit
+from PySide6.QtWidgets import QSpinBox
 
 import functools
 

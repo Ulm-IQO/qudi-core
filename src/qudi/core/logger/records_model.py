@@ -23,7 +23,7 @@ __all__ = ('LogRecordsTableModel',)
 
 import traceback
 from datetime import datetime
-from PySide2 import QtCore, QtGui
+from PySide6 import QtCore, QtGui
 from qudi.util.mutex import Mutex
 
 

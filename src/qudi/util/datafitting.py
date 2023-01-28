@@ -28,7 +28,7 @@ import logging
 import inspect
 import lmfit
 import numpy as np
-from PySide2 import QtCore
+from PySide6 import QtCore
 
 import qudi.util.fit_models as _fit_models_ns
 from qudi.util.mutex import Mutex

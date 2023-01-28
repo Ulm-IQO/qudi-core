@@ -22,7 +22,7 @@ If not, see <https://www.gnu.org/licenses/>.
 
 __all__ = ['ModuleEditorWidget']
 
-from PySide2 import QtCore, QtWidgets
+from PySide6 import QtCore, QtWidgets
 from typing import Optional, Mapping, Dict, Union, Any
 from qudi.util.widgets.separator_lines import HorizontalLine
 from qudi.tools.config_editor.module_finder import QudiModules

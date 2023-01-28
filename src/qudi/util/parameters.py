@@ -5,7 +5,7 @@ values via GUI. These arguments are boiled down to simple builtin types that can
 a GUI editor:
                             int: qudi.util.widgets.scientific_spinbox.ScienSpinBox
                           float: qudi.util.widgets.scientific_spinbox.ScienDSpinbox
-                            str: PySide2.QtWidgets.QLineEdit
+                            str: PySide6.QtWidgets.QLineEdit
                         complex: qudi.util.widgets.literal_lineedit.ComplexLineEdit
                             set: qudi.util.widgets.literal_lineedit.SetLineEdit
                            dict: qudi.util.widgets.literal_lineedit.DictLineEdit
@@ -15,7 +15,7 @@ a GUI editor:
 Here defined are also custom generic types that can be used like any other type from
 the typing module.
 Arguments annotated with these types are represented with the following widgets:
-    FilePath: PySide2.QtWidgets.QLineEdit
+    FilePath: PySide6.QtWidgets.QLineEdit
 
 Any other type annotation that can not be mapped to a simple builtin or a custom generic type
 (see above) will result in no corresponding widget (None).
@@ -42,7 +42,7 @@ __all__ = ['FilePath', 'RealNumber', 'ParameterWidgetMapper']
 import inspect
 import typing
 from os import PathLike
-from PySide2 import QtWidgets
+from PySide6 import QtWidgets
 from typing import Callable, Any, Set, FrozenSet, MutableSequence, Mapping, Tuple, Dict, Type, Union
 from typing import get_origin, get_args, Iterable, Sequence
 

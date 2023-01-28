@@ -23,7 +23,7 @@ import traceback
 from datetime import datetime
 from collections import deque
 from qudi.util.mutex import RecursiveMutex
-from PySide2 import QtWidgets, QtCore
+from PySide6 import QtWidgets, QtCore
 
 
 class ErrorDialog(QtWidgets.QDialog):
