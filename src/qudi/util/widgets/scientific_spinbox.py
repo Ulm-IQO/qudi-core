@@ -58,33 +58,33 @@ class FloatValidator(QtGui.QValidator):
                          complete an expression (i.e. the decimal point of a float value).
         @param string: The current input string (from a QLineEdit for example)
         @param position: The current position of the text cursor
-        @return: enum QValidator::State: the returned validator state,
+        @return: enum QtGui.QValidator::State: the returned validator state,
                  str: the input string, int: the cursor position
         """
         # Return intermediate status when empty string is passed or when incomplete "[+-]inf"
         if string.strip() in '+.-.' or string.strip() in list('YZEPTGMkmµunpfazy') or re.match(
                 r'[+-]?(in$|i$)', string, re.IGNORECASE):
-            return self.Intermediate, string, position
+            return QtGui.QValidator.Intermediate, string, position
 
         # Accept input of [+-]inf. Not case sensitive.
         if re.match(r'[+-]?\binf$', string, re.IGNORECASE):
-            return self.Acceptable, string.lower(), position
+            return QtGui.QValidator.Acceptable, string.lower(), position
 
         group_dict = self.get_group_dict(string)
         if group_dict:
             if group_dict['match'] == string:
-                return self.Acceptable, string, position
+                return QtGui.QValidator.Acceptable, string, position
             if string.count('.') > 1:
-                return self.Invalid, group_dict['match'], position
+                return QtGui.QValidator.Invalid, group_dict['match'], position
             if position > len(string):
                 position = len(string)
             if string[position-1] in 'eE-+' and 'i' not in string.lower():
-                return self.Intermediate, string, position
-            return self.Invalid, group_dict['match'], position
+                return QtGui.QValidator.Intermediate, string, position
+            return QtGui.QValidator.Invalid, group_dict['match'], position
         else:
             if string[position-1] in 'eE-+.' and 'i' not in string.lower():
-                return self.Intermediate, string, position
-            return self.Invalid, '', position
+                return QtGui.QValidator.Intermediate, string, position
+            return QtGui.QValidator.Invalid, '', position
 
     def get_group_dict(self, string):
         """
@@ -144,21 +144,21 @@ class IntegerValidator(QtGui.QValidator):
         """
         # Return intermediate status when empty string is passed or cursor is at index 0
         if not string.strip() or string.strip() in list('YZEPTGMk'):
-            return self.Intermediate, string, position
+            return QtGui.QValidator.Intermediate, string, position
 
         group_dict = self.get_group_dict(string)
         if group_dict:
             if group_dict['match'] == string:
-                return self.Acceptable, string, position
+                return QtGui.QValidator.Acceptable, string, position
 
             if position > len(string):
                 position = len(string)
             if string[position-1] in 'eE-+':
-                return self.Intermediate, string, position
+                return QtGui.QValidator.Intermediate, string, position
 
-            return self.Invalid, group_dict['match'], position
+            return QtGui.QValidator.Invalid, group_dict['match'], position
         else:
-            return self.Invalid, '', position
+            return QtGui.QValidator.Invalid, '', position
 
     def get_group_dict(self, string):
         """
@@ -928,7 +928,7 @@ class ScienDSpinBox(QtWidgets.QAbstractSpinBox):
         """
         Enables stepping (mouse wheel, arrow up/down, clicking, PgUp/Down) by default.
         """
-        return self.StepUpEnabled | self.StepDownEnabled
+        return QtWidgets.QAbstractSpinBox.StepUpEnabled | QtWidgets.QAbstractSpinBox.StepDownEnabled
 
     def wheelEvent(self, event):
         """
@@ -1475,7 +1475,7 @@ class ScienSpinBox(QtWidgets.QAbstractSpinBox):
         """
         Enables stepping (mouse wheel, arrow up/down, clicking, PgUp/Down) by default.
         """
-        return self.StepUpEnabled | self.StepDownEnabled
+        return QtWidgets.QAbstractSpinBox.StepUpEnabled | QtWidgets.QAbstractSpinBox.StepDownEnabled
 
     def stepBy(self, steps):
         """
