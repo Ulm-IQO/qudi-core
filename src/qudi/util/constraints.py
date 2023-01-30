@@ -48,7 +48,7 @@ class ScalarConstraint:
                             'and returning a bool.')
         self._default = default
         self._minimum, self._maximum = sorted(bounds)
-        self._increment = increment if increment else None
+        self._increment = increment
         self._checker = checker
 
         if not self.is_valid(self._default):
@@ -94,6 +94,13 @@ class ScalarConstraint:
     def clip(self, value: Union[int, float]) -> Union[int, float]:
         return min(self._maximum, max(self._minimum, value))
 
+    def copy(self) -> object:
+        return ScalarConstraint(default=self.default,
+                                bounds=self.bounds,
+                                increment=self.increment,
+                                enforce_int=self.enforce_int,
+                                checker=self._checker)
+
     def _check_value_type(self, value: Any) -> None:
         if self._enforce_int:
             if not is_integer(value):
@@ -111,3 +118,42 @@ class ScalarConstraint:
                f'increment={self.increment}, ' \
                f'enforce_int={self.enforce_int}, ' \
                f'checker={self._checker})'
+
+    def __copy__(self):
+        return self.copy()
+
+    def __deepcopy__(self, memodict={}):
+        new_obj = self.copy()
+        memodict[id(self)] = new_obj
+        return new_obj
+
+    # Backwards compatibility properties:
+    @default.setter
+    def default(self, value: Union[int, float]):
+        if not self.is_valid(value):
+            raise ValueError(f'invalid default value ({value}) encountered')
+        self._default = value
+
+    @property
+    def min(self) -> Union[int, float]:
+        return self._minimum
+
+    @min.setter
+    def min(self, value: Union[int, float]):
+        self._minimum = value
+
+    @property
+    def max(self) -> Union[int, float]:
+        return self._maximum
+
+    @max.setter
+    def max(self, value: Union[int, float]):
+        self._maximum = value
+
+    @property
+    def step(self) -> Union[None, int, float]:
+        return self._increment
+
+    @step.setter
+    def step(self, value: Union[None, int, float]):
+        self._increment = value

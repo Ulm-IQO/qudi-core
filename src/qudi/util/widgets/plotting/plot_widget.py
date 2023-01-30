@@ -105,6 +105,7 @@ class DataSelectionMixin:
                  selection_hover_brush: Optional[Any] = None,
                  xy_region_selection_crosshair: Optional[bool] = False,
                  xy_region_selection_handles: Optional[bool] = True,
+                 xy_region_min_size_percentile: Optional[float] = None,
                  **kwargs
                  ) -> None:
         if not isinstance(kwargs.get('viewBox', None), _vb.DataSelectionMixin):
@@ -116,7 +117,8 @@ class DataSelectionMixin:
                 selection_brush=selection_brush,
                 selection_hover_brush=selection_hover_brush,
                 xy_region_selection_crosshair=xy_region_selection_crosshair,
-                xy_region_selection_handles=xy_region_selection_handles
+                xy_region_selection_handles=xy_region_selection_handles,
+                xy_region_min_size_percentile=xy_region_min_size_percentile
             )
         super().__init__(**kwargs)
         vb = self.getViewBox()
@@ -213,6 +215,7 @@ class RubberbandZoomSelectionPlotWidget(RubberbandZoomMixin, DataSelectionMixin,
                  selection_hover_brush: Optional[Any] = None,
                  xy_region_selection_crosshair: Optional[bool] = False,
                  xy_region_selection_handles: Optional[bool] = True,
+                 xy_region_min_size_percentile: Optional[float] = None,
                  **kwargs
                  ) -> None:
         has_selection = isinstance(kwargs.get('viewBox', None), _vb.DataSelectionMixin)
@@ -226,6 +229,7 @@ class RubberbandZoomSelectionPlotWidget(RubberbandZoomMixin, DataSelectionMixin,
                 selection_brush=selection_brush,
                 selection_hover_brush=selection_hover_brush,
                 xy_region_selection_crosshair=xy_region_selection_crosshair,
-                xy_region_selection_handles=xy_region_selection_handles
+                xy_region_selection_handles=xy_region_selection_handles,
+                xy_region_min_size_percentile=xy_region_min_size_percentile
             )
         super().__init__(**kwargs)

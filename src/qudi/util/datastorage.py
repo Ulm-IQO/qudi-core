@@ -617,25 +617,29 @@ class TextDataStorage(DataStorageBase):
         @param str file_path: optional, path to file to load data from
         """
         # Read back metadata
-        header, header_lines = get_header_from_file(file_path)
-        general, metadata = get_info_from_header(header)
-        # Determine dtype specifier from general header section
-        dtype = general['column_dtypes']
-        if dtype is not None and not isinstance(dtype, type):
-            # If dtypes differ, construct a structured array
-            if all(dtype[0] == typ for typ in dtype):
-                dtype = dtype[0]
-            elif str in dtype:
-                # handle str type separately since this is (arguably) a bug in numpy.genfromtxt
-                dtype = None
-            else:
-                dtype = [(f'f{col:d}', typ) for col, typ in enumerate(dtype)]
-        # Load data from file
-        data = np.genfromtxt(file_path,
-                             dtype=dtype,
-                             comments=general['comments'],
-                             delimiter=general['delimiter'],
-                             skip_header=header_lines + 2)
+        try:
+            header, header_lines = get_header_from_file(file_path)
+            general, metadata = get_info_from_header(header)
+            # Determine dtype specifier from general header section
+            dtype = general['column_dtypes']
+            if dtype is not None and not isinstance(dtype, type):
+                # If dtypes differ, construct a structured array
+                if all(dtype[0] == typ for typ in dtype):
+                    dtype = dtype[0]
+                elif str in dtype:
+                    # handle str type separately since this is (arguably) a bug in numpy.genfromtxt
+                    dtype = None
+                else:
+                    dtype = [(f'f{col:d}', typ) for col, typ in enumerate(dtype)]
+            # Load data from file
+            data = np.genfromtxt(file_path,
+                                 dtype=dtype,
+                                 comments=general['comments'],
+                                 delimiter=general['delimiter'],
+                                 skip_header=header_lines + 2)
+        except UnicodeError as err:
+            raise ValueError(f'Loading data from file "{file_path}" failed. The file you are '
+                             f'trying to load is most likely no unicode textfile.') from err
         return data, metadata, general
 
 

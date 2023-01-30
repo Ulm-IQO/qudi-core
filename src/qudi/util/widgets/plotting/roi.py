@@ -64,10 +64,19 @@ class RectangleROI(ROI):
                      aspectLocked=aspectLocked)
         self.__center_position = (0, 0)
         self.__norm_size = (1, 1)
+        self.__min_norm_size = (0, 0)
         self.__start_pos = (0, 0)
         self._apply_bounds_to_center = bool(apply_bounds_to_center)
         self._bounds = self.normalize_bounds(bounds)
         self.set_area(position=pos, size=size)
+
+    @property
+    def min_size(self) -> Tuple[float, float]:
+        return self.__min_norm_size
+
+    def set_min_size(self, size: Union[None, Tuple[float, float]]) -> None:
+        self.__min_norm_size = (0, 0) if size is None else (abs(size[0]), abs(size[1]))
+        self.set_area(size=self.__norm_size)
 
     @property
     def area(self) -> Tuple[Tuple[float, float], Tuple[float, float]]:
@@ -78,14 +87,18 @@ class RectangleROI(ROI):
                  size: Optional[Tuple[float, float]] = None
                  ) -> None:
         if position is not None:
-            self.setPos(QtCore.QPointF(position[0] - self.__norm_size[0] / 2,
-                                       position[1] + self.__norm_size[1] / 2),
+            constr_size = (max(self.__norm_size[0], self.__min_norm_size[0]),
+                           max(self.__norm_size[1], self.__min_norm_size[1]))
+            self.setPos(QtCore.QPointF(position[0] - constr_size[0] / 2,
+                                       position[1] + constr_size[1] / 2),
                         update=False,
                         finish=False)
             self.__center_position = (position[0], position[1])
         if size is not None:
             size = (abs(size[0]), abs(size[1]))
-            self.setSize(QtCore.QPointF(size[0], -size[1]),
+            constr_size = (max(size[0], self.__min_norm_size[0]),
+                           max(size[1], self.__min_norm_size[1]))
+            self.setSize(QtCore.QPointF(constr_size[0], -constr_size[1]),
                          center=(0.5, 0.5),
                          update=False,
                          finish=False)
