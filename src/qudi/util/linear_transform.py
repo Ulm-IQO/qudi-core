@@ -140,6 +140,9 @@ class LinearTransformation:
         """
         raise NotImplementedError('Arbitrary rotation transformation not implemented yet')
 
+    def from_support_vectors(self):
+        # todo
+        pass
 
 class LinearTransformation3D(LinearTransformation):
     """ Linear transformation for 3D cartesian coordinates """
