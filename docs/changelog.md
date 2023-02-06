@@ -9,7 +9,8 @@ None
 None
 
 ### New Features
-None
+- Added utility descriptor object `qudi.util.constraints.CheckedAttribute`. Can be used to perform 
+customized automatic sanity checking on attribute value assignments.
 
 ### Other
 None
