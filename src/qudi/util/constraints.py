@@ -179,9 +179,9 @@ class CheckedAttribute:
                 raise ValueError('String must start with "foo" and end with "bar"')
 
         class Test:
-            my_string = CheckedVariable([str])
-            my_number = CheckedVariable([int, float])
-            my_custom = CheckedVariable([str], validators=[custom_validate])
+            my_string = CheckedAttribute([str])
+            my_number = CheckedAttribute([int, float])
+            my_custom = CheckedAttribute([str], validators=[custom_validate])
             def __init__(self):
                 self.my_string = 'I am a test string'
                 self.my_number = 42
