@@ -19,9 +19,10 @@ You should have received a copy of the GNU Lesser General Public License along w
 If not, see <https://www.gnu.org/licenses/>.
 """
 
-__all__ = ['ScalarConstraint']
+__all__ = ['ScalarConstraint', 'CheckedAttribute']
 
-from typing import Union, Optional, Tuple, Callable, Any
+from inspect import isclass
+from typing import Union, Optional, Tuple, Callable, Any, Type, Iterable
 from qudi.util.helpers import is_float, is_integer
 
 
@@ -38,14 +39,14 @@ class ScalarConstraint:
         """
         """
         self._enforce_int = bool(enforce_int)
-        self._check_value_type(default)
+        self.check_value_type(default)
         for value in bounds:
-            self._check_value_type(value)
+            self.check_value_type(value)
         if increment is not None:
-            self._check_value_type(increment)
+            self.check_value_type(increment)
         if checker is not None and not callable(checker):
-            raise TypeError('checker must be eithe None or a callable accepting a single scalar '
-                            'and returning a bool.')
+            raise TypeError('checker must be either None or a callable accepting a single scalar '
+                            'and returning a valid-flag bool or raising ValueError')
         self._default = default
         self._minimum, self._maximum = sorted(bounds)
         self._increment = increment
@@ -78,18 +79,17 @@ class ScalarConstraint:
     def enforce_int(self) -> bool:
         return self._enforce_int
 
+    def check(self, value: Union[int, float]) -> None:
+        self.check_value_type(value)
+        self.check_value_range(value)
+        self.check_custom(value)
+
     def is_valid(self, value: Union[int, float]) -> bool:
         try:
-            self._check_value_type(value)
-        except TypeError:
+            self.check(value)
+        except (ValueError, TypeError):
             return False
-
-        if self._minimum <= value <= self._maximum:
-            if self._checker is None:
-                return True
-            else:
-                return self._checker(value)
-        return False
+        return True
 
     def clip(self, value: Union[int, float]) -> Union[int, float]:
         return min(self._maximum, max(self._minimum, value))
@@ -101,7 +101,15 @@ class ScalarConstraint:
                                 enforce_int=self.enforce_int,
                                 checker=self._checker)
 
-    def _check_value_type(self, value: Any) -> None:
+    def check_custom(self, value: Any) -> None:
+        if (self._checker is not None) and (not self._checker(value)):
+            raise ValueError(f'Custom checker failed to validate value "{value}"')
+
+    def check_value_range(self, value: Union[int, float]) -> None:
+        if not (self._minimum <= value <= self._maximum):
+            raise ValueError(f'Value "{value}" is out of bounds {self.bounds}')
+
+    def check_value_type(self, value: Any) -> None:
         if self._enforce_int:
             if not is_integer(value):
                 raise TypeError(f'values must be int type (received {value})')
@@ -157,3 +165,67 @@ class ScalarConstraint:
     @step.setter
     def step(self, value: Union[None, int, float]):
         self._increment = value
+
+
+class CheckedAttribute:
+    """ Descriptor to perform customizable, automatic sanity checks on a class attribute value
+    assignment. Performs optional type checking via isinstance() builtin as well as sanity checking
+    via optional validator callables.
+
+    Example usage:
+
+        def custom_validate(value):
+            if not value.startswith('foo') or not value.endswith('bar'):
+                raise ValueError('String must start with "foo" and end with "bar"')
+
+        class Test:
+            my_string = CheckedVariable([str])
+            my_number = CheckedVariable([int, float])
+            my_custom = CheckedVariable([str], validators=[custom_validate])
+            def __init__(self):
+                my_string = 'I am a test string'
+                my_number = 42
+                my_custom = 'foo is the beginning and it must end on bar'
+                # Following assignments would raise
+                # my_string = 42
+                # my_number = None
+                # my_custom = 'It is a string but it fails custom validator'
+    """
+    def __init__(self,
+                 valid_types: Optional[Iterable[Type]] = None,
+                 validators: Optional[Iterable[Callable]] = None):
+        self.attr_name = ''
+        self.valid_types = tuple() if valid_types is None else tuple(valid_types)
+        self.validators = list() if validators is None else list(validators)
+        if any(not isclass(typ) for typ in self.valid_types):
+            raise TypeError('valid_types must be iterable of types (classes)')
+        if any(not callable(validator) for validator in self.validators):
+            raise TypeError('validators must be iterable of callables')
+
+    def __set_name__(self, owner, name):
+        self.attr_name = name
+
+    def __get__(self, instance, owner):
+        if instance:
+            try:
+                return instance.__dict__[self.attr_name]
+            except KeyError:
+                raise AttributeError(self.attr_name) from None
+        else:
+            return self
+
+    def __delete__(self, instance):
+        try:
+            del instance.__dict__[self.attr_name]
+        except KeyError:
+            raise AttributeError(self.attr_name) from None
+
+    def __set__(self, instance, value):
+        if self.valid_types and not isinstance(value, self.valid_types):
+            raise TypeError(f'{self.attr_name} value must be of type(s) {list(self.valid_types)}')
+        for validator in self.validators:
+            try:
+                validator(value)
+            except Exception as err:
+                raise ValueError(f'{self.attr_name} value did not pass validation:') from err
+        instance.__dict__[self.attr_name] = value
