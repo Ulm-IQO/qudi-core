@@ -183,13 +183,13 @@ class CheckedAttribute:
             my_number = CheckedVariable([int, float])
             my_custom = CheckedVariable([str], validators=[custom_validate])
             def __init__(self):
-                my_string = 'I am a test string'
-                my_number = 42
-                my_custom = 'foo is the beginning and it must end on bar'
+                self.my_string = 'I am a test string'
+                self.my_number = 42
+                self.my_custom = 'foo is the beginning and it must end on bar'
                 # Following assignments would raise
-                # my_string = 42
-                # my_number = None
-                # my_custom = 'It is a string but it fails custom validator'
+                # self.my_string = 42
+                # self.my_number = None
+                # self.my_custom = 'It is a string but it fails custom validator'
     """
     def __init__(self,
                  valid_types: Optional[Iterable[Type]] = None,
