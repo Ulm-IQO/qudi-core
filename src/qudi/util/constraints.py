@@ -21,7 +21,7 @@ If not, see <https://www.gnu.org/licenses/>.
 
 __all__ = ['ScalarConstraint', 'CheckedAttribute']
 
-from inspect import isclass
+from inspect import isclass, signature
 from typing import Union, Optional, Tuple, Callable, Any, Type, Iterable
 from qudi.util.helpers import is_float, is_integer
 
@@ -193,14 +193,15 @@ class CheckedAttribute:
     """
     def __init__(self,
                  valid_types: Optional[Iterable[Type]] = None,
-                 validators: Optional[Iterable[Callable]] = None):
+                 static_validators: Optional[Iterable[Callable[[Any], None]]] = None):
         self.attr_name = ''
         self.valid_types = tuple() if valid_types is None else tuple(valid_types)
-        self.validators = list() if validators is None else list(validators)
-        if any(not isclass(typ) for typ in self.valid_types):
+        self.static_validators = list() if static_validators is None else list(static_validators)
+        self.bound_validators = list()
+        if not all(isclass(typ) for typ in self.valid_types):
             raise TypeError('valid_types must be iterable of types (classes)')
-        if any(not callable(validator) for validator in self.validators):
-            raise TypeError('validators must be iterable of callables')
+        if not all(callable(val) for val in self.static_validators):
+            raise TypeError('static_validators must be iterable of callables')
 
     def __set_name__(self, owner, name):
         self.attr_name = name
@@ -221,11 +222,32 @@ class CheckedAttribute:
             raise AttributeError(self.attr_name) from None
 
     def __set__(self, instance, value):
+        # Type checking
         if self.valid_types and not isinstance(value, self.valid_types):
             raise TypeError(f'{self.attr_name} value must be of type(s) {list(self.valid_types)}')
-        for validator in self.validators:
-            try:
+        # Custom validator evaluation
+        try:
+            for validator in self.static_validators:
                 validator(value)
-            except Exception as err:
-                raise ValueError(f'{self.attr_name} value did not pass validation:') from err
+            for bound_name in self.bound_validators:
+                try:
+                    validator = getattr(instance, bound_name)
+                except AttributeError:
+                    raise AttributeError(
+                        f'Registered bound validator "{bound_name}" not found in {instance}'
+                    ) from None
+                validator(value)
+        except Exception as err:
+            raise ValueError(f'Value of "{self.attr_name}" did not pass validation:') from err
         instance.__dict__[self.attr_name] = value
+
+    def validator(self, func: Union[Callable[[Any, Any], None], Callable[[Any], None]]) -> Callable:
+        """ Decorator to register either a static or bound validator """
+        if callable(func):
+            if len(signature(func).parameters) == 1:
+                self.static_validators.append(func)
+            else:
+                self.bound_validators.append(func.__name__)
+        else:
+            self.bound_validators.append(func.__func__.__name__)
+        return func
