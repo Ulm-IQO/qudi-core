@@ -19,7 +19,7 @@ You should have received a copy of the GNU Lesser General Public License along w
 If not, see <https://www.gnu.org/licenses/>.
 """
 
-__all__ = ['ScalarConstraint', 'CheckedAttribute']
+__all__ = ['ScalarConstraint', 'CheckedAttribute', 'TypedAttribute']
 
 from inspect import isclass, signature
 from typing import Union, Optional, Tuple, Callable, Any, Type, Iterable
