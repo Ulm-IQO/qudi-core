@@ -169,8 +169,7 @@ class ScalarConstraint:
 
 class CheckedAttribute:
     """ Descriptor to perform customizable, automatic sanity checks on a class attribute value
-    assignment. Performs optional type checking via isinstance() builtin as well as sanity checking
-    via optional validator callables.
+    assignment. Performs sanity checking via provided validator callables.
 
     Example usage:
 
@@ -179,27 +178,16 @@ class CheckedAttribute:
                 raise ValueError('String must start with "foo" and end with "bar"')
 
         class Test:
-            my_string = CheckedAttribute([str])
-            my_number = CheckedAttribute([int, float])
-            my_custom = CheckedAttribute([str], validators=[custom_validate])
+            my_custom = CheckedAttribute([custom_validate])
             def __init__(self):
-                self.my_string = 'I am a test string'
-                self.my_number = 42
-                self.my_custom = 'foo is the beginning and it must end on bar'
-                # Following assignments would raise
-                # self.my_string = 42
-                # self.my_number = None
-                # self.my_custom = 'It is a string but it fails custom validator'
+                self.my_custom = 'foo bar'
+                # Following assignment would raise
+                # self.my_custom = 'This fails validator'
     """
-    def __init__(self,
-                 valid_types: Optional[Iterable[Type]] = None,
-                 static_validators: Optional[Iterable[Callable[[Any], None]]] = None):
+    def __init__(self, static_validators: Optional[Iterable[Callable[[Any], None]]] = None):
         self.attr_name = ''
-        self.valid_types = tuple() if valid_types is None else tuple(valid_types)
         self.static_validators = list() if static_validators is None else list(static_validators)
         self.bound_validators = list()
-        if not all(isclass(typ) for typ in self.valid_types):
-            raise TypeError('valid_types must be iterable of types (classes)')
         if not all(callable(val) for val in self.static_validators):
             raise TypeError('static_validators must be iterable of callables')
 
@@ -222,9 +210,6 @@ class CheckedAttribute:
             raise AttributeError(self.attr_name) from None
 
     def __set__(self, instance, value):
-        # Type checking
-        if self.valid_types and not isinstance(value, self.valid_types):
-            raise TypeError(f'{self.attr_name} value must be of type(s) {list(self.valid_types)}')
         # Custom validator evaluation
         try:
             for validator in self.static_validators:
@@ -251,3 +236,39 @@ class CheckedAttribute:
         else:
             self.bound_validators.append(func.__func__.__name__)
         return func
+
+
+class TypedAttribute(CheckedAttribute):
+    """ Extends CheckedAttribute so that you can easily include type checking via isinstance()
+    builtin before the optional user-provided checker functions are called.
+
+    Example usage:
+
+        def custom_validate(value):
+            if not value.startswith('foo') or not value.endswith('bar'):
+                raise ValueError('String must start with "foo" and end with "bar"')
+
+        class Test:
+            my_string = CheckedAttribute([str])
+            my_number = CheckedAttribute([int, float])
+            my_custom = CheckedAttribute([str], static_validators=[custom_validate])
+            def __init__(self):
+                self.my_string = 'I am a test string'
+                self.my_number = 42
+                self.my_custom = 'foo bar'
+                # Following assignments would raise
+                # self.my_string = 42
+                # self.my_number = None
+                # self.my_custom = 'It is a string but it fails custom validator'
+    """
+    def __init__(self, valid_types: Optional[Iterable[Type]] = None, **kwargs):
+        self.valid_types = tuple() if valid_types is None else tuple(valid_types)
+        if not all(isclass(typ) for typ in self.valid_types):
+            raise TypeError('valid_types must be iterable of types (classes)')
+        kwargs['static_validators'] = [self.check_types, *kwargs.get('static_validators', list())]
+        super().__init__(**kwargs)
+
+    def check_types(self, value: Any) -> None:
+        if self.valid_types and not isinstance(value, self.valid_types):
+            raise TypeError(f'{self.attr_name} value must be of type(s) '
+                            f'{[typ.__name__ for typ in self.valid_types]}')
