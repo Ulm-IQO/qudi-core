@@ -19,11 +19,15 @@ You should have received a copy of the GNU Lesser General Public License along w
 If not, see <https://www.gnu.org/licenses/>.
 """
 
-__all__ = ['Connector']
+__all__ = ['Connector', 'ModuleConnectionError']
 
 import weakref
 from typing import Any, Type, Union
 from qudi.util.overload import OverloadProxy
+
+
+class ModuleConnectionError(RuntimeError):
+    pass
 
 
 class Connector:
@@ -37,71 +41,73 @@ class Connector:
                          omitted.
         @param bool optional: optional, flag indicating if the connection is mandatory (False)
         """
-        assert isinstance(interface, (str, type)), \
-            'Parameter "interface" must be an interface class or the class name as str.'
-        assert name is None or (isinstance(name, str) and name), \
-            'Parameter "name" must be non-empty str or None.'
-        assert isinstance(optional, bool), 'Parameter "optional" must be bool type.'
+        if not isinstance(interface, (str, type)):
+            raise TypeError(
+                'Parameter "interface" must be an interface class or the class name as str'
+            )
+        if name is not None:
+            if not isinstance(name, str):
+                raise TypeError('Parameter "name" must be str type or None')
+            elif len(name) < 1:
+                raise ValueError('Parameter "name" must be non-empty string')
+        if not isinstance(optional, bool):
+            raise TypeError('Parameter "optional" must be bool type')
+        super().__init__()
         self.interface = interface if isinstance(interface, str) else interface.__name__
         self.name = name
         self.optional = optional
-        self._obj_proxy = None
-        self._obj_ref = lambda: None
+        self.attr_name = None
 
     def __set_name__(self, owner, name):
         if self.name is None:
             self.name = name
+        self.attr_name = name
 
-    def __call__(self) -> Any:
-        """ Return reference to the module that this connector is connected to. """
-        if self.is_connected:
-            return self._obj_proxy
-        if self.optional:
-            return None
-        raise RuntimeError(
-            f'Connector "{self.name}" (interface "{self.interface}") is not connected.'
-        )
+    def __get__(self, instance, owner):
+        try:
+            return instance.__dict__[self.attr_name]
+        except KeyError:
+            if self.optional:
+                return None
+            raise ModuleConnectionError(
+                f'Connector "{self.name}" (interface "{self.interface}") is not connected.'
+            ) from None
+        except AttributeError:
+            return self
 
-    def __copy__(self):
-        return self.copy()
+    def __delete__(self, instance):
+        raise AttributeError('Connector attribute can not be deleted')
 
-    def __deepcopy__(self, memodict={}):
-        return self.copy()
+    def __set__(self, instance, value):
+        raise AttributeError('Connector attribute can not be overwritten')
 
     def __repr__(self):
         return f'{self.__module__}.Connector("{self.interface}", "{self.name}", {self.optional})'
 
-    def __module_died_callback(self, ref=None):
-        self.disconnect()
-
-    @property
-    def is_connected(self) -> bool:
-        """ Read-only property to check if the Connector instance is connected to a target module.
-
-        @return bool: Connection status flag (True: connected, False: disconnected)
-        """
-        return self._obj_proxy is not None
-
-    def connect(self, target: Any) -> None:
-        """ Check if target is connectible by this connector and connect.
-        """
+    def connect(self, instance: object, target: Any) -> None:
+        """ Check if target is connectible by this connector and connect. """
         bases = {cls.__name__ for cls in target.__class__.mro()}
         if self.interface not in bases:
-            raise RuntimeError(
-                f'Module "{target}" connected to connector "{self.name}" does not implement '
-                f'interface "{self.interface}".'
+            raise ModuleConnectionError(
+                f'Module "{target}" does not implement interface "{self.interface}" required by '
+                f'connector "{self.name}". Connection failed.'
             )
-        self._obj_proxy = OverloadProxy(target, self.interface)
-        self._obj_ref = weakref.ref(target, self.__module_died_callback)
+        if self.is_connected(instance):
+            raise ModuleConnectionError(
+                f'Connector "{self.name}" already connected to a target module. Connection failed.'
+            )
+        instance.__dict__[self.attr_name] = OverloadProxy(target, self.interface)
 
-    def disconnect(self) -> None:
-        """ Disconnect connector.
-        """
-        self._obj_proxy = None
+    def disconnect(self, instance: object) -> None:
+        """ Disconnect connector. """
+        try:
+            del instance.__dict__[self.attr_name]
+        except KeyError:
+            pass
 
-    def copy(self, **kwargs):
-        """ Create a new instance of Connector with copied values and update
-        """
-        return Connector(kwargs.get('interface', self.interface),
-                         kwargs.get('name', self.name),
-                         kwargs.get('optional', self.optional))
+    def is_connected(self, instance: object) -> bool:
+        """ Checks if the given module instance has this Connector connected to a target module. """
+        try:
+            return self.__get__(instance, instance.__class__) is not None
+        except ModuleConnectionError:
+            return False

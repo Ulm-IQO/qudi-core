@@ -381,7 +381,7 @@ class ManagedModule(QtCore.QObject):
         try:
             return self._instance.module_state()
         except AttributeError:
-            return 'not loaded'
+            return 'deactivated'
         except:
             return 'BROKEN'
 
@@ -476,9 +476,6 @@ class ManagedModule(QtCore.QObject):
             return
 
         with self._lock:
-            if not self.is_loaded:
-                self._load()
-
             # Return early if already active
             if self.is_active:
                 # If it is a GUI module, show it again.
@@ -501,8 +498,8 @@ class ManagedModule(QtCore.QObject):
                                          f'ManagedModule "{self._name}".')
                 module.activate()
 
-            # Establish module interconnections via Connector meta object in qudi module instance
-            self._connect()
+            if not self.is_loaded:
+                self._load()
 
             # Activate this module
             if self._instance.is_module_threaded:
@@ -536,10 +533,6 @@ class ManagedModule(QtCore.QObject):
             # Raise exception if by some reason no exception propagated to here and the activation
             # is still unsuccessful.
             if not self.is_active:
-                try:
-                    self._disconnect()
-                except:
-                    pass
                 raise RuntimeError(f'Failed to activate {self.module_base} module "{self.name}"!')
 
             if self.is_remote:
@@ -626,9 +619,7 @@ class ManagedModule(QtCore.QObject):
                     pass
             QtCore.QCoreApplication.instance().processEvents()  # ToDo: Is this still needed?
 
-            # Disconnect modules from this module
-            self._disconnect()
-
+            self._instance = None
             self.__last_state = self.state
             self.sigStateChanged.emit(self._base, self._name, self.__last_state)
             self.sigAppDataChanged.emit(self._base, self._name, self.has_app_data)
@@ -701,11 +692,22 @@ class ManagedModule(QtCore.QObject):
                         raise TypeError(f'Qudi module class "{mod_class}" is no subclass of '
                                         f'"qudi.core.module.Base"')
 
+                    # Collect all module instances required by connector config
+                    module_instances = {
+                        module_ref().name: module_ref().instance for module_ref in
+                        self.required_modules
+                    }
+                    module_connections = {
+                        conn_name: module_instances[mod_name] for conn_name, mod_name in
+                        self._connect_cfg.items()
+                    }
+
                     # Try to instantiate the imported qudi module class
                     try:
                         self._instance = mod_class(qudi_main_weakref=self._qudi_main_ref,
                                                    name=self._name,
-                                                   config=self._options)
+                                                   options=self._options,
+                                                   connections=module_connections)
                     except BaseException as e:
                         self._instance = None
                         raise RuntimeError(f'Error during initialization of qudi module '
@@ -713,24 +715,3 @@ class ManagedModule(QtCore.QObject):
             finally:
                 self.__last_state = self.state
                 self.sigStateChanged.emit(self._base, self._name, self.__last_state)
-
-    def _connect(self):
-        with self._lock:
-            # Check if module has already been loaded/instantiated
-            if not self.is_loaded:
-                raise RuntimeError(f'Connection failed. No module instance found for module '
-                                   f'"{self._base}.{self._name}".')
-
-            # Collect all module instances required by connector config
-            module_instances = {
-                module_ref().name: module_ref().instance for module_ref in self.required_modules
-            }
-            module_connections = {conn_name: module_instances[mod_name] for conn_name, mod_name in
-                                  self._connect_cfg.items()}
-
-            # Apply module connections
-            self._instance.connect_modules(module_connections)
-
-    def _disconnect(self):
-        with self._lock:
-            self._instance.disconnect_modules()

@@ -35,7 +35,8 @@ class StatusVar(DefaultAttribute):
 
     def __init__(self,
                  name: Optional[str] = None,
-                 default: Optional[Any] = None, *,
+                 default: Optional[Any] = None,
+                 *,
                  constructor: Optional[Callable] = None,
                  representer: Optional[Callable] = None):
         """

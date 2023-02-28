@@ -18,6 +18,7 @@ See the GNU Lesser General Public License for more details.
 You should have received a copy of the GNU Lesser General Public License along with qudi.
 If not, see <https://www.gnu.org/licenses/>.
 """
+
 import logging
 import os
 import copy
@@ -26,13 +27,15 @@ from abc import abstractmethod
 from uuid import uuid4
 from fysom import Fysom
 from PySide2 import QtCore, QtGui, QtWidgets
-from typing import Any, Mapping, Optional, Callable, Union, Dict
+from typing import Any, Mapping, MutableMapping, Optional, Callable, Union, Dict
 
-from qudi.core.configoption import MissingOption
+from qudi.core.configoption import MissingAction
 from qudi.core.statusvariable import StatusVar
+from qudi.core.connector import ModuleConnectionError
 from qudi.util.paths import get_module_app_data_path, get_daily_directory, get_default_data_dir
 from qudi.util.yaml import yaml_load, yaml_dump
-from qudi.core.meta import ModuleMeta
+from qudi.util.descriptors import ReadOnlyAttribute
+from qudi.core.meta import QudiObjectMeta
 from qudi.core.logger import get_logger
 
 
@@ -97,7 +100,7 @@ class ModuleStateMachine(Fysom, QtCore.QObject):
         super().unlock()
 
 
-class Base(QtCore.QObject, metaclass=ModuleMeta):
+class Base(QtCore.QObject, metaclass=QudiObjectMeta):
     """ Base class for all loadable modules
 
     * Ensure that the program will not die during the load of modules
@@ -121,23 +124,26 @@ class Base(QtCore.QObject, metaclass=ModuleMeta):
                             f'with abstract methods {set(abstract)}')
         return super().__new__(cls, *args, **kwargs)
 
-    def __init__(self, qudi_main_weakref: Any, name: str,
-                 config: Optional[Mapping[str, Any]] = None,
-                 callbacks: Optional[Mapping[str, Callable]] = None, **kwargs):
-        """ Initialise Base instance. Set up its state machine and initialize ConfigOption meta
-        attributes from given config.
+    def __init__(self,
+                 qudi_main_weakref: Any,
+                 name: str,
+                 options: Optional[Mapping[str, Any]] = None,
+                 connections: Optional[MutableMapping[str, Any]] = None,
+                 **kwargs):
+        """ Initialize Base instance. Set up its state machine, initializes ConfigOption meta
+        attributes from given config and connects activated module dependencies.
 
-        @param object self: the object being initialised
+        @param object self: the object being initialized
         @param str name: unique name for this module instance
         @param dict configuration: parameters from the configuration file
         @param dict callbacks: dict specifying functions to be run on state machine transitions
         """
         super().__init__(**kwargs)
 
-        if config is None:
-            config = dict()
-        if callbacks is None:
-            callbacks = dict()
+        if options is None:
+            options = dict()
+        if connections is None:
+            connections = dict()
 
         # Keep weak reference to qudi main instance
         self.__qudi_main_weakref = qudi_main_weakref
@@ -145,52 +151,44 @@ class Base(QtCore.QObject, metaclass=ModuleMeta):
         # Create logger instance for module
         self.__logger = get_logger(f'{self.__module__}.{self.__class__.__name__}')
 
-        # Create a copy of the _meta class dict and attach it to the created instance
-        self._meta = copy.deepcopy(self._meta)
-        # Add additional meta info to _meta dict
-        self._meta['name'] = name
-        self._meta['uuid'] = uuid4()
-        self._meta['configuration'] = copy.deepcopy(config)
-
-        # set instance attributes according to config_option meta objects
-        self.__initialize_config_options(config)
-
-        # set instance attributes according to connector meta objects
-        self.__initialize_connectors()
+        # Add additional module info
+        self.__module_name = name
+        self.__module_uuid = uuid4()
+        if isinstance(self, GuiBase):
+            self.__module_base = 'gui'
+        elif isinstance(self, LogicBase):
+            self.__module_base = 'logic'
+        else:
+            self.__module_base = 'hardware'
 
         # Initialize module FSM
-        default_callbacks = {'on_before_activate'  : self.__activation_callback,
-                             'on_before_deactivate': self.__deactivation_callback}
-        default_callbacks.update(callbacks)
-        self.module_state = ModuleStateMachine(parent=self, callbacks=default_callbacks)
-        return
+        fsm_callbacks = {'on_before_activate'  : self.__activation_callback,
+                         'on_before_deactivate': self.__deactivation_callback}
+        self.module_state = ModuleStateMachine(parent=self, callbacks=fsm_callbacks)
 
-    def __initialize_config_options(self, config: Optional[Mapping[str, Any]]) -> None:
+        # set instance attributes according to ConfigOption meta-objects
+        self.__init_config_options(options)
+        # connect other modules according to Connector meta-objects
+        self.__connect_modules(connections)
+
+    def __init_config_options(self, option_values: Optional[Mapping[str, Any]]) -> None:
         for attr_name, cfg_opt in self._meta['config_options'].items():
-            if cfg_opt.name in config:
-                cfg_val = copy.deepcopy(config[cfg_opt.name])
-            else:
-                if cfg_opt.missing == MissingOption.error:
+            try:
+                value = option_values[cfg_opt.name]
+            except KeyError:
+                if cfg_opt.missing_action == MissingAction.ERROR:
                     raise ValueError(
-                        f'Required ConfigOption "{cfg_opt.name}" not given in configuration.\n'
-                        f'Configuration is: {config}'
+                        f'Required ConfigOption "{cfg_opt.name}" not given in module configuration '
+                        f'options:\n{option_values}'
                     )
                 msg = f'No ConfigOption "{cfg_opt.name}" configured, using default value ' \
                       f'"{cfg_opt.default}" instead.'
-                cfg_val = copy.deepcopy(cfg_opt.default)
-                if cfg_opt.missing == MissingOption.warn:
+                if cfg_opt.missing_action == MissingAction.WARN:
                     self.log.warning(msg)
-                elif cfg_opt.missing == MissingOption.info:
+                elif cfg_opt.missing_action == MissingAction.INFO:
                     self.log.info(msg)
-            if cfg_opt.check(cfg_val):
-                cfg_val = cfg_opt.convert(cfg_val)
-                if cfg_opt.constructor_function is not None:
-                    cfg_val = cfg_opt.constructor_function(self, cfg_val)
-                setattr(self, attr_name, cfg_val)
-
-    def __initialize_connectors(self) -> None:
-        for attr_name, conn in self._meta['connectors'].items():
-            setattr(self, attr_name, conn)
+            else:
+                cfg_opt.construct(self, copy.deepcopy(value))
 
     def __eq__(self, other):
         if isinstance(other, Base):
@@ -225,20 +223,20 @@ class Base(QtCore.QObject, metaclass=ModuleMeta):
         """ Read-only property returning the module name of this module instance as specified in the
         config.
         """
-        return self._meta['name']
+        return self.__module_name
 
     @property
     def module_base(self) -> str:
         """ Read-only property returning the module base of this module instance
         ('hardware' 'logic' or 'gui')
         """
-        return self._meta['base']
+        return self.__module_base
 
     @property
     def module_uuid(self) -> uuid.UUID:
         """ Read-only property returning a unique uuid for this module instance.
         """
-        return self._meta['uuid']
+        return self.__module_uuid
 
     @property
     def module_default_data_dir(self) -> str:
@@ -258,18 +256,7 @@ class Base(QtCore.QObject, metaclass=ModuleMeta):
 
     @property
     def module_status_variables(self) -> Dict[str, Any]:
-        variables = dict()
-        try:
-            for attr_name, var in self._meta['status_variables'].items():
-                if hasattr(self, attr_name):
-                    value = getattr(self, attr_name)
-                    if not isinstance(value, StatusVar):
-                        if var.representer_function is not None:
-                            value = var.representer_function(self, value)
-                        variables[var.name] = value
-        except:
-            self.log.exception('Error while collecting status variables:')
-        return variables
+        return {var.name: var.represent(self) for var in self._meta['status_variables'].values()}
 
     @property
     def _qudi_main(self) -> Any:
@@ -315,6 +302,7 @@ class Base(QtCore.QObject, metaclass=ModuleMeta):
         finally:
             # save status variables even if deactivation failed
             self._dump_status_variables()
+            self.__disconnect_modules()
         return True
 
     def _load_status_variables(self) -> None:
@@ -330,15 +318,17 @@ class Base(QtCore.QObject, metaclass=ModuleMeta):
             variables = dict()
             self.log.exception('Failed to load status variables:')
 
-        # Set instance attributes according to StatusVar meta objects
-        try:
-            for attr_name, var in self._meta['status_variables'].items():
-                value = variables.get(var.name, copy.deepcopy(var.default))
-                if var.constructor_function is not None:
-                    value = var.constructor_function(self, value)
-                setattr(self, attr_name, value)
-        except:
-            self.log.exception('Error while settings status variables:')
+        # Set instance attributes according to StatusVar meta-objects
+        if variables:
+            for var in self._meta['status_variables'].values():
+                try:
+                    value = variables[var.name]
+                except KeyError:
+                    continue
+                try:
+                    var.construct(self, value)
+                except:
+                    self.log.exception(f'Error while restoring status variable "{var.name}":')
 
     def _dump_status_variables(self) -> None:
         """ Dump status variables to app data directory on disc.
@@ -350,7 +340,12 @@ class Base(QtCore.QObject, metaclass=ModuleMeta):
                                              self.module_base,
                                              self.module_name)
         # collect StatusVar values into dictionary
-        variables = self.module_status_variables
+        try:
+            variables = self.module_status_variables
+        except:
+            self.log.exception('Error while representing status variables for saving:')
+            variables = dict()
+
         # Save to file if any StatusVars have been found
         if variables:
             try:
@@ -379,41 +374,34 @@ class Base(QtCore.QObject, metaclass=ModuleMeta):
             return
         qudi_main.gui.pop_up_message(title, message)
 
-    def connect_modules(self, connections: Mapping[str, Any]) -> None:
-        """ Connects given modules (values) to their respective Connector (keys).
+    def __connect_modules(self, connections: MutableMapping[str, Any]) -> None:
+        """ Connects given modules (values) to their respective Connector (keys). """
+        try:
+            # Iterate through all module connectors and try to connect them to targets
+            for connector in self._meta['connectors'].values():
+                target = connections.pop(connector.name, None)
+                if target is None:
+                    if not connector.optional:
+                        raise ModuleConnectionError(
+                            f'Mandatory module connector "{connector.name}" not configured.'
+                        )
+                else:
+                    connector.connect(self, target)
+        except Exception:
+            self.__disconnect_modules()
+            raise
 
-        DO NOT CALL THIS METHOD UNLESS YOU KNOW WHAT YOU ARE DOING!
-        """
-        # Sanity checks
-        conn_names = set(conn.name for conn in self._meta['connectors'].values())
-        mandatory_conn = set(
-            conn.name for conn in self._meta['connectors'].values() if not conn.optional
-        )
-        configured_conn = set(connections)
-        if not configured_conn.issubset(conn_names):
-            raise KeyError(f'Mismatch of connectors in configuration {configured_conn} and module '
-                           f'Connector meta objects {conn_names}.')
-        if not mandatory_conn.issubset(configured_conn):
-            raise ValueError(f'Not all mandatory connectors are specified in config.\n'
-                             f'Mandatory connectors are: {mandatory_conn}')
+        # Warn if too many connections have been configured
+        if connections:
+            self.log.warning(
+                f'Module config contains additional connectors that are ignored. Please remove '
+                f'the following connections from the configuration: {list(connections)}'
+            )
 
-        # Iterate through module connectors and connect them if possible
-        for conn in self._meta['connectors'].values():
-            target = connections.get(conn.name, None)
-            if target is None:
-                continue
-            if conn.is_connected:
-                raise RuntimeError(f'Connector "{conn.name}" already connected.\n'
-                                   f'Call "disconnect_modules()" before trying to reconnect.')
-            conn.connect(target)
-
-    def disconnect_modules(self) -> None:
-        """ Disconnects all Connector instances for this module.
-
-        DO NOT CALL THIS METHOD UNLESS YOU KNOW WHAT YOU ARE DOING!
-        """
-        for conn in self._meta['connectors'].values():
-            conn.disconnect()
+    def __disconnect_modules(self) -> None:
+        """ Disconnects all Connector instances for this module. """
+        for connector in self._meta['connectors'].values():
+            connector.disconnect(self)
 
     @abstractmethod
     def on_activate(self) -> None:
