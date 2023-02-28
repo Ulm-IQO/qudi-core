@@ -23,7 +23,6 @@ If not, see <https://www.gnu.org/licenses/>.
 
 __all__ = ['ConfigOption', 'MissingAction']
 
-from inspect import signature
 from enum import Enum
 from typing import Any, Optional, Callable, Union
 from qudi.util.descriptors import DefaultAttribute
