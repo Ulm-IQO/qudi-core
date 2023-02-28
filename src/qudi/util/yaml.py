@@ -23,7 +23,7 @@ If not, see <https://www.gnu.org/licenses/>.
 
 __all__ = ['SafeRepresenter', 'SafeConstructor', 'YAML', 'yaml_load', 'yaml_dump', 'ParserError',
            'YAMLError', 'MarkedYAMLError', 'YAMLStreamError', 'ScannerError', 'ConstructorError',
-           'DuplicateKeyError']
+           'DuplicateKeyError', 'YamlFileHandler']
 
 import os
 import numpy as np
@@ -267,3 +267,37 @@ def yaml_dump(file_path: _FilePath, data: Mapping[str, Any]) -> None:
         os.makedirs(file_dir, exist_ok=True)
     with open(file_path, 'w') as f:
         YAML().dump(data, f)
+
+
+class YamlFileHandler:
+    """ Small helper class to dump/load/clear/check a qudi yaml file defined by a path """
+    def __init__(self, file_path: _FilePath):
+        self._file_path = file_path
+
+    @property
+    def file_path(self) -> _FilePath:
+        return self._file_path
+
+    @property
+    def exists(self) -> bool:
+        return os.path.isfile(self.file_path)
+
+    def clear(self) -> None:
+        try:
+            os.remove(self.file_path)
+        except OSError:
+            pass
+
+    def dump(self, variables: Mapping[str, Any]) -> None:
+        if variables:
+            yaml_dump(self.file_path, variables)
+        else:
+            self.clear()
+
+    def load(self, raise_missing: Optional[bool] = False) -> Dict[str, Any]:
+        try:
+            return yaml_load(self.file_path)
+        except FileNotFoundError:
+            if raise_missing:
+                raise
+            return dict()

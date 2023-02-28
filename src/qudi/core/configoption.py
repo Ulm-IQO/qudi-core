@@ -21,30 +21,34 @@ You should have received a copy of the GNU Lesser General Public License along w
 If not, see <https://www.gnu.org/licenses/>.
 """
 
-__all__ = ['ConfigOption', 'MissingOption']
+__all__ = ['ConfigOption', 'MissingAction']
 
-import copy
-import inspect
 from enum import Enum
-from typing import Any, Optional, Callable
+from typing import Any, Optional, Callable, Union
+from qudi.util.descriptors import DefaultAttribute
 
 
-class MissingOption(Enum):
+class MissingAction(Enum):
     """ Representation for missing ConfigOption """
-    error = -3
-    warn = -2
-    info = -1
-    nothing = 0
+    ERROR = 'error'
+    WARN = 'warn'
+    INFO = 'info'
+    NOTHING = 'nothing'
 
 
-class ConfigOption:
+class ConfigOption(DefaultAttribute):
     """ This class represents a configuration entry in the config file that is loaded before
-        module initalisation.
+    module initialisation.
     """
 
-    def __init__(self, name: Optional[str] = None, default: Optional[Any] = None, *,
-                 missing: Optional[str] = 'nothing', constructor: Optional[Callable] = None,
-                 checker: Optional[Callable] = None, converter: Optional[Callable] = None):
+    _NO_VALUE = object()
+
+    def __init__(self,
+                 name: Optional[str] = None,
+                 default: Optional[Any] = _NO_VALUE,
+                 *,
+                 missing: Optional[Union[MissingAction, str]] = MissingAction.NOTHING,
+                 constructor: Optional[Callable] = None):
         """ Create a ConfigOption object.
 
         @param name: identifier of the option in the configuration file
@@ -52,79 +56,58 @@ class ConfigOption:
         @param missing: action to take when the option is not set. 'nothing' does nothing, 'warn'
                         logs a warning, 'error' logs an error and prevents the module from loading
         @param constructor: constructor function for complex config option behaviour
-        @param checker: static function that checks if value is ok
-        @param converter: static function that forces type interpretation
         """
-        self.missing = MissingOption[missing]
-
+        if default is self._NO_VALUE:
+            super().__init__()
+        else:
+            super().__init__(default=default)
         self.name = name
-        self.default = default
-        self.checker = checker
-        self.converter = converter
-        self.constructor_function = None
-        if constructor is not None:
-            self.constructor(constructor)
+        if default is self._NO_VALUE:
+            self.missing_action = MissingAction.ERROR
+        else:
+            self.missing_action = MissingAction(missing)
+        if constructor is None:
+            self._constructor = None
+        elif callable(constructor):
+            self._constructor = constructor
+        else:
+            self._constructor = self._sanitize_signature(constructor)
+
+    @property
+    def optional(self) -> bool:
+        return self.missing_action != MissingAction.ERROR
 
     def __set_name__(self, owner, name):
         if self.name is None:
             self.name = name
+        return super().__set_name__(owner, name)
 
-    def __copy__(self):
-        return self.copy()
+    def construct(self, instance: object, value: Any) -> None:
+        if self._constructor is not None:
+            if isinstance(self._constructor, str):
+                value = getattr(instance, self._constructor)(value)
+            else:
+                value = self._constructor(value)
+        self.__set__(instance, value)
 
-    def __deepcopy__(self, memodict={}):
-        return self.copy()
+    def constructor(self,
+                    func: Union[staticmethod, classmethod, Callable]
+                    ) -> Union[staticmethod, classmethod, Callable]:
+        """ This is the decorator for declaring constructor function for this StatusVar.
 
-    @property
-    def optional(self) -> bool:
-        return self.missing != MissingOption.error
-
-    def copy(self, **kwargs):
-        """ Create a new instance of ConfigOption with copied values and update
-
-        @param kwargs: extra arguments or overrides for the constructor of this class
-        """
-        newargs = {'name': self.name,
-                   'default': copy.deepcopy(self.default),
-                   'missing': self.missing.name,
-                   'constructor': self.constructor_function,
-                   'checker': self.checker,
-                   'converter': self.converter}
-        newargs.update(kwargs)
-        return ConfigOption(**newargs)
-
-    def check(self, value: Any) -> bool:
-        """ If checker function set, check value. Assume everything is ok otherwise.
-        """
-        if callable(self.checker):
-            return self.checker(value)
-        return True
-
-    def convert(self, value: Any) -> Any:
-        """ If converter function set, convert value (pass-through otherwise).
-        """
-        if callable(self.converter):
-            return self.converter(value)
-        return value
-
-    def constructor(self, func: Callable) -> Callable:
-        """ This is the decorator for declaring a constructor function for this ConfigOption.
-
-        @param func: constructor function for this ConfigOption
+        @param func: constructor function for this StatusVar
         @return: return the original function so this can be used as a decorator
         """
-        self.constructor_function = self._assert_func_signature(func)
+        self._constructor = self._sanitize_signature(func)
         return func
 
     @staticmethod
-    def _assert_func_signature(func: Callable) -> Callable:
-        assert callable(func), 'ConfigOption constructor must be callable'
-        params = tuple(inspect.signature(func).parameters)
-        assert 0 < len(params) < 3, 'ConfigOption constructor must be function with ' \
-                                    '1 (static) or 2 (bound method) parameters.'
-        if len(params) == 1:
-            def wrapper(instance, value):
-                return func(value)
+    def _sanitize_signature(func: Union[staticmethod, classmethod, Callable]) -> str:
+        if isinstance(func, (staticmethod, classmethod)):
+            return func.__func__.__name__
+        elif callable(func):
+            return func.__name__
+        else:
+            raise TypeError('ConfigOption constructor must be callable, staticmethod or '
+                            'classmethod type')
 
-            return wrapper
-        return func

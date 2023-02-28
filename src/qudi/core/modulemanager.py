@@ -339,30 +339,6 @@ class LocalManagedModule(ManagedModule):
         self.__activating = False
         self.__deactivating = False
 
-    def __activation_callback(self, event=None) -> bool:
-        """ Restore status variables before activation and invoke on_activate method.
-        """
-        try:
-            self._load_status_variables()
-            self.on_activate()
-        except:
-            self.log.exception('Exception during activation:')
-            return False
-        return True
-
-    def __deactivation_callback(self, event=None) -> bool:
-        """ Invoke on_deactivate method and save status variables afterwards even if deactivation
-        fails.
-        """
-        try:
-            self.on_deactivate()
-        except:
-            self.log.exception('Exception during deactivation:')
-        finally:
-            # save status variables even if deactivation failed
-            self._dump_status_variables()
-        return True
-
     @property
     def url(self) -> str:
         return self._module

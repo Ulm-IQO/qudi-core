@@ -171,6 +171,9 @@ class OverloadProxy:
     def __repr__(self):
         return repr(object.__getattribute__(self, '_obj_ref')())
 
+    def __call__(self):
+        return self
+
     # factories
     _special_names = (
         '__abs__', '__add__', '__and__', '__call__', '__cmp__', '__coerce__', '__contains__',
