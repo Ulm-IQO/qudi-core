@@ -33,7 +33,7 @@ from typing import Any, Mapping, Optional, Callable, Union, Dict
 from qudi.core.configoption import MissingOption
 from qudi.core.statusvariable import StatusVar
 from qudi.util.paths import get_module_app_data_path, get_daily_directory, get_default_data_dir, get_appdata_dir
-from qudi.util.yaml import yaml_load, yaml_dump, YamlFileHandler
+from qudi.util.yaml import yaml_load, yaml_dump
 from qudi.core.meta import ModuleMeta
 from qudi.core.logger import get_logger
 
@@ -350,12 +350,19 @@ class Base(QtCore.QObject, metaclass=ModuleMeta):
         # Set instance attributes according to StatusVar meta objects
         try:
             for attr_name, var in self._meta['status_variables'].items():
-                value = variables.get(var.name, copy.deepcopy(var.default))
-                if var.constructor_function is not None:
-                    value = var.constructor_function(self, value)
-                setattr(self, attr_name, value)
-        except:
-            self.log.exception('Error while settings status variables:')
+                try:
+                    if var.constructor_function is not None:
+                        value = var.constructor_function(self, value)
+                try:
+                    value = variables[var.name]
+                except KeyError:
+                    continue
+                try:
+                    if var.constructor_function is not None:
+                        value = var.constructor_function(self, value)
+                    setattr(self, attr_name, value)
+                except:
+                    self.log.exception(f'Error while settings status variable "{var.name}":')
 
     def _dump_status_variables(self) -> None:
         """ Dump status variables to app data directory on disc.
