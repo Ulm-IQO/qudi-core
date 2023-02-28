@@ -18,10 +18,12 @@ See the GNU Lesser General Public License for more details.
 You should have received a copy of the GNU Lesser General Public License along with qudi.
 If not, see <https://www.gnu.org/licenses/>.
 """
+
 import logging
 import os
 import copy
 import uuid
+from enum import Enum
 from abc import abstractmethod
 from uuid import uuid4
 from fysom import Fysom
@@ -30,13 +32,25 @@ from typing import Any, Mapping, Optional, Callable, Union, Dict
 
 from qudi.core.configoption import MissingOption
 from qudi.core.statusvariable import StatusVar
-from qudi.util.paths import get_module_app_data_path, get_daily_directory, get_default_data_dir
-from qudi.util.yaml import yaml_load, yaml_dump
+from qudi.util.paths import get_module_app_data_path, get_daily_directory, get_default_data_dir, get_appdata_dir
+from qudi.util.yaml import yaml_load, yaml_dump, YamlFileHandler
 from qudi.core.meta import ModuleMeta
 from qudi.core.logger import get_logger
 
 
-class ModuleStateMachine(Fysom, QtCore.QObject):
+class ModuleState(Enum):
+    DEACTIVATED = 'deactivated'
+    IDLE = 'idle'
+    LOCKED = 'locked'
+
+
+class ModuleBase(Enum):
+    HARDWARE = 'hardware'
+    LOGIC = 'logic'
+    GUI = 'gui'
+
+
+class ModuleStateMachine(Fysom):
     """
     FIXME
     """
@@ -143,7 +157,7 @@ class Base(QtCore.QObject, metaclass=ModuleMeta):
         self.__qudi_main_weakref = qudi_main_weakref
 
         # Create logger instance for module
-        self.__logger = get_logger(f'{self.__module__}.{self.__class__.__name__}')
+        self.__logger = get_logger(f'{self.__module__}.{self.__class__.__name__}:{name}')
 
         # Create a copy of the _meta class dict and attach it to the created instance
         self._meta = copy.deepcopy(self._meta)
@@ -261,8 +275,11 @@ class Base(QtCore.QObject, metaclass=ModuleMeta):
         variables = dict()
         try:
             for attr_name, var in self._meta['status_variables'].items():
-                if hasattr(self, attr_name):
+                try:
                     value = getattr(self, attr_name)
+                except AttributeError:
+                    pass
+                else:
                     if not isinstance(value, StatusVar):
                         if var.representer_function is not None:
                             value = var.representer_function(self, value)
