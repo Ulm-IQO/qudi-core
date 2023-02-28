@@ -22,54 +22,54 @@ If not, see <https://www.gnu.org/licenses/>.
 
 __all__ = ['StatusVar']
 
-import copy
-import inspect
-from typing import Callable, Any, Optional
+
+from inspect import signature
+from typing import Callable, Any, Optional, Union
+from qudi.util.descriptors import DefaultAttribute
 
 
-class StatusVar:
+class StatusVar(DefaultAttribute):
     """ This class defines a status variable that is loaded before activation and saved after
     deactivation.
     """
 
-    def __init__(self, name: Optional[str] = None, default: Optional[Any] = None, *,
-                 constructor: Optional[Callable] = None, representer: Optional[Callable] = None):
+    def __init__(self,
+                 name: Optional[str] = None,
+                 default: Optional[Any] = None, *,
+                 constructor: Optional[Callable] = None,
+                 representer: Optional[Callable] = None):
         """
         @param name: identifier of the status variable when stored
         @param default: default value for the status variable when a saved version is not present
         @param constructor: constructor function for variable; use for type checks or conversion
         @param representer: representer function for status variable; use for saving conversion
         """
+        super().__init__(default=default)
         self.name = name
-        self.default = default
-        self.constructor_function = None
-        self.representer_function = None
-        if constructor is not None:
-            self.constructor(constructor)
-        if representer is not None:
-            self.representer(representer)
+        self._constructor = self._sanitize_signature(constructor) if constructor else None
+        self._representer = self._sanitize_signature(representer) if representer else None
 
     def __set_name__(self, owner, name):
         if self.name is None:
             self.name = name
+        return super().__set_name__(owner, name)
 
-    def __copy__(self):
-        return self.copy()
+    def construct(self, instance: object, value: Any) -> None:
+        if self._constructor is not None:
+            if isinstance(self._constructor, str):
+                value = getattr(instance, self._constructor)(value)
+            else:
+                value = self._constructor(value)
+        self.__set__(instance, value)
 
-    def __deepcopy__(self, memodict={}):
-        return self.copy()
-
-    def copy(self, **kwargs):
-        """ Create a new instance of StatusVar with copied and updated values.
-
-        @param kwargs: Additional or overridden parameters for the constructor of this class
-        """
-        newargs = {'name': self.name,
-                   'default': copy.deepcopy(self.default),
-                   'constructor': self.constructor_function,
-                   'representer': self.representer_function}
-        newargs.update(kwargs)
-        return StatusVar(**newargs)
+    def represent(self, instance: object) -> Any:
+        value = self.__get__(instance, instance.__class__)
+        if self._representer is not None:
+            if isinstance(self._representer, str):
+                value = getattr(instance, self._representer)(value)
+            else:
+                value = self._representer(value)
+        return value
 
     def constructor(self, func: Callable) -> Callable:
         """ This is the decorator for declaring constructor function for this StatusVar.
@@ -77,7 +77,7 @@ class StatusVar:
         @param func: constructor function for this StatusVar
         @return: return the original function so this can be used as a decorator
         """
-        self.constructor_function = self._assert_func_signature(func)
+        self._constructor = self._sanitize_signature(func)
         return func
 
     def representer(self, func: Callable) -> Callable:
@@ -86,18 +86,21 @@ class StatusVar:
         @param func: representer function for this StatusVar
         @return: return the original function so this can be used as a decorator
         """
-        self.representer_function = self._assert_func_signature(func)
+        self._representer = self._sanitize_signature(func)
         return func
 
     @staticmethod
-    def _assert_func_signature(func: Callable) -> Callable:
-        assert callable(func), 'StatusVar constructor/representer must be callable'
-        params = tuple(inspect.signature(func).parameters)
-        assert 0 < len(params) < 3, 'StatusVar constructor/representer must be function with ' \
-                                    '1 (static) or 2 (bound method) parameters.'
-        if len(params) == 1:
-            def wrapper(instance, value):
-                return func(value)
-
-            return wrapper
-        return func
+    def _sanitize_signature(func: Union[staticmethod, classmethod, Callable]) -> Union[str, Callable]:
+        # in case of staticmethod and classmethod objects
+        try:
+            func = func.__func__
+        except AttributeError:
+            pass
+        func_parameters = signature(func).parameters
+        if len(func_parameters) == 1:
+            return func
+        elif len(func_parameters) == 2:
+            return func.__name__
+        else:
+            raise TypeError('StatusVar constructor/representer must be callable with 1 (static) or '
+                            '2 (bound method) parameters.')
