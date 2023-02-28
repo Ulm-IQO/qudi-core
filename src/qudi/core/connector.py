@@ -21,7 +21,6 @@ If not, see <https://www.gnu.org/licenses/>.
 
 __all__ = ['Connector', 'ModuleConnectionError']
 
-import weakref
 from typing import Any, Type, Union
 from qudi.util.overload import OverloadProxy
 

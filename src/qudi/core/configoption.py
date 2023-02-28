@@ -67,7 +67,12 @@ class ConfigOption(DefaultAttribute):
             self.missing_action = MissingAction.ERROR
         else:
             self.missing_action = MissingAction(missing)
-        self._constructor = self._sanitize_signature(constructor) if constructor else None
+        if constructor is None:
+            self._constructor = None
+        elif callable(constructor):
+            self._constructor = constructor
+        else:
+            self._constructor = self._sanitize_signature(constructor)
 
     @property
     def optional(self) -> bool:
@@ -86,7 +91,9 @@ class ConfigOption(DefaultAttribute):
                 value = self._constructor(value)
         self.__set__(instance, value)
 
-    def constructor(self, func: Callable) -> Callable:
+    def constructor(self,
+                    func: Union[staticmethod, classmethod, Callable]
+                    ) -> Union[staticmethod, classmethod, Callable]:
         """ This is the decorator for declaring constructor function for this StatusVar.
 
         @param func: constructor function for this StatusVar
@@ -96,18 +103,12 @@ class ConfigOption(DefaultAttribute):
         return func
 
     @staticmethod
-    def _sanitize_signature(func: Union[staticmethod, classmethod, Callable]) -> Union[str, Callable]:
-        # in case of staticmethod and classmethod objects
-        try:
-            func = func.__func__
-        except AttributeError:
-            pass
-        func_parameters = signature(func).parameters
-        if len(func_parameters) == 1:
-            return func
-        elif len(func_parameters) == 2:
+    def _sanitize_signature(func: Union[staticmethod, classmethod, Callable]) -> str:
+        if isinstance(func, (staticmethod, classmethod)):
+            return func.__func__.__name__
+        elif callable(func):
             return func.__name__
         else:
-            raise TypeError('ConfigOption constructor must be callable with 1 (static) or '
-                            '2 (bound method) parameters.')
+            raise TypeError('ConfigOption constructor must be callable, staticmethod or '
+                            'classmethod type')
 

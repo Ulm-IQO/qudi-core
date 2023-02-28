@@ -47,8 +47,18 @@ class StatusVar(DefaultAttribute):
         """
         super().__init__(default=default)
         self.name = name
-        self._constructor = self._sanitize_signature(constructor) if constructor else None
-        self._representer = self._sanitize_signature(representer) if representer else None
+        if constructor is None:
+            self._constructor = None
+        elif callable(constructor):
+            self._constructor = constructor
+        else:
+            self._constructor = self._sanitize_signature(constructor)
+        if representer is None:
+            self._representer = None
+        elif callable(representer):
+            self._representer = constructor
+        else:
+            self._representer = self._sanitize_signature(representer)
 
     def __set_name__(self, owner, name):
         if self.name is None:
@@ -91,17 +101,12 @@ class StatusVar(DefaultAttribute):
         return func
 
     @staticmethod
-    def _sanitize_signature(func: Union[staticmethod, classmethod, Callable]) -> Union[str, Callable]:
+    def _sanitize_signature(func: Union[staticmethod, classmethod, Callable]) -> str:
         # in case of staticmethod and classmethod objects
-        try:
-            func = func.__func__
-        except AttributeError:
-            pass
-        func_parameters = signature(func).parameters
-        if len(func_parameters) == 1:
-            return func
-        elif len(func_parameters) == 2:
+        if isinstance(func, (staticmethod, classmethod)):
+            return func.__func__.__name__
+        elif callable(func):
             return func.__name__
         else:
-            raise TypeError('StatusVar constructor/representer must be callable with 1 (static) or '
-                            '2 (bound method) parameters.')
+            raise TypeError('StatusVar constructor/representer must be callable, staticmethod or '
+                            'classmethod type')

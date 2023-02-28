@@ -27,14 +27,13 @@ from abc import abstractmethod
 from uuid import uuid4
 from fysom import Fysom
 from PySide2 import QtCore, QtGui, QtWidgets
-from typing import Any, Mapping, MutableMapping, Optional, Callable, Union, Dict
+from typing import Any, Mapping, MutableMapping, Optional, Union, Dict
 
 from qudi.core.configoption import MissingAction
 from qudi.core.statusvariable import StatusVar
 from qudi.core.connector import ModuleConnectionError
 from qudi.util.paths import get_module_app_data_path, get_daily_directory, get_default_data_dir
 from qudi.util.yaml import yaml_load, yaml_dump
-from qudi.util.descriptors import ReadOnlyAttribute
 from qudi.core.meta import QudiObjectMeta
 from qudi.core.logger import get_logger
 
