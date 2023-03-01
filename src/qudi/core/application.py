@@ -254,7 +254,7 @@ class Qudi(QtCore.QObject):
             self.log.info(f'Applying configuration from "{self.configuration.file_path}"...')
 
         # Clear all qudi modules
-        self.module_manager.clear()
+        self.module_manager.remove_all_modules()
 
         # Configure extension paths
         self._remove_extensions_from_path()
@@ -269,7 +269,6 @@ class Qudi(QtCore.QObject):
                                                    base=base,
                                                    configuration=module_cfg)
                 except:
-                    self.module_manager.remove_module(module_name, ignore_missing=True)
                     self.log.exception(f'Unable to create ManagedModule instance for {base} '
                                        f'module "{module_name}"')
 
@@ -352,13 +351,9 @@ class Qudi(QtCore.QObject):
             self._shutting_down = True
             if prompt:
                 locked_modules = False
-                broken_modules = False
                 for module in self.module_manager.values():
-                    if module.is_busy:
+                    if module.is_locked:
                         locked_modules = True
-                    elif module.state == 'BROKEN':
-                        broken_modules = True
-                    if broken_modules and locked_modules:
                         break
 
                 if self.no_gui:
@@ -405,8 +400,7 @@ class Qudi(QtCore.QObject):
             QtCore.QCoreApplication.instance().processEvents()
             self.log.info('Deactivating modules...')
             print('> Deactivating modules...')
-            self.module_manager.stop_all_modules()
-            self.module_manager.clear()
+            self.module_manager.remove_all_modules()
             QtCore.QCoreApplication.instance().processEvents()
             if not self.no_gui:
                 self.log.info('Closing main GUI...')

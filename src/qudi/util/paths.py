@@ -157,5 +157,5 @@ def get_daily_directory(timestamp: Optional[datetime.datetime] = None, root: Opt
 def get_module_app_data_path(cls_name: str, module_base: str, module_name: str) -> str:
     """ Constructs the appData file path for the given qudi module
     """
-    file_name = f'status-{cls_name}_{module_base}_{module_name}.cfg'
+    file_name = f'status-{module_base.lower()}-{cls_name}-{module_name}.cfg'
     return os.path.join(get_appdata_dir(), file_name)

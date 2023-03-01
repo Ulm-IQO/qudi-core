@@ -156,23 +156,13 @@ class QudiNamespaceService(rpyc.Service):
 
     def __init__(self, *args, qudi, force_remote_calls_by_value=False, **kwargs):
         super().__init__(*args, **kwargs)
-        self.__qudi_ref = weakref.ref(qudi)
+        self._qudi_main = qudi
         self._notifier_callbacks = dict()
         self._force_remote_calls_by_value = force_remote_calls_by_value
 
     @property
-    def _qudi(self):
-        qudi = self.__qudi_ref()
-        if qudi is None:
-            raise RuntimeError('Dead qudi application reference encountered')
-        return qudi
-
-    @property
     def _module_manager(self):
-        manager = self._qudi.module_manager
-        if manager is None:
-            raise RuntimeError('No module manager initialized in qudi application')
-        return manager
+        return self._qudi_main.module_manager
 
     def on_connect(self, conn):
         """ code that runs when a connection is created
@@ -204,12 +194,12 @@ class QudiNamespaceService(rpyc.Service):
         @return dict: Names (keys) and object references (values)
         """
         if self._force_remote_calls_by_value:
-            mods = {name: ModuleRpycProxy(mod.instance) for name, mod in
-                    self._module_manager.items() if mod.is_active}
+            mods = {name: ModuleRpycProxy(instance) for name, instance in
+                    self._module_manager.module_instances.items() if instance is not None}
         else:
-            mods = {name: mod.instance for name, mod in self._module_manager.items() if
-                    mod.is_active}
-        mods['qudi'] = self._qudi
+            mods = {name: instance for name, instance in
+                    self._module_manager.module_instances.items() if instance is not None}
+        mods['qudi'] = self._qudi_main
         return mods
 
     def exposed_get_logger(self, name: str) -> logging.Logger:

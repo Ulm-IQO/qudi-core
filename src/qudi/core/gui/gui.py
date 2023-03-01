@@ -25,6 +25,7 @@ import platform
 from PySide2 import QtCore, QtGui, QtWidgets
 from qudi.core.gui.main_gui.main_gui import QudiMainGui
 from qudi.core.modulemanager import ModuleManager
+from qudi.core.module import ModuleState, ModuleBase
 from qudi.util.paths import get_artwork_dir
 from qudi.core.logger import get_logger
 
@@ -146,8 +147,7 @@ class Gui(QtCore.QObject):
         self._sigBalloonMessage.connect(self.balloon_message, QtCore.Qt.QueuedConnection)
 
         self._configure_pyqtgraph(use_opengl)
-        self.main_gui_module = QudiMainGui(qudi_main_weakref=weakref.ref(qudi_instance),
-                                           name='qudi_main_gui')
+        self.main_gui_module = QudiMainGui(qudi_main=qudi_instance, name='qudi_main_gui')
         self.system_tray_icon.managerAction.triggered.connect(self.activate_main_gui,
                                                               QtCore.Qt.QueuedConnection)
         self.system_tray_icon.quitAction.triggered.connect(qudi_instance.quit,
@@ -377,15 +377,11 @@ class Gui(QtCore.QObject):
         self.system_tray_notification_bubble(title, message, time=time, icon=icon)
         return
 
-    @QtCore.Slot(str, str, str)
-    def _tray_module_action_changed(self, base, module_name, state):
-        if self.system_tray_icon and base == 'gui':
-            if state == 'deactivated':
-                self.system_tray_icon.remove_action(module_name)
+    @QtCore.Slot(str, object)
+    def _tray_module_action_changed(self, name: str, state: tuple) -> None:
+        if self.system_tray_icon and state[0] == ModuleBase.GUI:
+            if state[1] == ModuleState.DEACTIVATED:
+                self.system_tray_icon.remove_action(name)
             else:
                 mod_manager = ModuleManager.instance()
-                try:
-                    module_inst = mod_manager[module_name].instance
-                except KeyError:
-                    return
-                self.system_tray_icon.add_action(module_name, module_inst.show)
+                self.system_tray_icon.add_action(name, lambda: mod_manager.activate_module(name))

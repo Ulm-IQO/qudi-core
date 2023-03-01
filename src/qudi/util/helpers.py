@@ -19,12 +19,14 @@ If not, see <https://www.gnu.org/licenses/>.
 
 __all__ = ['csv_2_list', 'in_range', 'is_complex', 'is_complex_type', 'is_float', 'is_float_type',
            'is_integer', 'is_integer_type', 'is_number', 'is_number_type', 'is_string',
-           'is_string_type', 'iter_modules_recursive', 'natural_sort', 'str_to_number']
+           'is_string_type', 'iter_modules_recursive', 'natural_sort', 'str_to_number',
+           'call_slot_from_native_thread', 'called_from_native_thread']
 
 import re
 import os
 import pkgutil
 import numpy as np
+from PySide2 import QtCore
 from typing import Union, Optional, Iterable, List, Any, Type, Tuple, Callable
 
 _RealNumber = Union[int, float]
@@ -81,6 +83,23 @@ def natural_sort(iterable: Iterable[Any]) -> List[Any]:
         return sorted(iterable, key=lambda key: [conv(i) for i in re.split(r'(\d+)', key)])
     except:
         return sorted(iterable)
+
+
+def called_from_native_thread(obj: QtCore.QObject) -> bool:
+    return QtCore.QThread.currentThread() == obj.thread()
+
+
+def call_slot_from_native_thread(obj: QtCore.QObject,
+                                 slot_name: str,
+                                 blocking: Optional[bool] = True) -> bool:
+    if called_from_native_thread(obj):
+        return True
+    QtCore.QMetaObject.invokeMethod(
+        obj,
+        slot_name,
+        QtCore.Qt.BlockingQueuedConnection if blocking else QtCore.Qt.QueuedConnection
+    )
+    return False
 
 
 def is_number(test_value: Any) -> bool:

@@ -22,14 +22,13 @@ You should have received a copy of the GNU Lesser General Public License along w
 If not, see <https://www.gnu.org/licenses/>.
 """
 
-__all__ = ['Mutex', 'RecursiveMutex']
+__all__ = ['Mutex', 'RecursiveMutex', 'acquire_timeout']
 
+import threading
+from typing import Optional, Union
+from contextlib import contextmanager
 from PySide2.QtCore import QMutex as _QMutex
 from PySide2.QtCore import QRecursiveMutex as _QRecursiveMutex
-from typing import Optional, Union
-
-
-_RealNumber = Union[int, float]
 
 
 class Mutex(_QMutex):
@@ -40,7 +39,9 @@ class Mutex(_QMutex):
     * Context management (enter/exit)
     """
 
-    def acquire(self, blocking: Optional[bool] = True, timeout: Optional[_RealNumber] = -1) -> bool:
+    def acquire(self,
+                blocking: Optional[bool] = True,
+                timeout: Optional[Union[int, float]] = -1) -> bool:
         """ Mimics threading.Lock.acquire() to allow this class as a drop-in replacement.
 
         @param bool blocking: If True, this method will be blocking (indefinitely or for up to
@@ -91,8 +92,9 @@ if all(hasattr(_QRecursiveMutex, attr) for attr in ('lock', 'unlock', 'tryLock')
         refactoring your code to use a simple mutex before using this object.
         """
 
-        def acquire(self, blocking: Optional[bool] = True,
-                    timeout: Optional[_RealNumber] = -1) -> bool:
+        def acquire(self,
+                    blocking: Optional[bool] = True,
+                    timeout: Optional[Union[int, float]] = -1) -> bool:
             """ Mimics threading.Lock.acquire() to allow this class as a drop-in replacement.
 
             @param bool blocking: If True, this method will be blocking (indefinitely or for up to
@@ -139,3 +141,14 @@ else:
         """
         def __init__(self):
             super().__init__(_QMutex.Recursive)
+
+
+@contextmanager
+def acquire_timeout(lock: Union[Mutex, RecursiveMutex, threading.Lock, threading.RLock],
+                    timeout: Optional[Union[int, float]] = 0):
+    acquired = lock.acquire(blocking=True, timeout=timeout)
+    try:
+        yield acquired
+    finally:
+        if acquired:
+            lock.release()

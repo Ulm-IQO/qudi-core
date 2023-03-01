@@ -285,7 +285,7 @@ class YamlFileHandler:
     def clear(self) -> None:
         try:
             os.remove(self.file_path)
-        except OSError:
+        except FileNotFoundError:
             pass
 
     def dump(self, variables: Mapping[str, Any]) -> None:

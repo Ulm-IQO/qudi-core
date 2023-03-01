@@ -19,7 +19,7 @@ You should have received a copy of the GNU Lesser General Public License along w
 If not, see <https://www.gnu.org/licenses/>.
 """
 
-__all__ = ['ABCQObjectMeta', 'QObjectMeta', 'QudiObjectMeta']
+__all__ = ['ABCQObjectMeta', 'QObjectMeta', 'QudiObjectMeta', 'ABCQObject', 'QudiObject']
 
 from abc import ABCMeta
 from PySide2.QtCore import QObject
@@ -78,3 +78,20 @@ class QudiObjectMeta(ABCQObjectMeta):
                      'status_variables': status_vars,
                      'config_options'  : config_opt}
         return cls
+
+
+class ABCQObject(QObject, metaclass=ABCQObjectMeta):
+    """ Base class for an abstract QObject.
+    This is necessary because of a known bug in PySide2(6).
+    See: https://bugreports.qt.io/browse/PYSIDE-1434 for more details
+    """
+    def __new__(cls, *args, **kwargs):
+        abstract = getattr(cls, '__abstractmethods__', frozenset())
+        if abstract:
+            raise TypeError(f'Can\'t instantiate abstract class "{cls.__name__}" '
+                            f'with abstract methods {set(abstract)}')
+        return super().__new__(cls, *args, **kwargs)
+
+
+class QudiObject(QObject, metaclass=QudiObjectMeta):
+    pass
