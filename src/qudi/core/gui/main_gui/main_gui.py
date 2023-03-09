@@ -33,6 +33,7 @@ from qudi.util.paths import get_main_dir, get_default_config_dir
 from qudi.core.gui.main_gui.errordialog import ErrorDialog
 from qudi.core.gui.main_gui.mainwindow import QudiMainWindow
 from qudi.core.module import GuiBase, ModuleState, ModuleBase
+from qudi.core.modulemanager import ModuleInfo
 from qudi.core.logger import get_signal_handler
 
 try:
@@ -139,9 +140,11 @@ class QudiMainGui(GuiBase):
         self.mw.module_widget.sigActivateModule.connect(qudi_main.module_manager.activate_module)
         self.mw.module_widget.sigReloadModule.connect(qudi_main.module_manager.reload_module)
         self.mw.module_widget.sigDeactivateModule.connect(
-            qudi_main.module_manager.deactivate_module)
+            qudi_main.module_manager.deactivate_module
+        )
         self.mw.module_widget.sigCleanupModule.connect(
-            qudi_main.module_manager.clear_module_app_data)
+            qudi_main.module_manager.clear_module_appdata
+        )
 
     def _disconnect_signals(self):
         qudi_main = self._qudi_main
@@ -332,15 +335,15 @@ class QudiMainGui(GuiBase):
         self.mw.config_widget.set_config(config.config_map)
 
     @QtCore.Slot(dict)
-    def update_configured_modules(self, module_states=None):
+    def update_configured_modules(self, modules_info=None):
         """ Clear and refill the module list widget """
-        if module_states is None:
-            module_states = self._qudi_main.module_manager.module_states
-        self.mw.module_widget.update_modules(module_states)
+        if modules_info is None:
+            modules_info = self._qudi_main.module_manager.modules_info
+        self.mw.module_widget.update_modules(modules_info)
 
-    @QtCore.Slot(str, object)
-    def update_module_state(self, name: str, state: tuple) -> None:
-        self.mw.module_widget.update_module_state(name, state)
+    @QtCore.Slot(str, ModuleInfo)
+    def update_module_state(self, name: str, info: ModuleInfo) -> None:
+        self.mw.module_widget.update_module_info(name, info)
 
     def get_qudi_version(self):
         """ Try to determine the software version in case the program is in a git repository.

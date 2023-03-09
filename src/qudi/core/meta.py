@@ -93,5 +93,5 @@ class ABCQObject(QObject, metaclass=ABCQObjectMeta):
         return super().__new__(cls, *args, **kwargs)
 
 
-class QudiObject(QObject, metaclass=QudiObjectMeta):
+class QudiObject(ABCQObject, metaclass=QudiObjectMeta):
     pass

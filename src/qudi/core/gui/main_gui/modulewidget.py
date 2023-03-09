@@ -25,6 +25,7 @@ from PySide2 import QtCore, QtGui, QtWidgets
 from qudi.util.paths import get_artwork_dir
 from qudi.util.mutex import Mutex
 from qudi.core.module import ModuleBase, ModuleState
+from qudi.core.modulemanager import ModuleInfo
 
 
 class ModuleFrameWidget(QtWidgets.QWidget):
@@ -95,8 +96,8 @@ class ModuleFrameWidget(QtWidgets.QWidget):
             self.activate_button.setText('Load {0}'.format(name))
             self._module_name = name
 
-    def set_module_state(self, state: tuple) -> None:
-        if state[1] == ModuleState.DEACTIVATED:
+    def set_module_info(self, info: ModuleInfo) -> None:
+        if info.state == ModuleState.DEACTIVATED:
             self.activate_button.setText(f'Activate {self._module_name}')
             self.cleanup_button.setEnabled(True)
             self.deactivate_button.setEnabled(False)
@@ -104,14 +105,16 @@ class ModuleFrameWidget(QtWidgets.QWidget):
             if self.activate_button.isChecked():
                 self.activate_button.setChecked(False)
         else:
-            self.activate_button.setText(self._module_name)
+            self.activate_button.setText(
+                f'Show {self._module_name}' if info.base == ModuleBase.GUI else self._module_name
+            )
             self.cleanup_button.setEnabled(False)
             self.deactivate_button.setEnabled(True)
             self.reload_button.setEnabled(True)
             if not self.activate_button.isChecked():
                 self.activate_button.setChecked(True)
-        self.status_label.setText(f'Module is {state[1].value}')
-        self.cleanup_button.setEnabled(state[2])
+        self.status_label.setText(f'Module is {info.state.value}')
+        self.cleanup_button.setEnabled(info.has_appdata)
 
     @QtCore.Slot()
     def activate_clicked(self) -> None:
@@ -136,60 +139,59 @@ class ModuleListModel(QtCore.QAbstractListModel):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._lock = Mutex()
-        self._module_states = dict()
+        self._module_infos = dict()
         self._module_names = list()
 
     def rowCount(self, parent):
         return len(self._module_names)
 
     def data(self, index, role):
-        if not index.isValid():
+        if not index.isValid() or role != QtCore.Qt.DisplayRole:
             return
         row = index.row()
         if row >= len(self._module_names):
             return
         name = self._module_names[row]
-        state = self._module_states[name]
-        if role == QtCore.Qt.DisplayRole:
-            return name, state
+        info = self._module_infos[name]
+        return name, info
 
     def flags(self, index):
         return QtCore.Qt.ItemNeverHasChildren | QtCore.Qt.ItemIsEnabled
 
-    def append_module(self, name: str, state: tuple) -> None:
+    def append_module(self, name: str, info: ModuleInfo) -> None:
         with self._lock:
-            if name in self._module_states:
+            if name in self._module_infos:
                 raise RuntimeError(f'Module with name "{name}" already present in ModuleListModel.')
             self.beginInsertRows(len(self._module_names))
             self._module_names.append(name)
-            self._module_states[name] = state
+            self._module_infos[name] = info
             self.endInsertRows()
 
     def remove_module(self, name: str) -> None:
         with self._lock:
-            if name not in self._module_states:
+            if name not in self._module_infos:
                 return
             row = self._module_names.index(name)
             self.beginRemoveRows(row, row + 1)
             del self._module_names[row]
-            del self._module_states[name]
+            del self._module_infos[name]
             self.endRemoveRows()
 
-    def reset_modules(self, state_dict: Dict[str, tuple]) -> None:
+    def reset_modules(self, infos_dict: Dict[str, ModuleInfo]) -> None:
         with self._lock:
             self.beginResetModel()
-            self._module_states = state_dict.copy()
-            self._module_names = list(state_dict)
+            self._module_infos = infos_dict.copy()
+            self._module_names = list(infos_dict)
             self.endResetModel()
 
-    def change_module_state(self, name: str, state: tuple) -> None:
+    def change_module_info(self, name: str, info: ModuleInfo) -> None:
         with self._lock:
-            if name not in self._module_states:
+            if name not in self._module_infos:
                 raise RuntimeError(
-                    f'Can not change module state in ModuleListModel. No module by the name '
+                    f'Can not change module info in ModuleListModel. No module by the name '
                     f'"{name}" found.'
                 )
-            self._module_states[name] = state
+            self._module_infos[name] = info
             row = self._module_names.index(name)
             self.dataChanged.emit(self.createIndex(row, 0),
                                   self.createIndex(row + 1, 0),
@@ -223,7 +225,7 @@ class ModuleListItemDelegate(QtWidgets.QStyledItemDelegate):
         data = index.data()
         if data:
             editor.set_module_name(data[0])
-            editor.set_module_state(data[1])
+            editor.set_module_info(data[1])
 
     def setModelData(self, editor, model, index):
         pass
@@ -234,9 +236,9 @@ class ModuleListItemDelegate(QtWidgets.QStyledItemDelegate):
     def paint(self, painter, option, index):
         """
         """
-        name, state = index.data()
+        name, info = index.data()
         self.render_widget.set_module_name(name)
-        self.render_widget.set_module_state(state)
+        self.render_widget.set_module_info(info)
         self.render_widget.setGeometry(option.rect)
         painter.save()
         painter.translate(option.rect.topLeft())
@@ -302,13 +304,13 @@ class ModuleWidget(QtWidgets.QTabWidget):
             delegate.sigCleanupClicked.connect(self.sigCleanupModule)
 
     @QtCore.Slot(dict)
-    def update_modules(self, modules_dict: Mapping[str, tuple]):
+    def update_modules(self, modules_info: Mapping[str, ModuleInfo]):
         for base, model in self.list_models.items():
             model.reset_modules(
-                {name: state for name, state in modules_dict.items() if state[0] == base}
+                {name: info for name, info in modules_info.items() if info.base == base}
             )
 
-    @QtCore.Slot(str, object)
-    def update_module_state(self, name: str, state: tuple) -> None:
-        model = self.list_models[state[0]]
-        model.change_module_state(name, state)
+    @QtCore.Slot(str, ModuleInfo)
+    def update_module_info(self, name: str, info: ModuleInfo) -> None:
+        model = self.list_models[info.base]
+        model.change_module_info(name, info)

@@ -208,7 +208,7 @@ class ModuleScript(QtCore.QObject, metaclass=QudiObjectMeta):
             target = connector_targets.get(conn.name, None)
             if target is None:
                 continue
-            if conn.is_connected:
+            if conn.is_connected(self):
                 raise RuntimeError(f'Connector "{conn.name}" already connected.\n'
                                    f'Call "disconnect_modules()" before trying to reconnect.')
             conn.connect(target)

@@ -82,7 +82,18 @@ class ConfigOption(DefaultAttribute):
             self.name = name
         return super().__set_name__(owner, name)
 
-    def construct(self, instance: object, value: Any) -> None:
+    def construct(self, instance: object, value: Optional[Any] = _NO_VALUE) -> None:
+        # If no config value is given for construction, try to get the default value.
+        # Raise exception if no default value is present and self.optional is False
+        if value is self._NO_VALUE:
+            try:
+                value = self.__get__(instance, instance.__class__)
+            except AttributeError:
+                cls = instance.__class__
+                raise RuntimeError(
+                    f'No value given to construct non-optional ConfigOption "{self.name}" on '
+                    f'"{cls.__module__}.{cls.__name__}.{self.attr_name}"'
+                ) from None
         if self._constructor is not None:
             if isinstance(self._constructor, str):
                 value = getattr(instance, self._constructor)(value)

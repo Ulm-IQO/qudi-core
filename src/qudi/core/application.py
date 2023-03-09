@@ -31,11 +31,12 @@ from PySide2 import QtCore, QtWidgets
 
 from qudi.core.logger import init_rotating_file_handler, init_record_model_handler, clear_handlers
 from qudi.core.logger import get_logger, set_log_level
-from qudi.util.paths import get_main_dir, get_default_log_dir
+from qudi.util.paths import get_default_log_dir
 from qudi.util.mutex import Mutex
 from qudi.util.colordefs import QudiMatplotlibStyle
 from qudi.core.config import Configuration, ValidationError, YAMLError
 from qudi.core.watchdog import AppWatchdog
+from qudi.core.module import ModuleState
 from qudi.core.modulemanager import ModuleManager
 from qudi.core.threadmanager import ThreadManager
 from qudi.core.gui.gui import Gui
@@ -351,8 +352,8 @@ class Qudi(QtCore.QObject):
             self._shutting_down = True
             if prompt:
                 locked_modules = False
-                for module in self.module_manager.values():
-                    if module.is_locked:
+                for module_info in self.module_manager.modules_info.values():
+                    if module_info.state == ModuleState.LOCKED:
                         locked_modules = True
                         break
 

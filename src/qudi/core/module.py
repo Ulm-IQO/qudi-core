@@ -36,7 +36,7 @@ from qudi.core.connector import ModuleConnectionError, Connector
 from qudi.util.paths import get_module_app_data_path, get_daily_directory, get_default_data_dir
 from qudi.util.yaml import yaml_load, yaml_dump, YamlFileHandler
 from qudi.util.helpers import call_slot_from_native_thread
-from qudi.core.meta import QudiObjectMeta
+from qudi.core.meta import QudiObject
 from qudi.core.logger import get_logger
 
 
@@ -56,7 +56,7 @@ class ModuleBase(Enum):
     GUI = 'gui'
 
 
-class Base(QtCore.QObject, metaclass=QudiObjectMeta):
+class Base(QudiObject):
     """ Base class for all loadable modules
 
     * Ensure that the program will not die during the load of modules
@@ -72,18 +72,17 @@ class Base(QtCore.QObject, metaclass=QudiObjectMeta):
     _threaded = False
 
     @classmethod
-    def is_module_threaded(cls) -> bool:
+    def module_threaded(cls) -> bool:
         """ Returns whether the module shall be started in its own thread """
         return cls._threaded
 
-    # FIXME: This __new__ implementation has the sole purpose to circumvent a known PySide2(6) bug.
-    #  See https://bugreports.qt.io/browse/PYSIDE-1434 for more details.
-    def __new__(cls, *args, **kwargs):
-        abstract = getattr(cls, '__abstractmethods__', frozenset())
-        if abstract:
-            raise TypeError(f'Can\'t instantiate abstract class "{cls.__name__}" '
-                            f'with abstract methods {set(abstract)}')
-        return super().__new__(cls, *args, **kwargs)
+    @classmethod
+    def module_base(cls) -> ModuleBase:
+        if issubclass(cls, GuiBase):
+            return ModuleBase.GUI
+        if issubclass(cls, LogicBase):
+            return ModuleBase.LOGIC
+        return ModuleBase.HARDWARE
 
     def __init__(self,
                  qudi_main: Any,
@@ -110,17 +109,11 @@ class Base(QtCore.QObject, metaclass=QudiObjectMeta):
         self.__qudi_main = qudi_main
 
         # Create logger instance for module
-        self.__logger = get_logger(f'{self.__module__}.{self.__class__.__name__}/{name}')
+        self.__logger = get_logger(f'{self.__module__}.{self.__class__.__name__}::{name}')
 
         # Add additional module info
         self.__module_name = name
         self.__module_uuid = uuid4()
-        if isinstance(self, GuiBase):
-            self.__module_base = ModuleBase.GUI
-        elif isinstance(self, LogicBase):
-            self.__module_base = ModuleBase.LOGIC
-        else:
-            self.__module_base = ModuleBase.HARDWARE
 
         # set instance attributes according to ConfigOption meta-objects
         self.__init_config_options(options)
@@ -137,11 +130,12 @@ class Base(QtCore.QObject, metaclass=QudiObjectMeta):
             try:
                 value = option_values[cfg_opt.name]
             except KeyError:
-                if cfg_opt.missing_action == MissingAction.ERROR:
+                if not cfg_opt.optional:
                     raise ValueError(
                         f'Required ConfigOption "{cfg_opt.name}" not given in module configuration '
                         f'options:\n{option_values}'
                     )
+                cfg_opt.construct(self)
                 msg = f'No ConfigOption "{cfg_opt.name}" configured, using default value ' \
                       f'"{cfg_opt.default}" instead.'
                 if cfg_opt.missing_action == MissingAction.WARN:
@@ -191,27 +185,11 @@ class Base(QtCore.QObject, metaclass=QudiObjectMeta):
             self.moveToThread(QtCore.QCoreApplication.instance().thread())
 
     @property
-    def module_thread(self) -> Union[QtCore.QThread, None]:
-        """ Read-only property returning the current module QThread instance if the module is
-        threaded. Returns None otherwise.
-        """
-        if self.is_module_threaded():
-            return self.thread()
-        return None
-
-    @property
     def module_name(self) -> str:
         """ Read-only property returning the module name of this module instance as specified in the
         config.
         """
         return self.__module_name
-
-    @property
-    def module_base(self) -> str:
-        """ Read-only property returning the module base of this module instance
-        ('hardware' 'logic' or 'gui')
-        """
-        return self.__module_base
 
     @property
     def module_uuid(self) -> uuid.UUID:
@@ -374,7 +352,7 @@ class ModuleStateControl(QtCore.QObject):
         self._status_variables = status_variables
         self._connectors = connectors
         self._appdata_filehandler = ModuleStateFileHandler(
-            module_base=module_instance.module_base,
+            module_base=module_instance.module_base(),
             class_name=module_instance.__class__.__name__,
             module_name=module_instance.module_name
         )
@@ -451,19 +429,20 @@ class ModuleStateControl(QtCore.QObject):
         try:
             data = self._appdata_filehandler.load(raise_missing=False)
         except Exception as err:
-            raise ModuleStateError(f'Error while loading status variable from file') from err
+            raise ModuleStateError(f'Error while loading status variables for module '
+                                   f'"{module.module_name}" from file') from err
 
         for var in self._status_variables.values():
             try:
-                value = data[var.name]
-            except KeyError:
-                continue
-            try:
-                var.construct(module, value)
+                try:
+                    value = data[var.name]
+                except KeyError:
+                    var.construct(module)
+                else:
+                    var.construct(module, value)
             except Exception as err:
-                raise ModuleStateError(
-                    f'Error while constructing status variable "{var.name}"'
-                ) from err
+                raise ModuleStateError(f'Error while constructing status variable "{var.name}" for '
+                                       f'module"{module.module_name}"') from err
 
     def __disconnect_modules(self) -> None:
         """ Disconnects all Connector instances for this module. """
@@ -496,7 +475,8 @@ class ModuleStateControl(QtCore.QObject):
                 try:
                     self.dump_appdata()
                 finally:
-                    self.__disconnect_modules()
+                    # self.__disconnect_modules()
+                    pass
         except Exception:
             module.log.exception('Exception during deactivation:')
         return True

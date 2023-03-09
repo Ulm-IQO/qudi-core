@@ -72,16 +72,16 @@ class TaskRunnerGui(GuiBase):
 
     @QtCore.Slot()
     def _deactivate_self(self):
-        self._qudi_main.module_manager.deactivate_module(self._meta['name'])
+        self._qudi_main.module_manager.deactivate_module(self.module_name)
 
     def on_deactivate(self):
         """ Hide window and stop ipython console.
         """
         self._save_window_geometry(self._mw)
-        self._mw.close()
         self._mw.sigStartTask.disconnect()
         self._mw.sigInterruptTask.disconnect()
-        self._mw.sigClosed.disconnect()
+        self._mw.sigClosed.disconnect()  # Important to disconnect before closing main window
+        self._mw.close()
         taskrunner = self._task_runner()
         taskrunner.sigTaskStarted.disconnect(self._mw.task_started, QtCore.Qt.QueuedConnection)
         taskrunner.sigTaskStateChanged.disconnect(self._mw.task_state_changed,

@@ -33,6 +33,8 @@ class StatusVar(DefaultAttribute):
     deactivation.
     """
 
+    _NO_VALUE = object()
+
     def __init__(self,
                  name: Optional[str] = None,
                  default: Optional[Any] = None,
@@ -65,7 +67,9 @@ class StatusVar(DefaultAttribute):
             self.name = name
         return super().__set_name__(owner, name)
 
-    def construct(self, instance: object, value: Any) -> None:
+    def construct(self, instance: object, value: Optional[Any] = _NO_VALUE) -> None:
+        if value is self._NO_VALUE:
+            value = self.__get__(instance, instance.__class__)
         if self._constructor is not None:
             if isinstance(self._constructor, str):
                 value = getattr(instance, self._constructor)(value)
@@ -106,7 +110,11 @@ class StatusVar(DefaultAttribute):
         if isinstance(func, (staticmethod, classmethod)):
             return func.__func__.__name__
         elif callable(func):
-            return func.__name__
+            name = func.__name__
+            if name.startswith('__'):
+                cls_name = func.__qualname__.rsplit('.', 2)[-2]
+                name = f'_{cls_name}{name}'
+            return name
         else:
             raise TypeError('StatusVar constructor/representer must be callable, staticmethod or '
                             'classmethod type')
