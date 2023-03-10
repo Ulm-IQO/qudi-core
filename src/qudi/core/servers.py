@@ -19,14 +19,14 @@ You should have received a copy of the GNU Lesser General Public License along w
 If not, see <https://www.gnu.org/licenses/>.
 """
 
-__all__ = ('get_remote_module_instance', 'BaseServer', 'RemoteModulesServer', 'QudiNamespaceServer')
+__all__ = ('connect_to_remote_module_server', 'BaseServer', 'RemoteModulesServer', 'QudiNamespaceServer')
 
 import ssl
 import rpyc
 import weakref
 from PySide2 import QtCore
-from urllib.parse import urlparse
 from rpyc.utils.authenticators import SSLAuthenticator
+from typing import Optional
 
 from qudi.util.mutex import Mutex
 from qudi.core.logger import get_logger
@@ -35,35 +35,32 @@ from qudi.core.services import RemoteModulesService, QudiNamespaceService
 logger = get_logger(__name__)
 
 
-def get_remote_module_instance(remote_url, certfile=None, keyfile=None, protocol_config=None):
-    """ Helper method to retrieve a remote module instance via rpyc from a qudi RemoteModuleServer.
-
-    @param str remote_url: The URL of the remote qudi module
-    @param str certfile: Certificate file path for the request
-    @param str keyfile: Key file path for the request
-    @param dict protocol_config: optional, configuration options for rpyc.ssl_connect
-
-    @return object: The requested qudi module instance (None if request failed)
+def connect_to_remote_module_server(host: str,
+                                    port: int,
+                                    certfile: Optional[str] = None,
+                                    keyfile: Optional[str] = None,
+                                    protocol_config: Optional[dict] = None):
+    """ Helper method to connect to a qudi RemoteModuleServer via rpyc. Returns an rpyc connection
+    root object.
     """
-    parsed = urlparse(remote_url)
     if protocol_config is None:
-        protocol_config = {'allow_all_attrs': True,
-                           'allow_setattr': True,
-                           'allow_delattr': True,
-                           'allow_pickle': True,
+        protocol_config = {'allow_all_attrs'     : True,
+                           'allow_setattr'       : True,
+                           'allow_delattr'       : True,
+                           'allow_pickle'        : True,
                            'sync_request_timeout': 3600}
-    if certfile is not None and keyfile is not None:
-        connection = rpyc.ssl_connect(host=parsed.hostname,
-                                      port=parsed.port,
+    if certfile and keyfile:
+        connection = rpyc.ssl_connect(host=host,
+                                      port=port,
                                       config=protocol_config,
                                       certfile=certfile,
                                       keyfile=keyfile)
     else:
-        connection = rpyc.connect(host=parsed.hostname,
-                                  port=parsed.port,
-                                  config=protocol_config,)
-    logger.debug(f'get_remote_module_instance has protocol_config {protocol_config}')
-    return connection.root.get_module_instance(parsed.path.replace('/', ''))
+        connection = rpyc.connect(host=host,
+                                  port=port,
+                                  config=protocol_config)
+    logger.debug(f'Connected to RemoteModulesServer on {host}:{port:d}')
+    return connection.root
 
 
 class _ServerRunnable(QtCore.QObject):
@@ -83,10 +80,10 @@ class _ServerRunnable(QtCore.QObject):
         self.certfile = certfile
         self.keyfile = keyfile
         if protocol_config is None:
-            self.protocol_config = {'allow_all_attrs': True,
-                                    'allow_setattr': True,
-                                    'allow_delattr': True,
-                                    'allow_pickle': True,
+            self.protocol_config = {'allow_all_attrs'     : True,
+                                    'allow_setattr'       : True,
+                                    'allow_delattr'       : True,
+                                    'allow_pickle'        : True,
                                     'sync_request_timeout': 3600}
         else:
             self.protocol_config = protocol_config
@@ -96,8 +93,7 @@ class _ServerRunnable(QtCore.QObject):
 
     @QtCore.Slot()
     def run(self):
-        """ Start the RPyC server
-        """
+        """ Start the RPyC server """
         if self.certfile is not None and self.keyfile is not None:
             authenticator = SSLAuthenticator(certfile=self.certfile,
                                              keyfile=self.keyfile,
@@ -125,8 +121,7 @@ class _ServerRunnable(QtCore.QObject):
 
     @QtCore.Slot()
     def stop(self):
-        """ Stop the RPyC server
-        """
+        """ Stop the RPyC server """
         if self.server is not None:
             try:
                 self.server.close()
@@ -231,15 +226,16 @@ class RemoteModulesServer(BaseServer):
 
     def __init__(self, force_remote_calls_by_value=False, **kwargs):
         kwargs['service_instance'] = RemoteModulesService(
+            module_manager=kwargs['qudi'].module_manager,
             force_remote_calls_by_value=force_remote_calls_by_value
         )
         super().__init__(**kwargs)
 
-    def share_module(self, module):
-        self.service.share_module(module)
+    def share_module(self, module_name: str):
+        self.service.share_module(module_name)
 
-    def remove_shared_module(self, module):
-        self.service.remove_shared_module(module)
+    def remove_shared_module(self, module_name: str):
+        self.service.remove_shared_module(module_name)
 
 
 class QudiNamespaceServer(BaseServer):

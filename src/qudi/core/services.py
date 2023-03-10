@@ -32,31 +32,16 @@ from qudi.util.mutex import Mutex
 from qudi.util.models import DictTableModel
 from qudi.util.network import netobtain
 from qudi.core.logger import get_logger
+from qudi.core.module import ModuleState
 
 logger = get_logger(__name__)
 
 
 class _SharedModulesModel(DictTableModel):
-    """ Derived dict model for GUI display elements
+    """ Derived list model for GUI display elements
     """
     def __init__(self):
         super().__init__(headers='Shared Module')
-
-    def data(self, index, role):
-        """ Get data from model for a given cell. Data can have a role that affects display.
-
-        @param QModelIndex index: cell for which data is requested
-        @param ItemDataRole role: role for which data is requested
-
-        @return QVariant: data for given cell and role
-        """
-        data = super().data(index, role)
-        if data is None:
-            return None
-        # second column returns weakref.ref object
-        if index.column() == 1:
-            data = data()
-        return data
 
 
 class RemoteModulesService(rpyc.Service):
@@ -64,88 +49,104 @@ class RemoteModulesService(rpyc.Service):
     """
     ALIASES = ['RemoteModules']
 
-    def __init__(self, *args, force_remote_calls_by_value=False, **kwargs):
+    def __init__(self, *args, module_manager, force_remote_calls_by_value=False, **kwargs):
         super().__init__(*args, **kwargs)
         self._thread_lock = Mutex()
-        self.shared_modules = _SharedModulesModel()
+        self._module_manager = module_manager
         self._force_remote_calls_by_value = force_remote_calls_by_value
+        # Dict model with module names (keys) and instance client counts (values)
+        self.shared_modules = _SharedModulesModel()
 
-    def share_module(self, module):
+    def share_module(self, module_name: str) -> None:
         with self._thread_lock:
-            if module.name in self.shared_modules:
-                logger.warning(f'Module "{module.name}" already shared')
+            if module_name in self.shared_modules:
+                logger.warning(f'Module "{module_name}" already shared')
                 return
-            self.shared_modules[module.name] = weakref.ref(module)
-            weakref.finalize(module, self.remove_shared_module, module.name)
+            self.shared_modules[module_name] = 0
 
-    def remove_shared_module(self, module):
+    def remove_shared_module(self, module_name: str) -> None:
         with self._thread_lock:
-            name = module if isinstance(module, str) else module.name
-            self.shared_modules.pop(name, None)
+            self.shared_modules.pop(module_name, None)
 
     def on_connect(self, conn):
-        """ code that runs when a connection is created
-        """
+        """ code that runs when a connection is created """
         host, port = conn._config['endpoints'][1]
-        logger.info(f'Client connected to remote modules service from [{host}]:{port:d}')
+        logger.info(f'Client connected to remote modules service from {host}:{port:d}')
 
     def on_disconnect(self, conn):
-        """ code that runs when the connection is closing
-        """
+        """ code that runs when the connection is closing """
         host, port = conn._config['endpoints'][1]
-        logger.info(f'Client [{host}]:{port:d} disconnected from remote modules service')
+        logger.info(f'Client {host}:{port:d} disconnected from remote modules service')
 
-    def exposed_get_module_instance(self, name, activate=False):
-        """ Return reference to a module in the shared module list.
+    def __check_module_name(self, name: str) -> None:
+        if name not in self.shared_modules:
+            raise ValueError(
+                f'Module "{name}" requested by client can not be found in shared modules.'
+            )
 
-        @param str name: unique module name
+    def exposed_activate_module(self, name: str) -> None:
+        with self._thread_lock:
+            self.__check_module_name(name)
+            self._module_manager.activate_module(name)
 
-        @return object: reference to the module
-        """
+    def exposed_deactivate_module(self, name: str) -> None:
+        with self._thread_lock:
+            self.__check_module_name(name)
+            self._module_manager.deactivate_module(name)
+
+    def exposed_reload_module(self, name: str) -> None:
+        with self._thread_lock:
+            self.__check_module_name(name)
+            self._module_manager.reload_module(name)
+
+    def exposed_get_module_info(self, name: str) -> object:
+        with self._thread_lock:
+            self.__check_module_name(name)
+            return self._module_manager.get_module_info(name)
+
+    def exposed_clear_module_appdata(self, name: str) -> None:
+        with self._thread_lock:
+            self.__check_module_name(name)
+            self._module_manager.clear_module_appdata(name)
+
+    def exposed_get_module_instance(self, name: str) -> object:
+        """ Return reference to a qudi module instance in the shared module list """
+        with self._thread_lock:
+            self.__check_module_name(name)
+            instance = self._module_manager.get_module_instance(name)
+            if instance is None:
+                raise RuntimeError(f'Can not get module instance for shared module "{name}". '
+                                   f'Module has not been activated.')
+            if self._force_remote_calls_by_value:
+                instance = ModuleRpycProxy(instance)
+            # Increment instance client counter
+            self.shared_modules[name] += 1
+            return instance
+
+    def exposed_return_module_instance(self, instance: object) -> None:
         with self._thread_lock:
             try:
-                module = self.shared_modules.get(name, None)()
-            except TypeError:
-                logger.error(f'Client requested a module ("{name}") that is not shared.')
-                return None
-            if activate:
-                if not module.activate():
-                    logger.error(f'Unable to share requested module "{name}" with client. Module '
-                                 f'can not be activated.')
-                    return None
-            if self._force_remote_calls_by_value:
-                return ModuleRpycProxy(module.instance)
-            return module.instance
+                self.shared_modules[instance.module_name] -= 1
+            except (KeyError, AttributeError):
+                pass
 
-    def exposed_get_available_module_names(self):
-        """ Returns the currently shared module names independent of the current module state.
+    def exposed_get_module_client_count(self, name: str) -> int:
+        with self._thread_lock:
+            try:
+                return self.shared_modules[name]
+            except KeyError:
+                return 0
 
-        @return tuple: Names of the currently shared modules
-        """
+    def exposed_get_shared_module_names(self) -> tuple:
+        """ Returns the currently shared module names independent of the current module state """
         with self._thread_lock:
             return tuple(self.shared_modules)
 
-    def exposed_get_loaded_module_names(self):
-        """ Returns the currently shared module names for all modules that have been loaded
-        (instantiated).
-
-        @return tuple: Names of the currently shared and loaded modules
-        """
+    def exposed_get_active_module_names(self) -> tuple:
+        """ Returns the currently shared module names for all modules that are active """
         with self._thread_lock:
-            all_modules = {name: ref() for name, ref in self.shared_modules.items()}
-            return tuple(name for name, mod in all_modules.items() if
-                         mod is not None and mod.instance is not None)
-
-    def exposed_get_active_module_names(self):
-        """ Returns the currently shared module names for all modules that are active.
-
-        @return tuple: Names of the currently shared active modules
-        """
-        with self._thread_lock:
-            all_modules = {name: ref() for name, ref in self.shared_modules.items()}
-            return tuple(
-                name for name, mod in all_modules.items() if mod is not None and mod.is_active
-            )
+            return tuple(name for name in self.shared_modules if
+                         self._module_manager.get_module_state(name) != ModuleState.DEACTIVATED)
 
 
 class QudiNamespaceService(rpyc.Service):
@@ -172,14 +173,14 @@ class QudiNamespaceService(rpyc.Service):
         except AttributeError:
             pass
         host, port = conn._config['endpoints'][1]
-        logger.info(f'Client connected to local module service from [{host}]:{port:d}')
+        logger.info(f'Client connected to local namespace service from {host}:{port:d}')
 
     def on_disconnect(self, conn):
         """ code that runs when the connection is closing
         """
         self._notifier_callbacks.pop(conn, None)
         host, port = conn._config['endpoints'][1]
-        logger.info(f'Client [{host}]:{port:d} disconnected from local module service')
+        logger.info(f'Client {host}:{port:d} disconnected from local namespace service')
 
     def notify_module_change(self):
         logger.debug('Local module server has detected a module state change and sends async '

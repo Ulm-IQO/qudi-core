@@ -30,7 +30,7 @@ from dataclasses import dataclass
 from qudi.util.mutex import Mutex
 from qudi.util.helpers import call_slot_from_native_thread, called_from_native_thread
 from qudi.core.logger import get_logger
-from qudi.core.servers import get_remote_module_instance
+from qudi.core.servers import connect_to_remote_module_server
 from qudi.core.meta import ABCQObject
 from qudi.core.module import Base, ModuleState, ModuleBase, ModuleStateFileHandler, ModuleStateError
 from qudi.core.config.validator import validate_local_module_config, validate_remote_module_config
@@ -108,8 +108,26 @@ class ModuleManager(QtCore.QObject):
                 module = self._modules[name]
             except KeyError:
                 raise KeyError(f'No module named "{name}" found in managed qudi modules. '
-                               f'Can not check for module state.') from None
+                               f'Can not check for module info.') from None
             return module.info
+
+    def get_module_state(self, name: str) -> ModuleState:
+        with self._thread_lock:
+            try:
+                module = self._modules[name]
+            except KeyError:
+                raise KeyError(f'No module named "{name}" found in managed qudi modules. '
+                               f'Can not check for module state.') from None
+            return module.state
+
+    def get_module_instance(self, name: str) -> Base:
+        with self._thread_lock:
+            try:
+                module = self._modules[name]
+            except KeyError:
+                raise KeyError(f'No module named "{name}" found in managed qudi modules. '
+                               f'Can not get module instance.') from None
+            return module.instance
 
     def remove_module(self,
                       name: str,
@@ -127,6 +145,11 @@ class ModuleManager(QtCore.QObject):
         except KeyError:
             if not ignore_missing:
                 raise
+        else:
+            try:
+                self._qudi_main.remote_modules_server.remove_shared_module(name)
+            except AttributeError:
+                pass
         finally:
             if emit_change:
                 self.sigManagedModulesChanged.emit(self.modules_info)
@@ -154,12 +177,18 @@ class ModuleManager(QtCore.QObject):
                 self._remove_module(name, ignore_missing=True, emit_change=emit_change)
             else:
                 raise KeyError(f'Module with name "{name}" already registered')
-        if self._is_remote_module(configuration):
+        is_remote = self._is_remote_module(configuration)
+        if is_remote:
             module = RemoteManagedModule(name, base, configuration, self._qudi_main)
         else:
             module = LocalManagedModule(name, base, configuration, self._qudi_main)
         module.sigStateChanged.connect(self.sigModuleStateChanged)
         self._modules[name] = module
+        if not is_remote and module.allow_remote:
+            try:
+                self._qudi_main.remote_modules_server.share_module(name)
+            except AttributeError:
+                pass
         if emit_change:
             self.sigManagedModulesChanged.emit(self.modules_info)
 
@@ -458,6 +487,10 @@ class LocalManagedModule(ManagedModule):
     def module_thread_name(self):
         return f'mod-{self.base.value}-{self.name}'
 
+    @property
+    def allow_remote(self) -> bool:
+        return self._allow_remote
+
     @QtCore.Slot()
     def clear_appdata(self) -> None:
         try:
@@ -613,41 +646,71 @@ class LocalManagedModule(ManagedModule):
                 module.activate()
 
 
-# class RemoteManagedModule(ManagedModule):
-#     """
-#     """
-#     def __init__(self, qudi_main, module_manager: ModuleManager, name: str, base: ModuleBase, configuration: Mapping[str, Any]):
-#         super().__init__(qudi_main, module_manager, name, base, configuration)
-#         # Sort out configuration
-#         self._native_name = configuration['native_module_name']
-#         self._address = configuration['address']
-#         self._port = configuration['port']
-#         self._certfile = configuration['certfile']
-#         self._keyfile = configuration['keyfile']
-#
-#     @property
-#     def url(self) -> str:
-#         return f'{self._address}:{self._port:d}/{self._native_name}'
-#
-#     @property
-#     def instance(self) -> Union[None, Base]:
-#
-#
-#     @property
-#     def state(self) -> ModuleState:
-#         return ModuleState(self._fsm.state)
-#
-#     @property
-#     def has_app_data(self) -> bool:
-#
-#     def clear_app_data(self) -> None:
-#
-#     def activate(self) -> None:
-#
-#     def deactivate(self) -> None:
-#
-#     def reload(self) -> None:
-#
-#     def set_busy(self) -> None:
-#
-#     def set_idle(self) -> None:
+class RemoteManagedModule(ManagedModule):
+    """
+    """
+    def __init__(self,
+                 name: str,
+                 base: ModuleBase,
+                 configuration: Mapping[str, Any],
+                 qudi_main: 'Qudi'):
+        super().__init__(name, base, configuration, qudi_main)
+        # Sort out configuration
+        try:
+            self._native_name = configuration['native_module_name']
+            self._address = configuration['address']
+            self._port = configuration['port']
+            self._certfile = configuration['certfile']
+            self._keyfile = configuration['keyfile']
+        except KeyError as err:
+            raise ValueError(
+                f'Invalid remote module configuration encountered:\n{configuration}'
+            ) from err
+        # Circular recursion fail-saves
+        self.__activating = False
+        self.__deactivating = False
+        self._instance = None
+        # cahced values
+        # self.__cached_module_info = ModuleInfo(self.base, ModuleState.DEACTIVATED, False)
+
+    def __connect(self):
+        return connect_to_remote_module_server(host=self._address,
+                                               port=self._port,
+                                               certfile=self._certfile,
+                                               keyfile=self._keyfile)
+
+    @property
+    def url(self) -> str:
+        return f'{self._address}:{self._port:d}/{self._native_name}'
+
+    @property
+    def has_appdata(self) -> bool:
+        return self.__connect().get_module_info(self.name).has_appdata
+
+    @property
+    def state(self) -> ModuleState:
+        return ModuleState(self.__connect().get_module_info(self.name).state.value)
+
+    @property
+    def info(self) -> ModuleInfo:
+        info = self.__connect().get_module_info(self.name)
+        return ModuleInfo(self.base, ModuleState(info.state.value), info.has_appdata)
+
+    @property
+    def instance(self) -> Union[None, Base]:
+        return self._instance
+
+    def clear_appdata(self) -> None:
+        try:
+            self.__connect().clear_module_appdata(self.name)
+        finally:
+            self.sigStateChanged.emit(self.name, self.info)
+
+    def activate(self) -> None:
+        raise NotImplementedError
+
+    def deactivate(self) -> None:
+        raise NotImplementedError
+
+    def reload(self) -> None:
+        raise NotImplementedError

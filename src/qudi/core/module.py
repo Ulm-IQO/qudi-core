@@ -373,10 +373,10 @@ class ModuleStateControl(QtCore.QObject):
     def __call__(self) -> str:
         if not self.__warning_sent:
             warnings.warn(
-                'Being able to call ModuleStateControl instance to get a string representation of the '
-                'ModuleState is deprecated and will be removed in the future. Please use '
-                'ModuleStateControl.state to get the ModuleState Enum and use ModuleState.value if you '
-                'want the string representation.',
+                'Being able to call ModuleStateControl instance to get a string representation of '
+                'the ModuleState is deprecated and will be removed in the future. Please use '
+                'ModuleStateControl.state to get the ModuleState Enum and use ModuleState.value if '
+                'you must have the string representation (not recommended).',
                 DeprecationWarning,
                 stacklevel=2
             )
