@@ -24,6 +24,7 @@ import sys
 import os
 import weakref
 import inspect
+import warnings
 import traceback
 import faulthandler
 from logging import DEBUG, INFO
@@ -124,6 +125,9 @@ class Qudi(QtCore.QObject):
         init_record_model_handler(max_records=10000)
         init_rotating_file_handler(path=self.log_dir)
         set_log_level(DEBUG if self.debug_mode else INFO)
+        # Enable all warnings when in debug mode (especially DeprecationWarnings
+        if self.debug_mode:
+            warnings.simplefilter('always')
 
         # Set up logger for qudi main instance
         self.log = get_logger(__class__.__name__)  # will be "qudi.Qudi" in custom logger

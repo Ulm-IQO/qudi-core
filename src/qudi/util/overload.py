@@ -22,6 +22,7 @@ If not, see <https://www.gnu.org/licenses/>.
 __all__ = ['OverloadedAttribute', 'OverloadProxy']
 
 import weakref
+import warnings
 from typing import Any, Callable
 
 
@@ -172,6 +173,16 @@ class OverloadProxy:
         return repr(object.__getattribute__(self, '_obj_ref')())
 
     def __call__(self):
+        # Enable this warning regardless if set application/environment filters
+        # with warnings.catch_warnings():
+        #     warnings.simplefilter("always")
+        warnings.warn(
+            'Calling a qudi module Connector meta attribute has been deprecated and will be '
+            'removed in the future. Please use the connected module directly as a normal '
+            'attribute.',
+            DeprecationWarning,
+            stacklevel=2
+        )
         return self
 
     # factories

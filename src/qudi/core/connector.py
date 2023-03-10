@@ -67,7 +67,7 @@ class Connector:
             return instance.__dict__[self.attr_name]
         except KeyError:
             if self.optional:
-                return lambda: None
+                return None
             raise ModuleConnectionError(
                 f'Connector "{self.name}" (interface "{self.interface}") is not connected.'
             ) from None
@@ -107,7 +107,6 @@ class Connector:
     def is_connected(self, instance: object) -> bool:
         """ Checks if the given module instance has this Connector connected to a target module. """
         try:
-            proxy = self.__get__(instance, instance.__class__)
-            return proxy() is not None
+            return self.__get__(instance, instance.__class__) is not None
         except ModuleConnectionError:
             return False
