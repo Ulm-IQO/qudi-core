@@ -132,6 +132,7 @@ class OverloadProxy:
     Heavily inspired by this python recipe under PSF License:
     https://code.activestate.com/recipes/496741-object-proxying/
     """
+    __warning_sent = False
 
     __slots__ = ['_obj_ref', '_overload_key', '__weakref__']
 
@@ -176,13 +177,15 @@ class OverloadProxy:
         # Enable this warning regardless if set application/environment filters
         # with warnings.catch_warnings():
         #     warnings.simplefilter("always")
-        warnings.warn(
-            'Calling a qudi module Connector meta attribute has been deprecated and will be '
-            'removed in the future. Please use the connected module directly as a normal '
-            'attribute.',
-            DeprecationWarning,
-            stacklevel=2
-        )
+        if not OverloadProxy.__warning_sent:
+            warnings.warn(
+                'Calling a qudi module Connector meta attribute has been deprecated and will be '
+                'removed in the future. Please use the connected module directly as a normal '
+                'attribute.',
+                DeprecationWarning,
+                stacklevel=2
+            )
+            OverloadProxy.__warning_sent = True
         return self
 
     # factories

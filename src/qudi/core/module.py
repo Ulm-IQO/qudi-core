@@ -23,18 +23,19 @@ import logging
 import os
 import copy
 import uuid
+import warnings
 from enum import Enum
 from abc import abstractmethod
 from uuid import uuid4
-from fysom import Fysom, FysomError
+from fysom import Fysom
 from PySide2 import QtCore, QtGui, QtWidgets
-from typing import Any, Mapping, MutableMapping, Optional, Union, Dict, Callable
+from typing import Any, Mapping, MutableMapping, Optional, Union
 
 from qudi.core.configoption import MissingAction
 from qudi.core.statusvariable import StatusVar
-from qudi.core.connector import ModuleConnectionError, Connector
+from qudi.core.connector import ModuleConnectionError
 from qudi.util.paths import get_module_app_data_path, get_daily_directory, get_default_data_dir
-from qudi.util.yaml import yaml_load, yaml_dump, YamlFileHandler
+from qudi.util.yaml import YamlFileHandler
 from qudi.util.helpers import call_slot_from_native_thread
 from qudi.core.meta import QudiObject
 from qudi.core.logger import get_logger
@@ -122,8 +123,7 @@ class Base(QudiObject):
 
         # Initialize module state
         self.module_state = ModuleStateControl(module_instance=self,
-                                               status_variables=self._meta['status_variables'],
-                                               connectors=self._meta['connectors'])
+                                               status_variables=self._meta['status_variables'])
 
     def __init_config_options(self, option_values: Optional[Mapping[str, Any]]) -> None:
         for attr_name, cfg_opt in self._meta['config_options'].items():
@@ -240,14 +240,12 @@ class Base(QudiObject):
 
     @abstractmethod
     def on_activate(self) -> None:
-        """ Method called when module is activated. Must be implemented by actual qudi module.
-        """
+        """ Method called when module is activated. Must be implemented by actual qudi module. """
         raise NotImplementedError('Please implement and specify the activation method.')
 
     @abstractmethod
     def on_deactivate(self) -> None:
-        """ Method called when module is deactivated. Must be implemented by actual qudi module.
-        """
+        """ Method called when module is deactivated. Must be implemented by actual qudi module. """
         raise NotImplementedError('Please implement and specify the deactivation method.')
 
 
@@ -331,12 +329,12 @@ class ModuleStateMachine(Fysom):
 class ModuleStateControl(QtCore.QObject):
     """ Handler class to control qudi module state transitions and appstatus """
 
-    sigStateChanged = QtCore.Signal(object)
+    sigStateChanged = QtCore.Signal(ModuleState, bool)  # state, has_appdata
+    __warning_sent = False
 
     def __init__(self,
                  module_instance: Base,
-                 status_variables: Mapping[str, StatusVar],
-                 connectors: Mapping[str, Connector]):
+                 status_variables: Mapping[str, StatusVar]):
         if not isinstance(module_instance, Base):
             raise TypeError('Parameter "module_instance" of ModuleStateControl.__init__ '
                             'expects qudi.core.module.Base instance.')
@@ -344,32 +342,49 @@ class ModuleStateControl(QtCore.QObject):
                    status_variables.items()):
             raise TypeError('Parameter "status_variables" of ModuleStateControl.__init__ must be '
                             'mapping with str keys and StatusVar values.')
-        if not all(isinstance(name, str) and isinstance(conn, Connector) for name, conn in
-                   connectors.items()):
-            raise TypeError('Parameter "connectors" of ModuleStateControl.__init__ must be '
-                            'mapping with str keys and Connector values.')
         super().__init__(parent=module_instance)
         self._status_variables = status_variables
-        self._connectors = connectors
+        # initialize appdata file handler
         self._appdata_filehandler = ModuleStateFileHandler(
             module_base=module_instance.module_base(),
             class_name=module_instance.__class__.__name__,
             module_name=module_instance.module_name
         )
+        # initialize FSM with callbacks
         self._fsm = ModuleStateMachine(
             callbacks={'on_before_activate'  : self.__activation_callback,
-                       'on_before_deactivate': self.__deactivation_callback})
+                       'on_before_deactivate': self.__deactivation_callback}
+        )
         self._fsm.on_change_state = self._state_change_callback
 
     @property
-    def current(self) -> ModuleState:
+    def state(self) -> ModuleState:
         return ModuleState(self._fsm.current)
 
+    @property
+    def current(self) -> ModuleState:
+        """ For backwards compatibility """
+        return self.state
+
+    @property
+    def has_appdata(self) -> bool:
+        return self._appdata_filehandler.exists
+
     def __call__(self) -> str:
-        return self.current.value
+        if not self.__warning_sent:
+            warnings.warn(
+                'Being able to call ModuleStateControl instance to get a string representation of the '
+                'ModuleState is deprecated and will be removed in the future. Please use '
+                'ModuleStateControl.state to get the ModuleState Enum and use ModuleState.value if you '
+                'want the string representation.',
+                DeprecationWarning,
+                stacklevel=2
+            )
+            self.__class__.__warning_sent = True
+        return self.state.value
 
     def _state_change_callback(self, event) -> None:
-        self.sigStateChanged.emit(ModuleState(event.dst))
+        self.sigStateChanged.emit(ModuleState(event.dst), self.has_appdata)
 
     @QtCore.Slot()
     def activate(self) -> None:
@@ -399,13 +414,12 @@ class ModuleStateControl(QtCore.QObject):
         except Exception as err:
             raise ModuleStateError('Module unlocking failed') from err
 
-    @property
-    def has_appdata(self) -> bool:
-        return self._appdata_filehandler.exists
-
     @QtCore.Slot()
     def clear_appdata(self) -> None:
-        self._appdata_filehandler.clear()
+        try:
+            self._appdata_filehandler.clear()
+        finally:
+            self.sigStateChanged.emit(self.state, self.has_appdata)
 
     @QtCore.Slot()
     def dump_appdata(self) -> None:
@@ -414,14 +428,15 @@ class ModuleStateControl(QtCore.QObject):
         for var in self._status_variables.values():
             try:
                 data[var.name] = var.represent(module)
-            except Exception as err:
-                raise ModuleStateError(
-                    f'Error while representing status variable "{var.name}"'
-                ) from err
+            except Exception:
+                module.log.exception(f'Error while representing status variable "{var.name}". '
+                                     f'This variable will not be saved.')
         try:
             self._appdata_filehandler.dump(data)
         except Exception as err:
             raise ModuleStateError(f'Error while dumping status variables to file') from err
+        finally:
+            self.sigStateChanged.emit(self.state, self.has_appdata)
 
     @QtCore.Slot()
     def load_appdata(self) -> None:
@@ -433,32 +448,38 @@ class ModuleStateControl(QtCore.QObject):
                                    f'"{module.module_name}" from file') from err
 
         for var in self._status_variables.values():
+            value_found = False
             try:
+                value = data[var.name]
+                value_found = True
+            except KeyError:
+                pass
+            if value_found:
                 try:
-                    value = data[var.name]
-                except KeyError:
-                    var.construct(module)
-                else:
                     var.construct(module, value)
+                except Exception:
+                    module.log.exception(
+                        f'Error while constructing status variable "{var.name}" for module '
+                        f'"{module.module_name}" from loaded value "{value}". Using default '
+                        f'initialization instead.'
+                    )
+                else:
+                    continue
+            try:
+                var.construct(module)
             except Exception as err:
-                raise ModuleStateError(f'Error while constructing status variable "{var.name}" for '
-                                       f'module"{module.module_name}"') from err
-
-    def __disconnect_modules(self) -> None:
-        """ Disconnects all Connector instances for this module. """
-        module = self.parent()
-        for connector in self._connectors.values():
-            connector.disconnect(module)
+                raise ModuleStateError(f'Default initialization of status variable "{var.name}" for'
+                                       f' module "{module.module_name}" failed') from err
 
     def __activation_callback(self, event=None) -> bool:
-        """ Restore status variables before activation and invoke on_activate method.
-        """
+        """ Restore status variables before activation and invoke on_activate method. """
         module = self.parent()
         try:
             self.load_appdata()
             module.on_activate()
         except Exception:
-            module.log.exception('Exception during activation:')
+            if module.module_threaded():
+                module.log.exception('Exception during threaded activation:')
             raise
         return True
 
@@ -472,11 +493,8 @@ class ModuleStateControl(QtCore.QObject):
                 module.on_deactivate()
             finally:
                 # save status variables even if deactivation failed
-                try:
-                    self.dump_appdata()
-                finally:
-                    # self.__disconnect_modules()
-                    pass
+                self.dump_appdata()
         except Exception:
             module.log.exception('Exception during deactivation:')
+        # Always return True to allow for state transition
         return True

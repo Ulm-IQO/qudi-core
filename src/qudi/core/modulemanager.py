@@ -362,9 +362,15 @@ class ManagedModule(ABCQObject):
         return {mod_name: mod for mod_name, mod in self._managed_modules.items() if
                 mod_name in self.required_module_names}
 
-    @QtCore.Slot()
-    def _info_changed(self) -> None:
-        self.sigStateChanged.emit(self.name, self.info)
+    @QtCore.Slot(ModuleState, bool)
+    def _info_changed(self,
+                      state: Optional[ModuleState] = None,
+                      has_appdata: Optional[bool] = None) -> None:
+        if state is None:
+            state = self.state
+        if has_appdata is None:
+            has_appdata = self.has_appdata
+        self.sigStateChanged.emit(self.name, ModuleInfo(self.base, state, has_appdata))
 
 
 class LocalManagedModule(ManagedModule):
@@ -582,7 +588,7 @@ class LocalManagedModule(ManagedModule):
         self.instance.module_state.deactivate()
 
     def __disconnect_module_instance(self) -> None:
-        self.instance.module_state.sigStateChanged.disconnect(self._info_changed)
+        self.instance.module_state.sigStateChanged.disconnect()
 
     @QtCore.Slot()
     def reload(self) -> None:
