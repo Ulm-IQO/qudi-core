@@ -32,7 +32,6 @@ from qudi.util.mutex import Mutex
 from qudi.util.models import DictTableModel
 from qudi.util.network import netobtain
 from qudi.core.logger import get_logger
-from qudi.core.module import ModuleState
 
 logger = get_logger(__name__)
 
@@ -141,12 +140,6 @@ class RemoteModulesService(rpyc.Service):
         with self._thread_lock:
             return tuple(self.shared_modules)
 
-    def exposed_get_active_module_names(self) -> tuple:
-        """ Returns the currently shared module names for all modules that are active """
-        with self._thread_lock:
-            return tuple(name for name in self.shared_modules if
-                         self._module_manager.get_module_state(name) != ModuleState.DEACTIVATED)
-
 
 class QudiNamespaceService(rpyc.Service):
     """ An RPyC service providing a namespace dict containing references to all active qudi module
@@ -193,12 +186,13 @@ class QudiNamespaceService(rpyc.Service):
 
         @return dict: Names (keys) and object references (values)
         """
-        if self._force_remote_calls_by_value:
-            mods = {name: ModuleRpycProxy(instance) for name, instance in
-                    self._module_manager.module_instances.items() if instance is not None}
-        else:
-            mods = {name: instance for name, instance in
-                    self._module_manager.module_instances.items() if instance is not None}
+        def wrap(x):
+            if not self._force_remote_calls_by_value or isinstance(x, rpyc.core.netref.BaseNetref):
+                return x
+            return ModuleRpycProxy(x)
+
+        mods = {name: wrap(instance) for name, instance in
+                self._module_manager.module_instances.items() if instance is not None}
         mods['qudi'] = self._qudi_main
         return mods
 
@@ -221,11 +215,11 @@ class ModuleRpycProxy:
     __slots__ = ['_obj_ref', '__weakref__']
 
     def __init__(self, obj):
-        object.__setattr__(self, '_obj_ref', weakref.ref(obj))
+        object.__setattr__(self, '_obj_ref', obj)
 
     # proxying (special cases)
     def __getattribute__(self, name):
-        obj = object.__getattribute__(self, '_obj_ref')()
+        obj = object.__getattribute__(self, '_obj_ref')
         attr = getattr(obj, name)
         if not name.startswith('__') and ismethod(attr) or isfunction(attr):
             sig = signature(attr)
@@ -243,11 +237,11 @@ class ModuleRpycProxy:
         return attr
 
     def __delattr__(self, name):
-        obj = object.__getattribute__(self, '_obj_ref')()
+        obj = object.__getattribute__(self, '_obj_ref')
         return delattr(obj, name)
 
     def __setattr__(self, name, value):
-        obj = object.__getattribute__(self, '_obj_ref')()
+        obj = object.__getattribute__(self, '_obj_ref')
         return setattr(obj, name, netobtain(value))
 
     # factories
@@ -274,7 +268,7 @@ class ModuleRpycProxy:
         def make_method(method_name):
 
             def method(self, *args, **kw):
-                obj = object.__getattribute__(self, '_obj_ref')()
+                obj = object.__getattribute__(self, '_obj_ref')
                 args = [netobtain(arg) for arg in args]
                 kw = {key: netobtain(val) for key, val in kw.items()}
                 return getattr(obj, method_name)(*args, **kw)

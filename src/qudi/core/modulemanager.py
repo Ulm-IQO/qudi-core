@@ -670,12 +670,11 @@ class RemoteManagedModule(ManagedModule):
         self.__activating = False
         self.__deactivating = False
         # rpyc connection
+        self.__instance = None  # Must hold strong reference to rpyc netref
         self.__connection = connect_to_remote_module_server(host=self._address,
                                                             port=self._port,
                                                             certfile=self._certfile,
                                                             keyfile=self._keyfile)
-        # cahced values
-        # self.__cached_module_info = ModuleInfo(self.base, ModuleState.DEACTIVATED, False)
 
     @property
     def url(self) -> str:
@@ -683,20 +682,24 @@ class RemoteManagedModule(ManagedModule):
 
     @property
     def has_appdata(self) -> bool:
-        return self.__connection.root.get_module_info(self._native_name).has_appdata
+        return self.info.has_appdata
 
     @property
     def state(self) -> ModuleState:
-        return ModuleState(self.__connection.root.get_module_info(self._native_name).state.value)
+        return self.info.state
 
     @property
     def info(self) -> ModuleInfo:
         info = self.__connection.root.get_module_info(self._native_name)
-        return ModuleInfo(self.base, ModuleState(info.state.value), info.has_appdata)
+        info = ModuleInfo(self.base, ModuleState(info.state.value), info.has_appdata)
+        if info.state == ModuleState.DEACTIVATED:
+            self.__instance = None
+        return info
 
     @property
     def instance(self) -> Union[None, Base]:
-        return self.__connection.root.get_module_instance(self._native_name)
+        self.__instance = self.__connection.root.get_module_instance(self._native_name)
+        return self.__instance
 
     def clear_appdata(self) -> None:
         try:
@@ -714,6 +717,7 @@ class RemoteManagedModule(ManagedModule):
         try:
             self.__connection.root.deactivate_module(self._native_name)
         finally:
+            self.__instance = None
             self.sigStateChanged.emit(self.name, self.info)
 
     def reload(self) -> None:
