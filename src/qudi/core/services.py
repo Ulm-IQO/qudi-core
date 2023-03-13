@@ -115,8 +115,7 @@ class RemoteModulesService(rpyc.Service):
             self.__check_module_name(name)
             instance = self._module_manager.get_module_instance(name)
             if instance is None:
-                raise RuntimeError(f'Can not get module instance for shared module "{name}". '
-                                   f'Module has not been activated.')
+                return None
             if self._force_remote_calls_by_value:
                 instance = ModuleRpycProxy(instance)
             # Increment instance client counter

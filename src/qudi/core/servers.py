@@ -60,7 +60,7 @@ def connect_to_remote_module_server(host: str,
                                   port=port,
                                   config=protocol_config)
     logger.debug(f'Connected to RemoteModulesServer on {host}:{port:d}')
-    return connection.root
+    return connection
 
 
 class _ServerRunnable(QtCore.QObject):

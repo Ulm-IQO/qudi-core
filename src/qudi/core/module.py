@@ -147,20 +147,16 @@ class Base(QudiObject):
 
     def __init_connectors(self, connections: MutableMapping[str, Any]) -> None:
         """ Connects given modules (values) to their respective Connector (keys). """
-        try:
-            # Iterate through all module connectors and try to connect them to targets
-            for connector in self._meta['connectors'].values():
-                target = connections.pop(connector.name, None)
-                if target is None:
-                    if not connector.optional:
-                        raise ModuleConnectionError(
-                            f'Mandatory module connector "{connector.name}" not configured.'
-                        )
-                else:
-                    connector.connect(self, target)
-        except Exception:
-            self.__disconnect_modules()
-            raise
+        # Iterate through all module connectors and try to connect them to targets
+        for connector in self._meta['connectors'].values():
+            target = connections.pop(connector.name, None)
+            if target is None:
+                if not connector.optional:
+                    raise ModuleConnectionError(
+                        f'Mandatory module connector "{connector.name}" not configured.'
+                    )
+            else:
+                connector.connect(self, target)
 
         # Warn if too many connections have been configured
         if connections:

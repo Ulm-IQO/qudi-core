@@ -669,15 +669,13 @@ class RemoteManagedModule(ManagedModule):
         # Circular recursion fail-saves
         self.__activating = False
         self.__deactivating = False
-        self._instance = None
+        # rpyc connection
+        self.__connection = connect_to_remote_module_server(host=self._address,
+                                                            port=self._port,
+                                                            certfile=self._certfile,
+                                                            keyfile=self._keyfile)
         # cahced values
         # self.__cached_module_info = ModuleInfo(self.base, ModuleState.DEACTIVATED, False)
-
-    def __connect(self):
-        return connect_to_remote_module_server(host=self._address,
-                                               port=self._port,
-                                               certfile=self._certfile,
-                                               keyfile=self._keyfile)
 
     @property
     def url(self) -> str:
@@ -685,32 +683,41 @@ class RemoteManagedModule(ManagedModule):
 
     @property
     def has_appdata(self) -> bool:
-        return self.__connect().get_module_info(self.name).has_appdata
+        return self.__connection.root.get_module_info(self._native_name).has_appdata
 
     @property
     def state(self) -> ModuleState:
-        return ModuleState(self.__connect().get_module_info(self.name).state.value)
+        return ModuleState(self.__connection.root.get_module_info(self._native_name).state.value)
 
     @property
     def info(self) -> ModuleInfo:
-        info = self.__connect().get_module_info(self.name)
+        info = self.__connection.root.get_module_info(self._native_name)
         return ModuleInfo(self.base, ModuleState(info.state.value), info.has_appdata)
 
     @property
     def instance(self) -> Union[None, Base]:
-        return self._instance
+        return self.__connection.root.get_module_instance(self._native_name)
 
     def clear_appdata(self) -> None:
         try:
-            self.__connect().clear_module_appdata(self.name)
+            self.__connection.root.clear_module_appdata(self._native_name)
         finally:
             self.sigStateChanged.emit(self.name, self.info)
 
     def activate(self) -> None:
-        raise NotImplementedError
+        try:
+            self.__connection.root.activate_module(self._native_name)
+        finally:
+            self.sigStateChanged.emit(self.name, self.info)
 
     def deactivate(self) -> None:
-        raise NotImplementedError
+        try:
+            self.__connection.root.deactivate_module(self._native_name)
+        finally:
+            self.sigStateChanged.emit(self.name, self.info)
 
     def reload(self) -> None:
-        raise NotImplementedError
+        try:
+            self.__connection.root.reload_module(self._native_name)
+        finally:
+            self.sigStateChanged.emit(self.name, self.info)

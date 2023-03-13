@@ -247,7 +247,7 @@ class Gui(QtCore.QObject):
                                             QtCore.Qt.BlockingQueuedConnection)
             return
 
-        if self.main_gui_module.module_state() != 'deactivated':
+        if self.main_gui_module.module_state.state != ModuleState.DEACTIVATED:
             self.main_gui_module.show()
             return
 
@@ -264,7 +264,7 @@ class Gui(QtCore.QObject):
                                             QtCore.Qt.BlockingQueuedConnection)
             return
 
-        if self.main_gui_module.module_state() == 'deactivated':
+        if self.main_gui_module.module_state.state == ModuleState.DEACTIVATED:
             return
 
         self.main_gui_module.module_state.deactivate()
