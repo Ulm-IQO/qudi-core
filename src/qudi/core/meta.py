@@ -22,7 +22,7 @@ If not, see <https://www.gnu.org/licenses/>.
 __all__ = ['ABCQObjectMeta', 'QObjectMeta', 'QudiObjectMeta', 'ABCQObject', 'QudiObject']
 
 from abc import ABCMeta
-from PySide2.QtCore import QObject
+from PySide2.QtCore import QObject, Signal
 from qudi.core.statusvariable import StatusVar
 from qudi.core.connector import Connector
 from qudi.core.configoption import ConfigOption
@@ -55,6 +55,7 @@ class QudiObjectMeta(ABCQObjectMeta):
     """ General purpose metaclass for abstract QObject subclasses that include qudi meta attributes
     (Connector, StatusVar, ConfigOption).
     Collects all meta attributes in new "_meta" class variable for easier access.
+    Also collects QtCore.Signal attribute names for easier maintenance and access.
     """
     def __new__(mcs, name, bases, attributes):
         cls = super().__new__(mcs, name, bases, attributes)
@@ -66,6 +67,7 @@ class QudiObjectMeta(ABCQObjectMeta):
         connectors = base_meta.get('connectors', dict()).copy()
         status_vars = base_meta.get('status_variables', dict()).copy()
         config_opt = base_meta.get('config_options', dict()).copy()
+        signals = base_meta.get('signals', dict()).copy()
         for attr_name, attr in cls.__dict__.items():
             if isinstance(attr, Connector):
                 connectors[attr_name] = attr
@@ -73,10 +75,13 @@ class QudiObjectMeta(ABCQObjectMeta):
                 status_vars[attr_name] = attr
             elif isinstance(attr, ConfigOption):
                 config_opt[attr_name] = attr
+            elif isinstance(attr, Signal):
+                signals[attr_name] = attr_name
 
         cls._meta = {'connectors'      : connectors,
                      'status_variables': status_vars,
-                     'config_options'  : config_opt}
+                     'config_options'  : config_opt,
+                     'signals'         : signals}
         return cls
 
 

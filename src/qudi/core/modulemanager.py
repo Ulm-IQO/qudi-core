@@ -22,17 +22,21 @@ If not, see <https://www.gnu.org/licenses/>.
 import importlib
 import weakref
 
-from typing import FrozenSet, Mapping, Any, Union, MutableMapping, Dict, Optional, List
+from typing import FrozenSet, Mapping, Any, Union, MutableMapping, Dict, Optional, List, Tuple
+
+import rpyc
 from PySide2 import QtCore
 from abc import abstractmethod
 from dataclasses import dataclass
 
 from qudi.util.mutex import Mutex
+from qudi.util.network import RpycByValueProxy, netobtain, netdeliver
 from qudi.util.helpers import call_slot_from_native_thread, called_from_native_thread
 from qudi.core.logger import get_logger
 from qudi.core.servers import connect_to_remote_module_server
 from qudi.core.meta import ABCQObject
-from qudi.core.module import Base, ModuleState, ModuleBase, ModuleStateFileHandler, ModuleStateError
+from qudi.core.module import Base, RemoteProxy, ModuleStateFileHandler
+from qudi.core.module import ModuleState, ModuleBase, ModuleStateError
 from qudi.core.config.validator import validate_local_module_config, validate_remote_module_config
 from qudi.core.config.validator import ValidationError
 
@@ -51,6 +55,7 @@ class ModuleManager(QtCore.QObject):
     """
     """
     _instance = None  # Only class instance created will be stored here as weakref
+    _remote_connections: Dict[str, Tuple[rpyc.Connection, List[str]]] = dict()
 
     sigModuleStateChanged = QtCore.Signal(str, ModuleInfo)
     sigManagedModulesChanged = QtCore.Signal(dict)  # {str: ModuleInfo, ...}
@@ -82,6 +87,11 @@ class ModuleManager(QtCore.QObject):
         self._thread_lock = Mutex()
         self._qudi_main = qudi_main
         self._modules = dict()
+
+    def __del__(self):
+        for conn, _ in self._remote_connections.values():
+            conn.close()
+            self._remote_connections.clear()
 
     def __contains__(self, item: str) -> bool:
         return item in self._modules
@@ -142,6 +152,7 @@ class ModuleManager(QtCore.QObject):
         try:
             self._deactivate_module(name)
             del self._modules[name]
+            self._remove_module_remote_connection(module_name=name)
         except KeyError:
             if not ignore_missing:
                 raise
@@ -179,9 +190,30 @@ class ModuleManager(QtCore.QObject):
                 raise KeyError(f'Module with name "{name}" already registered')
         is_remote = self._is_remote_module(configuration)
         if is_remote:
-            module = RemoteManagedModule(name, base, configuration, self._qudi_main)
+            try:
+                connection = self._add_module_remote_connection(module_name=name,
+                                                                host=configuration['address'],
+                                                                port=configuration['port'],
+                                                                certfile=configuration['certfile'],
+                                                                keyfile=configuration['keyfile'])
+                module = RemoteManagedModule(name=name,
+                                             base=base,
+                                             qudi_main=self._qudi_main,
+                                             native_name=configuration['native_module_name'],
+                                             host=configuration['address'],
+                                             port=configuration['port'],
+                                             connection=connection)
+            except Exception:
+                self._remove_module_remote_connection(module_name=name)
+                raise
         else:
-            module = LocalManagedModule(name, base, configuration, self._qudi_main)
+            module = LocalManagedModule(name=name,
+                                        base=base,
+                                        qudi_main=self._qudi_main,
+                                        module_class_cfg=configuration['module.Class'],
+                                        allow_remote=configuration['allow_remote'],
+                                        options_cfg=configuration['options'],
+                                        connect_cfg=configuration['connect'])
         module.sigStateChanged.connect(self.sigModuleStateChanged)
         self._modules[name] = module
         if not is_remote and module.allow_remote:
@@ -275,7 +307,8 @@ class ModuleManager(QtCore.QObject):
                 self._remove_module(module_name, ignore_missing=True, emit_change=False)
             self.sigManagedModulesChanged.emit(self.modules_info)
 
-    def _is_remote_module(self, configuration: Mapping[str, Any]) -> bool:
+    @staticmethod
+    def _is_remote_module(configuration: Mapping[str, Any]) -> bool:
         try:
             validate_remote_module_config(configuration)
             return True
@@ -288,6 +321,38 @@ class ModuleManager(QtCore.QObject):
             pass
         raise ValueError('Invalid module configuration encountered. Configuration did not pass '
                          'local or remote module json schema validation.')
+
+    def _add_module_remote_connection(self,
+                                      module_name: str,
+                                      host: str,
+                                      port: int,
+                                      certfile: Optional[str] = None,
+                                      keyfile: Optional[str] = None) -> rpyc.Connection:
+        url = f'{host}:{port:d}:{certfile}:{keyfile}'
+        try:
+            conn, mod_list = self._remote_connections[url]
+        except KeyError:
+            conn = connect_to_remote_module_server(host=host,
+                                                   port=port,
+                                                   certfile=certfile,
+                                                   keyfile=keyfile)
+            mod_list = list()
+            self._remote_connections[url] = (conn, mod_list)
+        if module_name not in mod_list:
+            mod_list.append(module_name)
+        return conn
+
+    def _remove_module_remote_connection(self, module_name: str) -> None:
+        terminate = None
+        for url, (conn, mod_list) in self._remote_connections.items():
+            if module_name in mod_list:
+                mod_list.remove(module_name)
+                if len(mod_list) == 0:
+                    terminate = url
+                break
+        if terminate is not None:
+            conn, mod_list = self._remote_connections.pop(terminate)
+            conn.close()
 
 
 class ManagedModule(ABCQObject):
@@ -307,19 +372,15 @@ class ManagedModule(ABCQObject):
     def __init__(self,
                  name: str,
                  base: Union[str, ModuleBase],
-                 configuration: Mapping[str, Any],
                  qudi_main: 'Qudi'):
         if not isinstance(name, str):
             raise TypeError('Module name must be str type')
         if len(name) < 1:
             raise ValueError('Module name must be non-empty string')
-        super().__init__()
-        self._thread_lock = Mutex()
+        super().__init__(parent=qudi_main.module_manager)
         self._name = name
         self._base = ModuleBase(base)
-        self._configuration = configuration
         self._qudi_main = qudi_main
-        self._required_module_names = frozenset(configuration.get('connect', dict()).values())
 
     @property
     @abstractmethod
@@ -379,7 +440,15 @@ class ManagedModule(ABCQObject):
 
     @property
     def required_module_names(self) -> FrozenSet[str]:
-        return self._required_module_names
+        """ Overwrite by subclass if needed """
+        return frozenset()
+
+    @property
+    def module_thread_name(self) -> str:
+        """ Generic qudi module thread name used by the ThreadManager in case the module is
+        running in its own thread
+        """
+        return f'mod-{self.base.value}-{self.name}'
 
     @property
     def active_dependent_modules(self) -> Dict[str, 'ManagedModule']:
@@ -391,7 +460,46 @@ class ManagedModule(ABCQObject):
         return {mod_name: mod for mod_name, mod in self._managed_modules.items() if
                 mod_name in self.required_module_names}
 
-    @QtCore.Slot(ModuleState, bool)
+    def _activate_required_modules(self) -> Dict[str, Base]:
+        target_instances = dict()
+        for mod_name, module in self.required_modules.items():
+            module.activate()
+            target_instances[mod_name] = module.instance
+        return target_instances
+
+    def _deactivate_dependent_modules(self) -> None:
+        for _, module in self.active_dependent_modules.items():
+            module.deactivate()
+
+    def _connect_module_signals(self) -> None:
+        instance = self.instance
+        instance.sigModuleStateChanged.connect(self._state_changed)
+        instance.sigModuleAppDataChanged.connect(self._appdata_changed)
+
+    def _disconnect_module_signals(self) -> None:
+        instance = self.instance
+        instance.sigModuleAppDataChanged.disconnect()
+        instance.sigModuleStateChanged.disconnect()
+
+    def _move_instance_to_thread(self) -> None:
+        thread_manager = self._qudi_main.thread_manager
+        thread = thread_manager.get_new_thread(self.module_thread_name)
+        self.instance.moveToThread(thread)
+        thread.start()
+
+    def _join_instance_thread(self) -> None:
+        thread_name = self.module_thread_name
+        thread_manager = self._qudi_main.thread_manager
+        call_slot_from_native_thread(self.instance, 'move_to_main_thread', blocking=True)
+        thread_manager.quit_thread(thread_name)
+        thread_manager.join_thread(thread_name)
+
+    def _activate_instance_threaded(self) -> None:
+        call_slot_from_native_thread(self.instance.module_state, 'activate', blocking=True)
+        # Check if activation has been successful
+        if not self.is_active:
+            raise ModuleStateError(f'Error during threaded activation of module "{self.url}"')
+
     def _info_changed(self,
                       state: Optional[ModuleState] = None,
                       has_appdata: Optional[bool] = None) -> None:
@@ -401,6 +509,14 @@ class ManagedModule(ABCQObject):
             has_appdata = self.has_appdata
         self.sigStateChanged.emit(self.name, ModuleInfo(self.base, state, has_appdata))
 
+    @QtCore.Slot(ModuleState)
+    def _state_changed(self, state: ModuleState) -> None:
+        self._info_changed(state=state)
+
+    @QtCore.Slot(bool)
+    def _appdata_changed(self, has_appdata: bool) -> None:
+        self._info_changed(has_appdata=has_appdata)
+
 
 class LocalManagedModule(ManagedModule):
     """
@@ -408,20 +524,19 @@ class LocalManagedModule(ManagedModule):
     def __init__(self,
                  name: str,
                  base: ModuleBase,
-                 configuration: Mapping[str, Any],
-                 qudi_main: 'Qudi'):
-        super().__init__(name, base, configuration, qudi_main)
-        # Sort out configuration
-        try:
-            self._allow_remote = configuration['allow_remote']
-            self._options = configuration['options']
-            self._connect_cfg = configuration['connect']
-            self._module_url, self._class_name = configuration['module.Class'].rsplit('.', 1)
-        except KeyError as err:
-            raise ValueError(
-                f'Invalid local module configuration encountered:\n{configuration}'
-            ) from err
+                 qudi_main: 'Qudi',
+                 module_class_cfg: str,
+                 allow_remote: Optional[bool] = None,
+                 options_cfg: Optional[Mapping[str, Any]] = None,
+                 connect_cfg: Optional[Mapping[str, str]] = None):
+        super().__init__(name, base, qudi_main)
+        # Configuration
+        self._module_url, self._class_name = module_class_cfg.rsplit('.', 1)
         self._module_url = f'qudi.{self.base.value}.{self._module_url}'
+        self._allow_remote = bool(allow_remote)
+        self._options = dict() if options_cfg is None else options_cfg
+        self._connections = dict() if connect_cfg is None else connect_cfg
+
         # Circular recursion fail-saves
         self.__activating = False
         self.__deactivating = False
@@ -431,7 +546,7 @@ class LocalManagedModule(ManagedModule):
         self._instance = None
         self.__import_module_class()
         # App status handling
-        self._appdata_handler = ModuleStateFileHandler(self.base, self._class_name, self.name)
+        self._appdata_handler = ModuleStateFileHandler(self.name, self._class)
 
     def __import_module_class(self) -> None:
         try:
@@ -475,7 +590,7 @@ class LocalManagedModule(ManagedModule):
     @property
     def state(self) -> ModuleState:
         try:
-            return ModuleState(self.instance.module_state.current)
+            return self.instance.module_state.state
         except AttributeError:
             return ModuleState.DEACTIVATED
 
@@ -484,8 +599,8 @@ class LocalManagedModule(ManagedModule):
         return self._instance
 
     @property
-    def module_thread_name(self):
-        return f'mod-{self.base.value}-{self.name}'
+    def required_module_names(self) -> FrozenSet[str]:
+        return frozenset(self._connections.values())
 
     @property
     def allow_remote(self) -> bool:
@@ -496,7 +611,7 @@ class LocalManagedModule(ManagedModule):
         try:
             self._appdata_handler.clear()
         finally:
-            self._info_changed()
+            self._appdata_changed(self.has_appdata)
 
     @QtCore.Slot()
     def activate(self) -> None:
@@ -509,18 +624,21 @@ class LocalManagedModule(ManagedModule):
         self.__activating = True
         try:
             logger.info(f'Activating module "{self.url}" ...')
-            connections = self.__activate_required_modules()
-            self.__instantiate_module_class(connections)
-            if self._class.module_threaded():
+            required_instances = self._activate_required_modules()
+            connections = {
+                conn: required_instances[target] for conn, target in self._connections.items()
+            }
+            self._instantiate_module_class(connections)
+            if self._class.module_threaded:
                 try:
-                    self.__move_instance_to_thread()
-                    self.__activate_instance_threaded()
+                    self._move_instance_to_thread()
+                    self._activate_instance_threaded()
                 except Exception:
-                    self.__join_instance_thread()
+                    self._join_instance_thread()
                     raise
             else:
-                self.__activate_instance_direct()
-            self.__connect_module_instance()
+                self.instance.module_state.activate()
+            self._connect_module_signals()
         except Exception:
             self._instance = None
             raise
@@ -531,14 +649,7 @@ class LocalManagedModule(ManagedModule):
             self._info_changed()
             QtCore.QCoreApplication.instance().processEvents()
 
-    def __activate_required_modules(self) -> Dict[str, Base]:
-        target_instances = dict()
-        for mod_name, module in self.required_modules.items():
-            module.activate()
-            target_instances[mod_name] = module.instance
-        return {conn: target_instances[target] for conn, target in self._connect_cfg.items()}
-
-    def __instantiate_module_class(self, connections: MutableMapping[str, Base]) -> None:
+    def _instantiate_module_class(self, connections: MutableMapping[str, Base]) -> None:
         """ Try to instantiate the imported qudi module class """
         try:
             self._instance = self._class(qudi_main=self._qudi_main,
@@ -549,36 +660,6 @@ class LocalManagedModule(ManagedModule):
             self._instance = None
             raise RuntimeError(f'Error during __init__ of qudi module "{self.url}".') from err
 
-    def __connect_module_instance(self) -> None:
-        self.instance.module_state.sigStateChanged.connect(self._info_changed)
-
-    def __move_instance_to_thread(self) -> None:
-        thread_manager = self._qudi_main.thread_manager
-        thread = thread_manager.get_new_thread(self.module_thread_name)
-        self.instance.moveToThread(thread)
-        thread.start()
-
-    def __join_instance_thread(self) -> None:
-        thread_name = self.module_thread_name
-        thread_manager = self._qudi_main.thread_manager
-        call_slot_from_native_thread(self.instance, 'move_to_main_thread', blocking=True)
-        thread_manager.quit_thread(thread_name)
-        thread_manager.join_thread(thread_name)
-
-    def __activate_instance_threaded(self) -> None:
-        call_slot_from_native_thread(self.instance.module_state, 'activate', blocking=True)
-        # Check if activation has been successful
-        if not self.is_active:
-            raise ModuleStateError(f'Error during on_activate execution of module "{self.url}"')
-
-    def __activate_instance_direct(self) -> None:
-        try:
-            self.instance.module_state.activate()
-        except Exception as err:
-            raise ModuleStateError(
-                f'Error during on_activate execution of module "{self.url}"'
-            ) from err
-
     @QtCore.Slot()
     def deactivate(self) -> None:
         if self.__deactivating or not self.is_active:
@@ -587,18 +668,20 @@ class LocalManagedModule(ManagedModule):
         try:
             logger.info(f'Deactivating module "{self.url}" ...')
             try:
-                self.__deactivate_dependent_modules()
+                self._deactivate_dependent_modules()
             finally:
                 try:
-                    self.__disconnect_module_instance()
+                    self._disconnect_module_signals()
                 finally:
-                    if self._class.module_threaded():
+                    if self._class.module_threaded:
                         try:
-                            self.__deactivate_instance_threaded()
+                            QtCore.QMetaObject.invokeMethod(self.instance.module_state,
+                                                            'deactivate',
+                                                            QtCore.Qt.BlockingQueuedConnection)
                         finally:
-                            self.__join_instance_thread()
+                            self._join_instance_thread()
                     else:
-                        self.__deactivate_instance_direct()
+                        self.instance.module_state.deactivate()
         finally:
             try:
                 self._instance = None
@@ -607,21 +690,6 @@ class LocalManagedModule(ManagedModule):
                 self.__deactivating = False
                 self._info_changed()
                 QtCore.QCoreApplication.instance().processEvents()
-
-    def __deactivate_dependent_modules(self) -> None:
-        for _, module in self.active_dependent_modules.items():
-            module.deactivate()
-
-    def __deactivate_instance_threaded(self) -> None:
-        QtCore.QMetaObject.invokeMethod(self.instance.module_state,
-                                        'deactivate',
-                                        QtCore.Qt.BlockingQueuedConnection)
-
-    def __deactivate_instance_direct(self) -> None:
-        self.instance.module_state.deactivate()
-
-    def __disconnect_module_instance(self) -> None:
-        self.instance.module_state.sigStateChanged.disconnect()
 
     @QtCore.Slot()
     def reload(self) -> None:
@@ -652,33 +720,24 @@ class RemoteManagedModule(ManagedModule):
     def __init__(self,
                  name: str,
                  base: ModuleBase,
-                 configuration: Mapping[str, Any],
-                 qudi_main: 'Qudi'):
-        super().__init__(name, base, configuration, qudi_main)
-        # Sort out configuration
-        try:
-            self._native_name = configuration['native_module_name']
-            self._address = configuration['address']
-            self._port = configuration['port']
-            self._certfile = configuration['certfile']
-            self._keyfile = configuration['keyfile']
-        except KeyError as err:
-            raise ValueError(
-                f'Invalid remote module configuration encountered:\n{configuration}'
-            ) from err
+                 qudi_main: 'Qudi',
+                 native_name: str,
+                 host: str,
+                 port: int,
+                 connection: rpyc.Connection):
+        super().__init__(name, base, qudi_main)
+        self._native_name = native_name
+        self.__connection = connection
+        self._instance = None
+        self._url = f'{host}:{port:d}/{self._native_name}'
+
         # Circular recursion fail-saves
         self.__activating = False
         self.__deactivating = False
-        # rpyc connection
-        self.__instance = None  # Must hold strong reference to rpyc netref
-        self.__connection = connect_to_remote_module_server(host=self._address,
-                                                            port=self._port,
-                                                            certfile=self._certfile,
-                                                            keyfile=self._keyfile)
 
     @property
     def url(self) -> str:
-        return f'{self._address}:{self._port:d}/{self._native_name}'
+        return self._url
 
     @property
     def has_appdata(self) -> bool:
@@ -691,37 +750,92 @@ class RemoteManagedModule(ManagedModule):
     @property
     def info(self) -> ModuleInfo:
         info = self.__connection.root.get_module_info(self._native_name)
-        info = ModuleInfo(self.base, ModuleState(info.state.value), info.has_appdata)
-        if info.state == ModuleState.DEACTIVATED:
-            self.__instance = None
-        return info
+        return ModuleInfo(self.base, ModuleState(info.state.value), info.has_appdata)
 
     @property
     def instance(self) -> Union[None, Base]:
-        self.__instance = self.__connection.root.get_module_instance(self._native_name)
-        return self.__instance
+        return self._instance
 
+    @QtCore.Slot()
     def clear_appdata(self) -> None:
         try:
             self.__connection.root.clear_module_appdata(self._native_name)
         finally:
-            self.sigStateChanged.emit(self.name, self.info)
+            self._appdata_changed(self.has_appdata)
 
+    @QtCore.Slot()
     def activate(self) -> None:
+        if self.__activating or self.is_active:
+            return
+        self.__activating = True
         try:
-            self.__connection.root.activate_module(self._native_name)
+            logger.info(f'Activating remote module "{self.url}" ...')
+            self._instantiate_module_proxy()
+            self.instance.module_state.activate()
+            self._connect_module_signals()
+        except Exception:
+            self._instance = None
+            raise
+        else:
+            logger.info(f'Remote module "{self.url}" successfully activated.')
         finally:
-            self.sigStateChanged.emit(self.name, self.info)
+            self.__activating = False
+            self._info_changed()
+            QtCore.QCoreApplication.instance().processEvents()
 
+    def _instantiate_module_proxy(self):
+        try:
+            self._instance = RemoteProxy(qudi_main=self._qudi_main,
+                                         name=self.name,
+                                         native_name=self._native_name,
+                                         connection=self.__connection)
+        except Exception as err:
+            self._instance = None
+            raise RuntimeError(
+                f'Error during RemoteProxy.__init__ of qudi remote module "{self.url}".'
+            ) from err
+
+    @QtCore.Slot()
     def deactivate(self) -> None:
+        if self.__deactivating or not self.is_active:
+            return
+        self.__deactivating = True
         try:
-            self.__connection.root.deactivate_module(self._native_name)
+            logger.info(f'Deactivating module "{self.url}" ...')
+            try:
+                self._deactivate_dependent_modules()
+            finally:
+                try:
+                    self._disconnect_module_signals()
+                finally:
+                    self.instance.module_state.deactivate()
         finally:
-            self.__instance = None
-            self.sigStateChanged.emit(self.name, self.info)
+            try:
+                self._instance = None
+                logger.info(f'Module "{self.url}" successfully deactivated.')
+            finally:
+                self.__deactivating = False
+                self._info_changed()
+                QtCore.QCoreApplication.instance().processEvents()
 
+    @QtCore.Slot()
     def reload(self) -> None:
-        try:
-            self.__connection.root.reload_module(self._native_name)
-        finally:
-            self.sigStateChanged.emit(self.name, self.info)
+        was_active = self.is_active
+        if was_active:
+            # Find all modules that are currently active and depend recursively on self
+            active_dependent_modules = set(self.active_dependent_modules.values())
+            while True:
+                dependency_count = len(active_dependent_modules)
+                for module in list(active_dependent_modules):
+                    active_dependent_modules.update(module.active_dependent_modules.values())
+                if dependency_count == len(active_dependent_modules):
+                    break
+            self.deactivate()
+        else:
+            active_dependent_modules = set()
+        logger.info(f'Reloading remote module "{self.url}" with re-import.')
+        self.__connection.root.reload_module(self._native_name)
+        if was_active:
+            self.activate()
+            for module in active_dependent_modules:
+                module.activate()

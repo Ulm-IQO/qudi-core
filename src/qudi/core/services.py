@@ -24,13 +24,11 @@ __all__ = ('RemoteModulesService', 'QudiNamespaceService')
 import logging
 
 import rpyc
-import weakref
-from functools import wraps
-from inspect import signature, isfunction, ismethod
+import pickle
+from typing import Optional, Any
 
 from qudi.util.mutex import Mutex
 from qudi.util.models import DictTableModel
-from qudi.util.network import netobtain
 from qudi.core.logger import get_logger
 
 logger = get_logger(__name__)
@@ -115,8 +113,6 @@ class RemoteModulesService(rpyc.Service):
             instance = self._module_manager.get_module_instance(name)
             if instance is None:
                 return None
-            if self._force_remote_calls_by_value:
-                instance = ModuleRpycProxy(instance)
             # Increment instance client counter
             self.shared_modules[name] += 1
             return instance
@@ -139,6 +135,36 @@ class RemoteModulesService(rpyc.Service):
         """ Returns the currently shared module names independent of the current module state """
         with self._thread_lock:
             return tuple(self.shared_modules)
+
+    def exposed_get_pickle_module(self):
+        return pickle
+
+    def exposed_get_module_attribute(self, module_name: str, attribute_name: str) -> Any:
+        with self._thread_lock:
+            self.__check_module_name(module_name)
+            instance = self._module_manager.get_module_instance(module_name)
+        if instance is None:
+            raise RuntimeError(f'Module "{module_name}" is not active')
+        return getattr(instance, attribute_name)
+
+    def exposed_set_module_attribute(self,
+                                     module_name: str,
+                                     attribute_name: str,
+                                     value: Any) -> None:
+        with self._thread_lock:
+            self.__check_module_name(module_name)
+            instance = self._module_manager.get_module_instance(module_name)
+        if instance is None:
+            raise RuntimeError(f'Module "{module_name}" is not active')
+        setattr(instance, attribute_name, value)
+
+    def exposed_del_module_attribute(self, module_name: str, attribute_name: str) -> None:
+        with self._thread_lock:
+            self.__check_module_name(module_name)
+            instance = self._module_manager.get_module_instance(module_name)
+        if instance is None:
+            raise RuntimeError(f'Module "{module_name}" is not active')
+        delattr(instance, attribute_name)
 
 
 class QudiNamespaceService(rpyc.Service):
@@ -180,18 +206,16 @@ class QudiNamespaceService(rpyc.Service):
         for callback in self._notifier_callbacks.values():
             callback()
 
+    def exposed_get_pickle_module(self):
+        return pickle if self._force_remote_calls_by_value else None
+
     def exposed_get_namespace_dict(self):
         """ Returns the instances of the currently active modules as well as a reference to the
         qudi application itself.
 
         @return dict: Names (keys) and object references (values)
         """
-        def wrap(x):
-            if not self._force_remote_calls_by_value or isinstance(x, rpyc.core.netref.BaseNetref):
-                return x
-            return ModuleRpycProxy(x)
-
-        mods = {name: wrap(instance) for name, instance in
+        mods = {name: instance for name, instance in
                 self._module_manager.module_instances.items() if instance is not None}
         mods['qudi'] = self._qudi_main
         return mods
@@ -199,95 +223,3 @@ class QudiNamespaceService(rpyc.Service):
     def exposed_get_logger(self, name: str) -> logging.Logger:
         """ Returns a logger object for remote processes to log into the qudi logging facility """
         return get_logger(name)
-
-
-class ModuleRpycProxy:
-    """ Instances of this class serve as proxies for qudi modules accessed via RPyC.
-    It currently wraps all API methods (none- and single-underscore methods) to only receive
-    parameters "by value", i.e. using qudi.util.network.netobtain. This will only work if all
-    method arguments are "pickle-able".
-    In addition all values passed to __setattr__ are also received "by value".
-
-    Proxy class concept heavily inspired by this python recipe under PSF License:
-    https://code.activestate.com/recipes/496741-object-proxying/
-    """
-
-    __slots__ = ['_obj_ref', '__weakref__']
-
-    def __init__(self, obj):
-        object.__setattr__(self, '_obj_ref', obj)
-
-    # proxying (special cases)
-    def __getattribute__(self, name):
-        obj = object.__getattribute__(self, '_obj_ref')
-        attr = getattr(obj, name)
-        if not name.startswith('__') and ismethod(attr) or isfunction(attr):
-            sig = signature(attr)
-            if len(sig.parameters) > 0:
-
-                @wraps(attr)
-                def wrapped(*args, **kwargs):
-                    sig.bind(*args, **kwargs)
-                    args = [netobtain(arg) for arg in args]
-                    kwargs = {name: netobtain(arg) for name, arg in kwargs.items()}
-                    return attr(*args, **kwargs)
-
-                wrapped.__signature__ = sig
-                return wrapped
-        return attr
-
-    def __delattr__(self, name):
-        obj = object.__getattribute__(self, '_obj_ref')
-        return delattr(obj, name)
-
-    def __setattr__(self, name, value):
-        obj = object.__getattribute__(self, '_obj_ref')
-        return setattr(obj, name, netobtain(value))
-
-    # factories
-    _special_names = (
-        '__abs__', '__add__', '__and__', '__call__', '__cmp__', '__coerce__', '__contains__',
-        '__delitem__', '__delslice__', '__div__', '__divmod__', '__eq__', '__float__',
-        '__floordiv__', '__ge__', '__getitem__', '__getslice__', '__gt__', '__hash__', '__hex__',
-        '__iadd__', '__iand__', '__idiv__', '__idivmod__', '__ifloordiv__', '__ilshift__',
-        '__imod__', '__imul__', '__int__', '__invert__', '__ior__', '__ipow__', '__irshift__',
-        '__isub__', '__iter__', '__itruediv__', '__ixor__', '__le__', '__len__', '__long__',
-        '__lshift__', '__lt__', '__mod__', '__mul__', '__ne__', '__neg__', '__oct__', '__or__',
-        '__pos__', '__pow__', '__radd__', '__rand__', '__rdiv__', '__rdivmod__', '__reduce__',
-        '__reduce_ex__', '__repr__', '__reversed__', '__rfloorfiv__', '__rlshift__', '__rmod__',
-        '__rmul__', '__ror__', '__rpow__', '__rrshift__', '__rshift__', '__rsub__', '__rtruediv__',
-        '__rxor__', '__setitem__', '__setslice__', '__sub__', '__truediv__', '__xor__', 'next',
-        '__str__', '__nonzero__'
-    )
-
-    @classmethod
-    def _create_class_proxy(cls, theclass):
-        """ creates a proxy for the given class
-        """
-
-        def make_method(method_name):
-
-            def method(self, *args, **kw):
-                obj = object.__getattribute__(self, '_obj_ref')
-                args = [netobtain(arg) for arg in args]
-                kw = {key: netobtain(val) for key, val in kw.items()}
-                return getattr(obj, method_name)(*args, **kw)
-
-            return method
-
-        # Add all special names to this wrapper class if they are present in the original class
-        namespace = dict()
-        for name in cls._special_names:
-            if hasattr(theclass, name):
-                namespace[name] = make_method(name)
-
-        return type(f'{cls.__name__}({theclass.__name__})', (cls,), namespace)
-
-    def __new__(cls, obj, *args, **kwargs):
-        """ creates an proxy instance referencing `obj`. (obj, *args, **kwargs) are passed to this
-        class' __init__, so deriving classes can define an __init__ method of their own.
-
-        note: _class_proxy_cache is unique per class (each deriving class must hold its own cache)
-        """
-        theclass = cls._create_class_proxy(obj.__class__)
-        return object.__new__(theclass)

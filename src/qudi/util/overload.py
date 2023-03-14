@@ -134,22 +134,22 @@ class OverloadProxy:
     """
     __warning_sent = False
 
-    __slots__ = ['_obj_ref', '_overload_key', '__weakref__']
+    __slots__ = ['_obj', '_overload_key', '__weakref__']
 
     def __init__(self, obj: Any, overload_key: str):
-        object.__setattr__(self, '_obj_ref', weakref.ref(obj))
+        object.__setattr__(self, '_obj', obj)
         object.__setattr__(self, '_overload_key', overload_key)
 
     # proxying (special cases)
     def __getattribute__(self, name):
-        obj = object.__getattribute__(self, '_obj_ref')()
+        obj = object.__getattribute__(self, '_obj')
         attr = getattr(obj, name)
         if isinstance(attr, _OverloadedAttributeMapper):
             return attr[object.__getattribute__(self, '_overload_key')]
         return attr
 
     def __delattr__(self, name):
-        obj = object.__getattribute__(self, '_obj_ref')()
+        obj = object.__getattribute__(self, '_obj')
         attr = getattr(obj, name)
         if isinstance(attr, _OverloadedAttributeMapper):
             del attr[object.__getattribute__(self, '_overload_key')]
@@ -157,7 +157,7 @@ class OverloadProxy:
             delattr(obj, name)
 
     def __setattr__(self, name, value):
-        obj = object.__getattribute__(self, '_obj_ref')()
+        obj = object.__getattribute__(self, '_obj')
         attr = getattr(obj, name)
         if isinstance(attr, _OverloadedAttributeMapper):
             attr[object.__getattribute__(self, '_overload_key')] = value
@@ -165,13 +165,13 @@ class OverloadProxy:
             setattr(obj, name, value)
 
     def __nonzero__(self):
-        return bool(object.__getattribute__(self, '_obj_ref')())
+        return bool(object.__getattribute__(self, '_obj'))
 
     def __str__(self):
-        return str(object.__getattribute__(self, '_obj_ref')())
+        return str(object.__getattribute__(self, '_obj'))
 
     def __repr__(self):
-        return repr(object.__getattribute__(self, '_obj_ref')())
+        return repr(object.__getattribute__(self, '_obj'))
 
     def __call__(self):
         # Enable this warning regardless if set application/environment filters
@@ -210,7 +210,7 @@ class OverloadProxy:
 
         def make_method(name):
             def method(self, *args, **kw):
-                return getattr(object.__getattribute__(self, '_obj_ref')(), name)(*args, **kw)
+                return getattr(object.__getattribute__(self, '_obj'), name)(*args, **kw)
 
             return method
 

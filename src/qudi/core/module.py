@@ -24,12 +24,14 @@ import os
 import copy
 import uuid
 import warnings
+import rpyc
+import inspect
 from enum import Enum
 from abc import abstractmethod
 from uuid import uuid4
 from fysom import Fysom
 from PySide2 import QtCore, QtGui, QtWidgets
-from typing import Any, Mapping, MutableMapping, Optional, Union
+from typing import Any, Mapping, MutableMapping, Optional, Type, Callable
 
 from qudi.core.configoption import MissingAction
 from qudi.core.statusvariable import StatusVar
@@ -37,7 +39,8 @@ from qudi.core.connector import ModuleConnectionError
 from qudi.util.paths import get_module_app_data_path, get_daily_directory, get_default_data_dir
 from qudi.util.yaml import YamlFileHandler
 from qudi.util.helpers import call_slot_from_native_thread
-from qudi.core.meta import QudiObject
+from qudi.util.network import netobtain, netdeliver
+from qudi.core.meta import QudiObject, QudiObjectMeta
 from qudi.core.logger import get_logger
 
 
@@ -57,7 +60,23 @@ class ModuleBase(Enum):
     GUI = 'gui'
 
 
-class Base(QudiObject):
+class QudiModuleMeta(QudiObjectMeta):
+    """ Extends QudiObjectMeta by some read-only class properties for convenience """
+    @property
+    def module_threaded(cls) -> bool:
+        """ Always returns False for GUI modules regardless of _threaded attribute. """
+        return False if cls.module_base == ModuleBase.GUI else cls._threaded
+
+    @property
+    def module_base(cls) -> ModuleBase:
+        if issubclass(cls, GuiBase):
+            return ModuleBase.GUI
+        if issubclass(cls, LogicBase):
+            return ModuleBase.LOGIC
+        return ModuleBase.HARDWARE
+
+
+class Base(QudiObject, metaclass=QudiModuleMeta):
     """ Base class for all loadable modules
 
     * Ensure that the program will not die during the load of modules
@@ -72,25 +91,14 @@ class Base(QudiObject):
     """
     _threaded = False
 
-    @classmethod
-    def module_threaded(cls) -> bool:
-        """ Returns whether the module shall be started in its own thread """
-        return cls._threaded
-
-    @classmethod
-    def module_base(cls) -> ModuleBase:
-        if issubclass(cls, GuiBase):
-            return ModuleBase.GUI
-        if issubclass(cls, LogicBase):
-            return ModuleBase.LOGIC
-        return ModuleBase.HARDWARE
+    sigModuleStateChanged = QtCore.Signal(ModuleState)
+    sigModuleAppDataChanged = QtCore.Signal(bool)  # has_appdata
 
     def __init__(self,
                  qudi_main: Any,
                  name: str,
                  options: Optional[Mapping[str, Any]] = None,
-                 connections: Optional[MutableMapping[str, Any]] = None,
-                 **kwargs):
+                 connections: Optional[MutableMapping[str, Any]] = None):
         """ Initialize Base instance. Set up its state machine, initializes ConfigOption meta
         attributes from given config and connects activated module dependencies.
 
@@ -99,31 +107,32 @@ class Base(QudiObject):
         @param dict configuration: parameters from the configuration file
         @param dict callbacks: dict specifying functions to be run on state machine transitions
         """
-        super().__init__(**kwargs)
+        super().__init__()
 
         if options is None:
             options = dict()
         if connections is None:
             connections = dict()
 
-        # Keep weak reference to qudi main instance
+        # Keep reference to qudi main instance
         self.__qudi_main = qudi_main
-
-        # Create logger instance for module
-        self.__logger = get_logger(f'{self.__module__}.{self.__class__.__name__}::{name}')
-
         # Add additional module info
         self.__module_name = name
-        self.__module_uuid = uuid4()
+        self.__module_uuid = uuid4()  # unique module identifier
+        # Create logger instance for module
+        self.__logger = get_logger(f'{self.__module__}.{self.__class__.__name__}::{name}')
+        # Create file handler for module AppData
+        self.__appdata_filehandler = ModuleStateFileHandler(self.module_name, self.__class__)
 
-        # set instance attributes according to ConfigOption meta-objects
+        # Initialize ConfigOption and Connector meta-attributes (descriptors)
         self.__init_config_options(options)
-        # connect other modules according to Connector meta-objects
         self.__init_connectors(connections)
 
         # Initialize module state
-        self.module_state = ModuleStateControl(module_instance=self,
-                                               status_variables=self._meta['status_variables'])
+        self.__module_state = ModuleStateControl(module_instance=self,
+                                                 activation_callback=self.__activation_callback,
+                                                 deactivation_callback=self.__deactivation_callback,
+                                                 state_change_callback=self.__state_change_callback)
 
     def __init_config_options(self, option_values: Optional[Mapping[str, Any]]) -> None:
         for attr_name, cfg_opt in self._meta['config_options'].items():
@@ -165,20 +174,25 @@ class Base(QudiObject):
                 f'the following connections from the configuration: {list(connections)}'
             )
 
+    def __clear_connectors(self) -> None:
+        for connector in self._meta['connectors'].values():
+            connector.disconnect(self)
+
     def __eq__(self, other):
         if isinstance(other, Base):
-            return self.module_uuid == other.module_uuid
-        return super().__eq__(other)
+            return self.module_uuid.int == other.module_uuid.int
+        return False
 
     def __hash__(self):
         return self.module_uuid.int
 
-    @QtCore.Slot()
-    def move_to_main_thread(self) -> None:
-        """ Method that will move this module into the main/manager thread.
-        """
-        if call_slot_from_native_thread(self, 'move_to_main_thread', blocking=True):
-            self.moveToThread(QtCore.QCoreApplication.instance().thread())
+    @property
+    def _qudi_main(self) -> Any:
+        return self.__qudi_main
+
+    @property
+    def module_state(self):
+        return self.__module_state
 
     @property
     def module_name(self) -> str:
@@ -192,6 +206,19 @@ class Base(QudiObject):
         """ Read-only property returning a unique uuid for this module instance.
         """
         return self.__module_uuid
+
+    @property
+    def module_has_appdata(self) -> bool:
+        """ Read-only property indicating if the module has AppData stored on disk (True) or not
+        (False)
+        """
+        return self.__appdata_filehandler.exists
+
+    @property
+    def log(self) -> logging.Logger:
+        """ Returns the module logger instance
+        """
+        return self.__logger
 
     @property
     def module_default_data_dir(self) -> str:
@@ -209,17 +236,65 @@ class Base(QudiObject):
             data_dir = os.path.join(data_root, self.module_name)
         return data_dir
 
-    @property
-    def _qudi_main(self) -> Any:
-        return self.__qudi_main
-
-    @property
-    def log(self) -> logging.Logger:
-        """ Returns the module logger instance
+    @QtCore.Slot()
+    def move_to_main_thread(self) -> None:
+        """ Method that will move this module into the main/manager thread.
         """
-        return self.__logger
+        if call_slot_from_native_thread(self, 'move_to_main_thread', blocking=True):
+            self.moveToThread(QtCore.QCoreApplication.instance().thread())
 
-    def _send_balloon_message(self, title: str, message: str, time: Optional[float] = None,
+    def _dump_status_variables(self) -> None:
+        data = dict()
+        for attr_name, var in self._meta['status_variables'].items():
+            try:
+                data[var.name] = var.represent(self)
+            except Exception:
+                self.log.exception(
+                    f'Error while representing status variable "{var.name}" from '
+                    f'"{self.__class__.__name__}.{attr_name}". This variable will not be saved.'
+                )
+        try:
+            self.__appdata_filehandler.dump(data)
+        except Exception as err:
+            raise ModuleStateError(f'Error while dumping status variables to file') from err
+        finally:
+            self.sigModuleAppDataChanged.emit(self.module_has_appdata)
+
+    def _load_status_variables(self) -> None:
+        try:
+            data = self.__appdata_filehandler.load(raise_missing=False)
+        except Exception as err:
+            raise ModuleStateError(f'Error while loading status variables for module '
+                                   f'"{self.module_name}" from file') from err
+        for attr_name, var in self._meta['status_variables'].items():
+            if var.name in data:
+                value = data[var.name]
+                try:
+                    var.construct(self, value)
+                except Exception:
+                    self.log.exception(
+                        f'Error while constructing status variable "{var.name}" to '
+                        f'"{self.__class__.__name__}.{attr_name}" from loaded value "{value}". '
+                        f'Using default initialization instead.'
+                    )
+                else:
+                    continue
+            try:
+                var.construct(self)
+            except Exception as err:
+                raise ModuleStateError(f'Default initialization of status variable "{var.name}" to '
+                                       f'"{self.__class__.__name__}.{attr_name}" failed') from err
+
+    def _clear_status_variables(self) -> None:
+        try:
+            self.__appdata_filehandler.clear()
+        finally:
+            self.sigModuleAppDataChanged.emit(self.module_has_appdata)
+
+    def _send_balloon_message(self,
+                              title: str,
+                              message: str,
+                              time: Optional[float] = None,
                               icon: Optional[QtGui.QIcon] = None) -> None:
         if self._qudi_main.gui is None:
             log = get_logger('balloon-message')
@@ -227,12 +302,51 @@ class Base(QudiObject):
             return
         self._qudi_main.gui.balloon_message(title, message, time, icon)
 
-    def _send_pop_up_message(self, title: str, message: str):
+    def _send_pop_up_message(self, title: str, message: str) -> None:
         if self._qudi_main.gui is None:
             log = get_logger('pop-up-message')
             log.warning(f'{title}:\n{message}')
             return
         self._qudi_main.gui.pop_up_message(title, message)
+
+    def __activation_callback(self, event=None) -> bool:
+        """ Restore status variables before activation and invoke on_activate method.
+        DO NOT INVOKE THIS METHOD DIRECTLY!
+        """
+        try:
+            self._load_status_variables()
+            self.on_activate()
+        except Exception:
+            if self.module_threaded:
+                self.log.exception('Exception during threaded activation:')
+            raise
+        return True
+
+    def __deactivation_callback(self, event=None) -> bool:
+        """ Invoke on_deactivate method and save status variables afterwards even if deactivation
+        fails.
+        DO NOT INVOKE THIS METHOD DIRECTLY!
+        """
+        try:
+            try:
+                self.on_deactivate()
+            finally:
+                # save status variables even if deactivation failed
+                try:
+                    self._dump_status_variables()
+                finally:
+                    self.__clear_connectors()
+        except Exception:
+            self.log.exception('Exception during deactivation:')
+        # Always return True to allow for state transition
+        return True
+
+    def __state_change_callback(self, event=None) -> None:
+        try:
+            state = ModuleState(event.dst)
+        except AttributeError:
+            state = self.module_state.state
+        self.sigModuleStateChanged.emit(state)
 
     @abstractmethod
     def on_activate(self) -> None:
@@ -254,7 +368,6 @@ class LogicBase(Base):
 class GuiBase(Base):
     """This is the GUI base class. It provides functions that every GUI module should have.
     """
-    _threaded = False
     __window_geometry = StatusVar(name='_GuiBase__window_geometry', default=None)
     __window_state = StatusVar(name='_GuiBase__window_state', default=None)
 
@@ -293,16 +406,29 @@ class GuiBase(Base):
 class ModuleStateFileHandler(YamlFileHandler):
     """ Helper object to facilitate file handling for module app status files
     """
-    def __init__(self, module_base: Union[str, ModuleBase], class_name: str, module_name: str):
-        module_base = ModuleBase(module_base)
-        super().__init__(get_module_app_data_path(class_name, module_base.value, module_name))
+    def __init__(self, module_name: str, module_class: Type[Base]):
+        super().__init__(
+            file_path=get_module_app_data_path(module_class.__name__,
+                                               module_class.module_base.value,
+                                               module_name)
+        )
 
 
 class ModuleStateMachine(Fysom):
+    """ Finite state machine controlling the state of a qudi module. Deactivation is possible from
+    every other state.
+
+        -----> deactivated --------->--------
+                    |                       |
+                    |                       v
+                    ^---------<---------- idle <---
+                    |                       |     |
+                    |                       v     |
+                    ----------<--------- locked ->-
     """
-    FIXME
-    """
-    def __init__(self, callbacks=None, **kwargs):
+    def __init__(self,
+                 callbacks: Optional[Mapping[str, Callable[[object], bool]]] = None,
+                 **kwargs):
         if callbacks is None:
             callbacks = dict()
 
@@ -323,50 +449,40 @@ class ModuleStateMachine(Fysom):
 
 
 class ModuleStateControl(QtCore.QObject):
-    """ Handler class to control qudi module state transitions and appstatus """
-
-    sigStateChanged = QtCore.Signal(ModuleState, bool)  # state, has_appdata
-    __warning_sent = False
+    """ QObject wrapper for module FSM control """
+    __warning_sent = False  # Send DeprecationWarning only once per process
 
     def __init__(self,
                  module_instance: Base,
-                 status_variables: Mapping[str, StatusVar]):
+                 activation_callback: Callable[[object], bool],
+                 deactivation_callback: Callable[[object], bool],
+                 state_change_callback: Callable[[object], None]):
         if not isinstance(module_instance, Base):
             raise TypeError('Parameter "module_instance" of ModuleStateControl.__init__ '
                             'expects qudi.core.module.Base instance.')
-        if not all(isinstance(name, str) and isinstance(var, StatusVar) for name, var in
-                   status_variables.items()):
-            raise TypeError('Parameter "status_variables" of ModuleStateControl.__init__ must be '
-                            'mapping with str keys and StatusVar values.')
+        if not (callable(activation_callback) and callable(deactivation_callback) and callable(state_change_callback)):
+            raise TypeError(
+                'Parameters "activation_callback", "deactivation_callback" and '
+                '"state_change_callback" of ModuleStateControl.__init__ must be callables'
+            )
         super().__init__(parent=module_instance)
-        self._status_variables = status_variables
-        # initialize appdata file handler
-        self._appdata_filehandler = ModuleStateFileHandler(
-            module_base=module_instance.module_base(),
-            class_name=module_instance.__class__.__name__,
-            module_name=module_instance.module_name
-        )
-        # initialize FSM with callbacks
         self._fsm = ModuleStateMachine(
-            callbacks={'on_before_activate'  : self.__activation_callback,
-                       'on_before_deactivate': self.__deactivation_callback}
+            callbacks={'on_before_activate'  : activation_callback,
+                       'on_before_deactivate': deactivation_callback,
+                       'on_change_state'     : state_change_callback}
         )
-        self._fsm.on_change_state = self._state_change_callback
 
     @property
     def state(self) -> ModuleState:
         return ModuleState(self._fsm.current)
 
     @property
-    def current(self) -> ModuleState:
+    def current(self) -> str:
         """ For backwards compatibility """
-        return self.state
-
-    @property
-    def has_appdata(self) -> bool:
-        return self._appdata_filehandler.exists
+        return self._fsm.current
 
     def __call__(self) -> str:
+        """ For backwards compatibility """
         if not self.__warning_sent:
             warnings.warn(
                 'Being able to call ModuleStateControl instance to get a string representation of '
@@ -378,9 +494,6 @@ class ModuleStateControl(QtCore.QObject):
             )
             self.__class__.__warning_sent = True
         return self.state.value
-
-    def _state_change_callback(self, event) -> None:
-        self.sigStateChanged.emit(ModuleState(event.dst), self.has_appdata)
 
     @QtCore.Slot()
     def activate(self) -> None:
@@ -410,87 +523,97 @@ class ModuleStateControl(QtCore.QObject):
         except Exception as err:
             raise ModuleStateError('Module unlocking failed') from err
 
-    @QtCore.Slot()
-    def clear_appdata(self) -> None:
-        try:
-            self._appdata_filehandler.clear()
-        finally:
-            self.sigStateChanged.emit(self.state, self.has_appdata)
 
-    @QtCore.Slot()
-    def dump_appdata(self) -> None:
-        module = self.parent()
-        data = dict()
-        for var in self._status_variables.values():
-            try:
-                data[var.name] = var.represent(module)
-            except Exception:
-                module.log.exception(f'Error while representing status variable "{var.name}". '
-                                     f'This variable will not be saved.')
-        try:
-            self._appdata_filehandler.dump(data)
-        except Exception as err:
-            raise ModuleStateError(f'Error while dumping status variables to file') from err
-        finally:
-            self.sigStateChanged.emit(self.state, self.has_appdata)
+class RemoteProxy(Base):
+    """ FIXME:
+    DO NOT USE DIRECTLY!
+    """
+    _threaded = False
 
-    @QtCore.Slot()
-    def load_appdata(self) -> None:
-        module = self.parent()
-        try:
-            data = self._appdata_filehandler.load(raise_missing=False)
-        except Exception as err:
-            raise ModuleStateError(f'Error while loading status variables for module '
-                                   f'"{module.module_name}" from file') from err
+    def __init__(self, qudi_main: Any, name: str, native_name: str, connection: rpyc.Connection):
+        """ Initialize Base instance. Set up its state machine, initializes ConfigOption meta
+        attributes from given config and connects activated module dependencies.
 
-        for var in self._status_variables.values():
-            value_found = False
-            try:
-                value = data[var.name]
-                value_found = True
-            except KeyError:
-                pass
-            if value_found:
-                try:
-                    var.construct(module, value)
-                except Exception:
-                    module.log.exception(
-                        f'Error while constructing status variable "{var.name}" for module '
-                        f'"{module.module_name}" from loaded value "{value}". Using default '
-                        f'initialization instead.'
-                    )
-                else:
-                    continue
-            try:
-                var.construct(module)
-            except Exception as err:
-                raise ModuleStateError(f'Default initialization of status variable "{var.name}" for'
-                                       f' module "{module.module_name}" failed') from err
-
-    def __activation_callback(self, event=None) -> bool:
-        """ Restore status variables before activation and invoke on_activate method. """
-        module = self.parent()
-        try:
-            self.load_appdata()
-            module.on_activate()
-        except Exception:
-            if module.module_threaded():
-                module.log.exception('Exception during threaded activation:')
-            raise
-        return True
-
-    def __deactivation_callback(self, event=None) -> bool:
-        """ Invoke on_deactivate method and save status variables afterwards even if deactivation
-        fails.
+        @param object self: the object being initialized
+        @param str name: unique name for this module instance
+        @param dict configuration: parameters from the configuration file
+        @param dict callbacks: dict specifying functions to be run on state machine transitions
         """
-        module = self.parent()
+        super().__init__(qudi_main=qudi_main, name=name)
+        self.__native_name = native_name
+        self.__connection = connection
+        self.__remote_pickle = self.__connection.root.get_pickle_module()
+
+    def __getattr__(self, item):
+        if item.startswith('_'):
+            raise AttributeError(
+                'Remote module access is limited to public attributes (without leading underscores)'
+            )
         try:
+            attr = self.__connection.root.get_module_attribute(self.__native_name, item)
+        except Exception as err:
+            raise AttributeError from err
+        if inspect.isfunction(attr) or inspect.ismethod(attr):
+            sig = inspect.signature(attr)
+
+            def _by_value_wrapper(*args, **kwargs):
+                sig.bind(*args, **kwargs)
+                args = tuple(netdeliver(value, self.__remote_pickle) for value in args)
+                kwargs = {
+                    key: netdeliver(value, self.__remote_pickle) for key, value in kwargs.items()
+                }
+                return netobtain(attr(*args, **kwargs))
+
+            _by_value_wrapper.__signature__ = sig
+            return _by_value_wrapper
+        else:
+            return netobtain(attr)
+
+    def __setattr__(self, key, value):
+        if key.startswith('_') or key in dir(self.__class__):
+            super().__setattr__(key, value)
+        else:
             try:
-                module.on_deactivate()
-            finally:
-                # save status variables even if deactivation failed
-                self.dump_appdata()
-        except Exception:
-            module.log.exception('Exception during deactivation:')
-        # Always return True to allow for state transition
-        return True
+                self.__connection.root.set_module_attribute(self.__native_name,
+                                                            key,
+                                                            netdeliver(value, self.__remote_pickle))
+            except Exception as err:
+                raise AttributeError from err
+
+    def __delattr__(self, item):
+        if item.startswith('_') or item in dir(self.__class__):
+            super().__delattr__(item)
+        else:
+            try:
+                self.__connection.root.del_module_attribute(self.__native_name, item)
+            except Exception as err:
+                raise AttributeError from err
+
+    @property
+    def module_has_appdata(self) -> bool:
+        return self.__connection.root.get_module_info(self.__native_name).has_appdata
+
+    def _dump_status_variables(self) -> None:
+        pass
+
+    def _load_status_variables(self) -> None:
+        pass
+
+    def _clear_status_variables(self) -> None:
+        try:
+            self.__connection.root.clear_module_appdata(self.__native_name)
+        finally:
+            self.sigModuleAppDataChanged.emit(self.module_has_appdata)
+
+    def __state_change_callback(self, event=None) -> None:
+        try:
+            state = ModuleState(event.dst)
+        except AttributeError:
+            state = self.module_state.state
+        self.sigModuleStateChanged.emit(state)
+
+    def on_activate(self) -> None:
+        self.__connection.root.activate_module(self.__native_name)
+
+    def on_deactivate(self) -> None:
+        pass

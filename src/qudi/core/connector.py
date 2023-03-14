@@ -86,7 +86,7 @@ class Connector:
     def connect(self, instance: object, target: Any) -> None:
         """ Check if target is connectible by this connector and connect. """
         bases = {cls.__name__ for cls in target.__class__.mro()}
-        if self.interface not in bases:
+        if self.interface not in bases and target.__class__.__name__ != 'RemoteProxy':
             raise ModuleConnectionError(
                 f'Module "{target}" does not implement interface "{self.interface}" required by '
                 f'connector "{self.name}". Connection failed.'

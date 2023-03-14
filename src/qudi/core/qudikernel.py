@@ -32,6 +32,7 @@ import tempfile
 from ipykernel.ipkernel import IPythonKernel
 
 from qudi.core.config import Configuration, ValidationError, YAMLError
+from qudi.util.network import RpycByValueProxy
 
 
 def install_kernel():
@@ -107,12 +108,17 @@ class QudiKernelClient:
     def __init__(self):
         self.service_instance = QudiKernelService()
         self.connection = None
+        self._remote_pickle = None
 
     def get_active_modules(self):
         if self.connection is None or self.connection.closed:
             return dict()
         try:
-            return self.connection.root.get_namespace_dict()
+            if self._remote_pickle:
+                return {name: mod if name == 'qudi' else RpycByValueProxy(mod, self._remote_pickle)
+                        for name, mod in self.connection.root.get_namespace_dict().items()}
+            else:
+                return self.connection.root.get_namespace_dict()
         except (ConnectionError, EOFError):
             self.disconnect()
             return dict()
@@ -134,6 +140,7 @@ class QudiKernelClient:
                                                'sync_request_timeout': 3600},
                                        port=config['namespace_server_port'],
                                        service=self.service_instance)
+        self._remote_pickle = self.connection.root.get_pickle_module()
 
     def disconnect(self):
         if self.connection is not None:
@@ -142,6 +149,7 @@ class QudiKernelClient:
             except:
                 pass
             finally:
+                self._remote_pickle = None
                 self.connection = None
 
 
