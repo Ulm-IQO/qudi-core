@@ -96,7 +96,17 @@ class RemoteModulesService(rpyc.Service):
             self.__check_module_name(name)
             self._module_manager.reload_module(name)
 
-    def exposed_get_module_info(self, name: str) -> object:
+    def exposed_get_module_has_appdata(self, name: str):
+        with self._thread_lock:
+            self.__check_module_name(name)
+            return self._module_manager.get_module_has_appdata(name)
+
+    def exposed_get_module_state(self, name: str):
+        with self._thread_lock:
+            self.__check_module_name(name)
+            return self._module_manager.get_module_state(name)
+
+    def exposed_get_module_info(self, name: str):
         with self._thread_lock:
             self.__check_module_name(name)
             return self._module_manager.get_module_info(name)

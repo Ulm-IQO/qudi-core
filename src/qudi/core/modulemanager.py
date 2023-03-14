@@ -130,6 +130,15 @@ class ModuleManager(QtCore.QObject):
                                f'Can not check for module state.') from None
             return module.state
 
+    def get_module_has_appdata(self, name: str) -> bool:
+        with self._thread_lock:
+            try:
+                module = self._modules[name]
+            except KeyError:
+                raise KeyError(f'No module named "{name}" found in managed qudi modules. '
+                               f'Can not check for module appdata.') from None
+            return module.has_appdata
+
     def get_module_instance(self, name: str) -> Base:
         with self._thread_lock:
             try:
@@ -734,6 +743,9 @@ class RemoteManagedModule(ManagedModule):
         # Circular recursion fail-saves
         self.__activating = False
         self.__deactivating = False
+        # state cache
+        self.__cached_state = ModuleState.DEACTIVATED
+        self.__cached_has_appdata = False
 
     @property
     def url(self) -> str:
@@ -741,16 +753,18 @@ class RemoteManagedModule(ManagedModule):
 
     @property
     def has_appdata(self) -> bool:
-        return self.info.has_appdata
+        self.update_module_info()
+        return self.__cached_has_appdata
 
     @property
     def state(self) -> ModuleState:
-        return self.info.state
+        self.update_module_info()
+        return self.__cached_state
 
     @property
     def info(self) -> ModuleInfo:
-        info = self.__connection.root.get_module_info(self._native_name)
-        return ModuleInfo(self.base, ModuleState(info.state.value), info.has_appdata)
+        self.update_module_info()
+        return ModuleInfo(self.base, self.__cached_state, self.__cached_has_appdata)
 
     @property
     def instance(self) -> Union[None, Base]:
@@ -761,7 +775,7 @@ class RemoteManagedModule(ManagedModule):
         try:
             self.__connection.root.clear_module_appdata(self._native_name)
         finally:
-            self._appdata_changed(self.has_appdata)
+            self.update_module_info()
 
     @QtCore.Slot()
     def activate(self) -> None:
@@ -780,7 +794,7 @@ class RemoteManagedModule(ManagedModule):
             logger.info(f'Remote module "{self.url}" successfully activated.')
         finally:
             self.__activating = False
-            self._info_changed()
+            self.update_module_info()
             QtCore.QCoreApplication.instance().processEvents()
 
     def _instantiate_module_proxy(self):
@@ -839,3 +853,20 @@ class RemoteManagedModule(ManagedModule):
             self.activate()
             for module in active_dependent_modules:
                 module.activate()
+
+    @QtCore.Slot()
+    def update_module_info(self) -> None:
+        has_appdata = self.__connection.root.get_module_has_appdata(self._native_name)
+        try:
+            state = ModuleState(self._instance.module_state.state.value)
+        except AttributeError:
+            state = ModuleState.DEACTIVATED
+        state_changed = self.__cached_state != state
+        if state_changed or (self.__cached_has_appdata != has_appdata):
+            self.__cached_state = state
+            self.__cached_has_appdata = has_appdata
+            if state == ModuleState.DEACTIVATED:
+                self._instance = None
+            self.sigStateChanged.emit(
+                ModuleInfo(self.base, self.__cached_state, self.__cached_has_appdata)
+            )
