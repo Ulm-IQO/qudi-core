@@ -137,9 +137,7 @@ class RemoteConnectionWatchdog(QtCore.QObject):
                                 connection.root.get_module_state(native_name).value
                             )
                             if remote_state == ModuleState.DEACTIVATED:
-                                print('remote deactivation', module)
                                 self._deactivation_callback(module)
-                                print('locally deactivated', module)
             finally:
                 self._poll_timer.start()
 
