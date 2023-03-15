@@ -740,15 +740,12 @@ class RemoteManagedModule(ManagedModule):
         self._force_remote_calls_by_value = force_remote_calls_by_value
         self._native_name = native_name
         self._connection = connection
-        self._instance_proxy = None
         self._url = f'{host}:{port:d}/{self._native_name}'
-
+        self._instance_proxy = None
+        self._cached_state = ModuleState.DEACTIVATED
         # Circular recursion fail-saves
         self.__activating = False
         self.__deactivating = False
-        # state cache
-        self._cached_state = ModuleState.DEACTIVATED
-        self._cached_has_appdata = False
 
     @property
     def url(self) -> str:
@@ -756,18 +753,11 @@ class RemoteManagedModule(ManagedModule):
 
     @property
     def has_appdata(self) -> bool:
-        self.update_module_info()
-        return self._cached_has_appdata
+        return self._connection.root.module_has_appdata(self._native_name)
 
     @property
     def state(self) -> ModuleState:
-        self.update_module_info()
         return self._cached_state
-
-    @property
-    def info(self) -> ModuleInfo:
-        self.update_module_info()
-        return ModuleInfo(self.base, self._cached_state, self._cached_has_appdata)
 
     @property
     def instance(self) -> Union[None, Base]:
@@ -778,7 +768,7 @@ class RemoteManagedModule(ManagedModule):
         try:
             self._connection.root.clear_module_appdata(self._native_name)
         finally:
-            self.update_module_info()
+            self._emit_info_changed()
 
     @QtCore.Slot()
     def activate(self) -> None:
@@ -791,6 +781,7 @@ class RemoteManagedModule(ManagedModule):
                 self._connection.root.activate_module(self._native_name)
             except Exception:
                 self._instance_proxy = None
+                self._cached_state = ModuleState.DEACTIVATED
                 raise
             self._instantiate_module_proxy()
             logger.info(f'Remote module "{self.name}" at "{self.url}" successfully activated.')
@@ -800,7 +791,7 @@ class RemoteManagedModule(ManagedModule):
             ) from err
         finally:
             self.__activating = False
-            self.update_module_info()
+            self._emit_info_changed()
             QtCore.QCoreApplication.instance().processEvents()
 
     @QtCore.Slot()
@@ -822,7 +813,8 @@ class RemoteManagedModule(ManagedModule):
         finally:
             self._instance_proxy = None
             self.__deactivating = False
-            self.update_module_info()
+            self._cached_state = ModuleState.DEACTIVATED
+            self._emit_info_changed()
             QtCore.QCoreApplication.instance().processEvents()
 
     @QtCore.Slot()
@@ -847,22 +839,6 @@ class RemoteManagedModule(ManagedModule):
             for module in active_dependent_modules:
                 module.activate()
 
-    @QtCore.Slot()
-    def update_module_info(self) -> None:
-        has_appdata = self._connection.root.module_has_appdata(self._native_name)
-        if self._instance_proxy is None:
-            state = ModuleState.DEACTIVATED
-        else:
-            state = ModuleState(self._connection.root.get_module_state(self._native_name).value)
-            # Delete proxy if module has been deactivated on remote side
-            if state == ModuleState.DEACTIVATED:
-                self.deactivate()
-                return
-        if (self._cached_state != state) or (self._cached_has_appdata != has_appdata):
-            self._cached_state = state
-            self._cached_has_appdata = has_appdata
-            self._emit_info_changed(state, has_appdata)
-
     def _instantiate_module_proxy(self):
         try:
             self._instance_proxy = self._connection.root.get_module_instance(self._native_name)
@@ -873,8 +849,12 @@ class RemoteManagedModule(ManagedModule):
             if self._force_remote_calls_by_value:
                 remote_pickle = self._connection.root.get_pickle_module()
                 self._instance_proxy = RpycByValueProxy(self._instance_proxy, remote_pickle)
+            self._cached_state = ModuleState(
+                self._connection.root.get_module_state(self._native_name).value
+            )
         except Exception as err:
             self._instance_proxy = None
+            self._cached_state = ModuleState.DEACTIVATED
             raise RuntimeError(
                 f'Error while creating/retrieving proxy for qudi remote module "{self.url}".'
             ) from err
