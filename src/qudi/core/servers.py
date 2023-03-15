@@ -224,10 +224,9 @@ class RemoteModulesServer(BaseServer):
     """
     """
 
-    def __init__(self, force_remote_calls_by_value=False, **kwargs):
+    def __init__(self, **kwargs):
         kwargs['service_instance'] = RemoteModulesService(
-            module_manager=kwargs['qudi'].module_manager,
-            force_remote_calls_by_value=force_remote_calls_by_value
+            module_manager=kwargs['qudi'].module_manager
         )
         super().__init__(**kwargs)
 

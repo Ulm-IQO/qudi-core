@@ -24,8 +24,6 @@ import os
 import copy
 import uuid
 import warnings
-import rpyc
-import inspect
 from enum import Enum
 from abc import abstractmethod
 from uuid import uuid4
@@ -39,8 +37,7 @@ from qudi.core.connector import ModuleConnectionError
 from qudi.util.paths import get_module_app_data_path, get_daily_directory, get_default_data_dir
 from qudi.util.yaml import YamlFileHandler
 from qudi.util.helpers import call_slot_from_native_thread
-from qudi.util.network import netobtain, netdeliver
-from qudi.core.meta import QudiObject, QudiObjectMeta
+from qudi.core.meta import QudiObject
 from qudi.core.logger import get_logger
 
 
@@ -60,23 +57,37 @@ class ModuleBase(Enum):
     GUI = 'gui'
 
 
-class QudiModuleMeta(QudiObjectMeta):
-    """ Extends QudiObjectMeta by some read-only class properties for convenience """
-    @property
-    def module_threaded(cls) -> bool:
-        """ Always returns False for GUI modules regardless of _threaded attribute. """
-        return False if cls.module_base == ModuleBase.GUI else cls._threaded
+class ThreadedDescriptor:
+    def __get__(self, instance, owner):
+        if owner is None:
+            owner = type(instance)
+        return owner._threaded
 
-    @property
-    def module_base(cls) -> ModuleBase:
-        if issubclass(cls, GuiBase):
+    def __delete__(self, instance):
+        raise AttributeError('Can not delete')
+
+    def __set__(self, instance, value):
+        raise AttributeError('Read-Only')
+
+
+class ModuleBaseDescriptor:
+    def __get__(self, instance, owner):
+        if owner is None:
+            owner = type(instance)
+        if issubclass(owner, GuiBase):
             return ModuleBase.GUI
-        if issubclass(cls, LogicBase):
+        if issubclass(owner, LogicBase):
             return ModuleBase.LOGIC
         return ModuleBase.HARDWARE
 
+    def __delete__(self, instance):
+        raise AttributeError('Can not delete')
 
-class Base(QudiObject, metaclass=QudiModuleMeta):
+    def __set__(self, instance, value):
+        raise AttributeError('Read-Only')
+
+
+class Base(QudiObject):
     """ Base class for all loadable modules
 
     * Ensure that the program will not die during the load of modules
@@ -90,6 +101,8 @@ class Base(QudiObject, metaclass=QudiModuleMeta):
     * Reload module data (from saved variables)
     """
     _threaded = False
+    module_threaded = ThreadedDescriptor()
+    module_base = ModuleBaseDescriptor()
 
     sigModuleStateChanged = QtCore.Signal(ModuleState)
     sigModuleAppDataChanged = QtCore.Signal(bool)  # has_appdata
@@ -522,98 +535,3 @@ class ModuleStateControl(QtCore.QObject):
             self._fsm.unlock()
         except Exception as err:
             raise ModuleStateError('Module unlocking failed') from err
-
-
-class RemoteProxy(Base):
-    """ FIXME:
-    DO NOT USE DIRECTLY!
-    """
-    _threaded = False
-
-    def __init__(self, qudi_main: Any, name: str, native_name: str, connection: rpyc.Connection):
-        """ Initialize Base instance. Set up its state machine, initializes ConfigOption meta
-        attributes from given config and connects activated module dependencies.
-
-        @param object self: the object being initialized
-        @param str name: unique name for this module instance
-        @param dict configuration: parameters from the configuration file
-        @param dict callbacks: dict specifying functions to be run on state machine transitions
-        """
-        super().__init__(qudi_main=qudi_main, name=name)
-        self.__native_name = native_name
-        self.__connection = connection
-        self.__remote_pickle = self.__connection.root.get_pickle_module()
-
-    def __getattr__(self, item):
-        if item.startswith('_'):
-            raise AttributeError(
-                'Remote module access is limited to public attributes (without leading underscores)'
-            )
-        try:
-            attr = self.__connection.root.get_module_attribute(self.__native_name, item)
-        except Exception as err:
-            raise AttributeError from err
-        if inspect.isfunction(attr) or inspect.ismethod(attr):
-            sig = inspect.signature(attr)
-
-            def _by_value_wrapper(*args, **kwargs):
-                sig.bind(*args, **kwargs)
-                args = tuple(netdeliver(value, self.__remote_pickle) for value in args)
-                kwargs = {
-                    key: netdeliver(value, self.__remote_pickle) for key, value in kwargs.items()
-                }
-                return netobtain(attr(*args, **kwargs))
-
-            _by_value_wrapper.__signature__ = sig
-            return _by_value_wrapper
-        else:
-            return netobtain(attr)
-
-    def __setattr__(self, key, value):
-        if key.startswith('_') or key in dir(self.__class__):
-            super().__setattr__(key, value)
-        else:
-            try:
-                self.__connection.root.set_module_attribute(self.__native_name,
-                                                            key,
-                                                            netdeliver(value, self.__remote_pickle))
-            except Exception as err:
-                raise AttributeError from err
-
-    def __delattr__(self, item):
-        if item.startswith('_') or item in dir(self.__class__):
-            super().__delattr__(item)
-        else:
-            try:
-                self.__connection.root.del_module_attribute(self.__native_name, item)
-            except Exception as err:
-                raise AttributeError from err
-
-    @property
-    def module_has_appdata(self) -> bool:
-        return self.__connection.root.get_module_info(self.__native_name).has_appdata
-
-    def _dump_status_variables(self) -> None:
-        pass
-
-    def _load_status_variables(self) -> None:
-        pass
-
-    def _clear_status_variables(self) -> None:
-        try:
-            self.__connection.root.clear_module_appdata(self.__native_name)
-        finally:
-            self.sigModuleAppDataChanged.emit(self.module_has_appdata)
-
-    def __state_change_callback(self, event=None) -> None:
-        try:
-            state = ModuleState(event.dst)
-        except AttributeError:
-            state = self.module_state.state
-        self.sigModuleStateChanged.emit(state)
-
-    def on_activate(self) -> None:
-        self.__connection.root.activate_module(self.__native_name)
-
-    def on_deactivate(self) -> None:
-        pass

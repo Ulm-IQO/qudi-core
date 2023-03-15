@@ -145,7 +145,11 @@ class Qudi(QtCore.QObject):
 
         # initialize thread manager and module manager
         self.thread_manager = ThreadManager(parent=self)
-        self.module_manager = ModuleManager(qudi_main=self, parent=self)
+        self.module_manager = ModuleManager(
+            qudi_main=self,
+            force_remote_calls_by_value=self.configuration['force_remote_calls_by_value'],
+            parent=self
+        )
 
         # initialize remote modules server if needed
         remote_server_config = self.configuration['remote_modules_server']
@@ -161,8 +165,7 @@ class Qudi(QtCore.QObject):
                 protocol_config=remote_server_config.get('protocol_config', None),
                 ssl_version=remote_server_config.get('ssl_version', None),
                 cert_reqs=remote_server_config.get('cert_reqs', None),
-                ciphers=remote_server_config.get('ciphers', None),
-                force_remote_calls_by_value=self.configuration['force_remote_calls_by_value']
+                ciphers=remote_server_config.get('ciphers', None)
             )
         else:
             self.remote_modules_server = None

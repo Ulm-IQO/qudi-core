@@ -62,7 +62,7 @@ class Connector:
             self.name = name
         self.attr_name = name
 
-    def __get__(self, instance, owner):
+    def __get__(self, instance, owner) -> Union[None, OverloadProxy, 'Connector']:
         try:
             return instance.__dict__[self.attr_name]
         except KeyError:
