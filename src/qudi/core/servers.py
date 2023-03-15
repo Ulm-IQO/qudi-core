@@ -39,7 +39,7 @@ def connect_to_remote_module_server(host: str,
                                     port: int,
                                     certfile: Optional[str] = None,
                                     keyfile: Optional[str] = None,
-                                    protocol_config: Optional[dict] = None):
+                                    protocol_config: Optional[dict] = None) -> rpyc.Connection:
     """ Helper method to connect to a qudi RemoteModuleServer via rpyc. Returns an rpyc connection
     root object.
     """

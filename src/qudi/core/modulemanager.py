@@ -25,7 +25,8 @@ import importlib
 from PySide2 import QtCore
 from abc import abstractmethod
 from dataclasses import dataclass
-from typing import FrozenSet, Mapping, Any, Union, MutableMapping, Dict, Optional, List, Tuple
+from typing import FrozenSet, Mapping, Any, Union, MutableMapping, Dict, Optional, List, Tuple, Set
+from typing import Callable
 
 from qudi.util.mutex import Mutex
 from qudi.util.network import RpycByValueProxy
@@ -39,6 +40,8 @@ from qudi.core.config.validator import validate_local_module_config, validate_re
 from qudi.core.config.validator import ValidationError
 
 
+_REMOTE_WATCHDOG_INTERVAL = 1  # in seconds
+
 logger = get_logger(__name__)
 
 
@@ -49,11 +52,102 @@ class ModuleInfo:
     has_appdata: bool
 
 
+class RemoteConnectionWatchdog(QtCore.QObject):
+    """ Watchdog to periodically poll remote modules for their state and deactivate local proxy
+    module if they are no longer active.
+    Also manages/creates socket connections and terminates them if they are no longer needes.
+    """
+    def __init__(self,
+                 deactivation_callback: Callable[[str], None],
+                 timer_interval: float,
+                 parent: Optional[QtCore.QObject] = None):
+        super().__init__(parent=parent)
+        self._deactivation_callback = deactivation_callback
+        self._connections: Dict[str, Tuple[rpyc.Connection, Set[str]]] = dict()
+        self._native_name_mapping: Dict[str, str] = dict()
+        self._poll_timer_running = False
+        self._poll_timer = QtCore.QTimer(parent=self)
+        self._poll_timer.setInterval(int(round(timer_interval * 1000)))
+        self._poll_timer.setSingleShot(True)
+        self._poll_timer.timeout.connect(self._poll_connections, QtCore.Qt.QueuedConnection)
+
+    def __del__(self):
+        for connection, _ in self._connections.values():
+            connection.close()
+        self._connections.clear()
+
+    def connect_module(self,
+                       module_name: str,
+                       native_name: str,
+                       host: str,
+                       port: int,
+                       certfile: Optional[str] = None,
+                       keyfile: Optional[str] = None) -> rpyc.Connection:
+        address = f'{host}:{port:d}'
+        try:
+            connection, modules = self._connections[address]
+        except KeyError:
+            connection = connect_to_remote_module_server(host=host,
+                                                         port=port,
+                                                         certfile=certfile,
+                                                         keyfile=keyfile)
+            self._connections[address] = (connection, {module_name})
+        else:
+            modules.add(module_name)
+        self._native_name_mapping[module_name] = native_name
+        if not self._poll_timer_running:
+            self._poll_timer_running = True
+            self._poll_timer.start()
+        return connection
+
+    def disconnect_module(self, module_name: str) -> None:
+        terminate = None
+        for address, (connection, modules) in self._connections.items():
+            if module_name in modules:
+                modules.remove(module_name)
+                del self._native_name_mapping[module_name]
+                if len(modules) == 0:
+                    terminate = address
+                break
+        if terminate:
+            try:
+                connection, _ = self._connections.pop(terminate)
+                connection.close()
+            finally:
+                if len(self._connections) == 0:
+                    self._poll_timer_running = False
+
+    @QtCore.Slot()
+    def _poll_connections(self) -> None:
+        if self._poll_timer_running:
+            try:
+                for address in list(self._connections):
+                    connection, modules = self._connections[address]
+                    if connection.closed:
+                        logger.warning(f'Rpyc connection to "{address}" has died unexpectedly. '
+                                       f'Deactivating all dependent remote modules.')
+                        for module in modules:
+                            del self._native_name_mapping[module]
+                            self._deactivation_callback(module)
+                        del self._connections[address]
+                    else:
+                        for module in modules:
+                            native_name = self._native_name_mapping[module]
+                            remote_state = ModuleState(
+                                connection.root.get_module_state(native_name).value
+                            )
+                            if remote_state == ModuleState.DEACTIVATED:
+                                print('remote deactivation', module)
+                                self._deactivation_callback(module)
+                                print('locally deactivated', module)
+            finally:
+                self._poll_timer.start()
+
+
 class ModuleManager(QtCore.QObject):
     """
     """
     _instance = None  # Only class instance created will be stored here as weakref
-    _remote_connections: Dict[str, Tuple[rpyc.Connection, List[str]]] = dict()
 
     sigModuleStateChanged = QtCore.Signal(str, ModuleInfo)
     sigManagedModulesChanged = QtCore.Signal(dict)  # {str: ModuleInfo, ...}
@@ -85,12 +179,12 @@ class ModuleManager(QtCore.QObject):
         self._thread_lock = Mutex()
         self._qudi_main = qudi_main
         self._force_remote_calls_by_value = force_remote_calls_by_value
+        self._remote_connection_watchdog = RemoteConnectionWatchdog(
+            deactivation_callback=self.deactivate_module,
+            timer_interval=_REMOTE_WATCHDOG_INTERVAL,
+            parent=self
+        )
         self._modules = dict()
-
-    def __del__(self):
-        for conn, _ in self._remote_connections.values():
-            conn.close()
-            self._remote_connections.clear()
 
     def __contains__(self, item: str) -> bool:
         return item in self._modules
@@ -159,16 +253,15 @@ class ModuleManager(QtCore.QObject):
     def _remove_module(self, name: str, ignore_missing: bool, emit_change: bool) -> None:
         try:
             self._deactivate_module(name)
-            del self._modules[name]
-            self._remove_module_remote_connection(module_name=name)
-        except KeyError:
-            if not ignore_missing:
-                raise
-        else:
+            self._remote_connection_watchdog.disconnect_module(module_name=name)
             try:
                 self._qudi_main.remote_modules_server.remove_shared_module(name)
             except AttributeError:
                 pass
+            del self._modules[name]
+        except KeyError:
+            if not ignore_missing:
+                raise
         finally:
             if emit_change:
                 self.sigManagedModulesChanged.emit(self.modules_info)
@@ -198,11 +291,14 @@ class ModuleManager(QtCore.QObject):
         is_remote = self._is_remote_module(configuration)
         if is_remote:
             try:
-                connection = self._add_module_remote_connection(module_name=name,
-                                                                host=configuration['address'],
-                                                                port=configuration['port'],
-                                                                certfile=configuration['certfile'],
-                                                                keyfile=configuration['keyfile'])
+                connection = self._remote_connection_watchdog.connect_module(
+                    module_name=name,
+                    native_name=configuration['native_module_name'],
+                    host=configuration['address'],
+                    port=configuration['port'],
+                    certfile=configuration['certfile'],
+                    keyfile=configuration['keyfile']
+                )
                 module = RemoteManagedModule(
                     name=name,
                     base=base,
@@ -214,7 +310,7 @@ class ModuleManager(QtCore.QObject):
                     connection=connection
                 )
             except Exception:
-                self._remove_module_remote_connection(module_name=name)
+                self._remote_connection_watchdog.disconnect_module(module_name=name)
                 raise
         else:
             module = LocalManagedModule(name=name,
@@ -804,7 +900,6 @@ class RemoteManagedModule(ManagedModule):
             try:
                 self._deactivate_dependent_modules()
             finally:
-                self._connection.root.deactivate_module(self._native_name)
                 logger.info(f'Module "{self.url}" successfully deactivated.')
         except Exception as err:
             raise ModuleStateError(
@@ -812,8 +907,8 @@ class RemoteManagedModule(ManagedModule):
             ) from err
         finally:
             self._instance_proxy = None
-            self.__deactivating = False
             self._cached_state = ModuleState.DEACTIVATED
+            self.__deactivating = False
             self._emit_info_changed()
             QtCore.QCoreApplication.instance().processEvents()
 
