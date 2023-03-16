@@ -30,10 +30,11 @@ import inspect
 from abc import abstractmethod
 from PySide2 import QtCore
 from logging import Logger
-from typing import Mapping, Any, Type, Optional, Union, Dict
+from typing import Mapping, Any, Type, Optional, Union, Dict, MutableMapping
 
-from qudi.core.meta import QudiObjectMeta
+from qudi.core.meta import QudiObject
 from qudi.core.module import Base
+from qudi.core.connector import ModuleConnectionError
 from qudi.core.logger import get_logger
 from qudi.util.models import DictTableModel
 from qudi.util.mutex import Mutex
@@ -45,7 +46,7 @@ class ModuleScriptInterrupted(Exception):
     pass
 
 
-class ModuleScript(QtCore.QObject, metaclass=QudiObjectMeta):
+class ModuleScript(QudiObject):
     """
     The only part that can be interrupted is the _run() method.
     The implementations must occasionally call _check_interrupt() to raise an exception at that
@@ -55,24 +56,9 @@ class ModuleScript(QtCore.QObject, metaclass=QudiObjectMeta):
 
     sigFinished = QtCore.Signal()
 
-    # FIXME: This __new__ implementation has the sole purpose to circumvent a known PySide2(6) bug.
-    #  See https://bugreports.qt.io/browse/PYSIDE-1434 for more details.
-    def __new__(cls, *args, **kwargs):
-        abstract = getattr(cls, '__abstractmethods__', frozenset())
-        if abstract:
-            raise TypeError(f'Can\'t instantiate abstract class "{cls.__name__}" '
-                            f'with abstract methods {set(abstract)}')
-        return super().__new__(cls, *args, **kwargs)
-
     def __init__(self):
         # ModuleScript QObjects must not have a parent in order to be used as threaded workers
         super().__init__()
-
-        # Create a copy of the _meta class dict and attach it to this instance
-        self._meta = copy.deepcopy(self._meta)
-        # set instance attributes according to connector meta objects
-        for attr_name, conn in self._meta['connectors'].items():
-            setattr(self, attr_name, conn)
 
         self._thread_lock = Mutex()
         self.__logger = get_logger(f'{self.__module__}.{self.__class__.__name__}')
@@ -94,11 +80,6 @@ class ModuleScript(QtCore.QObject, metaclass=QudiObjectMeta):
 
     @property
     def log(self) -> Logger:
-        """ Returns a logger object.
-        DO NOT OVERRIDE IN SUBCLASS!
-
-        @return Logger: Logger object for this script class
-        """
         return self.__logger
 
     @property
@@ -110,14 +91,6 @@ class ModuleScript(QtCore.QObject, metaclass=QudiObjectMeta):
     def success(self) -> bool:
         with self._thread_lock:
             return self._success
-
-    @property
-    def connected_modules(self) -> Mapping[str, Union[str, None]]:
-        """ Mapping of Connector names (keys) to connected module target names (values).
-        Unconnected Connectors are indicated by None target.
-        """
-        return {conn.name: None if conn() is None else conn().module_name for conn in
-                self._meta['connectors']}
 
     @classmethod
     def call_parameters(cls) -> Dict[str, inspect.Parameter]:
@@ -185,41 +158,33 @@ class ModuleScript(QtCore.QObject, metaclass=QudiObjectMeta):
                 self._running = False
                 self.sigFinished.emit()
 
-    def connect_modules(self, connector_targets: Mapping[str, Base]) -> None:
-        """ Connects given modules (values) to their respective Connector (keys).
-
-        DO NOT CALL THIS METHOD UNLESS YOU KNOW WHAT YOU ARE DOING!
-        """
-        # Sanity checks
-        conn_names = set(conn.name for conn in self._meta['connectors'].values())
-        mandatory_conn = set(
-            conn.name for conn in self._meta['connectors'].values() if not conn.optional
-        )
-        configured_conn = set(connector_targets)
-        if not configured_conn.issubset(conn_names):
-            raise KeyError(f'Mismatch of connectors in configuration {configured_conn} and '
-                           f'Connector meta objects {conn_names}.')
-        if not mandatory_conn.issubset(configured_conn):
-            raise ValueError(f'Not all mandatory connectors are specified.\n'
-                             f'Mandatory connectors are: {mandatory_conn}')
-
-        # Iterate through module connectors and connect them if possible
-        for conn in self._meta['connectors'].values():
-            target = connector_targets.get(conn.name, None)
+    def connect_modules(self, connections: MutableMapping[str, Base]) -> None:
+        """ Connects given modules (values) to their respective Connector (keys). """
+        # Iterate through all module connectors and try to connect them to targets
+        for connector in self._meta['connectors'].values():
+            target = connections.pop(connector.name, None)
             if target is None:
-                continue
-            if conn.is_connected(self):
-                raise RuntimeError(f'Connector "{conn.name}" already connected.\n'
-                                   f'Call "disconnect_modules()" before trying to reconnect.')
-            conn.connect(target)
+                if not connector.optional:
+                    raise ModuleConnectionError(
+                        f'Mandatory module connector "{connector.name}" not configured.'
+                    )
+            else:
+                connector.connect(self, target)
+
+        # Warn if too many connections have been configured
+        if connections:
+            self.log.warning(
+                f'Module config contains additional connectors that are ignored. Please remove '
+                f'the following connections from the configuration: {list(connections)}'
+            )
 
     def disconnect_modules(self) -> None:
         """ Disconnects all Connector instances for this object.
 
         DO NOT CALL THIS METHOD UNLESS YOU KNOW WHAT YOU ARE DOING!
         """
-        for conn in self._meta['connectors'].values():
-            conn.disconnect()
+        for connector in self._meta['connectors'].values():
+            connector.disconnect(self)
 
     def _check_interrupt(self) -> None:
         """ Implementations of _run should occasionally call this method in order to break

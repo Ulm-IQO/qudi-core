@@ -24,7 +24,7 @@ If not, see <https://www.gnu.org/licenses/>.
 __all__ = ['ModuleTask', 'ModuleTaskStateMachine']
 
 
-from fysom import Fysom, Canceled
+from fysom import Fysom
 from PySide2 import QtCore
 from typing import Mapping, Any, Optional, Callable, Union
 

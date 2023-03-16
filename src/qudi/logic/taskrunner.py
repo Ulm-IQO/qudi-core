@@ -161,9 +161,8 @@ class TaskRunnerLogic(LogicBase):
             module_manager = self._qudi_main.module_manager
             connect_targets = dict()
             for conn_name, module_name in self._module_task_configs[name]['connect'].items():
-                module = module_manager[module_name]
-                module.activate()
-                connect_targets[conn_name] = module.instance
+                module_manager.activate_module(module_name)
+                connect_targets[conn_name] = module_manager.get_module_instance(module_name)
             task.connect_modules(connect_targets)
         except:
             self.log.exception(f'Exception during modules connection for ModuleTask "{name}":')

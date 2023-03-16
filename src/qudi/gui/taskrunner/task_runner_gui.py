@@ -43,7 +43,7 @@ class TaskRunnerGui(GuiBase):
         """Create all UI objects and show the window.
         """
         # Initialize main window and connect task widgets
-        taskrunner = self._task_runner()
+        taskrunner = self._task_runner
         self._mw = TaskMainWindow(tasks=taskrunner.configured_task_types)
         self._mw.sigStartTask.connect(taskrunner.run_task, QtCore.Qt.QueuedConnection)
         self._mw.sigInterruptTask.connect(taskrunner.interrupt_task, QtCore.Qt.QueuedConnection)
@@ -82,7 +82,7 @@ class TaskRunnerGui(GuiBase):
         self._mw.sigInterruptTask.disconnect()
         self._mw.sigClosed.disconnect()  # Important to disconnect before closing main window
         self._mw.close()
-        taskrunner = self._task_runner()
+        taskrunner = self._task_runner
         taskrunner.sigTaskStarted.disconnect(self._mw.task_started, QtCore.Qt.QueuedConnection)
         taskrunner.sigTaskStateChanged.disconnect(self._mw.task_state_changed,
                                                QtCore.Qt.QueuedConnection)

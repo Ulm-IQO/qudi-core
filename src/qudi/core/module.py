@@ -50,6 +50,19 @@ class ModuleState(Enum):
     IDLE = 'idle'
     LOCKED = 'locked'
 
+    def __call__(self) -> str:
+        """ For backwards compatibility """
+        if not hasattr(self.__class__, '__warning_sent__'):
+            warnings.warn(
+                'Being able to call ModuleState Enum to get a string representation is deprecated '
+                'and will be removed in the future. Please use ModuleState directly or use '
+                'ModuleState.value if you must have the string representation (not recommended).',
+                DeprecationWarning,
+                stacklevel=2
+            )
+            self.__class__.__warning_sent__ = True
+        return self.value
+
 
 class ModuleBase(Enum):
     HARDWARE = 'hardware'
@@ -142,10 +155,12 @@ class Base(QudiObject):
         self.__init_connectors(connections)
 
         # Initialize module state
-        self.__module_state = ModuleStateControl(module_instance=self,
-                                                 activation_callback=self.__activation_callback,
-                                                 deactivation_callback=self.__deactivation_callback,
-                                                 state_change_callback=self.__state_change_callback)
+        self.module_state_control = ModuleStateControl(
+            module_instance=self,
+            activation_callback=self.__activation_callback,
+            deactivation_callback=self.__deactivation_callback,
+            state_change_callback=self.__state_change_callback
+        )
 
     def __init_config_options(self, option_values: Optional[Mapping[str, Any]]) -> None:
         for attr_name, cfg_opt in self._meta['config_options'].items():
@@ -205,7 +220,7 @@ class Base(QudiObject):
 
     @property
     def module_state(self):
-        return self.__module_state
+        return self.module_state_control.state
 
     @property
     def module_name(self) -> str:
@@ -255,6 +270,12 @@ class Base(QudiObject):
         """
         if call_slot_from_native_thread(self, 'move_to_main_thread', blocking=True):
             self.moveToThread(QtCore.QCoreApplication.instance().thread())
+
+    def _lock_module(self) -> None:
+        self.module_state_control.lock()
+
+    def _unlock_module(self) -> None:
+        self.module_state_control.unlock()
 
     def _dump_status_variables(self) -> None:
         data = dict()
@@ -358,7 +379,7 @@ class Base(QudiObject):
         try:
             state = ModuleState(event.dst)
         except AttributeError:
-            state = self.module_state.state
+            state = self.module_state
         self.sigModuleStateChanged.emit(state)
 
     @abstractmethod
@@ -463,7 +484,6 @@ class ModuleStateMachine(Fysom):
 
 class ModuleStateControl(QtCore.QObject):
     """ QObject wrapper for module FSM control """
-    __warning_sent = False  # Send DeprecationWarning only once per process
 
     def __init__(self,
                  module_instance: Base,
@@ -488,25 +508,6 @@ class ModuleStateControl(QtCore.QObject):
     @property
     def state(self) -> ModuleState:
         return ModuleState(self._fsm.current)
-
-    @property
-    def current(self) -> str:
-        """ For backwards compatibility """
-        return self._fsm.current
-
-    def __call__(self) -> str:
-        """ For backwards compatibility """
-        if not self.__warning_sent:
-            warnings.warn(
-                'Being able to call ModuleStateControl instance to get a string representation of '
-                'the ModuleState is deprecated and will be removed in the future. Please use '
-                'ModuleStateControl.state to get the ModuleState Enum and use ModuleState.value if '
-                'you must have the string representation (not recommended).',
-                DeprecationWarning,
-                stacklevel=2
-            )
-            self.__class__.__warning_sent = True
-        return self.state.value
 
     @QtCore.Slot()
     def activate(self) -> None:

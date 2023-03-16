@@ -247,14 +247,14 @@ class Gui(QtCore.QObject):
                                             QtCore.Qt.BlockingQueuedConnection)
             return
 
-        if self.main_gui_module.module_state.state != ModuleState.DEACTIVATED:
+        if self.main_gui_module.module_state != ModuleState.DEACTIVATED:
             self.main_gui_module.show()
             return
 
         logger.info('Activating main GUI module...')
         print('> Activating main GUI module...')
 
-        self.main_gui_module.module_state.activate()
+        self.main_gui_module.module_state_control.activate()
         QtWidgets.QApplication.instance().processEvents()
 
     def deactivate_main_gui(self):
@@ -264,10 +264,10 @@ class Gui(QtCore.QObject):
                                             QtCore.Qt.BlockingQueuedConnection)
             return
 
-        if self.main_gui_module.module_state.state == ModuleState.DEACTIVATED:
+        if self.main_gui_module.module_state == ModuleState.DEACTIVATED:
             return
 
-        self.main_gui_module.module_state.deactivate()
+        self.main_gui_module.module_state_control.deactivate()
         QtWidgets.QApplication.instance().processEvents()
 
     def show_system_tray_icon(self):

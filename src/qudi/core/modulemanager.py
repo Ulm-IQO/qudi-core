@@ -657,7 +657,7 @@ class LocalManagedModule(ManagedModule):
     @property
     def state(self) -> ModuleState:
         try:
-            return self.instance.module_state.state
+            return self.instance.module_state
         except AttributeError:
             return ModuleState.DEACTIVATED
 
@@ -704,7 +704,7 @@ class LocalManagedModule(ManagedModule):
                     self._join_instance_thread()
                     raise
             else:
-                self.instance.module_state.activate()
+                self.instance.module_state_control.activate()
             self._connect_module_signals()
         except Exception:
             self._instance = None
@@ -731,13 +731,13 @@ class LocalManagedModule(ManagedModule):
                 finally:
                     if self._class.module_threaded:
                         try:
-                            QtCore.QMetaObject.invokeMethod(self.instance.module_state,
+                            QtCore.QMetaObject.invokeMethod(self.instance.module_state_control,
                                                             'deactivate',
                                                             QtCore.Qt.BlockingQueuedConnection)
                         finally:
                             self._join_instance_thread()
                     else:
-                        self.instance.module_state.deactivate()
+                        self.instance.module_state_control.deactivate()
         finally:
             try:
                 self._instance = None
@@ -804,7 +804,7 @@ class LocalManagedModule(ManagedModule):
         thread_manager.join_thread(thread_name)
 
     def _activate_instance_threaded(self) -> None:
-        call_slot_from_native_thread(self.instance.module_state, 'activate', blocking=True)
+        call_slot_from_native_thread(self.instance.module_state_control, 'activate', blocking=True)
         # Check if activation has been successful
         if not self.is_active:
             raise ModuleStateError(f'Error during threaded activation of module "{self.url}"')
