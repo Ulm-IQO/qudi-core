@@ -25,14 +25,13 @@ import subprocess
 import jupyter_client.kernelspec
 from PySide2 import QtCore, QtWidgets
 from qtconsole.manager import QtKernelManager
-from collections.abc import Mapping, Sequence, Set
 
 from qudi.core.statusvariable import StatusVar
 from qudi.core.threadmanager import ThreadManager
 from qudi.util.paths import get_main_dir, get_default_config_dir
-from qudi.core.gui.main_gui.errordialog import ErrorDialog
-from qudi.core.gui.main_gui.mainwindow import QudiMainWindow
-from qudi.core.module import GuiBase, ModuleState, ModuleBase
+from qudi.gui.main_gui.errordialog import ErrorDialog
+from qudi.gui.main_gui.mainwindow import QudiMainWindow
+from qudi.core.module import GuiBase
 from qudi.core.modulemanager import ModuleInfo
 from qudi.core.logger import get_signal_handler
 

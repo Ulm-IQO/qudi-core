@@ -40,7 +40,7 @@ from qudi.core.watchdog import AppWatchdog
 from qudi.core.module import ModuleState
 from qudi.core.modulemanager import ModuleManager
 from qudi.core.threadmanager import ThreadManager
-from qudi.core.gui.gui import Gui
+from qudi.core.gui import Gui
 from qudi.core.servers import RemoteModulesServer, QudiNamespaceServer
 
 # Use non-GUI "Agg" backend for matplotlib by default since it is reasonably thread-safe. Otherwise
@@ -286,8 +286,10 @@ class Qudi(QtCore.QObject):
     def _start_gui(self):
         if self.no_gui:
             return
-        self.gui = Gui(qudi_instance=self, stylesheet_path=self.configuration['stylesheet'])
-        if not self.configuration['hide_manager_window']:
+        self.gui = Gui(qudi_instance=self,
+                       stylesheet_path=self.configuration['stylesheet'],
+                       main_module_config=self.configuration['main_gui'])
+        if not self.configuration['hide_main_gui']:
             self.gui.activate_main_gui()
 
     def _start_startup_modules(self):
@@ -411,8 +413,6 @@ class Qudi(QtCore.QObject):
             self.module_manager.remove_all_modules()
             QtCore.QCoreApplication.instance().processEvents()
             if not self.no_gui:
-                self.log.info('Closing main GUI...')
-                print('> Closing main GUI...')
                 self.gui.deactivate_main_gui()
                 self.log.info('Closing remaining windows...')
                 print('> Closing remaining windows...')

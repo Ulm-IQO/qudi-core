@@ -21,12 +21,12 @@ If not, see <https://www.gnu.org/licenses/>.
 
 import os
 from PySide2 import QtCore, QtGui, QtWidgets
-from qudi.core.gui.main_gui.logwidget import LogWidget
-from qudi.core.gui.main_gui.remotewidget import RemoteWidget
-from qudi.core.gui.main_gui.aboutqudidialog import AboutQudiDialog
-from qudi.core.gui.main_gui.settingsdialog import SettingsDialog
-from qudi.core.gui.main_gui.modulewidget import ModuleWidget
-from qudi.core.gui.main_gui.configwidget import ConfigQTreeWidget
+from qudi.gui.main_gui.logwidget import LogWidget
+from qudi.gui.main_gui.remotewidget import RemoteWidget
+from qudi.gui.main_gui.aboutqudidialog import AboutQudiDialog
+from qudi.gui.main_gui.settingsdialog import SettingsDialog
+from qudi.gui.main_gui.modulewidget import ModuleWidget
+from qudi.gui.main_gui.configwidget import ConfigQTreeWidget
 from qudi.util.paths import get_artwork_dir
 from qudi.util.widgets.advanced_dockwidget import AdvancedDockWidget
 from qtconsole.rich_jupyter_widget import RichJupyterWidget

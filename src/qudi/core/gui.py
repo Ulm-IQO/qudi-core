@@ -22,8 +22,8 @@ If not, see <https://www.gnu.org/licenses/>.
 import os
 import weakref
 import platform
+import importlib
 from PySide2 import QtCore, QtGui, QtWidgets
-from qudi.core.gui.main_gui.main_gui import QudiMainGui
 from qudi.core.modulemanager import ModuleManager, ModuleInfo
 from qudi.core.module import ModuleState, ModuleBase
 from qudi.util.paths import get_artwork_dir
@@ -122,7 +122,12 @@ class Gui(QtCore.QObject):
             'created instance.'
         )
 
-    def __init__(self, qudi_instance, stylesheet_path=None, theme=None, use_opengl=False):
+    def __init__(self,
+                 qudi_instance,
+                 stylesheet_path=None,
+                 theme=None,
+                 use_opengl=False,
+                 main_module_config=None):
         if theme is None:
             theme = 'qudiTheme'
 
@@ -144,7 +149,6 @@ class Gui(QtCore.QObject):
         self._sigBalloonMessage.connect(self.balloon_message, QtCore.Qt.QueuedConnection)
 
         self._configure_pyqtgraph(use_opengl)
-        self.main_gui_module = QudiMainGui(qudi_main=qudi_instance, name='qudi_main_gui')
         self.system_tray_icon.managerAction.triggered.connect(self.activate_main_gui,
                                                               QtCore.Qt.QueuedConnection)
         self.system_tray_icon.quitAction.triggered.connect(qudi_instance.quit,
@@ -153,6 +157,17 @@ class Gui(QtCore.QObject):
                                                               QtCore.Qt.QueuedConnection)
         qudi_instance.module_manager.sigModuleStateChanged.connect(self._tray_module_action_changed)
         self.show_system_tray_icon()
+        if main_module_config is None:
+            self.main_gui_module = None
+        else:
+            module_url, class_name = main_module_config['module.Class'].rsplit('.', 1)
+            if not module_url.startswith('qudi.'):
+                module_url = f'qudi.{module_url}'
+            mod = importlib.import_module(module_url)
+            module_cls = getattr(mod, class_name)
+            self.main_gui_module = module_cls(qudi_main=qudi_instance,
+                                              name='qudi_main',
+                                              options=main_module_config.get('options', None))
 
     @classmethod
     def instance(cls):
@@ -238,6 +253,9 @@ class Gui(QtCore.QObject):
         QtWidgets.QApplication.instance().closeAllWindows()
 
     def activate_main_gui(self):
+        if self.main_gui_module is None:
+            return
+
         if QtCore.QThread.currentThread() is not self.thread():
             QtCore.QMetaObject.invokeMethod(self,
                                             'activate_main_gui',
@@ -255,6 +273,9 @@ class Gui(QtCore.QObject):
         QtWidgets.QApplication.instance().processEvents()
 
     def deactivate_main_gui(self):
+        if self.main_gui_module is None:
+            return
+
         if QtCore.QThread.currentThread() is not self.thread():
             QtCore.QMetaObject.invokeMethod(self,
                                             'deactivate_main_gui',
@@ -263,6 +284,9 @@ class Gui(QtCore.QObject):
 
         if self.main_gui_module.module_state == ModuleState.DEACTIVATED:
             return
+
+        self.log.info('Closing main GUI...')
+        print('> Closing main GUI...')
 
         self.main_gui_module.module_state_control.deactivate()
         QtWidgets.QApplication.instance().processEvents()
@@ -312,11 +336,13 @@ class Gui(QtCore.QObject):
         else:
             msg = 'Do you really want to quit?'
 
-        result = QtWidgets.QMessageBox.question(self.main_gui_module.mw,
-                                                'Qudi: Quit?',
-                                                msg,
-                                                QtWidgets.QMessageBox.Yes,
-                                                QtWidgets.QMessageBox.No)
+        result = QtWidgets.QMessageBox.question(
+            None if self.main_gui_module is None else self.main_gui_module.mw,
+            'Qudi: Quit?',
+            msg,
+            QtWidgets.QMessageBox.Yes,
+            QtWidgets.QMessageBox.No
+        )
         return result == QtWidgets.QMessageBox.Yes
 
     def prompt_restart(self, modules_locked=True):
@@ -328,11 +354,13 @@ class Gui(QtCore.QObject):
         else:
             msg = 'Do you really want to restart?'
 
-        result = QtWidgets.QMessageBox.question(self.main_gui_module.mw,
-                                                'Qudi: Restart?',
-                                                msg,
-                                                QtWidgets.QMessageBox.Yes,
-                                                QtWidgets.QMessageBox.No)
+        result = QtWidgets.QMessageBox.question(
+            None if self.main_gui_module is None else self.main_gui_module.mw,
+            'Qudi: Restart?',
+            msg,
+            QtWidgets.QMessageBox.Yes,
+            QtWidgets.QMessageBox.No
+        )
         return result == QtWidgets.QMessageBox.Yes
 
     @QtCore.Slot(str, str)

@@ -599,7 +599,11 @@ class LocalManagedModule(ManagedModule):
         super().__init__(name, base, qudi_main)
         # Configuration
         self._module_url, self._class_name = module_class_cfg.rsplit('.', 1)
-        self._module_url = f'qudi.{self.base.value}.{self._module_url}'
+        if not self._module_url.startswith('qudi.'):
+            if self._module_url.startswith(tuple(f'{b.value}.' for b in ModuleBase)):
+                self._module_url = f'qudi.{self._module_url}'
+            else:
+                self._module_url = f'qudi.{self.base.value}.{self._module_url}'
         self._allow_remote = bool(allow_remote)
         self._options = dict() if options_cfg is None else options_cfg
         self._connections = dict() if connect_cfg is None else connect_cfg

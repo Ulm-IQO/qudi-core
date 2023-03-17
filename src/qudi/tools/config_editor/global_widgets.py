@@ -192,12 +192,12 @@ class GlobalOptionsWidget(QtWidgets.QWidget):
         # Create flag editor to hide manager window upon startup
         label = QtWidgets.QLabel('Hide manager window:')
         label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
-        self.hide_manager_window_checkbox = QtWidgets.QCheckBox()
-        self.hide_manager_window_checkbox.setToolTip(
-            'Whether to suppress the qudi module manager window at startup.'
+        self.hide_main_gui_checkbox = QtWidgets.QCheckBox()
+        self.hide_main_gui_checkbox.setToolTip(
+            'Whether to suppress the qudi main GUI window at startup.'
         )
         layout.addWidget(label, 4, 0)
-        layout.addWidget(self.hide_manager_window_checkbox, 4, 1)
+        layout.addWidget(self.hide_main_gui_checkbox, 4, 1)
 
         # Create flag editor to auomatically create a data sub-directory for each day
         label = QtWidgets.QLabel('Create daily data directories:')
@@ -261,7 +261,7 @@ class GlobalOptionsWidget(QtWidgets.QWidget):
             'remote_modules_server'      : self.remote_server_editor.config,
             'namespace_server_port'      : self.namespace_port_spinbox.value(),
             'force_remote_calls_by_value': self.force_calls_by_value_checkbox.isChecked(),
-            'hide_manager_window'        : self.hide_manager_window_checkbox.isChecked(),
+            'hide_main_gui'              : self.hide_main_gui_checkbox.isChecked(),
             'daily_data_dirs'            : self.daily_data_dirs_checkbox.isChecked(),
             'startup_modules'            : [mod.strip() for mod in
                                             self.startup_lineedit.text().split(',') if mod.strip()],
@@ -286,7 +286,7 @@ class GlobalOptionsWidget(QtWidgets.QWidget):
         self.remote_server_editor.set_config(config['remote_modules_server'])
         self.namespace_port_spinbox.setValue(config['namespace_server_port'])
         self.force_calls_by_value_checkbox.setChecked(config['force_remote_calls_by_value'])
-        self.hide_manager_window_checkbox.setChecked(config['hide_manager_window'])
+        self.hide_main_gui_checkbox.setChecked(config['hide_main_gui'])
         self.daily_data_dirs_checkbox.setChecked(config['daily_data_dirs'])
         default_data_dir = config['default_data_dir']
         self.data_directory_lineedit.setText('' if default_data_dir is None else default_data_dir)

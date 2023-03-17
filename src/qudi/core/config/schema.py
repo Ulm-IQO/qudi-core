@@ -48,9 +48,22 @@ def config_schema() -> Dict[str, Any]:
                         },
                         'default': list()
                     },
-                    'main_module': {
-                        **local_module_config_schema(),
-                        'default': {'module.Class': 'qudi.core.main_gui.main_gui.QudiMainGui'}
+                    'main_gui': {
+                        'type': ['null', 'object'],
+                        'required': ['module.Class'],
+                        'additionalProperties': False,
+                        'properties': {
+                            'module.Class': {
+                                'type': 'string',
+                                'pattern': f'^gui(\\.{__module_name_pattern})+$',
+                            },
+                            'options': {
+                                'type': 'object',
+                                'additionalProperties': True,
+                                'default': dict()
+                            }
+                        },
+                        'default': {'module.Class': 'gui.main_gui.main_gui.QudiMainGui'}
                     },
                     'remote_modules_server': {
                         'type': ['null', 'object'],
@@ -86,7 +99,7 @@ def config_schema() -> Dict[str, Any]:
                         'type': 'boolean',
                         'default': True
                     },
-                    'hide_manager_window': {
+                    'hide_main_gui': {
                         'type': 'boolean',
                         'default': False
                     },
