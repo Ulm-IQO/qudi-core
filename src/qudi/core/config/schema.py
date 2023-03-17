@@ -48,6 +48,10 @@ def config_schema() -> Dict[str, Any]:
                         },
                         'default': list()
                     },
+                    'main_module': {
+                        **local_module_config_schema(),
+                        'default': {'module.Class': 'qudi.core.main_gui.main_gui.QudiMainGui'}
+                    },
                     'remote_modules_server': {
                         'type': ['null', 'object'],
                         'required': ['address', 'port'],

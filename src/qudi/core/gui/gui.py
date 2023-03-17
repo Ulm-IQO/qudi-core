@@ -38,13 +38,10 @@ logger = get_logger(__name__)
 
 
 class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
-    """Tray icon class subclassing QSystemTrayIcon for custom functionality.
-    """
+    """ Tray icon class subclassing QSystemTrayIcon for custom functionality. """
 
     def __init__(self):
-        """Tray icon constructor.
-        Adds all the appropriate menus and actions.
-        """
+        """ Tray icon constructor. Adds all the appropriate menus and actions. """
         super().__init__()
         self._actions = dict()
         self.setIcon(QtWidgets.QApplication.instance().windowIcon())
