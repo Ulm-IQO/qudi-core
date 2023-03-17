@@ -424,7 +424,12 @@ class Qudi(QtCore.QObject):
             self.thread_manager.quit_all_threads()
             QtCore.QCoreApplication.instance().processEvents()
             clear_handlers()
-            gc.collect()  # Explicit gc call to prevent Qt C++ extensions from using deleted Python objects
+            # FIXME: Suppress ResourceWarning from jupyter_client package upon garbage collection.
+            #  This is just sloppy implementation from jupyter and not critical.
+            with warnings.catch_warnings():
+                warnings.filterwarnings('ignore', category=ResourceWarning, module='asyncio')
+                # Explicit gc call to prevent Qt C++ extensions from using deleted Python objects
+                gc.collect()
             if restart:
                 QtCore.QCoreApplication.exit(42)
             else:
