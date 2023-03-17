@@ -285,7 +285,7 @@ class Gui(QtCore.QObject):
         if self.main_gui_module.module_state == ModuleState.DEACTIVATED:
             return
 
-        self.log.info('Closing main GUI...')
+        logger.info('Closing main GUI...')
         print('> Closing main GUI...')
 
         self.main_gui_module.module_state_control.deactivate()
