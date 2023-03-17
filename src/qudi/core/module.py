@@ -36,7 +36,7 @@ from qudi.core.statusvariable import StatusVar
 from qudi.core.connector import ModuleConnectionError
 from qudi.util.paths import get_module_app_data_path, get_daily_directory, get_default_data_dir
 from qudi.util.yaml import YamlFileHandler
-from qudi.util.helpers import call_slot_from_native_thread
+from qudi.util.helpers import call_slot_from_native_thread, current_is_native_thread
 from qudi.core.meta import QudiObject
 from qudi.core.logger import get_logger
 
@@ -268,8 +268,10 @@ class Base(QudiObject):
     def move_to_main_thread(self) -> None:
         """ Method that will move this module into the main/manager thread.
         """
-        if call_slot_from_native_thread(self, 'move_to_main_thread', blocking=True):
+        if current_is_native_thread(self):
             self.moveToThread(QtCore.QCoreApplication.instance().thread())
+        else:
+            call_slot_from_native_thread(self, 'move_to_main_thread', blocking=True)
 
     def _lock_module(self) -> None:
         self.module_state_control.lock()

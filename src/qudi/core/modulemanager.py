@@ -30,7 +30,7 @@ from typing import Callable
 
 from qudi.util.mutex import Mutex
 from qudi.util.network import RpycByValueProxy
-from qudi.util.helpers import call_slot_from_native_thread, called_from_native_thread
+from qudi.util.helpers import call_slot_from_native_thread, current_is_native_thread
 from qudi.core.logger import get_logger
 from qudi.core.servers import connect_to_remote_module_server
 from qudi.core.meta import ABCQObject
@@ -243,7 +243,7 @@ class ModuleManager(QtCore.QObject):
                       name: str,
                       ignore_missing: Optional[bool] = False,
                       emit_change: Optional[bool] = True) -> None:
-        if not called_from_native_thread(self):
+        if not current_is_native_thread(self):
             raise RuntimeError(f'"remove_module" can only be called from main/GUI thread')
         with self._thread_lock:
             self._remove_module(name, ignore_missing, emit_change)
@@ -270,7 +270,7 @@ class ModuleManager(QtCore.QObject):
                    configuration: Mapping[str, Any],
                    allow_overwrite: Optional[bool] = False,
                    emit_change: Optional[bool] = True) -> None:
-        if not called_from_native_thread(self):
+        if not current_is_native_thread(self):
             raise RuntimeError(f'"add_module" can only be called from main/GUI thread')
         with self._thread_lock:
             self._add_module(name, base, configuration, allow_overwrite, emit_change)
@@ -339,8 +339,10 @@ class ModuleManager(QtCore.QObject):
         except KeyError:
             raise KeyError(f'No module named "{name}" found in managed qudi modules. '
                            f'Module activation aborted.') from None
-        if call_slot_from_native_thread(module, 'activate', blocking=True):
+        if current_is_native_thread(self):
             module.activate()
+        else:
+            call_slot_from_native_thread(module, 'activate', blocking=True)
 
     @QtCore.Slot(str)
     def deactivate_module(self, name: str) -> None:
@@ -353,8 +355,10 @@ class ModuleManager(QtCore.QObject):
         except KeyError:
             raise KeyError(f'No module named "{name}" found in managed qudi modules. '
                            f'Module deactivation aborted.') from None
-        if call_slot_from_native_thread(module, 'deactivate', blocking=True):
+        if current_is_native_thread(self):
             module.deactivate()
+        else:
+            call_slot_from_native_thread(module, 'deactivate', blocking=True)
 
     @QtCore.Slot(str)
     def reload_module(self, name: str) -> None:
@@ -367,8 +371,10 @@ class ModuleManager(QtCore.QObject):
         except KeyError:
             raise KeyError(f'No module named "{name}" found in managed qudi modules. '
                            f'Module reload aborted.') from None
-        if call_slot_from_native_thread(module, 'reload', blocking=True):
+        if current_is_native_thread(self):
             module.reload()
+        else:
+            call_slot_from_native_thread(module, 'reload', blocking=True)
 
     @QtCore.Slot(str)
     def clear_module_appdata(self, name: str) -> None:
@@ -382,7 +388,7 @@ class ModuleManager(QtCore.QObject):
 
     @QtCore.Slot()
     def activate_all_modules(self) -> None:
-        if call_slot_from_native_thread(self, 'activate_all_modules', blocking=True):
+        if current_is_native_thread(self):
             with self._thread_lock:
                 for module in self._modules.values():
                     try:
@@ -390,10 +396,13 @@ class ModuleManager(QtCore.QObject):
                     except:
                         logger.exception('Module activation failed. Activating all modules will '
                                          'continue regardless.')
+        else:
+            call_slot_from_native_thread(self, 'activate_all_modules', blocking=True)
+
 
     @QtCore.Slot()
     def deactivate_all_modules(self) -> None:
-        if call_slot_from_native_thread(self, 'deactivate_all_modules', blocking=True):
+        if current_is_native_thread(self):
             with self._thread_lock:
                 for module in self._modules.values():
                     try:
@@ -401,10 +410,13 @@ class ModuleManager(QtCore.QObject):
                     except:
                         logger.exception('Module deactivation failed. Deactivating all modules '
                                          'will continue regardless.')
+        else:
+            call_slot_from_native_thread(self, 'deactivate_all_modules', blocking=True)
+
 
     @QtCore.Slot()
     def remove_all_modules(self) -> None:
-        if not called_from_native_thread(self):
+        if not current_is_native_thread(self):
             raise RuntimeError(f'"remove_all_modules" can only be called from main/GUI thread')
         with self._thread_lock:
             for module_name in list(self._modules):
@@ -803,7 +815,7 @@ class LocalManagedModule(ManagedModule):
     def _join_instance_thread(self) -> None:
         thread_name = self.module_thread_name
         thread_manager = self._qudi_main.thread_manager
-        call_slot_from_native_thread(self.instance, 'move_to_main_thread', blocking=True)
+        self.instance.move_to_main_thread()
         thread_manager.quit_thread(thread_name)
         thread_manager.join_thread(thread_name)
 
