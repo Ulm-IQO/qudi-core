@@ -9,9 +9,8 @@ None
 None
 
 ### New Features
-- Added utility descriptor objects `CheckedAttribute` and `TypedAttribute` to 
-`qudi.util.constraints`. Can be used to perform customized automatic sanity checking on attribute 
-value assignments.
+- Added utility descriptor objects to new module `qudi.util.descriptors`. Can be used to 
+facilitate smart instance attribute handling. 
 
 ### Other
 None
