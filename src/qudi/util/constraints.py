@@ -19,10 +19,9 @@ You should have received a copy of the GNU Lesser General Public License along w
 If not, see <https://www.gnu.org/licenses/>.
 """
 
-__all__ = ['ScalarConstraint', 'CheckedAttribute', 'TypedAttribute']
+__all__ = ['ScalarConstraint']
 
-from inspect import isclass, signature
-from typing import Union, Optional, Tuple, Callable, Any, Type, Iterable
+from typing import Union, Optional, Tuple, Callable, Any
 from qudi.util.helpers import is_float, is_integer
 
 
@@ -165,110 +164,3 @@ class ScalarConstraint:
     @step.setter
     def step(self, value: Union[None, int, float]):
         self._increment = value
-
-
-class CheckedAttribute:
-    """ Descriptor to perform customizable, automatic sanity checks on a class attribute value
-    assignment. Performs sanity checking via provided validator callables.
-
-    Example usage:
-
-        def custom_validate(value):
-            if not value.startswith('foo') or not value.endswith('bar'):
-                raise ValueError('String must start with "foo" and end with "bar"')
-
-        class Test:
-            my_custom = CheckedAttribute([custom_validate])
-            def __init__(self):
-                self.my_custom = 'foo bar'
-                # Following assignment would raise
-                # self.my_custom = 'This fails validator'
-    """
-    def __init__(self, static_validators: Optional[Iterable[Callable[[Any], None]]] = None):
-        self.attr_name = ''
-        self.static_validators = list() if static_validators is None else list(static_validators)
-        self.bound_validators = list()
-        if not all(callable(val) for val in self.static_validators):
-            raise TypeError('static_validators must be iterable of callables')
-
-    def __set_name__(self, owner, name):
-        self.attr_name = name
-
-    def __get__(self, instance, owner):
-        if instance:
-            try:
-                return instance.__dict__[self.attr_name]
-            except KeyError:
-                raise AttributeError(self.attr_name) from None
-        else:
-            return self
-
-    def __delete__(self, instance):
-        try:
-            del instance.__dict__[self.attr_name]
-        except KeyError:
-            raise AttributeError(self.attr_name) from None
-
-    def __set__(self, instance, value):
-        # Custom validator evaluation
-        try:
-            for validator in self.static_validators:
-                validator(value)
-            for bound_name in self.bound_validators:
-                try:
-                    validator = getattr(instance, bound_name)
-                except AttributeError:
-                    raise AttributeError(
-                        f'Registered bound validator "{bound_name}" not found in {instance}'
-                    ) from None
-                validator(value)
-        except Exception as err:
-            raise ValueError(f'Value of "{self.attr_name}" did not pass validation:') from err
-        instance.__dict__[self.attr_name] = value
-
-    def validator(self, func: Union[Callable[[Any, Any], None], Callable[[Any], None]]) -> Callable:
-        """ Decorator to register either a static or bound validator """
-        if callable(func):
-            if len(signature(func).parameters) == 1:
-                self.static_validators.append(func)
-            else:
-                self.bound_validators.append(func.__name__)
-        else:
-            self.bound_validators.append(func.__func__.__name__)
-        return func
-
-
-class TypedAttribute(CheckedAttribute):
-    """ Extends CheckedAttribute so that you can easily include type checking via isinstance()
-    builtin before the optional user-provided checker functions are called.
-
-    Example usage:
-
-        def custom_validate(value):
-            if not value.startswith('foo') or not value.endswith('bar'):
-                raise ValueError('String must start with "foo" and end with "bar"')
-
-        class Test:
-            my_string = CheckedAttribute([str])
-            my_number = CheckedAttribute([int, float])
-            my_custom = CheckedAttribute([str], static_validators=[custom_validate])
-            def __init__(self):
-                self.my_string = 'I am a test string'
-                self.my_number = 42
-                self.my_custom = 'foo bar'
-                # Following assignments would raise
-                # self.my_string = 42
-                # self.my_number = None
-                # self.my_custom = 'It is a string but it fails custom validator'
-    """
-    def __init__(self, valid_types: Optional[Iterable[Type]] = None, **kwargs):
-        self.valid_types = tuple() if valid_types is None else tuple(valid_types)
-        if not all(isclass(typ) for typ in self.valid_types):
-            raise TypeError('valid_types must be iterable of types (classes)')
-        kwargs['static_validators'] = [self.check_types, *kwargs.get('static_validators', list())]
-        super().__init__(**kwargs)
-
-    def check_types(self, value: Any) -> None:
-        if self.valid_types and not isinstance(value, self.valid_types):
-            raise TypeError(f'{self.attr_name} value must be of type(s) '
-                            f'{[typ.__name__ for typ in self.valid_types]}')
