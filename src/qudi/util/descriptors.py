@@ -23,7 +23,7 @@ __all__ = ['BaseAttribute', 'DefaultAttribute', 'ReadOnlyAttribute', 'TypedAttri
            'CheckedAttribute', 'DefaultMixin', 'ReadOnlyMixin', 'TypedMixin', 'ValidateMixin']
 
 from typing import Any, Optional, Iterable, Type, Callable, Union
-from inspect import isclass, signature
+from inspect import isclass, isfunction
 
 
 class DefaultMixin:
@@ -101,12 +101,29 @@ class ValidateMixin:
         self.validate(value, instance)
         super().__set__(instance, value)
 
-    def validator(self, func: Union[Callable[[Any, Any], None], Callable[[Any], None]]) -> Callable:
+    def validator(self,
+                  func: Union[staticmethod, classmethod, Callable[[Any], None]]
+                  ) -> Union[staticmethod, classmethod, Callable[[Any], None]]:
         """ Decorator to register either a static or bound validator """
-        func_obj = func if callable(func) else func.__func__
-        if len(signature(func_obj).parameters) == 1:
-            self.static_validators.append(func_obj)
-        elif func_obj.__name__.startswith('__') and func_obj.__qualname__:
+        # Use function reference directly if static
+        if isinstance(func, staticmethod):
+            self.static_validators.append(func.__func__)
+            return func
+
+        # In case of bound methods (class/instance) just use the attribute name string
+        if isinstance(func, classmethod):
+            func_obj = func.__func__
+        elif isfunction(func):
+            func_obj = func
+            if func_obj.__qualname__ == func_obj.__name__:
+                # Not a class member, thus probably static
+                self.static_validators.append(func)
+                return func
+        else:
+            raise TypeError('validator must either be function, staticmethod or classmethod object')
+
+        # Take care of name mangling for private members
+        if func_obj.__name__.startswith('__'):
             cls_name = func_obj.__qualname__.rsplit('.', 1)[0]
             self.bound_validators.append(f'_{cls_name}{func_obj.__name__}')
         else:
