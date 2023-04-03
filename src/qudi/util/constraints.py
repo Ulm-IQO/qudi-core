@@ -38,14 +38,14 @@ class ScalarConstraint:
         """
         """
         self._enforce_int = bool(enforce_int)
-        self._check_value_type(default)
+        self.check_value_type(default)
         for value in bounds:
-            self._check_value_type(value)
+            self.check_value_type(value)
         if increment is not None:
-            self._check_value_type(increment)
+            self.check_value_type(increment)
         if checker is not None and not callable(checker):
-            raise TypeError('checker must be eithe None or a callable accepting a single scalar '
-                            'and returning a bool.')
+            raise TypeError('checker must be either None or a callable accepting a single scalar '
+                            'and returning a valid-flag bool or raising ValueError')
         self._default = default
         self._minimum, self._maximum = sorted(bounds)
         self._increment = increment
@@ -78,18 +78,17 @@ class ScalarConstraint:
     def enforce_int(self) -> bool:
         return self._enforce_int
 
+    def check(self, value: Union[int, float]) -> None:
+        self.check_value_type(value)
+        self.check_value_range(value)
+        self.check_custom(value)
+
     def is_valid(self, value: Union[int, float]) -> bool:
         try:
-            self._check_value_type(value)
-        except TypeError:
+            self.check(value)
+        except (ValueError, TypeError):
             return False
-
-        if self._minimum <= value <= self._maximum:
-            if self._checker is None:
-                return True
-            else:
-                return self._checker(value)
-        return False
+        return True
 
     def clip(self, value: Union[int, float]) -> Union[int, float]:
         return min(self._maximum, max(self._minimum, value))
@@ -101,7 +100,15 @@ class ScalarConstraint:
                                 enforce_int=self.enforce_int,
                                 checker=self._checker)
 
-    def _check_value_type(self, value: Any) -> None:
+    def check_custom(self, value: Any) -> None:
+        if (self._checker is not None) and (not self._checker(value)):
+            raise ValueError(f'Custom checker failed to validate value "{value}"')
+
+    def check_value_range(self, value: Union[int, float]) -> None:
+        if not (self._minimum <= value <= self._maximum):
+            raise ValueError(f'Value "{value}" is out of bounds {self.bounds}')
+
+    def check_value_type(self, value: Any) -> None:
         if self._enforce_int:
             if not is_integer(value):
                 raise TypeError(f'values must be int type (received {value})')
