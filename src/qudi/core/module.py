@@ -29,7 +29,7 @@ from abc import abstractmethod
 from uuid import uuid4
 from fysom import Fysom
 from PySide2 import QtCore, QtGui, QtWidgets
-from typing import Any, Mapping, MutableMapping, Optional, Type, Callable
+from typing import Any, Mapping, MutableMapping, Optional, Union, Callable
 
 from qudi.core.configoption import MissingAction
 from qudi.core.statusvariable import StatusVar
@@ -148,7 +148,9 @@ class Base(QudiObject):
         # Create logger instance for module
         self.__logger = get_logger(f'{self.__module__}.{self.__class__.__name__}::{name}')
         # Create file handler for module AppData
-        self.__appdata_filehandler = ModuleStateFileHandler(self.module_name, self.__class__)
+        self.__appdata_filehandler = ModuleStateFileHandler(self.module_name,
+                                                            self.module_base,
+                                                            self.__class__.__name__)
 
         # Initialize ConfigOption and Connector meta-attributes (descriptors)
         self.__init_config_options(options)
@@ -442,11 +444,10 @@ class GuiBase(Base):
 class ModuleStateFileHandler(YamlFileHandler):
     """ Helper object to facilitate file handling for module app status files
     """
-    def __init__(self, module_name: str, module_class: Type[Base]):
+    def __init__(self, module_name: str, module_base: Union[str, ModuleBase], class_name: str):
+        module_base = ModuleBase(module_base)
         super().__init__(
-            file_path=get_module_app_data_path(module_class.__name__,
-                                               module_class.module_base.value,
-                                               module_name)
+            file_path=get_module_app_data_path(class_name, module_base.value, module_name)
         )
 
 
@@ -454,13 +455,13 @@ class ModuleStateMachine(Fysom):
     """ Finite state machine controlling the state of a qudi module. Deactivation is possible from
     every other state.
 
-        -----> deactivated --------->--------
-                    |                       |
-                    |                       v
-                    ^---------<---------- idle <---
-                    |                       |     |
-                    |                       v     |
-                    ----------<--------- locked ->-
+        ------------> deactivated <---
+                           |         |
+                           v         |
+                  -----> idle ---->---
+                  |        |         |
+                  |        v         |
+                  --<-- locked --->---
     """
     def __init__(self,
                  callbacks: Optional[Mapping[str, Callable[[object], bool]]] = None,

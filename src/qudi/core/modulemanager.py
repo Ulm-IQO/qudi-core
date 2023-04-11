@@ -627,9 +627,8 @@ class LocalManagedModule(ManagedModule):
         self._module = None
         self._class = None
         self._instance = None
-        self.__import_module_class()
         # App status handling
-        self._appdata_handler = ModuleStateFileHandler(self.name, self._class)
+        self._appdata_handler = ModuleStateFileHandler(self.name, self.base, self._class_name)
 
     def __import_module_class(self) -> None:
         try:
@@ -787,6 +786,8 @@ class LocalManagedModule(ManagedModule):
 
     def _instantiate_module_class(self, connections: MutableMapping[str, Base]) -> None:
         """ Try to instantiate the imported qudi module class """
+        if self._class is None:
+            self.__import_module_class()
         try:
             self._instance = self._class(qudi_main=self._qudi_main,
                                          name=self.name,
