@@ -1,5 +1,7 @@
 import numpy as np
-from basis_transformation_helpers import assert_np_square_mat, gram_schmidt_columns, computational_basis
+from basis_transformation_helpers import assert_np_square_mat, gram_schmidt_columns, \
+computational_basis
+from qudi.util.math import normalize
 
 def basis_from_points(points:np.ndarray)->np.ndarray:
     """
@@ -29,7 +31,8 @@ def point_in_new_basis(components:np.ndarray, old_basis:np.ndarray, new_basis:np
 
 def is_orthogonal_basis(basis:np.ndarray)->np.bool_:
     """
-    we want to check if the matrix consisting of the basis vectors [b0, b1, ... ,bn-1] gives the kronecker delta
+    we want to check if the matrix consisting of the basis vectors [b0, b1, ... ,bn-1]
+    gives the kronecker delta
     upon matrix multiplication.
     """
     assert_np_square_mat(basis)
@@ -43,3 +46,17 @@ def point_in_new_basis_shifted(components:np.ndarray, old_basis:np.ndarray, new_
     new_components = point_in_new_basis(components, old_basis, new_basis)
     return new_components + shift
 
+# code for 3D rotation matrix, roughly following chat GPT
+def compute_rotation_mat_rodriguez(v0:np.ndarray, v1:np.ndarray, v2:np.ndarray)->np.ndarray:
+    if len(v0) != 3 or len(v1) != 3 or len(v2) != 3:
+        raise ValueError('The support vectors should have a length of 3.')
+    s0 = v1 - v0
+    s1 = v2 - v0
+    print("function updated")
+    rot_axis = normalize(np.cross(s0, s1))[0]
+
+    kx, ky, kz = rot_axis
+    k_mat = np.array([[0.0, -kz, ky], [kz, 0.0, -kx], [-ky, kx, 0.0]])
+    # See the math here: https://en.wikipedia.org/wiki/Rodrigues'_rotation_formula
+    theta = np.arccos(np.dot(rot_axis, np.array([0, 0, 1])))
+    return np.eye(3) + np.sin(theta) * k_mat + (1 - np.cos(theta)) * np.matmul(k_mat, k_mat)
