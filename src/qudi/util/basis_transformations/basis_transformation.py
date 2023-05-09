@@ -53,7 +53,7 @@ def det_changing_axes(points: np.ndarray) -> np.ndarray:
     for axis in range(num_axes):
         elements = points[:, axis]
         for ii, element in enumerate(points[:, axis]):
-            d_elements = element - elements[ii+1:]
+            d_elements = np.abs(element - elements[ii+1:])
             if np.any(d_elements > 0):
                 axes_changing_p[axis] = True
                 break
