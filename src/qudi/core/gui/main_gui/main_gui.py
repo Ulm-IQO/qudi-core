@@ -23,7 +23,7 @@ import sys
 import logging
 import subprocess
 import jupyter_client.kernelspec
-from PySide2 import QtCore, QtWidgets
+from PySide6 import QtCore, QtWidgets
 from qtconsole.manager import QtKernelManager
 from collections.abc import Mapping, Sequence, Set
 

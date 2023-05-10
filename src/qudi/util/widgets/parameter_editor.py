@@ -21,7 +21,7 @@ __all__ = ['ParameterEditor', 'ParameterEditorDialog']
 
 import inspect
 from typing import Any, Optional, Dict, Mapping, Callable
-from PySide2 import QtCore, QtWidgets
+from PySide6 import QtCore, QtWidgets
 
 from qudi.util.parameters import ParameterWidgetMapper
 

@@ -25,7 +25,7 @@ __all__ = ['ColorBarWidget']
 
 from enum import IntEnum
 from pyqtgraph import mkPen, mkBrush, PlotWidget, BarGraphItem
-from PySide2 import QtCore, QtGui, QtWidgets
+from PySide6 import QtCore, QtGui, QtWidgets
 from qudi.util.widgets.scientific_spinbox import ScienDSpinBox
 from qudi.util.colordefs import ColorScaleInferno
 

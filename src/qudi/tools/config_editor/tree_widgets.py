@@ -6,7 +6,7 @@
 __all__ = ['AvailableModulesTreeWidget', 'SelectedModulesTreeWidget', 'ConfigModulesTreeWidget']
 
 from re import compile
-from PySide2 import QtCore, QtWidgets, QtGui
+from PySide6 import QtCore, QtGui, QtWidgets
 from typing import Optional, Iterable, Mapping, Tuple, Dict, List, Sequence
 
 
@@ -21,7 +21,7 @@ class AvailableModulesTreeWidget(QtWidgets.QTreeWidget):
 
         self.setColumnCount(2)
         self.setHeaderLabels(('Base', 'module.Class'))
-        self.setSelectionMode(self.ExtendedSelection)
+        self.setSelectionMode(QtWidgets.QAbstractItemView.ExtendedSelection)
         self.setEditTriggers(self.EditTrigger.NoEditTriggers)
         self.setDragEnabled(True)
 
@@ -116,7 +116,7 @@ class ConfigModulesTreeWidget(QtWidgets.QTreeWidget):
         self.setAcceptDrops(True)
         self.setColumnCount(3)
         self.setHeaderLabels(['Base', 'Name', 'module.Class'])
-        self.setSelectionMode(self.SingleSelection)
+        self.setSelectionMode(QtWidgets.QAbstractItemView.SingleSelection)
         self.setEditTriggers(self.EditTrigger.NoEditTriggers)
         self.itemDoubleClicked.connect(self._edit_item_column)
 

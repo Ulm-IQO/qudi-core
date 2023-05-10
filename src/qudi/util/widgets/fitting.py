@@ -24,7 +24,7 @@ __all__ = ['FitWidget', 'FitConfigurationWidget', 'FitConfigurationDialog']
 
 import os
 import weakref
-from PySide2 import QtCore, QtWidgets, QtGui
+from PySide6 import QtCore, QtWidgets, QtGui
 from qudi.util.datafitting import FitContainer, FitConfigurationsModel, FitConfiguration
 from qudi.util.paths import get_artwork_dir
 from qudi.util.widgets.scientific_spinbox import ScienDSpinBox
@@ -195,7 +195,7 @@ class FitConfigurationListView(QtWidgets.QListView):
     """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.setVerticalScrollMode(self.ScrollPerPixel)
+        self.setVerticalScrollMode(QtWidgets.QListWidget.ScrollPerPixel)
         self.setMouseTracking(True)
         self.installEventFilter(self)
         config_item_delegate = _FitConfigurationItemDelegate(parent=self)

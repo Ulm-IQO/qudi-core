@@ -67,7 +67,7 @@ def loadUi(file_path, base_widget):
             os.remove(file_path)
             raise
     try:
-        result = subprocess.run(['pyside2-uic', file_path],
+        result = subprocess.run(['pyside6-uic', file_path],
                                 capture_output=True,
                                 text=True,
                                 check=True)
@@ -81,10 +81,10 @@ def loadUi(file_path, base_widget):
     if match is None:
         raise RuntimeError('Failed to match regex for finding class name in generated python code.')
     class_name = match.groups()[0]
-    # Workaround (again) because pyside2-uic forgot to include objects from PySide2 that can be
+    # Workaround (again) because pyside2-uic forgot to include objects from PySide6 that can be
     # used by Qt Designer. So we inject import statements here just before the class declaration.
     insert = match.start()
-    compiled = compiled[:insert] + 'from PySide2.QtCore import QLocale\n\n' + compiled[insert:]
+    compiled = compiled[:insert] + 'from PySide6.QtCore import QLocale\n\n' + compiled[insert:]
 
     # Execute python code in order to obtain a module object from it
     spec = spec_from_loader('ui_module', loader=None)

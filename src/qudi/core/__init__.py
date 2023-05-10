@@ -25,8 +25,8 @@ import os
 from importlib import metadata
 __version__ = metadata.version('qudi-core')
 
-# Set QT_API environment variable to PySide2
-os.environ['QT_API'] = 'pyside2'
+# Set QT_API environment variable to PySide6
+os.environ['QT_API'] = 'pyside6'
 
 from qudi.core.statusvariable import StatusVar
 from qudi.core.configoption import ConfigOption
