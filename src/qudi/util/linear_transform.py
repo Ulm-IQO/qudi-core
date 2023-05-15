@@ -114,8 +114,7 @@ class LinearTransformation:
         if len(args) != dim:
             raise ValueError(f'LinearTransformation.translate requires as many arguments as '
                              f'number of dimensions ({dim:d})')
-        translate_matrix = np.zeros(self._matrix.shape, dtype=float)
-        translate_matrix[-1, -1] = 1
+        translate_matrix = np.asarray(np.diag([1]*(dim+1)), dtype=float)
         translate_matrix[:-1, -1] = args
         self.add_transform(translate_matrix)
 
