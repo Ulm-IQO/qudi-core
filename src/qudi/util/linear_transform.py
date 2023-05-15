@@ -195,6 +195,17 @@ class LinearTransformation3D(LinearTransformation):
         """
         return super().scale(sx, sy, sz)
 
+    def add_rotation(self, matrix) -> None:
+        """
+        Add a rotation given by 3x3 matrix. Pad the array to represent this rotation plus a zero translation.
+        :param matrix:
+        :return:
+        """
+        rot_matrix = np.pad(matrix, [(0, 1), (0, 1)])
+        rot_matrix[-1,-1] = 1
+
+        self.add_transform(rot_matrix)
+
 
 class LinearTransformation2D(LinearTransformation):
     """ Linear transformation for 2D cartesian coordinates """
