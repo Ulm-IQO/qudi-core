@@ -24,7 +24,6 @@ __all__ = ('compute_ft', 'ft_windows')
 import numpy as np
 from scipy import signal
 
-
 # Available windows to be applied on signal data before FT.
 # To find out the amplitude normalization factor check either the scipy implementation on
 #     https://github.com/scipy/scipy/blob/v0.15.1/scipy/signal/windows.py#L336
@@ -140,3 +139,23 @@ def compute_ft(x_val, y_val, zeropad_num=0, window='none', base_corr=True, psd=F
     # function will handle an occuring devision by 0:
     fft_x = np.fft.fftfreq(len(zeropad_arr), d=x_spacing)
     return abs(fft_x[:middle]), fft_y[:middle]
+
+# Coordinate transformation and basis methods
+def transform_from_support_vectors_3d(vectors:np.ndarray)->np.ndarray:
+    """
+    Computes the transformation matrix between the default coordinate system
+    and the new coordinate system defined by a set of 4 vectors.
+
+    The first 3 vectors define the plane. The last one fixes the origin.
+    """
+    return vectors
+
+def normalize(arr:np.ndarray, axis=-1, order=2)->np.ndarray:
+    """
+    Taken from stack overflow
+    https://stackoverflow.com/questions/21030391/how-to-normalize-a-numpy-array-to-a-unit-vector
+    """
+    l2 = np.atleast_1d(np.linalg.norm(arr, order, axis))
+    l2[l2==0] = 1
+    return arr / np.expand_dims(l2, axis)
+
