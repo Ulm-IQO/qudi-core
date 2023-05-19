@@ -114,8 +114,7 @@ class LinearTransformation:
         if len(args) != dim:
             raise ValueError(f'LinearTransformation.translate requires as many arguments as '
                              f'number of dimensions ({dim:d})')
-        translate_matrix = np.zeros(self._matrix.shape, dtype=float)
-        translate_matrix[-1, -1] = 1
+        translate_matrix = np.asarray(np.diag([1]*(dim+1)), dtype=float)
         translate_matrix[:-1, -1] = args
         self.add_transform(translate_matrix)
 
@@ -194,6 +193,17 @@ class LinearTransformation3D(LinearTransformation):
         (x, y, z).
         """
         return super().scale(sx, sy, sz)
+
+    def add_rotation(self, matrix) -> None:
+        """
+        Add a rotation given by 3x3 matrix. Pad the array to represent this rotation plus a zero translation.
+        :param matrix:
+        :return:
+        """
+        rot_matrix = np.pad(matrix, [(0, 1), (0, 1)])
+        rot_matrix[-1,-1] = 1
+
+        self.add_transform(rot_matrix)
 
 
 class LinearTransformation2D(LinearTransformation):

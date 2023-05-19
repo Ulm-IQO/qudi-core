@@ -9,7 +9,8 @@ None
 None
 
 ### New Features
-None
+- Added utility descriptor objects to new module `qudi.util.descriptors`. Can be used to 
+facilitate smart instance attribute handling. 
 
 ### Other
 None
