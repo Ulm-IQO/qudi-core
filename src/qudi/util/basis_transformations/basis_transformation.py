@@ -47,6 +47,16 @@ def point_in_new_basis_shifted(components:np.ndarray, old_basis:np.ndarray, new_
     return new_components + shift
 
 def det_changing_axes(points: np.ndarray) -> np.ndarray:
+    """
+    Determine the axes that are changing.
+    @param numpy ndarray points: [[p00, p01, p02 ...], [p10, p11, ...], ...]
+    The second indice describes the axis, whereas the first one describes the points.
+    To further illustrate: points[point, component_of_point_along_axis]
+
+    If there is $|p_ij - pkj| > 0$ then
+    bj will hold the value "True"
+    @return numpy ndarray: [b0, b1, ..., bj, ...]
+    """
     num_axes = len(points[0])
     axes_changing_p = np.zeros(num_axes, dtype=np.bool_)
     # substract each
@@ -60,6 +70,12 @@ def det_changing_axes(points: np.ndarray) -> np.ndarray:
     return axes_changing_p
 
 def compute_reduced_vectors(points: np.ndarray) -> np.ndarray:
+    """
+    Given input
+    @param numpy ndarray points: [[p00, p01, p02 ...], [p10, p11, ...], ...]
+    with dimensions n x m this will return a vectors n x m_r with m_r the
+    axes that are not the same for all axes among the different points.
+    """
     axes_changing_p = det_changing_axes(points)
     return points[:, axes_changing_p]
 
