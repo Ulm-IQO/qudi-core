@@ -63,17 +63,22 @@ def compute_reduced_vectors(points: np.ndarray) -> np.ndarray:
     axes_changing_p = det_changing_axes(points)
     return points[:, axes_changing_p]
 
-# code for 3D rotation matrix, roughly following chat GPT
 def compute_rotation_mat_rodriguez(v0: np.ndarray, v1: np.ndarray, v2: np.ndarray) -> np.ndarray:
     if len(v0) != 3 or len(v1) != 3 or len(v2) != 3:
         raise ValueError('The support vectors should have a length of 3.')
     s0 = v1 - v0
     s1 = v2 - v0
-    print("function updated")
-    rot_axis = normalize(np.cross(s0, s1))[0]
+    ez = np.asarray([0,0,1])
 
-    kx, ky, kz = rot_axis
+    normal_plane_vec = normalize(np.cross(s0, s1))[0]
+    rot_axis = normalize(np.cross(normal_plane_vec, ez))[0]
+
+    kx, ky, kz = rot_axis[0], rot_axis[1], rot_axis[2]
     k_mat = np.array([[0.0, -kz, ky], [kz, 0.0, -kx], [-ky, kx, 0.0]])
+
+    theta = np.arccos(np.dot(normal_plane_vec, ez))
+    if theta > np.pi/2 or theta < -np.pi/2:
+        theta = -(np.pi-theta)
+
     # See the math here: https://en.wikipedia.org/wiki/Rodrigues'_rotation_formula
-    theta = np.arccos(np.dot(rot_axis, np.array([0, 0, 1])))
     return np.eye(3) + np.sin(theta) * k_mat + (1 - np.cos(theta)) * np.matmul(k_mat, k_mat)
