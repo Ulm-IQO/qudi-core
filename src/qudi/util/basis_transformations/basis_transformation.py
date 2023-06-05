@@ -76,7 +76,7 @@ def compute_rotation_mat_rodriguez(v0: np.ndarray, v1: np.ndarray, v2: np.ndarra
     kx, ky, kz = rot_axis[0], rot_axis[1], rot_axis[2]
     k_mat = np.array([[0.0, -kz, ky], [kz, 0.0, -kx], [-ky, kx, 0.0]])
 
-    theta = np.arccos(np.dot(normal_plane_vec, ez))
+    theta = -np.arccos(np.dot(normal_plane_vec, ez))
     if theta > np.pi/2 or theta < -np.pi/2:
         theta = -(np.pi-theta)
 
