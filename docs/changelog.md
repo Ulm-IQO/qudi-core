@@ -15,7 +15,7 @@ None
 None
 
 
-## Version 1.4.0
+## Version 1.4.1
 Released on 21.06.2023
 
 ### Breaking Changes
