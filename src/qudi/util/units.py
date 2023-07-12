@@ -193,9 +193,9 @@ def create_formatted_output(param_dict, num_sig_digits=5):
                 sc_fact, unit_prefix = fn.siScale(param_dict[entry]['value'])
                 str_val = '{0:.{1}e}'.format(
                     param_dict[entry]['value'], num_sig_digits - 1)
-                if np.isnan(np.float(str_val)):
+                if np.isnan(np.float64(str_val)):
                     value = np.NAN
-                elif np.isinf(np.float(str_val)):
+                elif np.isinf(np.float64(str_val)):
                     value = np.inf
                 else:
                     value = float('{0:.{1}e}'.format(
