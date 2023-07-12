@@ -16,7 +16,7 @@ unix_dep = [
     'matplotlib',
     'numpy',
     'pyqtgraph>=0.13.0',
-    'PySide2==5.15.2',
+    'PySide2==5.15.2.1',
     'rpyc>=5.0.1',
     'ruamel.yaml>=0.17.16',
     'scipy>=1.7.1',
@@ -35,7 +35,7 @@ windows_dep = [
     'matplotlib>=3.4.3',
     'numpy>=1.21.3',
     'pyqtgraph>=0.13.0',
-    'PySide2==5.15.2',
+    'PySide2==5.15.2.1',
     'rpyc>=5.0.1',
     'ruamel.yaml>=0.17.16',
     'scipy>=1.7.1',
@@ -75,6 +75,7 @@ setup(
               'diamond',
               'quantum',
               'confocal',
+              'automation',
               'experiment',
               'measurement',
               'framework',
@@ -86,7 +87,7 @@ setup(
               ],
     license='LGPLv3',
     install_requires=windows_dep if sys.platform == 'win32' else unix_dep,
-    python_requires='>=3.8, <3.10',
+    python_requires='>=3.8, <3.11',
     classifiers=['Development Status :: 5 - Production/Stable',
 
                  'Environment :: Win32 (MS Windows)',
@@ -110,6 +111,7 @@ setup(
 
                  'Programming Language :: Python :: 3.8',
                  'Programming Language :: Python :: 3.9',
+                 'Programming Language :: Python :: 3.10',
 
                  'Topic :: Scientific/Engineering',
                  'Topic :: Software Development :: Libraries :: Application Frameworks',

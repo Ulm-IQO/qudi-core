@@ -6,10 +6,46 @@
 None
 
 ### Bugfixes
+None
+
+### New Features
+None
+
+### Other
+None
+
+
+## Version 1.4.1
+Released on 21.06.2023
+
+### Breaking Changes
+None
+
+### Bugfixes
+None
+
+### New Features
+- Added utility descriptor objects to new module `qudi.util.descriptors`. Can be used to 
+facilitate smart instance attribute handling. 
+
+### Other
+- Support for Python 3.10
+- Better backwards compatibility of `qudi.util.constraints.ScalarConstraint` with the deprecated 
+`qudi.core.interface.ScalarConstraint` object
+
+
+## Version 1.3.0
+Released on 20.12.2022
+
+### Breaking Changes
+None
+
+### Bugfixes
 - NULL bytes in log messages are handled now and no longer lead to crashes of qudi. They are 
 replaced by the corresponding hex literal "\x00".
 - Rubberband selection of utility plot widgets now works for `pyqtgraph != 0.12.4`. This specific 
 version is broken in that regard and a comprehensive error is thrown if it is detected.
+- Adjusted 2D gaussian fit arguments to be compatible with the datafitting toolchain.
 
 ### New Features
 - Multiple qudi sessions can now be run in parallel locally. However, the user must ensure 
@@ -18,6 +54,9 @@ configs to load.
 
 ### Other
 - Bumped minimum package requirement `pyqtgraph >= 0.13.0`.
+- Introduced properties to make `qudi.util.constraints.ScalarConstraint` mostly backwards 
+compatible with the deprecated `qudi.core.interface.ScalarConstraint`. Only exception is `unit`
+which should not be supported anymore.
 
 
 ## Version 1.2.0
