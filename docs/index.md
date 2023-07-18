@@ -28,7 +28,7 @@ has_children: true
 - Module Interfuse
 - [Logging](design_concepts/logging.md)
 - Integrated IPython Kernel
-- Remote Modules
+- [Remote Modules](design_concepts/remote_modules.md)
 - Thread Manager
 - Module Manager
 - Main Application
