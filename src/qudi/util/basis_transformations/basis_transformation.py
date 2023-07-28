@@ -81,4 +81,4 @@ def compute_rotation_mat_rodriguez(v0: np.ndarray, v1: np.ndarray, v2: np.ndarra
         theta = -(np.pi-theta)
 
     # See the math here: https://en.wikipedia.org/wiki/Rodrigues'_rotation_formula
-    return np.eye(3) + np.sin(theta) * k_mat + (1 - np.cos(theta)) * np.matmul(k_mat, k_mat)
+    return np.eye(3) + np.sin(theta) * k_mat + (1 - np.cos(theta)) * np.matmul(k_mat, k_mat),theta
