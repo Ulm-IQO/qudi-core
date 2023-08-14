@@ -43,3 +43,5 @@ Moreover, subsequent processing of python objects in a corresponding logic on th
     data = netobatin(data)
 
 For a detailed explanation refer to the rpyc (netref) [documentation](https://rpyc.readthedocs.io/en/latest/index.html).
+
+In case you can not access your remote module, it might be also worth checking your firewall settings and the ethernet adapter settings (public/private network) of your machines.
