@@ -34,14 +34,16 @@ Now start qudi as usual by executing
   qudi
   ```
 
-from the console. Then, start a JupyterLab server from your qudi environment (you will have to
-open a new console or tab within your console) with the command
+from the console. Then, open a new console and move to the folder where you want your notebook files to be.
+Start a JupyterLab server (don't forget to enable the qudi environment beforehand) with the command
 
   ```console
   jupyter lab
   ```
 
 and wait for the lab to open in your browser (the classic notebook server is equally supported).
+If nothing opens up automatically, try the default address [`http://localhost:8888/`](http://localhost:8888/)
+in your browser.
 
 A launcher should have started in JupyterLab. Create a new notebook connected to the qudi kernel
 by clicking the `qudi` button in the top row of the launcher. 
@@ -63,6 +65,14 @@ True
 ```
 
 from your notebook, provided these attributes actually exist for this module of course.
+
+The qudi logger is also accessible from the notebook. Try something like
+
+```
+>>> logger.info(f'Red laser in on: {red_laser.is_running}')
+```
+
+to see it in action.
 
 In this way you can write your own measurements scripts that employ qudi modules. This can
 be useful to configure a fully automated measurement sequence for example.
