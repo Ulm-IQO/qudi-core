@@ -140,16 +140,6 @@ def compute_ft(x_val, y_val, zeropad_num=0, window='none', base_corr=True, psd=F
     fft_x = np.fft.fftfreq(len(zeropad_arr), d=x_spacing)
     return abs(fft_x[:middle]), fft_y[:middle]
 
-# Coordinate transformation and basis methods
-def transform_from_support_vectors_3d(vectors:np.ndarray)->np.ndarray:
-    """
-    Computes the transformation matrix between the default coordinate system
-    and the new coordinate system defined by a set of 4 vectors.
-
-    The first 3 vectors define the plane. The last one fixes the origin.
-    """
-    return vectors
-
 def normalize(arr:np.ndarray, axis=-1, order=2)->np.ndarray:
     """
     Taken from stack overflow
