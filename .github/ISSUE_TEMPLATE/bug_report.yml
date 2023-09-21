@@ -17,6 +17,7 @@ body:
       description: What version of our software are you running?
       options:
         - Development
+        - Release v1.4.1
         - Release v1.3.0
         - Release v1.2.0
         - Release v1.1.0

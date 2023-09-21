@@ -16,19 +16,19 @@ has_children: true
 ### Setup
 - [Installation](setup/installation.md)
 - [Startup](setup/startup.md)
-- Jupyter Notebook Integration
+- [Jupyter Notebook Integration](setup/jupyter.md)
 
 ### Design Concepts
 - [Measurement Modules (Hardware/Logic/GUI)](design_concepts/measurement_modules.md)
 - [Status Variables](design_concepts/status_variables.md)
 - [Config Options](design_concepts/config_options.md)
 - [Connectors](design_concepts/connectors.md)
-- Configuration
+- [Configuration](design_concepts/configuration.md)
 - [Hardware Interface](design_concepts/hardware_interface.md)
 - Module Interfuse
 - [Logging](design_concepts/logging.md)
 - Integrated IPython Kernel
-- Remote Modules
+- [Remote Modules](design_concepts/remote_modules.md)
 - Thread Manager
 - Module Manager
 - Main Application

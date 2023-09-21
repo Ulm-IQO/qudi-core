@@ -9,11 +9,29 @@ None
 None
 
 ### New Features
+None
+
+### Other
+None
+
+
+## Version 1.4.1
+Released on 21.06.2023
+
+### Breaking Changes
+None
+
+### Bugfixes
+None
+
+### New Features
 - Added utility descriptor objects to new module `qudi.util.descriptors`. Can be used to 
 facilitate smart instance attribute handling. 
 
 ### Other
-None
+- Support for Python 3.10
+- Better backwards compatibility of `qudi.util.constraints.ScalarConstraint` with the deprecated 
+`qudi.core.interface.ScalarConstraint` object
 
 
 ## Version 1.3.0
