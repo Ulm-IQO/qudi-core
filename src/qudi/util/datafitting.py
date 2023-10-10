@@ -348,3 +348,15 @@ class FitContainer(QtCore.QObject):
                                           'error': param.stderr,
                                           'unit': parameters_units.get(name, '')}
         return create_formatted_output(parameters_to_format)
+
+    @staticmethod
+    def dict_result(fit_result, keys=['value', 'stderr', 'min', 'max']):
+        export_keys = keys
+        fitparams = fit_result.result.params
+        export_dict = {'model': fit_result.model.name}
+
+        for key, res in fitparams.items():
+            dict_i = {key: getattr(res, key) for key in export_keys}
+            export_dict[key] = dict_i
+
+        return export_dict
