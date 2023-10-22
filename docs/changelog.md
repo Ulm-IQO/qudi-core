@@ -9,7 +9,7 @@ None
 None
 
 ### New Features
-None
+- Added helper functions in util/linear_transform.py to allow transformations (rotations and shifts) using the afﬁne transformation matrix formalism.
 
 ### Other
 None
