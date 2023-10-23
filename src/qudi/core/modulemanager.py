@@ -31,11 +31,12 @@ from typing import Callable
 from qudi.util.mutex import Mutex
 from qudi.util.network import RpycByValueProxy
 from qudi.util.helpers import call_slot_from_native_thread, current_is_native_thread
+from qudi.util.paths import get_module_appdata_path
+from qudi.util.yaml import YamlFileHandler
 from qudi.core.logger import get_logger
 from qudi.core.servers import connect_to_remote_module_server
 from qudi.core.meta import ABCQObject
-from qudi.core.module import Base, ModuleStateFileHandler
-from qudi.core.module import ModuleState, ModuleBase, ModuleStateError
+from qudi.core.module import Base, ModuleState, ModuleBase, ModuleStateError
 from qudi.core.config.validator import validate_local_module_config, validate_remote_module_config
 from qudi.core.config.validator import ValidationError
 
@@ -628,7 +629,9 @@ class LocalManagedModule(ManagedModule):
         self._class = None
         self._instance = None
         # App status handling
-        self._appdata_handler = ModuleStateFileHandler(self.name, self.base, self._class_name)
+        self._appdata_handler = YamlFileHandler(
+            get_module_appdata_path(self._class_name, self.base.value, self.name)
+        )
 
     def __import_module_class(self) -> None:
         try:
@@ -800,11 +803,11 @@ class LocalManagedModule(ManagedModule):
     def _connect_module_signals(self) -> None:
         instance = self.instance
         instance.sigModuleStateChanged.connect(self._state_changed)
-        instance.sigModuleAppDataChanged.connect(self._appdata_changed)
+        instance.sigAppDataChanged.connect(self._appdata_changed)
 
     def _disconnect_module_signals(self) -> None:
         instance = self.instance
-        instance.sigModuleAppDataChanged.disconnect()
+        instance.sigAppDataChanged.disconnect()
         instance.sigModuleStateChanged.disconnect()
 
     def _move_instance_to_thread(self) -> None:

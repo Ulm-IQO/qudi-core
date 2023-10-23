@@ -19,13 +19,13 @@ You should have received a copy of the GNU Lesser General Public License along w
 If not, see <https://www.gnu.org/licenses/>.
 """
 
-__all__ = ['Connector', 'ModuleConnectionError']
+__all__ = ['Connector', 'QudiConnectionError']
 
 from typing import Any, Type, Union
 from qudi.util.overload import OverloadProxy
 
 
-class ModuleConnectionError(RuntimeError):
+class QudiConnectionError(RuntimeError):
     pass
 
 
@@ -68,7 +68,7 @@ class Connector:
         except KeyError:
             if self.optional:
                 return None
-            raise ModuleConnectionError(
+            raise QudiConnectionError(
                 f'Connector "{self.name}" (interface "{self.interface}") is not connected.'
             ) from None
         except AttributeError:
@@ -85,15 +85,22 @@ class Connector:
 
     def connect(self, instance: object, target: Any) -> None:
         """ Check if target is connectible by this connector and connect. """
+        cls = instance.__class__
+        if self.is_connected(instance):
+            raise QudiConnectionError(
+                f'Connector "{self.name}" at "{cls.__module__}.{cls.__name__}.{self.attr_name}" '
+                f'already connected to a target'
+            )
+        if target is None:
+            if not self.optional:
+                raise QudiConnectionError(f'No target given for mandatory connector "{self.name}" '
+                                          f'at "{cls.__module__}.{cls.__name__}.{self.attr_name}"')
+            return
         bases = {cls.__name__ for cls in target.__class__.mro()}
         if self.interface not in bases and target.__class__.__name__ != 'RemoteProxy':
-            raise ModuleConnectionError(
-                f'Module "{target}" does not implement interface "{self.interface}" required by '
-                f'connector "{self.name}". Connection failed.'
-            )
-        if self.is_connected(instance):
-            raise ModuleConnectionError(
-                f'Connector "{self.name}" already connected to a target module. Connection failed.'
+            raise QudiConnectionError(
+                f'Target "{target}" is no subclass of "{self.interface}" required by connector '
+                f'"{self.name}" at "{cls.__module__}.{cls.__name__}.{self.attr_name}"'
             )
         instance.__dict__[self.attr_name] = OverloadProxy(target, self.interface)
 
@@ -101,12 +108,12 @@ class Connector:
         """ Disconnect connector. """
         try:
             del instance.__dict__[self.attr_name]
-        except KeyError:
+        except (KeyError, AttributeError):
             pass
 
     def is_connected(self, instance: object) -> bool:
         """ Checks if the given module instance has this Connector connected to a target module. """
         try:
-            return self.__get__(instance, instance.__class__) is not None
-        except ModuleConnectionError:
+            return instance.__dict__[self.attr_name] is not None
+        except (KeyError, AttributeError):
             return False

@@ -34,7 +34,7 @@ from typing import Mapping, Any, Type, Optional, Union, Dict, MutableMapping
 
 from qudi.core.meta import QudiObject
 from qudi.core.module import Base
-from qudi.core.connector import ModuleConnectionError
+from qudi.core.connector import QudiConnectionError
 from qudi.core.logger import get_logger
 from qudi.util.models import DictTableModel
 from qudi.util.mutex import Mutex
@@ -165,7 +165,7 @@ class ModuleScript(QudiObject):
             target = connections.pop(connector.name, None)
             if target is None:
                 if not connector.optional:
-                    raise ModuleConnectionError(
+                    raise QudiConnectionError(
                         f'Mandatory module connector "{connector.name}" not configured.'
                     )
             else:

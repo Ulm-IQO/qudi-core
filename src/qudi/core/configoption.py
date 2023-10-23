@@ -21,11 +21,15 @@ You should have received a copy of the GNU Lesser General Public License along w
 If not, see <https://www.gnu.org/licenses/>.
 """
 
-__all__ = ['ConfigOption', 'MissingAction']
+__all__ = ['ConfigOption', 'MissingAction', 'QudiConfigOptionError']
 
 from enum import Enum
 from typing import Any, Optional, Callable, Union
 from qudi.util.descriptors import DefaultAttribute
+
+
+class QudiConfigOptionError(RuntimeError):
+    pass
 
 
 class MissingAction(Enum):
@@ -83,17 +87,31 @@ class ConfigOption(DefaultAttribute):
         return super().__set_name__(owner, name)
 
     def construct(self, instance: object, value: Optional[Any] = _NO_VALUE) -> None:
+        """ This is called by the qudi base object constructor, i.e. the "instance", to initialize
+        the ConfigOption as variable on the qudi object instance.
+        """
         # If no config value is given for construction, try to get the default value.
         # Raise exception if no default value is present and self.optional is False
         if value is self._NO_VALUE:
-            try:
-                value = self.__get__(instance, instance.__class__)
-            except AttributeError:
-                cls = instance.__class__
-                raise RuntimeError(
+            cls = instance.__class__
+            # Raise exception if no value is given and self.missing_action requires it
+            if self.missing_action == MissingAction.ERROR:
+                raise QudiConfigOptionError(
                     f'No value given to construct non-optional ConfigOption "{self.name}" on '
                     f'"{cls.__module__}.{cls.__name__}.{self.attr_name}"'
                 ) from None
+            # Take default value instead
+            value = self.__get__(instance, instance.__class__)
+            # Log messages if required by self.missing_action
+            if self.missing_action != MissingAction.NOTHING:
+                msg = (f'No value given to construct optional ConfigOption "{self.name}" on '
+                       f'"{cls.__module__}.{cls.__name__}.{self.attr_name}".\n'
+                       f'Using default value "{value}".')
+                if self.missing_action == MissingAction.WARN:
+                    instance.log.warning(msg)
+                elif self.missing_action == MissingAction.INFO:
+                    instance.log.info(msg)
+        # Pass value to constructor and continue with returned value
         if self._constructor is not None:
             if isinstance(self._constructor, str):
                 value = getattr(instance, self._constructor)(value)
@@ -104,9 +122,9 @@ class ConfigOption(DefaultAttribute):
     def constructor(self,
                     func: Union[staticmethod, classmethod, Callable]
                     ) -> Union[staticmethod, classmethod, Callable]:
-        """ This is the decorator for declaring constructor function for this StatusVar.
+        """ This is the decorator for declaring constructor function for this ConfigOption.
 
-        @param func: constructor function for this StatusVar
+        @param func: constructor function for this ConfigOption
         @return: return the original function so this can be used as a decorator
         """
         self._constructor = self._sanitize_signature(func)

@@ -30,6 +30,6 @@ os.environ['QT_API'] = 'pyside2'
 
 from qudi.core.statusvariable import StatusVar
 from qudi.core.configoption import ConfigOption
-from qudi.core.connector import Connector, ModuleConnectionError
+from qudi.core.connector import Connector, QudiConnectionError
 from qudi.core.module import Base, LogicBase, GuiBase, ModuleState, ModuleBase, ModuleStateError
 from qudi.core.logger import get_logger
