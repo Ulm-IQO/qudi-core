@@ -19,6 +19,8 @@ You should have received a copy of the GNU Lesser General Public License along w
 If not, see <https://www.gnu.org/licenses/>.
 """
 
+__all__ = ['ModuleState', 'ModuleBase', 'ModuleStateError', 'Base', 'LogicBase', 'GuiBase']
+
 import logging
 import os
 import copy
@@ -29,7 +31,7 @@ from abc import abstractmethod
 from uuid import uuid4
 from fysom import Fysom
 from PySide2 import QtCore, QtGui, QtWidgets
-from typing import Any, Mapping, MutableMapping, Optional, Union, Callable
+from typing import Any, Mapping, MutableMapping, Optional, Union, Callable, final
 
 from qudi.core.configoption import MissingAction
 from qudi.core.statusvariable import StatusVar
@@ -217,14 +219,17 @@ class Base(QudiObject):
         return self.module_uuid.int
 
     @property
+    @final
     def _qudi_main(self) -> Any:
         return self.__qudi_main
 
     @property
+    @final
     def module_state(self):
         return self.module_state_control.state
 
     @property
+    @final
     def module_name(self) -> str:
         """ Read-only property returning the module name of this module instance as specified in the
         config.
@@ -232,6 +237,7 @@ class Base(QudiObject):
         return self.__module_name
 
     @property
+    @final
     def module_uuid(self) -> uuid.UUID:
         """ Read-only property returning a unique uuid for this module instance.
         """
@@ -266,6 +272,7 @@ class Base(QudiObject):
             data_dir = os.path.join(data_root, self.module_name)
         return data_dir
 
+    @final
     @QtCore.Slot()
     def move_to_main_thread(self) -> None:
         """ Method that will move this module into the main/manager thread.
@@ -275,12 +282,15 @@ class Base(QudiObject):
         else:
             call_slot_from_native_thread(self, 'move_to_main_thread', blocking=True)
 
+    @final
     def _lock_module(self) -> None:
         self.module_state_control.lock()
 
+    @final
     def _unlock_module(self) -> None:
         self.module_state_control.unlock()
 
+    @final
     def _dump_status_variables(self) -> None:
         data = dict()
         for attr_name, var in self._meta['status_variables'].items():
@@ -298,6 +308,7 @@ class Base(QudiObject):
         finally:
             self.sigModuleAppDataChanged.emit(self.module_has_appdata)
 
+    @final
     def _load_status_variables(self) -> None:
         try:
             data = self.__appdata_filehandler.load(raise_missing=False)
@@ -323,12 +334,14 @@ class Base(QudiObject):
                 raise ModuleStateError(f'Default initialization of status variable "{var.name}" to '
                                        f'"{self.__class__.__name__}.{attr_name}" failed') from err
 
+    @final
     def _clear_status_variables(self) -> None:
         try:
             self.__appdata_filehandler.clear()
         finally:
             self.sigModuleAppDataChanged.emit(self.module_has_appdata)
 
+    @final
     def _send_balloon_message(self,
                               title: str,
                               message: str,
@@ -340,6 +353,7 @@ class Base(QudiObject):
             return
         self._qudi_main.gui.balloon_message(title, message, time, icon)
 
+    @final
     def _send_pop_up_message(self, title: str, message: str) -> None:
         if self._qudi_main.gui is None:
             log = get_logger('pop-up-message')
@@ -455,13 +469,13 @@ class ModuleStateMachine(Fysom):
     """ Finite state machine controlling the state of a qudi module. Deactivation is possible from
     every other state.
 
-        ------------> deactivated <---
-                           |         |
-                           v         |
-                  -----> idle ---->---
-                  |        |         |
-                  |        v         |
-                  --<-- locked --->---
+                                     ------<------
+                                     |           ^
+                                     v           |
+        [*] ----> deactivated ----> idle ----> busy
+                      ^              |           |
+                      |              v           v
+                      -------<-------------<------
     """
     def __init__(self,
                  callbacks: Optional[Mapping[str, Callable[[object], bool]]] = None,
