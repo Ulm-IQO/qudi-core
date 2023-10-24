@@ -269,7 +269,7 @@ class Gui(QtCore.QObject):
         logger.info('Activating main GUI module...')
         print('> Activating main GUI module...')
 
-        self.main_gui_module.module_state_control.activate()
+        self.main_gui_module.module_state.activate()
         QtWidgets.QApplication.instance().processEvents()
 
     def deactivate_main_gui(self):
@@ -288,7 +288,7 @@ class Gui(QtCore.QObject):
         logger.info('Closing main GUI...')
         print('> Closing main GUI...')
 
-        self.main_gui_module.module_state_control.deactivate()
+        self.main_gui_module.module_state.deactivate()
         QtWidgets.QApplication.instance().processEvents()
 
     def show_system_tray_icon(self):

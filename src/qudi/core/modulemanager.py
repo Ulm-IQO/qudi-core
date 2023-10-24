@@ -35,7 +35,7 @@ from qudi.util.paths import get_module_appdata_path
 from qudi.util.yaml import YamlFileHandler
 from qudi.core.logger import get_logger
 from qudi.core.servers import connect_to_remote_module_server
-from qudi.core.meta import ABCQObject
+from qudi.core.object import ABCQObject
 from qudi.core.module import Base, ModuleState, ModuleBase, ModuleStateError
 from qudi.core.config.validator import validate_local_module_config, validate_remote_module_config
 from qudi.core.config.validator import ValidationError
@@ -56,7 +56,7 @@ class ModuleInfo:
 class RemoteConnectionWatchdog(QtCore.QObject):
     """ Watchdog to periodically poll remote modules for their state and deactivate local proxy
     module if they are no longer active.
-    Also manages/creates socket connections and terminates them if they are no longer needes.
+    Also manages/creates socket connections and terminates them if they are no longer needed.
     """
     def __init__(self,
                  deactivation_callback: Callable[[str], None],
@@ -675,7 +675,7 @@ class LocalManagedModule(ManagedModule):
     @property
     def state(self) -> ModuleState:
         try:
-            return self.instance.module_state
+            return self.instance.module_state.state
         except AttributeError:
             return ModuleState.DEACTIVATED
 
@@ -722,7 +722,7 @@ class LocalManagedModule(ManagedModule):
                     self._join_instance_thread()
                     raise
             else:
-                self.instance.module_state_control.activate()
+                self.instance.module_state.activate()
             self._connect_module_signals()
         except Exception:
             self._instance = None
@@ -749,13 +749,13 @@ class LocalManagedModule(ManagedModule):
                 finally:
                     if self._class.module_threaded:
                         try:
-                            QtCore.QMetaObject.invokeMethod(self.instance.module_state_control,
+                            QtCore.QMetaObject.invokeMethod(self.instance.module_state,
                                                             'deactivate',
                                                             QtCore.Qt.BlockingQueuedConnection)
                         finally:
                             self._join_instance_thread()
                     else:
-                        self.instance.module_state_control.deactivate()
+                        self.instance.module_state.deactivate()
         finally:
             try:
                 self._instance = None
@@ -802,13 +802,13 @@ class LocalManagedModule(ManagedModule):
 
     def _connect_module_signals(self) -> None:
         instance = self.instance
-        instance.sigModuleStateChanged.connect(self._state_changed)
+        instance.sigStateChanged.connect(self._state_changed)
         instance.sigAppDataChanged.connect(self._appdata_changed)
 
     def _disconnect_module_signals(self) -> None:
         instance = self.instance
         instance.sigAppDataChanged.disconnect()
-        instance.sigModuleStateChanged.disconnect()
+        instance.sigStateChanged.disconnect()
 
     def _move_instance_to_thread(self) -> None:
         thread_manager = self._qudi_main.thread_manager
@@ -824,7 +824,7 @@ class LocalManagedModule(ManagedModule):
         thread_manager.join_thread(thread_name)
 
     def _activate_instance_threaded(self) -> None:
-        call_slot_from_native_thread(self.instance.module_state_control, 'activate', blocking=True)
+        call_slot_from_native_thread(self.instance.module_state, 'activate', blocking=True)
         # Check if activation has been successful
         if not self.is_active:
             raise ModuleStateError(f'Error during threaded activation of module "{self.url}"')

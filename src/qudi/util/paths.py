@@ -21,8 +21,7 @@ ToDo: Throw errors around for non-existent directories
 
 __all__ = ['get_appdata_dir', 'get_default_config_dir', 'get_default_log_dir',
            'get_default_data_dir', 'get_daily_directory', 'get_home_dir', 'get_main_dir',
-           'get_userdata_dir', 'get_artwork_dir', 'get_module_appdata_path',
-           'get_object_appdata_path']
+           'get_userdata_dir', 'get_artwork_dir', 'get_module_appdata_path']
 
 import datetime
 import os
@@ -155,13 +154,8 @@ def get_daily_directory(timestamp: Optional[datetime.datetime] = None, root: Opt
     return daily_path
 
 
-def get_object_appdata_path(nametag: str) -> str:
-    """ Constructs the appData file path for the given qudi object nametag """
-    if not nametag:
-        raise ValueError('nametag must be non-empty string')
-    return os.path.join(get_appdata_dir(create_missing=True), f'status-{nametag}.cfg')
-
-
 def get_module_appdata_path(cls_name: str, module_base: str, module_name: str) -> str:
     """ Constructs the appData file path for the given qudi module """
-    return get_object_appdata_path(f'{module_base.lower()}-{cls_name}-{module_name}')
+    assert cls_name and module_name and module_base, 'empty strings encountered'
+    return os.path.join(get_appdata_dir(create_missing=True),
+                        f'status-{module_base.lower()}-{cls_name}-{module_name}.cfg')
