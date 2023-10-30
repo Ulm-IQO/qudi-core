@@ -6,7 +6,9 @@
 None
 
 ### Bugfixes
-None
+- Fixes a bug where all fit configurations for a fit model/container fail to load upon activation 
+of a module because the fit model saved in AppData is no longer available. Throws a warning now 
+instead and ignores the respective fit configuration.
 
 ### New Features
 - Added helper functions in util/linear_transform.py to allow transformations (rotations and shifts) using the afﬁne transformation matrix formalism.

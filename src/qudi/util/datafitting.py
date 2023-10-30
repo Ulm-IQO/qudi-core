@@ -265,7 +265,12 @@ class FitConfigurationsModel(QtCore.QAbstractListModel):
 
         @param iterable configs: Iterable of FitConfiguration dict representations
         """
-        config_objects = [FitConfiguration.from_dict(cfg) for cfg in configs]
+        config_objects = list()
+        for cfg in configs:
+            try:
+                config_objects.append(FitConfiguration.from_dict(cfg))
+            except:
+                _log.warning(f'Unable to load fit configuration:\n{cfg}')
         self.beginResetModel()
         self._fit_configurations = config_objects
         self.endResetModel()
