@@ -241,7 +241,6 @@ class FitConfigurationsModel(QtCore.QAbstractListModel):
                       value=value_tuple[1],
                       min=value_tuple[2],
                       max=value_tuple[3])
-            print('setData:', params)
             config.estimator = None if not value[0] else value[0]
             config.custom_parameters = None if not params else params
             self.dataChanged.emit(self.createIndex(index.row(), 0),
