@@ -20,7 +20,7 @@ If not, see <https://www.gnu.org/licenses/>.
 __all__ = ['csv_2_list', 'in_range', 'is_complex', 'is_complex_type', 'is_float', 'is_float_type',
            'is_integer', 'is_integer_type', 'is_number', 'is_number_type', 'is_string',
            'is_string_type', 'iter_modules_recursive', 'natural_sort', 'str_to_number',
-           'call_slot_from_native_thread', 'current_is_native_thread']
+           'call_slot_from_native_thread', 'current_is_native_thread', 'current_is_main_thread']
 
 import re
 import os
@@ -88,6 +88,16 @@ def natural_sort(iterable: Iterable[Any]) -> List[Any]:
 def current_is_native_thread(obj: QtCore.QObject) -> bool:
     """ Check if the current thread is the native thread of given QObject """
     return QtCore.QThread.currentThread() == obj.thread()
+
+
+def current_is_main_thread() -> bool:
+    """ Check if the current thread is the Qt applications main thread. Only works if the main
+    event loop is running.
+    """
+    main = QtCore.QCoreApplication.instance()
+    if main is None:
+        raise RuntimeError('No Qt main event loop running. Unable to retrieve main thread.')
+    return QtCore.QThread.currentThread() == main.thread()
 
 
 def call_slot_from_native_thread(obj: QtCore.QObject,

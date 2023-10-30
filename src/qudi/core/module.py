@@ -25,9 +25,9 @@ import os
 import warnings
 from enum import Enum
 from abc import abstractmethod
-from fysom import Fysom
+from uuid import uuid4, UUID
 from PySide2 import QtCore, QtGui, QtWidgets
-from typing import Any, Mapping, MutableMapping, Optional, Callable, final, Final
+from typing import (Any, Mapping, MutableMapping, Optional, Dict, final, Final)
 
 from qudi.core.statusvariable import StatusVar
 from qudi.util.paths import get_daily_directory, get_default_data_dir, get_module_appdata_path
@@ -45,18 +45,17 @@ class ModuleState(Enum):
     IDLE = 'idle'
     LOCKED = 'locked'
 
-    def __call__(self) -> str:
-        """ For backwards compatibility """
-        if not hasattr(self.__class__, '__warning_sent__'):
-            warnings.warn(
-                'Being able to call ModuleState Enum to get a string representation is deprecated '
-                'and will be removed in the future. Please use ModuleState directly or use '
-                'ModuleState.value if you must have the string representation (not recommended).',
-                DeprecationWarning,
-                stacklevel=2
-            )
-            self.__class__.__warning_sent__ = True
-        return self.value
+    @property
+    def deactivated(self) -> bool:
+        return self is self.DEACTIVATED
+
+    @property
+    def idle(self) -> bool:
+        return self is self.IDLE
+
+    @property
+    def locked(self) -> bool:
+        return self is self.LOCKED
 
 
 class ModuleBase(Enum):
@@ -102,7 +101,12 @@ class Base(QudiObject):
     Does not run its own Qt event loop by default. In the rare case a hardware module needs its
     own event loop, overwrite and set the class attribute "_threaded = True" in the hardware
     implementation class.
+
+    Each module name will be assigned a UUID which will remain the same for multiple instantiations
+    with the same module name.
     """
+    __name_uuid_map: Final[Dict[str, UUID]] = dict()  # Same module_name will result in same UUID
+
     _threaded: bool = False
 
     module_threaded = ThreadedDescriptor()
@@ -118,13 +122,19 @@ class Base(QudiObject):
         """ Initialize Base instance. Set up its state machine, initializes ConfigOption meta
         attributes from given config and connects activated module dependencies.
         """
+        try:
+            uuid = self.__name_uuid_map[name]
+        except KeyError:
+            uuid = uuid4()
+            self.__name_uuid_map[name] = uuid
         super().__init__(
             options=options,
             connections=connections,
             appdata_filepath=get_module_appdata_path(cls_name=self.__class__.__name__,
                                                      module_base=self.module_base.value,
                                                      module_name=name),
-            logger_nametag=name
+            logger_nametag=name,
+            uuid=uuid
         )
 
         # Keep reference to qudi main instance
