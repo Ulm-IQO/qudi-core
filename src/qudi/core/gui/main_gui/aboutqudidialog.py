@@ -63,8 +63,10 @@ class AboutQudiDialog(QtWidgets.QDialog):
         self.credits_label = QtWidgets.QLabel(
             '<html><head/><body><p><span style=" text-decoration: underline;">Qudi was originally '
             'developed by the Institute for Quantum Optics at Ulm University. </span></p><p>'
-            'Kay D. Jahnke</p><p><span style=" text-decoration: underline;">External Contributors:'
-            '</span></p><p>Tobias Gehring, DTU Copenhagen</p><p>...</p></body></html>'
+            'You can find a full list of contributors at the '
+            '<a href="https://github.com/Ulm-IQO/qudi-core/graphs/contributors">'
+            '<span style=" text-decoration: underline; color:#00ffff;">qudi-core GitHub project '
+            'page</span></a>.</p></body></html>'
         )
         self.credits_label.setWordWrap(True)
         self.credits_label.setObjectName('creditsLabel')

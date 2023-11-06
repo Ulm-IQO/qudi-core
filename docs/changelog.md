@@ -9,6 +9,8 @@ None
 - Fixes a bug where all fit configurations for a fit model/container fail to load upon activation 
 of a module because the fit model saved in AppData is no longer available. Throws a warning now 
 instead and ignores the respective fit configuration.
+- Fixed a bug that caused `qudi.util.models.DictTableModel` to raise `IndexError` when used in a 
+`ListView` and/or when data at index zero is requested.
 
 ### New Features
 - Added helper functions in util/linear_transform.py to allow transformations (rotations and shifts) using the afﬁne transformation matrix formalism.
