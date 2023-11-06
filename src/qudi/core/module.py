@@ -105,14 +105,14 @@ class Base(QudiObject):
     Each module name will be assigned a UUID which will remain the same for multiple instantiations
     with the same module name.
     """
-    __name_uuid_map: Final[Dict[str, UUID]] = dict()  # Same module_name will result in same UUID
-
     _threaded: bool = False
 
     module_threaded = ThreadedDescriptor()
     module_base = ModuleBaseDescriptor()
 
     sigStateChanged = QtCore.Signal(ModuleState)
+
+    __name_uuid_map: Final[Dict[str, UUID]] = dict()  # Same module url will result in same UUID
 
     def __init__(self,
                  qudi_main: Any,
@@ -122,11 +122,12 @@ class Base(QudiObject):
         """ Initialize Base instance. Set up its state machine, initializes ConfigOption meta
         attributes from given config and connects activated module dependencies.
         """
+        mod_id = f'{self.__class__.__module__}.{self.__class__.__name__}::{name}'
         try:
-            uuid = self.__name_uuid_map[name]
+            uuid = self.__name_uuid_map[mod_id]
         except KeyError:
             uuid = uuid4()
-            self.__name_uuid_map[name] = uuid
+            self.__name_uuid_map[mod_id] = uuid
         super().__init__(
             options=options,
             connections=connections,
@@ -278,21 +279,16 @@ class ModuleStateControl(QtCore.QObject):
         super().__init__(parent=module_instance)
         self._current_state = ModuleState.DEACTIVATED
 
+    def __getattr__(self, item):
+        try:
+            return getattr(self._current_state, item)
+        except AttributeError:
+            pass
+        raise AttributeError
+
     @property
     def state(self) -> ModuleState:
         return self._current_state
-
-    @property
-    def deactivated(self) -> bool:
-        return self._current_state == ModuleState.DEACTIVATED
-
-    @property
-    def idle(self) -> bool:
-        return self._current_state == ModuleState.IDLE
-
-    @property
-    def locked(self) -> bool:
-        return self._current_state == ModuleState.LOCKED
 
     def __call__(self) -> str:
         """ For backwards compatibility """
@@ -311,7 +307,7 @@ class ModuleStateControl(QtCore.QObject):
         if isinstance(other, ModuleState):
             return self._current_state.value == other.value
         elif isinstance(other, ModuleStateControl):
-            return self.state.value == other.state.value
+            return self._current_state.value == other._current_state.value
         return False
 
     @QtCore.Slot()

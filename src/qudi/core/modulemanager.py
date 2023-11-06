@@ -26,7 +26,7 @@ from PySide2 import QtCore
 from abc import abstractmethod
 from dataclasses import dataclass
 from typing import FrozenSet, Mapping, Any, Union, MutableMapping, Dict, Optional, List, Tuple, Set
-from typing import Callable, Final
+from typing import Callable, Final, Type
 from types import ModuleType
 
 from qudi.util.mutex import Mutex
@@ -590,7 +590,7 @@ class LocalManagedModule(ManagedModule):
     @staticmethod
     def __import_module_class(base: ModuleBase,
                               module_url: str,
-                              class_name: str) -> Tuple[ModuleType, Base]:
+                              class_name: str) -> Tuple[ModuleType, Type[Base]]:
         # Import module
         try:
             module = importlib.import_module(module_url)
@@ -640,9 +640,9 @@ class LocalManagedModule(ManagedModule):
         self.__activating = False
         self.__deactivating = False
         # Import qudi module class
-        self._module = self._class = self.__import_module_class(self.base,
-                                                                self._module_url,
-                                                                self._class_name)
+        self._module, self._class = self.__import_module_class(self.base,
+                                                               self._module_url,
+                                                               self._class_name)
         self._instance = None
         # App status handling
         self._appdata_handler = YamlFileHandler(
@@ -692,8 +692,8 @@ class LocalManagedModule(ManagedModule):
                 self.instance.show()
             return
         self.__activating = True
+        logger.info(f'Activating module "{self.url}" ...')
         try:
-            logger.info(f'Activating module "{self.url}" ...')
             required_instances = self._activate_required_modules()
             connections = {
                 conn: required_instances[target] for conn, target in self._connections.items()
@@ -774,8 +774,6 @@ class LocalManagedModule(ManagedModule):
 
     def _instantiate_module_class(self, connections: MutableMapping[str, Base]) -> None:
         """ Try to instantiate the imported qudi module class """
-        if self._class is None:
-            self.__import_module_class()
         try:
             self._instance = self._class(qudi_main=self._qudi_main,
                                          name=self.name,
