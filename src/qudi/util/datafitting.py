@@ -342,10 +342,13 @@ class FitContainer(QtCore.QObject):
             parameters_units = dict()
         parameters_to_format = dict()
         for name, param in fit_result.params.items():
-            if not param.vary:
-                continue
+
+            param_fixed = False if param.vary else True
+            stderr = param.stderr if not param_fixed else None
+            stderr = np.nan if not param_fixed and stderr is None else stderr
+
             parameters_to_format[name] = {'value': param.value,
-                                          'error': param.stderr,
+                                          'error': stderr,
                                           'unit': parameters_units.get(name, '')}
         return create_formatted_output(parameters_to_format)
 
