@@ -29,6 +29,7 @@ import inspect
 import lmfit
 import numpy as np
 from PySide2 import QtCore
+from typing import Iterable, Optional, Mapping, Union
 
 import qudi.util.fit_models as _fit_models_ns
 from qudi.util.mutex import Mutex
@@ -335,30 +336,30 @@ class FitContainer(QtCore.QObject):
             return '', None
 
     @staticmethod
-    def formatted_result(fit_result, parameters_units=None):
+    def formatted_result(fit_result: Union[None, lmfit.model.ModelResult],
+                         parameters_units: Optional[Mapping[str, str]] = None) -> str:
         if fit_result is None:
             return ''
         if parameters_units is None:
             parameters_units = dict()
+
         parameters_to_format = dict()
         for name, param in fit_result.params.items():
-
-            param_fixed = False if param.vary else True
-            stderr = param.stderr if not param_fixed else None
-            stderr = np.nan if not param_fixed and stderr is None else stderr
+            stderr = param.stderr if param.vary else None
+            stderr = np.nan if param.vary and stderr is None else stderr
 
             parameters_to_format[name] = {'value': param.value,
                                           'error': stderr,
                                           'unit': parameters_units.get(name, '')}
+
         return create_formatted_output(parameters_to_format)
 
     @staticmethod
-    def dict_result(fit_result, keys=['value', 'stderr'], parameters_units=None):
-        export_keys = keys
-        export_dict = {}
-
+    def dict_result(fit_result: Union[None, lmfit.model.ModelResult],
+                    parameters_units: Optional[Mapping[str, str]] = None,
+                    export_keys: Optional[Iterable[str]] = ('value', 'stderr')) -> dict:
         if fit_result is None:
-            return export_dict
+            return dict()
         if parameters_units is None:
             parameters_units = dict()
 
