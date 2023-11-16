@@ -6,6 +6,22 @@
 None
 
 ### Bugfixes
+None
+
+### New Features
+None
+
+### Other
+None
+
+
+## Version 1.5.0
+Released on 16.11.2023
+
+### Breaking Changes
+None
+
+### Bugfixes
 - Fixes a bug where all fit configurations for a fit model/container fail to load upon activation 
 of a module because the fit model saved in AppData is no longer available. Throws a warning now 
 instead and ignores the respective fit configuration.
@@ -18,7 +34,6 @@ instead and ignores the respective fit configuration.
 ### Other
 - Fine-tuning of string output of fit results from qudi.util.units.create_formatted_output(): Failed fits should provide
   error= np.nan. Fixed parameters are marked as such. Brackets introduced, eg. (2.67 ± 0.01) GHz.
-
 
 
 ## Version 1.4.1
