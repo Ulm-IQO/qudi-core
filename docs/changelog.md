@@ -12,7 +12,9 @@ None
 None
 
 ### Other
-None
+- Fine-tuning of string output of fit results from qudi.util.units.create_formatted_output(): Failed fits should provide
+  error= np.nan. Fixed parameters are marked as such. Brackets introduced, eg. (2.67 ± 0.01) GHz.
+
 
 
 ## Version 1.3.0
