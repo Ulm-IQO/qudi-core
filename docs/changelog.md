@@ -16,7 +16,9 @@ instead and ignores the respective fit configuration.
 - Added helper functions in util/linear_transform.py to allow transformations (rotations and shifts) using the afﬁne transformation matrix formalism.
 
 ### Other
-None
+- Fine-tuning of string output of fit results from qudi.util.units.create_formatted_output(): Failed fits should provide
+  error= np.nan. Fixed parameters are marked as such. Brackets introduced, eg. (2.67 ± 0.01) GHz.
+
 
 
 ## Version 1.4.1

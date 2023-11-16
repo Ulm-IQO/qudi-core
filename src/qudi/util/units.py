@@ -207,17 +207,17 @@ def create_formatted_output(param_dict, num_sig_digits=5):
                 # range, rather then from the value 1000 to 1, which is
                 # default.
                 sc_fact, unit_prefix = fn.siScale(error * 10)
-            output_str += '{0}: {1} \u00B1 {2} {3}{4} \n'.format(entry, round(value * sc_fact,
-                                                                              num_sig_digits - 1),
-                                                                 round(error * sc_fact,
-                                                                       num_sig_digits - 1),
-                                                                 unit_prefix,
-                                                                 param_dict[entry]['unit'])
+            output_str += '{0}: ({1} \u00B1 {2}) {3}{4} \n'.format(entry, round(value * sc_fact,
+                                                                                num_sig_digits - 1),
+                                                                   round(error * sc_fact,
+                                                                         num_sig_digits - 1),
+                                                                   unit_prefix,
+                                                                   param_dict[entry]['unit'])
         else:
             output_str += '{0}: '.format(entry) + fn.siFormat(param_dict[entry]['value'],
                                                               precision=num_sig_digits,
                                                               suffix=param_dict[entry][
-                                                                  'unit']) + '\n'
+                                                                  'unit']) + ' (fixed) \n'
     return output_str
 
 
