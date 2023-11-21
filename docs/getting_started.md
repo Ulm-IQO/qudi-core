@@ -35,17 +35,17 @@ dedicated to
 - __Logic__: "Brains" of each application. Configure, control and monitor the measurement. 
 Orchestrate hardware.
 - __Hardware__: Similar to a driver. Provide simple, abstracted 
-[interfaces](https://github.com/Ulm-IQO/qudi-core/blob/f6d816ba9e5d312acffb3b6af01f5f43230c778c/docs/design_concepts/hardware_interface.md) 
+[interfaces](design_concepts/hardware_interface.md) 
 to avoid the logic from needing to "speak" the language of each specific device.
 - __GUI__: User-friendly graphical interfaces.
 
-The easiest way to play around is to install the 
+An example for an addon repository that providess several measurement toolchains is the 
 [qudi-iqo-modules](https://github.com/Ulm-IQO/qudi-iqo-modules) package (developed by the 
-Institute for Quantum Optics of Ulm University). It comes with several measurement toolchains and 
-corresponding dummy hardware modules, that run even without connecting real instrumentation hardware.
+Institute for Quantum Optics of Ulm University). Installing it is a great and simple way to play around 
+with qudi, as it comes with dummy hardware modules that run even without connecting real instrumentation hardware.
 
 After a fresh installation of qudi-iqo-modules, make sure that you load the `default.cfg` as 
-described in the installation guide.
+described in the [iqo-modules installation guide](https://github.com/Ulm-IQO/qudi-iqo-modules/blob/main/docs/installation_guide.md).
 Qudi should then run with only dummy hardware modules configured after a restart. That means you 
 can load any toolchain you like by clicking on the respective GUI module name in the main window 
 without breaking anything.
