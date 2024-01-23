@@ -29,7 +29,7 @@ from typing import FrozenSet, Iterable
 from functools import partial
 from PySide2 import QtCore
 
-from qudi.util.mutex import RecursiveMutex   # provides access serialization between threads
+from qudi.util.mutex import RecursiveMutex  # provides access serialization between threads
 from qudi.core.logger import get_logger
 from qudi.core.servers import get_remote_module_instance
 from qudi.core.module import Base, get_module_app_data_path
@@ -624,7 +624,6 @@ class ManagedModule(QtCore.QObject):
                     self._instance.module_state.deactivate()
                 except fysom.Canceled:
                     pass
-            QtCore.QCoreApplication.instance().processEvents()  # ToDo: Is this still needed?
 
             # Disconnect modules from this module
             self._disconnect()
