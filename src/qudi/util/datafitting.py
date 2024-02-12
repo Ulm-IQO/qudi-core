@@ -29,6 +29,7 @@ import inspect
 import lmfit
 import numpy as np
 from PySide2 import QtCore
+from typing import Iterable, Optional, Mapping, Union
 
 import qudi.util.fit_models as _fit_models_ns
 from qudi.util.mutex import Mutex
@@ -241,7 +242,6 @@ class FitConfigurationsModel(QtCore.QAbstractListModel):
                       value=value_tuple[1],
                       min=value_tuple[2],
                       max=value_tuple[3])
-            print('setData:', params)
             config.estimator = None if not value[0] else value[0]
             config.custom_parameters = None if not params else params
             self.dataChanged.emit(self.createIndex(index.row(), 0),
@@ -265,7 +265,12 @@ class FitConfigurationsModel(QtCore.QAbstractListModel):
 
         @param iterable configs: Iterable of FitConfiguration dict representations
         """
-        config_objects = [FitConfiguration.from_dict(cfg) for cfg in configs]
+        config_objects = list()
+        for cfg in configs:
+            try:
+                config_objects.append(FitConfiguration.from_dict(cfg))
+            except:
+                _log.warning(f'Unable to load fit configuration:\n{cfg}')
         self.beginResetModel()
         self._fit_configurations = config_objects
         self.endResetModel()
@@ -335,16 +340,39 @@ class FitContainer(QtCore.QObject):
             return '', None
 
     @staticmethod
-    def formatted_result(fit_result, parameters_units=None):
+    def formatted_result(fit_result: Union[None, lmfit.model.ModelResult],
+                         parameters_units: Optional[Mapping[str, str]] = None) -> str:
         if fit_result is None:
             return ''
         if parameters_units is None:
             parameters_units = dict()
+
         parameters_to_format = dict()
         for name, param in fit_result.params.items():
-            if not param.vary:
-                continue
+            stderr = param.stderr if param.vary else None
+            stderr = np.nan if param.vary and stderr is None else stderr
+
             parameters_to_format[name] = {'value': param.value,
-                                          'error': param.stderr,
+                                          'error': stderr,
                                           'unit': parameters_units.get(name, '')}
+
         return create_formatted_output(parameters_to_format)
+
+    @staticmethod
+    def dict_result(fit_result: Union[None, lmfit.model.ModelResult],
+                    parameters_units: Optional[Mapping[str, str]] = None,
+                    export_keys: Optional[Iterable[str]] = ('value', 'stderr')) -> dict:
+        if fit_result is None:
+            return dict()
+        if parameters_units is None:
+            parameters_units = dict()
+
+        fitparams = fit_result.result.params
+        export_dict = {'model': fit_result.model.name}
+
+        for key, res in fitparams.items():
+            dict_i = {key: getattr(res, key) for key in export_keys}
+            dict_i['unit'] = parameters_units.get(key, '')
+            export_dict[key] = dict_i
+
+        return export_dict
