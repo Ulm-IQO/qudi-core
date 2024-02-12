@@ -15,6 +15,27 @@ None
 None
 
 
+## Version 1.5.0
+Released on 16.11.2023
+
+### Breaking Changes
+None
+
+### Bugfixes
+- Fixes a bug where all fit configurations for a fit model/container fail to load upon activation 
+of a module because the fit model saved in AppData is no longer available. Throws a warning now 
+instead and ignores the respective fit configuration.
+- Fixed a bug that caused `qudi.util.models.DictTableModel` to raise `IndexError` when used in a 
+`ListView` and/or when data at index zero is requested.
+
+### New Features
+- Added helper functions in util/linear_transform.py to allow transformations (rotations and shifts) using the afﬁne transformation matrix formalism.
+
+### Other
+- Fine-tuning of string output of fit results from qudi.util.units.create_formatted_output(): Failed fits should provide
+  error= np.nan. Fixed parameters are marked as such. Brackets introduced, eg. (2.67 ± 0.01) GHz.
+
+
 ## Version 1.4.1
 Released on 21.06.2023
 
