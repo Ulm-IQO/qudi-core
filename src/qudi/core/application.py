@@ -24,6 +24,7 @@ import sys
 import os
 import weakref
 import inspect
+import warnings
 import traceback
 import faulthandler
 from logging import DEBUG, INFO
@@ -123,6 +124,9 @@ class Qudi(QtCore.QObject):
         init_record_model_handler(max_records=10000)
         init_rotating_file_handler(path=self.log_dir)
         set_log_level(DEBUG if self.debug_mode else INFO)
+        # Enable all warnings when in debug mode (especially DeprecationWarnings)
+        if self.debug_mode:
+            warnings.simplefilter('always')
 
         # Set up logger for qudi main instance
         self.log = get_logger(__class__.__name__)  # will be "qudi.Qudi" in custom logger
@@ -422,7 +426,12 @@ class Qudi(QtCore.QObject):
             self.thread_manager.quit_all_threads()
             QtCore.QCoreApplication.instance().processEvents()
             clear_handlers()
-            gc.collect()  # Explicit gc call to prevent Qt C++ extensions from using deleted Python objects
+            # FIXME: Suppress ResourceWarning from jupyter_client package upon garbage collection.
+            #  This is just sloppy implementation from jupyter and not critical.
+            with warnings.catch_warnings():
+                warnings.filterwarnings('ignore', category=ResourceWarning, module='asyncio')
+                # Explicit gc call to prevent Qt C++ extensions from using deleted Python objects
+                gc.collect()
             if restart:
                 QtCore.QCoreApplication.exit(42)
             else:
