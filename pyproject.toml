@@ -1,6 +1,81 @@
 [build-system]
-requires = [
-    "setuptools>=42",
-    "wheel"
-]
+requires = ["setuptools>=42", "wheel"]
 build-backend = "setuptools.build_meta"
+
+[project]
+name = "qudi-core"
+description = "A modular measurement application framework"
+readme = "README.md"
+keywords = [
+    'qudi',
+    'diamond',
+    'quantum',
+    'confocal',
+    'automation',
+    'experiment',
+    'measurement',
+    'framework',
+    'lab',
+    'laboratory',
+    'instrumentation',
+    'instrument',
+    'modular',
+]
+license = { text = "LGPLv3" }
+classifiers = [
+    'Development Status :: 5 - Production/Stable',
+
+    'Environment :: Win32 (MS Windows)',
+    'Environment :: X11 Applications',
+    'Environment :: MacOS X',
+
+    'Intended Audience :: Developers',
+    'Intended Audience :: Science/Research',
+    'Intended Audience :: End Users/Desktop',
+
+    'License :: OSI Approved :: GNU Lesser General Public License v3 (LGPLv3)',
+
+    'Natural Language :: English',
+
+    'Operating System :: Microsoft :: Windows :: Windows 8',
+    'Operating System :: Microsoft :: Windows :: Windows 8.1',
+    'Operating System :: Microsoft :: Windows :: Windows 10',
+    'Operating System :: MacOS :: MacOS X',
+    'Operating System :: Unix',
+    'Operating System :: POSIX :: Linux',
+
+    'Programming Language :: Python :: 3.8',
+    'Programming Language :: Python :: 3.9',
+    'Programming Language :: Python :: 3.10',
+
+    'Topic :: Scientific/Engineering',
+    'Topic :: Software Development :: Libraries :: Application Frameworks',
+    'Topic :: Software Development :: User Interfaces',
+]
+dependencies = [
+    "wheel>=0.37.0",
+    "cycler>=0.10.0",
+    "entrypoints>=0.3",
+    "fysom>=2.1.6",
+    "GitPython>=3.1.24",
+    "jupyter>=1.0.0",
+    "jupytext>=1.13.0",
+    "lmfit>=1.0.3",
+    "matplotlib>=3.4.3",
+    "numpy>=1.21.3",
+    "pyqtgraph>=0.13.0",
+    "PySide2==5.15.2.1",
+    "rpyc>=5.0.1",
+    "ruamel.yaml>=0.17.16",
+    "scipy>=1.7.1",
+    "jsonschema>=4.2.1",
+]
+version = "VERSION"
+
+[project.optional-dependencies]
+sphinx = ["Sphinx==7.2.6"]
+numpydoc = ["numpydoc==1.6.0"]
+sphinx-book-theme = ["sphinx-book-theme==1.1.1"]
+# sphinx-rtd-theme = ["sphinx-rtd-theme==2.0.0"]
+myst-parser = ["myst-parser==2.0.0"]
+# nbsphinx = "^0.8.8"

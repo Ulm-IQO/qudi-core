@@ -41,7 +41,7 @@ If not, see <https://www.gnu.org/licenses/>.
 Some parts of qudi are derived work from other projects licensed under the Modified BSD License and 
 The MIT License. Their respective license and copyright disclaimers are listed below:
 
-#### 1. [IPython](https://github.com/ipython/)
+### 1. [IPython](https://github.com/ipython/)
 ```
 This project is licensed under the terms of the Modified BSD License
 (also known as New or Revised or 3-Clause BSD), as follows:
@@ -76,7 +76,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ```
 
-#### 2. [ACQ4](https://github.com/acq4/acq4)
+### 2. [ACQ4](https://github.com/acq4/acq4)
 ```
 Copyright (c) 2013, Luke Campagnola
 

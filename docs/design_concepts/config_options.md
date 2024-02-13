@@ -77,14 +77,14 @@ logic:
     ...
 ```
 
-#### name
+### name
 Please note here that the variable name in the measurement module definition is `_my_config_option`,
 while the name given in the config file is `my_config_option` (without underscore). This is 
 possible because of the optional `name` argument of `ConfigOption`. This argument specifies the 
 field name of the config option in the qudi configuration and can be any YAML-compatible string as 
 long as it is unique within a measurement module.
 
-#### default
+### default
 This example is also defining an optional `default` value for the config option. If you specify a 
 default value, this config option is considered optional, i.e. if you do not provide the config 
 option via qudi configuration, it will be initialized to this default value instead.  
@@ -92,7 +92,7 @@ Non-optional config options (omitting the `default` argument) will cause the mea
 raise an exception during initialization if the corresponding field is not specified in the qudi 
 configuration.
 
-#### missing
+### missing
 The optional `missing` argument can be used to define the behaviour in case the config option is 
 missing from the configuration and has a default value. Ignored for non-optional config options.  
 Possible argument values are:
@@ -104,13 +104,13 @@ Possible argument values are:
 | `'warn'`        | Use default value but also logs a warning about the missing config option.                |
 | `'error'`       | Fail to initialize the module with an exception. Same as for non-optional config options. |
 
-#### checker
+### checker
 If you want to establish sanity checking for your config option at module initialization, you can 
 provide a static function to the optional `checker` argument of `ConfigOption`.  
 This function should accept a single argument (the configured value coming from the YAML loader) 
 and return a boolean indicating if the check has passed (`True`) or not.
 
-#### constructor
+### constructor
 Since config options must be provided via YAML format you are limited in what data types can be 
 configured. The qudi YAML loader currently supports any native Python builtin type and numpy arrays.
 

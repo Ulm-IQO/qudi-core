@@ -2,7 +2,7 @@
 
 Qudi supports accessing modules of a qudi instance that is running on a different (remote) computer within the same LAN. A possible configuration for this looks like:
 
-### Server
+## Server
 
 
     global:
@@ -17,7 +17,7 @@ Qudi supports accessing modules of a qudi instance that is running on a differen
             options:
                 ...
 
-### Client
+## Client
 
     global:
         force_remote_calls_by_value: True
