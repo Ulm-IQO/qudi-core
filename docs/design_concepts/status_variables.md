@@ -66,7 +66,7 @@ class MyExampleLogic(LogicBase):
     ...
 ```
 
-#### constructor & representer
+### constructor & representer
 Since status variables are dumped as YAML file you are limited in what data types can be stored.  
 Qudi YAML dumper and loader currently supports any native Python builtin type and numpy arrays.
 
@@ -114,7 +114,7 @@ class MyExampleLogic(LogicBase):
 Since these conversion functions are usually static (as the example above also shows), you could 
 also combine that with the `@staticmethod` decorator. But this is not necessary and just good style.
 
-#### name
+### name
 There is an optional `name` argument for `StatusVar`. The name given here is used by the YAML 
 dumper as field name for the variable data. So the `name` argument can be used to store the status 
 variable under a different (e.g. better readable) name in the app status file that is created.  

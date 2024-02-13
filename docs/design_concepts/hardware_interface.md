@@ -21,14 +21,15 @@ So every class that inherits the same interface is guaranteed to provide at leas
 methods and properties defined in the interface.
 
 Since the interface subclass that implements all the abstract members is also a subclass of `Base`,
-this class is then called a [hardware module]().
+this class is then called a [hardware module](../404.md).
 
-See also the detailed [qudi modules](qudi_modules.md) documentation if you want to know more about 
+<!-- This link to the IQO modules needs to be updated once that documentation is up -->
+See also the detailed [qudi modules](https://github.com/Ulm-IQO/qudi-iqo-modules/blob/main/docs/installation_guide.md) documentation if you want to know more about 
 what defines a qudi module and the respective inheritance trees.
 
 It's always good to have a look at some example... so here is a simple interface class for you.
 
-### Example Interface:
+## Example Interface:
 ```python
 from abc import abstractmethod
 from qudi.core import Base
@@ -65,7 +66,7 @@ Note also that it inherits `Base`.
 
 An actual hardware module implementation satisfying this interface could look like below, assuming 
 you placed the above code in `qudi/interface/my_simple_interface.py`.
-### Hardware Implementation:
+## Hardware Implementation:
 ```python
 from qudi.interface.my_simple_interface import MySimpleInterface
 
@@ -114,7 +115,7 @@ class in accordance with good programming practices.
 > hardware class internally. Consequentially, you should consider making them protected or even 
 > private, i.e. add single `_` or double underscore `__` name prefix, respectively. 
 
-### Why Do All This?
+## Why Do All This?
 An abstract interface class defines a common set of methods and properties to control and monitor a 
 certain generalized type of hardware (CW microwave sources, lasers, AWGs, etc.).
 

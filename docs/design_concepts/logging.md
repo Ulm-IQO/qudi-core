@@ -42,24 +42,24 @@ documentation:
 | info       | 20            |
 | debug      | 10            |
 
-#### critical
+### critical
 When a log record of level "critical" and higher is detected qudi will immediately attempt to kill 
 all running tasks and processes.
 
 In 99.99% of the cases there should be no reason to log a record of this level. So don't do it 
 unless you have very good reasons and know what you are doing.
 
-#### error
+### error
 Records of level "error" or higher should usually only be logged while handling an exception 
 (see: [exception handling guidelines](../404.md)).
 
 Unhandled exceptions will automatically be logged on the "error" level.
 
-#### warn
+### warn
 Warning messages can be used as a tool by application programmers to point out possible problems, 
 e.g. an occurring edge case that is not yet well handled and often leads to errors.
 
-#### info
+### info
 Info messages should be used by an application programmer to inform the user of major events or 
 milestones in the intended program execution flow.  
 
@@ -68,7 +68,7 @@ milestones in the intended program execution flow.
 > There is a fine line between spam and useful information density.  
 > Think carefully what to log and use "debug" level while developing code and debugging.
 
-#### debug
+### debug
 Use debug messages for information only interesting for programmers, e.g. to simplify debugging.
 Records of this level and below are ignored by default and are not logged unless you run qudi in 
 debug mode (command line argument `--debug`).
