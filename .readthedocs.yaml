@@ -12,8 +12,7 @@ build:
   # Install the project in editable mode. Avoid needing a requirements.txt
   jobs:
     pre_build:
-      steps:
-        - pip install -e ".[dev-docs]"
+      - pip install -e ".[dev-docs]"
 
 # Build documentation in the "docs/" directory with Sphinx
 sphinx:
