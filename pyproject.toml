@@ -5,6 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "qudi-core"
 description = "A modular measurement application framework"
+version = "1.5.1.dev0"
 readme = "README.md"
 keywords = [
     'qudi',
@@ -70,12 +71,14 @@ dependencies = [
     "scipy>=1.7.1",
     "jsonschema>=4.2.1",
 ]
-version = "VERSION"
 
 [project.optional-dependencies]
-sphinx = ["Sphinx==7.2.6"]
-numpydoc = ["numpydoc==1.6.0"]
-sphinx-book-theme = ["sphinx-book-theme==1.1.1"]
+dev-docs = [
+    "Sphinx==7.2.6",
+    "numpydoc==1.6.0",
+    "pydata_sphinx_theme==0.15.2",
+    "myst-parser==2.0.0",
+]
+# sphinx-book-theme = ["sphinx-book-theme==1.1.1"]
 # sphinx-rtd-theme = ["sphinx-rtd-theme==2.0.0"]
-myst-parser = ["myst-parser==2.0.0"]
 # nbsphinx = "^0.8.8"

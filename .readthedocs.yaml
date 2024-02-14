@@ -21,6 +21,12 @@ sphinx:
 # Optional but recommended, declare the Python requirements required
 # to build your documentation
 # See https://docs.readthedocs.io/en/stable/guides/reproducible-builds.html
-python:
-  install:
-    - requirements: docs/requirements-docs.txt
+# python:
+#   install:
+#     - requirements: docs/requirements-docs.txt
+
+# Install the project in editable mode. Avoid needing a requirements.txt
+jobs:
+  pre-build:
+    steps:
+      - pip install -e ".[dev-docs]"
