@@ -76,9 +76,17 @@ dependencies = [
 dev-docs = [
     "Sphinx==7.2.6",
     "numpydoc==1.6.0",
-    "pydata_sphinx_theme==0.15.2",
+    "sphinx-rtd-dark-mode==1.3.0",
+    "sphinx-rtd-theme==2.0.0",
     "myst-parser==2.0.0",
 ]
-# sphinx-book-theme = ["sphinx-book-theme==1.1.1"]
-# sphinx-rtd-theme = ["sphinx-rtd-theme==2.0.0"]
+
+[project.scripts]
+qudi = 'qudi.runnable:main'
+qudi-config-editor = 'qudi.tools.config_editor.config_editor:main'
+qudi-uninstall-kernel = 'qudi.core.qudikernel:uninstall_kernel'
+qudi-install-kernel = 'qudi.core.qudikernel:install_kernel'
+
+# "sphinx-book-theme==1.1.1"
 # nbsphinx = "^0.8.8"
+# "pydata_sphinx_theme==0.15.2"

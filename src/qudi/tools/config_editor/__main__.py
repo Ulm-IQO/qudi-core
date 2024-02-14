@@ -17,6 +17,7 @@ You should have received a copy of the GNU Lesser General Public License along w
 If not, see <https://www.gnu.org/licenses/>.
 """
 
-from .config_editor import main
+if __name__ == "__main__":
+    from .config_editor import main
 
-main()
+    main()
