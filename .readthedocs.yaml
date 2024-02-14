@@ -9,6 +9,11 @@ build:
   os: ubuntu-22.04
   tools:
     python: "3.10"
+  # Install the project in editable mode. Avoid needing a requirements.txt
+  jobs:
+    pre_build:
+      steps:
+        - pip install -e ".[dev-docs]"
 
 # Build documentation in the "docs/" directory with Sphinx
 sphinx:
@@ -25,8 +30,3 @@ sphinx:
 #   install:
 #     - requirements: docs/requirements-docs.txt
 
-# Install the project in editable mode. Avoid needing a requirements.txt
-jobs:
-  pre-build:
-    steps:
-      - pip install -e ".[dev-docs]"
