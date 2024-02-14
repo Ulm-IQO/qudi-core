@@ -40,7 +40,6 @@ share/python-wheels/
 .installed.cfg
 *.egg
 
-<<<<<<< HEAD
 # log files
 *.log
 *.log.*
@@ -71,8 +70,6 @@ share/python-wheels/
 .installed.cfg
 *.egg
 
-=======
->>>>>>> 26647177 (Added rtd config and edited files for myst syntax warnings. RTD site should work now, need to improve formatting and layout.)
 # Installer logs
 pip-log.txt
 pip-delete-this-directory.txt
@@ -95,10 +92,15 @@ cover/
 # Sphinx documentation
 docs/_build/
 <<<<<<< HEAD
+<<<<<<< HEAD
 docs/_autosummary/
 docs/_static/
 =======
 >>>>>>> 26647177 (Added rtd config and edited files for myst syntax warnings. RTD site should work now, need to improve formatting and layout.)
+=======
+docs/_autosummary/
+docs/_static/
+>>>>>>> 25ee7046 (Got autosummary working with a custom template. There are numerous warnings during the build due to syntax etc but at least the docs render locally. Added several `__init__.py` files to enable autosummary to recurse into submodules. Also some modules were run upon import which broke the build so added `if __name__ == "__main__"` where necessary. For some reason, the widgets submodule actually causes a segfault during the sphinx build which is amazing. I removed the blank `__init__.py` to avoid sphinx recursing into that submodule so the docs can build at least.)
 
 # Jupyter Notebook
 .ipynb_checkpoints

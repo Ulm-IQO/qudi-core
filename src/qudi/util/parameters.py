@@ -3,19 +3,21 @@
 This file contains utility methods to annotate arguments for which the user can potentially edit
 values via GUI. These arguments are boiled down to simple builtin types that can be represented by
 a GUI editor:
-                            int: qudi.util.widgets.scientific_spinbox.ScienSpinBox
-                          float: qudi.util.widgets.scientific_spinbox.ScienDSpinbox
-                            str: PySide2.QtWidgets.QLineEdit
-                        complex: qudi.util.widgets.literal_lineedit.ComplexLineEdit
-                            set: qudi.util.widgets.literal_lineedit.SetLineEdit
-                           dict: qudi.util.widgets.literal_lineedit.DictLineEdit
-                           list: qudi.util.widgets.literal_lineedit.ListLineEdit
-                          tuple: qudi.util.widgets.literal_lineedit.TupleLineEdit
+
+:int: :py:class:`qudi.util.widgets.scientific_spinbox.ScienSpinBox`
+:float: :py:class:`qudi.util.widgets.scientific_spinbox.ScienDSpinbox`
+:str: :py:class:`PySide2.QtWidgets.QLineEdit`
+:complex: :py:class:`qudi.util.widgets.literal_lineedit.ComplexLineEdit`
+:set: :py:class:`qudi.util.widgets.literal_lineedit.SetLineEdit`
+:dict: :py:class:`qudi.util.widgets.literal_lineedit.DictLineEdit`
+:list: :py:class:`qudi.util.widgets.literal_lineedit.ListLineEdit`
+:tuple: :py:class:`qudi.util.widgets.literal_lineedit.TupleLineEdit`
 
 Here defined are also custom generic types that can be used like any other type from
 the typing module.
 Arguments annotated with these types are represented with the following widgets:
-    FilePath: PySide2.QtWidgets.QLineEdit
+
+FilePath: PySide2.QtWidgets.QLineEdit
 
 Any other type annotation that can not be mapped to a simple builtin or a custom generic type
 (see above) will result in no corresponding widget (None).
