@@ -70,6 +70,9 @@ class CircleLoadingIndicator(QtWidgets.QWidget):
 
     @QtCore.Property(int)
     def indicator_position(self):
+        """THIS DOCSTRING IS NECESSARY TO ENSURE THAT THE PROPERTY IS PICKED UP BY
+        SPHINX-AUTOSUMMARY. DO NOT REMOVE UNTIL A BETTER SOLUTION IS FOUND!
+        """
         return self._indicator_position
 
     @indicator_position.setter

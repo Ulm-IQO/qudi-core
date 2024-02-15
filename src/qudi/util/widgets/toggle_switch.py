@@ -206,6 +206,9 @@ class ToggleSwitch(QtWidgets.QAbstractButton):
 
     @QtCore.Property(float)
     def thumb_position(self):
+        """THIS DOCSTRING IS NECESSARY TO ENSURE THAT THE PROPERTY IS PICKED UP BY
+        SPHINX-AUTOSUMMARY. DO NOT REMOVE UNTIL A BETTER SOLUTION IS FOUND!
+        """
         return self._thumb_position
 
     @thumb_position.setter
