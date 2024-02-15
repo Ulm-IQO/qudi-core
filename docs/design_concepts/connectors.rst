@@ -12,7 +12,7 @@ WORK IN PROGRESS
   said module instance in order to hide the fact that modules should not
   own strong references on other modules. But this is an implementation
   detail.
-| In case of `interface overloading <../404.md>`__ this proxy will also
+| In case of `interface overloading <../404.rst>`__ this proxy will also
   provide access to the other modules members via the right interface.
 
 --------------

@@ -17,7 +17,7 @@ hardware, logic and graphical user interface (GUI) modules.
      subclass of ``qudi.core.Base`` (``LogicBase`` and ``GuiBase`` are
      subclasses of ``Base`` as well) that is declared in a Python module
      usually located at ``qudi/[hardware|logic|gui]/`` (exception: `qudi
-     extension <../404.md>`__ directories).
+     extension <../404.rst>`__ directories).
 
    Historical reasons… you know…
 
@@ -89,7 +89,7 @@ property ``module_state``:
 
    FSM state diagram
 
-The qudi `module manager <../404.md>`__ uses this FSM to control and
+The qudi `module manager <../404.rst>`__ uses this FSM to control and
 monitor qudi measurement modules.
 
 | It can also be accessed by other entities in order to check if the
@@ -104,7 +104,7 @@ monitor qudi measurement modules.
 Logic modules (subclass of ``qudi.core.module.LogicBase``) will run by
 default in their own thread. Hardware and GUI modules will not live in
 their own threads by default. This is why it is so important to
-facilitate `inter-module communication <../404.md>`__ mainly with Qt
+facilitate `inter-module communication <../404.rst>`__ mainly with Qt
 Signals in order to automatically respect thread affinity.
 
 You can access the Qt ``QThread`` object that represents the native
@@ -129,7 +129,7 @@ thread or in the main thread, respectively, i.e.:
        ...
 
 Spawning and joining threads is handled automatically by the qudi
-`thread manager <../404.md>`__.
+`thread manager <../404.rst>`__.
 
 4. Balloon and Pop-Up Messaging
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -164,7 +164,7 @@ can call ``_dump_status_variables``.
    depending on the type and size of the variables. So think carefully
    before using manual dumping.
 
-See also the `qudi status variable documentation <../404.md>`__.
+See also the `qudi status variable documentation <../404.rst>`__.
 
 6. Static Configuration
 ~~~~~~~~~~~~~~~~~~~~~~~
@@ -177,7 +177,7 @@ See also the `qudi status variable documentation <../404.md>`__.
   initialized once at the instantiation of the module and NOT each time
   the module is activated.
 
-See also the `qudi configuration option documentation <../404.md>`__.
+See also the `qudi configuration option documentation <../404.rst>`__.
 
 7. Measurement Module Interconnection
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -218,7 +218,7 @@ module:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Each measurement module holds a (weak) reference to the
-```qudi.core.application.Qudi`` <../404.md>`__ singleton instance. This
+```qudi.core.application.Qudi`` <../404.rst>`__ singleton instance. This
 object holds references to all running core facilities like the
 currently loaded ``Configuration``, the ``ModuleManager``,
 ``ThreadManager`` and the ``rpyc`` servers for remote module and IPython

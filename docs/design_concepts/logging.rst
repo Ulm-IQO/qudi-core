@@ -63,7 +63,7 @@ error
 
 Records of level “error” or higher should usually only be logged while
 handling an exception (see: `exception handling
-guidelines <../404.md>`__).
+guidelines <../404.rst>`__).
 
 Unhandled exceptions will automatically be logged on the “error” level.
 
