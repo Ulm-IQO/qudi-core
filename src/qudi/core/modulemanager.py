@@ -23,7 +23,6 @@ import os
 import importlib
 import copy
 import weakref
-import fysom
 
 from typing import FrozenSet, Iterable
 from functools import partial
@@ -32,7 +31,7 @@ from PySide2 import QtCore
 from qudi.util.mutex import RecursiveMutex   # provides access serialization between threads
 from qudi.core.logger import get_logger
 from qudi.core.servers import get_remote_module_instance
-from qudi.core.module import Base, get_module_app_data_path
+from qudi.core.module import Base, get_module_app_data_path, ModuleStateError
 
 logger = get_logger(__name__)
 
@@ -526,7 +525,7 @@ class ManagedModule(QtCore.QObject):
             else:
                 try:
                     self._instance.module_state.activate()
-                except fysom.Canceled:
+                except ModuleStateError:
                     pass
 
             self.__last_state = self.state
@@ -622,7 +621,7 @@ class ManagedModule(QtCore.QObject):
             else:
                 try:
                     self._instance.module_state.deactivate()
-                except fysom.Canceled:
+                except ModuleStateError:
                     pass
             QtCore.QCoreApplication.instance().processEvents()  # ToDo: Is this still needed?
 

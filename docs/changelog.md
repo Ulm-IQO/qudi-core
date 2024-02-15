@@ -9,11 +9,23 @@ None
 None
 
 ### New Features
-None
+- New context manager `qudi.util.mutex.acquire_timeout` to facilitate (Recursive)Mutex/(R)Lock 
+acquisition with a timeout
+- Added helper methods `call_slot_from_native_thread`, `current_is_native_thread` and 
+`current_is_main_thread` to `qudi.util.helpers` for easy handling of `QObject` thread affinity
+- Added `qudi.util.yaml.YamlFileHandler` helper object to easily dump/load/clear/check a qudi 
+status file
 
 ### Other
-None
-
+- Refactoring of `qudi.util.overload.OverloadProxy` which is now a subclass of a more general 
+object proxy found in the new module `qudi.util.proxy`.
+- Got rid of the `fysom` package for qudi module state machines. This increases complexity and 
+readability for these very easy state machines and concentrates state transition procedure in the 
+FSM itself.
+- Intoduced new enum types `ModuleState` and `ModuleBase` in `qudi.core.module` for state and 
+module base type representation.
+- Changed `qudi.core.module.Base` properties `is_module_threaded` and `module_base` to read-only 
+class descriptors
 
 ## Version 1.5.0
 Released on 16.11.2023

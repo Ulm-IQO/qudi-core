@@ -22,9 +22,10 @@ import logging
 import os
 import copy
 import uuid
+import warnings
 from abc import abstractmethod
 from uuid import uuid4
-from fysom import Fysom
+from enum import Enum
 from PySide2 import QtCore, QtGui, QtWidgets
 from typing import Any, Mapping, Optional, Callable, Union, Dict
 
@@ -34,67 +35,224 @@ from qudi.util.paths import get_module_app_data_path, get_daily_directory, get_d
 from qudi.util.yaml import yaml_load, yaml_dump
 from qudi.core.meta import ModuleMeta
 from qudi.core.logger import get_logger
+from qudi.util.helpers import current_is_native_thread
 
 
-class ModuleStateMachine(Fysom, QtCore.QObject):
+class ModuleStateError(RuntimeError):
+    pass
+
+
+class ModuleState(Enum):
+    """ Qudi modules state enum with name strings as values and convenient state checking properties
     """
-    FIXME
+    DEACTIVATED = 'deactivated'
+    IDLE = 'idle'
+    LOCKED = 'locked'
+
+    @property
+    def deactivated(self) -> bool:
+        return self is self.DEACTIVATED
+
+    @property
+    def idle(self) -> bool:
+        return self is self.IDLE
+
+    @property
+    def locked(self) -> bool:
+        return self is self.LOCKED
+
+
+class ModuleBase(Enum):
+    """ Qudi modules base type enum with name strings as values """
+    HARDWARE = 'hardware'
+    LOGIC = 'logic'
+    GUI = 'gui'
+    INVALID = '<UNKNOWN>'
+
+
+class ThreadedDescriptor:
+    """ Read-only class descriptor representing the owners private class attribute <_threaded> value
     """
-    # do not copy declaration of trigger(self, event, *args, **kwargs), just apply Slot decorator
-    trigger = QtCore.Slot(str, result=bool)(Fysom.trigger)
+    def __get__(self, instance, owner=None) -> bool:
+        try:
+            return owner._threaded
+        except AttributeError:
+            return type(instance)._threaded
 
-    # signals
-    sigStateChanged = QtCore.Signal(object)  # Fysom event
+    def __delete__(self, instance):
+        raise AttributeError('Can not delete')
 
-    def __init__(self, callbacks=None, parent=None, **kwargs):
-        if callbacks is None:
-            callbacks = dict()
+    def __set__(self, instance, value):
+        raise AttributeError('Read-Only')
 
-        # State machine definition
-        # the abbreviations for the event list are the following:
-        #   name:   event name,
-        #   src:    source state,
-        #   dst:    destination state
-        fsm_cfg = {'initial': 'deactivated',
-                   'events': [{'name': 'activate', 'src': 'deactivated', 'dst': 'idle'},
-                              {'name': 'deactivate', 'src': 'idle', 'dst': 'deactivated'},
-                              {'name': 'deactivate', 'src': 'locked', 'dst': 'deactivated'},
-                              {'name': 'lock', 'src': 'idle', 'dst': 'locked'},
-                              {'name': 'unlock', 'src': 'locked', 'dst': 'idle'}],
-                   'callbacks': callbacks}
 
-        # Initialise state machine:
-        super().__init__(parent=parent, cfg=fsm_cfg, **kwargs)
+class ModuleBaseDescriptor:
+    """ Read-only class descriptor representing the owners qudi module base type enum """
+    def __get__(self, instance, owner=None) -> ModuleBase:
+        if owner is None:
+            owner = type(instance)
+        try:
+            if issubclass(owner, GuiBase):
+                return ModuleBase.GUI
+            if issubclass(owner, LogicBase):
+                return ModuleBase.LOGIC
+            if issubclass(owner, Base):
+                return ModuleBase.HARDWARE
+        except NameError:
+            return ModuleBase.INVALID
+        raise TypeError(
+            f'{owner.__module__}.{owner.__name__} is not a subclass of {Base.__module__}.Base'
+        )
+
+    def __delete__(self, instance):
+        raise AttributeError('Can not delete')
+
+    def __set__(self, instance, value):
+        raise AttributeError('Read-Only')
+
+
+class ModuleStateMachine(QtCore.QObject):
+    """ QObject providing FSM state control handling activation, deactivation, locking and
+    unlocking of qudi modules.
+    State transitions must only ever be triggered from the native thread of the respective module
+    (the parent qudi module).
+
+                                     ------<------
+                                     |           ^
+                                     v           |
+        [*] ----> deactivated ----> idle ----> locked
+                      ^              |           |
+                      |              v           v
+                      -------<-------------<------
+    """
+    sigStateChanged = QtCore.Signal(ModuleState)  # new ModuleState
+
+    def __init__(self, module_instance: 'Base'):
+        super().__init__(parent=module_instance)
+        self._current_state = ModuleState.DEACTIVATED
+
+    def __getattr__(self, item):
+        """ Make convenience state checking properties of ModuleState enum available through
+        ModuleStateMachine
+        """
+        try:
+            return getattr(self._current_state, item)
+        except AttributeError:
+            pass
+        raise AttributeError
+
+    @property
+    def current(self) -> ModuleState:
+        """ Read-only property representing the current ModuleState enum """
+        return self._current_state
 
     def __call__(self) -> str:
-        """
-        Returns the current state.
-        """
-        return self.current
+        """ For backwards compatibility """
+        warnings.warn(
+            'Being able to call ModuleStateMachine to get a string representation of the '
+            'ModuleState Enum is deprecated and will be removed in the future. Please compare '
+            '("==") ModuleStateMachine directly with ModuleState or use '
+            'ModuleStateMachine.current.value if you must have the string representation.',
+            DeprecationWarning,
+            stacklevel=2
+        )
+        return self.current.value
 
-    def on_change_state(self, e: Any) -> None:
+    def __eq__(self, other) -> bool:
+        """ Enables comparison with ModuleState Enum and other ModuleStateControl instances.
+        Compare enum values directly to avoid problems with multiprocessing.
         """
-        Fysom callback for all state transitions.
-
-        @param object e: Fysom event object passed through all state transition callbacks
-        """
-        self.sigStateChanged.emit(e)
+        if isinstance(other, ModuleState):
+            return self._current_state.value == other.value
+        elif isinstance(other, ModuleStateMachine):
+            return self._current_state.value == other._current_state.value
+        return False
 
     @QtCore.Slot()
     def activate(self) -> None:
-        super().activate()
+        """ Restore status variables first and invoke on_activate method afterward """
+        self._check_caller_thread()
+        module = self.parent()
+        try:
+            if self._current_state == ModuleState.DEACTIVATED:
+                try:
+                    module.load_status_variables()
+                    module.on_activate()
+                except Exception as err:
+                    raise ModuleStateError('Exception during module activation') from err
+                else:
+                    self._current_state = ModuleState.IDLE
+            else:
+                raise ModuleStateError(
+                    f'Module can only be activated from "{ModuleState.DEACTIVATED.value}" state. '
+                    f'Current state is "{self._current_state.value}".'
+                )
+        except ModuleStateError:
+            if module.is_module_threaded:
+                logger = get_logger(f'{self.__module__}.{self.__class__.__name__}')
+                logger.exception('Exception during threaded activation:')
+            raise
+        finally:
+            self.sigStateChanged.emit(self._current_state)
 
     @QtCore.Slot()
     def deactivate(self) -> None:
-        super().deactivate()
+        """ Invoke on_deactivate method first and dump status variables afterward.
+        State transition will always happen, even if an exception is raised.
+        """
+        self._check_caller_thread()
+        module = self.parent()
+        try:
+            if self._current_state != ModuleState.DEACTIVATED:
+                try:
+                    try:
+                        module.on_deactivate()
+                    finally:
+                        # save status variables even if deactivation failed
+                        module.dump_status_variables()
+                except Exception as err:
+                    raise ModuleStateError('Exception during module deactivation') from err
+            else:
+                raise ModuleStateError(f'Module already in state "{self._current_state.value}"')
+        except ModuleStateError:
+            if module.is_module_threaded:
+                module.log.exception('Exception during threaded deactivation:')
+            raise
+        finally:
+            self._current_state = ModuleState.DEACTIVATED
+            self.sigStateChanged.emit(self._current_state)
 
     @QtCore.Slot()
     def lock(self) -> None:
-        super().lock()
+        """ Sets the state to "locked"/"busy" """
+        try:
+            if self._current_state == ModuleState.IDLE:
+                self._current_state = ModuleState.LOCKED
+            else:
+                raise ModuleStateError(
+                    f'Module can only be locked from "{ModuleState.IDLE.value}" state. Current '
+                    f'state is "{self._current_state.value}".'
+                )
+        finally:
+            self.sigStateChanged.emit(self._current_state)
 
     @QtCore.Slot()
     def unlock(self) -> None:
-        super().unlock()
+        try:
+            if self._current_state == ModuleState.LOCKED:
+                self._current_state = ModuleState.IDLE
+            else:
+                raise ModuleStateError(
+                    f'Module can only be unlocked from "{ModuleState.LOCKED.value}" state. '
+                    f'Current state is "{self._current_state.value}".'
+                )
+        finally:
+            self.sigStateChanged.emit(self._current_state)
+
+    def _check_caller_thread(self) -> None:
+        if not current_is_native_thread(self):
+            raise ModuleStateError('Module activation and deactivation can only be triggered by '
+                                   'the modules native thread')
 
 
 class Base(QtCore.QObject, metaclass=ModuleMeta):
@@ -111,6 +269,9 @@ class Base(QtCore.QObject, metaclass=ModuleMeta):
     * Reload module data (from saved variables)
     """
     _threaded = False
+
+    is_module_threaded = ThreadedDescriptor()
+    module_base = ModuleBaseDescriptor()
 
     # FIXME: This __new__ implementation has the sole purpose to circumvent a known PySide2(6) bug.
     #  See https://bugreports.qt.io/browse/PYSIDE-1434 for more details.
@@ -159,11 +320,7 @@ class Base(QtCore.QObject, metaclass=ModuleMeta):
         self.__initialize_connectors()
 
         # Initialize module FSM
-        default_callbacks = {'on_before_activate'  : self.__activation_callback,
-                             'on_before_deactivate': self.__deactivation_callback}
-        default_callbacks.update(callbacks)
-        self.module_state = ModuleStateMachine(parent=self, callbacks=default_callbacks)
-        return
+        self.module_state = ModuleStateMachine(module_instance=self)
 
     def __initialize_config_options(self, config: Optional[Mapping[str, Any]]) -> None:
         for attr_name, cfg_opt in self._meta['config_options'].items():
@@ -228,13 +385,6 @@ class Base(QtCore.QObject, metaclass=ModuleMeta):
         return self._meta['name']
 
     @property
-    def module_base(self) -> str:
-        """ Read-only property returning the module base of this module instance
-        ('hardware' 'logic' or 'gui')
-        """
-        return self._meta['base']
-
-    @property
     def module_uuid(self) -> uuid.UUID:
         """ Read-only property returning a unique uuid for this module instance.
         """
@@ -287,37 +437,7 @@ class Base(QtCore.QObject, metaclass=ModuleMeta):
         """
         return self.__logger
 
-    @property
-    def is_module_threaded(self) -> bool:
-        """ Returns whether the module shall be started in its own thread.
-        """
-        return self._threaded
-
-    def __activation_callback(self, event=None) -> bool:
-        """ Restore status variables before activation and invoke on_activate method.
-        """
-        try:
-            self._load_status_variables()
-            self.on_activate()
-        except:
-            self.log.exception('Exception during activation:')
-            return False
-        return True
-
-    def __deactivation_callback(self, event=None) -> bool:
-        """ Invoke on_deactivate method and save status variables afterwards even if deactivation
-        fails.
-        """
-        try:
-            self.on_deactivate()
-        except:
-            self.log.exception('Exception during deactivation:')
-        finally:
-            # save status variables even if deactivation failed
-            self._dump_status_variables()
-        return True
-
-    def _load_status_variables(self) -> None:
+    def load_status_variables(self) -> None:
         """ Load status variables from app data directory on disc.
         """
         # Load status variables from app data directory
@@ -340,7 +460,7 @@ class Base(QtCore.QObject, metaclass=ModuleMeta):
         except:
             self.log.exception('Error while settings status variables:')
 
-    def _dump_status_variables(self) -> None:
+    def dump_status_variables(self) -> None:
         """ Dump status variables to app data directory on disc.
 
         This method can also be used to manually dump status variables independent of the automatic
