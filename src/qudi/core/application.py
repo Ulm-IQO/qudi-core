@@ -71,9 +71,10 @@ if sys.platform == 'win32':
         ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
     except ImportError:
         raise
-    except:
+    except Exception as e:
         print('SetCurrentProcessExplicitAppUserModelID failed! This is probably not Microsoft '
               'Windows!')
+        print(e)
 
 # Set default Qt locale to "C" in order to avoid surprises with number formats and other things
 # QtCore.QLocale.setDefault(QtCore.QLocale('en_US'))
@@ -268,10 +269,11 @@ class Qudi(QtCore.QObject):
                     self.module_manager.add_module(name=module_name,
                                                    base=base,
                                                    configuration=module_cfg)
-                except:
+                except Exception as e:
                     self.module_manager.remove_module(module_name, ignore_missing=True)
                     self.log.exception(f'Unable to create ManagedModule instance for {base} '
                                        f'module "{module_name}"')
+                    self.log.exception(f'Error message: {e}')
 
         print('> Qudi configuration complete!')
         self.log.info('Qudi configuration complete!')
@@ -290,8 +292,9 @@ class Qudi(QtCore.QObject):
             # Do not crash if a module can not be started
             try:
                 self.module_manager.activate_module(module)
-            except:
+            except Exception as e:
                 self.log.exception(f'Unable to activate autostart module "{module}":')
+                self.log.exception(f'Error message: {e}')
 
     def run(self):
         """
@@ -396,12 +399,14 @@ class Qudi(QtCore.QObject):
             if self.remote_modules_server is not None:
                 try:
                     self.remote_modules_server.stop()
-                except:
+                except Exception as e:
                     self.log.exception('Exception during shutdown of remote modules server:')
+                    self.log.exception(f'Error message: {e}')
             try:
                 self.local_namespace_server.stop()
-            except:
+            except Exception as e:
                 self.log.exception('Error during shutdown of local namespace server:')
+                self.log.exception(f'Error message: {e}')
             QtCore.QCoreApplication.instance().processEvents()
             self.log.info('Deactivating modules...')
             print('> Deactivating modules...')
