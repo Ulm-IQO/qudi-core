@@ -1,4 +1,4 @@
-`index <../index.md>`__
+`index <../index.rst>`__
 
 --------------
 
@@ -88,4 +88,4 @@ sequence for example. You can read more about the qudi kernel on the
 
 --------------
 
-`index <../index.md>`__
+`index <../index.rst>`__

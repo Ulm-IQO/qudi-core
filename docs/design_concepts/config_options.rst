@@ -1,24 +1,24 @@
-`index <../index.md>`__
+`index <../index.rst>`__
 
 --------------
 
 Configuration Options
 =====================
 
-When working with `measurement modules <measurement_modules.md>`__
+When working with `measurement modules <measurement_modules.rst>`__
 (hardware/logic/GUI) you may want to give the user the opportunity to
 statically configure certain aspects of the measurement module.
 
-| `Static configuration <configuration.md>`__ in qudi is generally
+| `Static configuration <configuration.rst>`__ in qudi is generally
   handled via a YAML configuration file that is read and parsed during
   the application startup process.
-| All `measurement modules <measurement_modules.md>`__ included in the
+| All `measurement modules <measurement_modules.rst>`__ included in the
   qudi session are declared in this file (among other things). But apart
   from the mandatory properties you can declare any number of additional
   properties inside the ``options`` property for each measurement
   module.
 | Please refer to the `qudi configuration
-  documentation <configuration.md>`__ for more details on config files.
+  documentation <configuration.rst>`__ for more details on config files.
 
 A measurement module constant that is automatically initialized from the
 qudi configuration is called a “configuration option” or “config
@@ -39,7 +39,7 @@ members and prevent each measurement module to implement their own
 solution, qudi provides the meta object
 ``qudi.core.configoption.ConfigOption``.
 
-When implementing a `measurement module <measurement_modules.md>`__
+When implementing a `measurement module <measurement_modules.rst>`__
 (hardware/logic/GUI) you can simply instantiate ``ConfigOption`` class
 variables. These meta objects will be transformed into regular variable
 members of your measurement module instances and can be used like any
@@ -191,4 +191,4 @@ decorator. But this is not necessary and just good style.
 
 --------------
 
-`index <../index.md>`__
+`index <../index.rst>`__

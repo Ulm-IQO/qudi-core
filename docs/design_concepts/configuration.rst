@@ -1,4 +1,4 @@
-`index <../index.md>`__
+`index <../index.rst>`__
 
 --------------
 
@@ -288,7 +288,7 @@ is called ``MyModuleClass`` and can be imported from
 
 | In order to interface different modules with each other, qudi modules
   are employing a meta-object called a ``Connector`` (`more details
-  here <connectors.md>`__).
+  here <connectors.rst>`__).
 | If the logic module in our example needs to be connected to other
   modules (logic or hardware), you have to specify this in the module
   configuration as well. The modules to connect to are addressed by
@@ -304,7 +304,7 @@ is called ``MyModuleClass`` and can be imported from
 
 | Now in order to configure static variables in the module configuration
   qudi modules use ``ConfigOption`` meta-objects (`more details
-  here <config_options.md>`__).
+  here <config_options.rst>`__).
 | If the logic module in our example needs to have options configured,
   you have to specify this in the module configuration as well. The name
   of the config option is determined by the respective ``ConfigOption``
@@ -406,4 +406,4 @@ in two different ways:
 
 --------------
 
-`index <../index.md>`__
+`index <../index.rst>`__

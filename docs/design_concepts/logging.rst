@@ -1,4 +1,4 @@
-`index <../index.md>`__
+`index <../index.rst>`__
 
 --------------
 
@@ -125,7 +125,7 @@ qudi Measurement Modules
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
 The base class of any `qudi measurement
-module <measurement_modules.md>`__ already provides you with an
+module <measurement_modules.rst>`__ already provides you with an
 appropriate ``Logger`` object that can be accessed with the ``log``
 property:
 
@@ -174,4 +174,4 @@ documentation <https://docs.python.org/3/library/logging.html>`__:
 
 --------------
 
-`index <../index.md>`__
+`index <../index.rst>`__

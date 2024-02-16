@@ -43,7 +43,7 @@ Client
            port: port_of_remote_hardware_server(int)
 
 For a more elaborate explanation refer to the `configuration
-documentation <https://github.com/Ulm-IQO/qudi-core/blob/main/docs/design_concepts/configuration.md>`__.
+documentation <https://github.com/Ulm-IQO/qudi-core/blob/main/docs/design_concepts/configuration.rst>`__.
 Moreover, subsequent processing of python objects in a corresponding
 logic on the client side may need a preliminary netobtain, which migth
 look like this:

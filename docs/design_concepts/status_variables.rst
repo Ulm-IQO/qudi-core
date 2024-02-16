@@ -1,11 +1,11 @@
-`index <../index.md>`__
+`index <../index.rst>`__
 
 --------------
 
 Status Variables
 ================
 
-When working with `measurement modules <measurement_modules.md>`__
+When working with `measurement modules <measurement_modules.rst>`__
 (hardware/logic/GUI) you may want to preserve some variable values
 across consecutive runs of qudi.
 
@@ -50,7 +50,7 @@ to/from disk and prevent each measurement module to implement their own
 solution, qudi provides the meta object
 ``qudi.core.statusvariable.StatusVar``.
 
-When implementing a `measurement module <measurement_modules.md>`__
+When implementing a `measurement module <measurement_modules.rst>`__
 (hardware/logic/GUI) you can simply instantiate ``StatusVar`` class
 variables. These meta objects will be transformed into regular variable
 members of your measurement module instances and can be used like any
@@ -147,4 +147,4 @@ name
 
 --------------
 
-`index <../index.md>`__
+`index <../index.rst>`__

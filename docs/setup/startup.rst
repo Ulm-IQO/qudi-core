@@ -1,4 +1,4 @@
-`index <../index.md>`__
+`index <../index.rst>`__
 
 --------------
 
@@ -6,7 +6,7 @@ Starting qudi
 =============
 
 If you have followed the `installation
-instructions <installation.md>`__, the easiest way of running qudi is by
+instructions <installation.rst>`__, the easiest way of running qudi is by
 command line (do not forget to activate the Python environment
 beforehand):
 
@@ -65,4 +65,4 @@ command line arguments:
 
 --------------
 
-`index <../index.md>`__
+`index <../index.rst>`__
