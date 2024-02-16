@@ -24,14 +24,15 @@ import importlib
 import copy
 import weakref
 
-from typing import FrozenSet, Iterable
+from typing import FrozenSet
 from functools import partial
 from PySide2 import QtCore
 
 from qudi.util.mutex import RecursiveMutex   # provides access serialization between threads
+from qudi.util.paths import get_module_appdata_path
 from qudi.core.logger import get_logger
 from qudi.core.servers import get_remote_module_instance
-from qudi.core.module import Base, get_module_app_data_path, ModuleStateError
+from qudi.core.module import Base, ModuleStateError
 
 logger = get_logger(__name__)
 
@@ -331,7 +332,7 @@ class ManagedModule(QtCore.QObject):
 
     @property
     def status_file_path(self):
-        return get_module_app_data_path(self.class_name, self.module_base, self.name)
+        return get_module_appdata_path(self.class_name, self.module_base, self.name)
 
     @property
     def is_loaded(self):

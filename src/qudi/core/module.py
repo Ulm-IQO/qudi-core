@@ -20,18 +20,15 @@ If not, see <https://www.gnu.org/licenses/>.
 """
 
 import os
-import copy
 import warnings
 from abc import abstractmethod
 from enum import Enum
 from uuid import uuid4, UUID
 from PySide2 import QtCore, QtGui, QtWidgets
-from typing import Any, Mapping, Optional, Callable, Union, Dict, Final, MutableMapping, final
+from typing import Any, Mapping, Optional, Union, Dict, Final, MutableMapping, final
 
-from qudi.core.configoption import MissingAction
 from qudi.core.statusvariable import StatusVar
-from qudi.util.paths import get_module_app_data_path, get_daily_directory, get_default_data_dir
-from qudi.util.yaml import yaml_load, yaml_dump
+from qudi.util.paths import get_module_appdata_path, get_daily_directory, get_default_data_dir
 from qudi.core.object import QudiObject
 from qudi.core.logger import get_logger
 from qudi.util.helpers import current_is_native_thread
@@ -294,9 +291,9 @@ class Base(QudiObject):
         super().__init__(
             options=options,
             connections=connections,
-            appdata_filepath=get_module_app_data_path(self.__class__.__name__,
-                                                      self.module_base.value,
-                                                      name),
+            appdata_filepath=get_module_appdata_path(self.__class__.__name__,
+                                                     self.module_base.value,
+                                                     name),
             logger_nametag=name,
             uuid=uuid
         )
@@ -354,12 +351,14 @@ class Base(QudiObject):
         data_root = config['default_data_dir']
         if data_root is None:
             data_root = get_default_data_dir()
+        data_root = os.path.expanduser(data_root)
         if config['daily_data_dirs']:
             data_dir = os.path.join(get_daily_directory(root=data_root), self.module_name)
         else:
             data_dir = os.path.join(data_root, self.module_name)
         return data_dir
 
+    @final
     def _send_balloon_message(self,
                               title: str,
                               message: str,
@@ -371,6 +370,7 @@ class Base(QudiObject):
             return
         self.__qudi_main.gui.balloon_message(title, message, time, icon)
 
+    @final
     def _send_pop_up_message(self, title: str, message: str) -> None:
         if self.__qudi_main.gui is None:
             log = get_logger('pop-up-message')
@@ -392,13 +392,15 @@ class Base(QudiObject):
 
 
 class LogicBase(Base):
+    """ Base class for all qudi logic modules. Logic module implementations must inherit this.
+    Runs its own thread with a Qt event loop, so setting "_threaded = False" is NOT allowed.
     """
-    """
-    _threaded: bool = True
+    _threaded: Final[bool] = True
 
 
 class GuiBase(Base):
-    """ This is the GUI base class. It provides functions that every GUI module should have.
+    """ This is the base class for all qudi GUI modules. GUI modules always run in the main Qt
+    event loop, so setting "_threaded = True" is NOT allowed.
     """
     _threaded: Final[bool] = False
 

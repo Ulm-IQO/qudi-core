@@ -21,11 +21,12 @@ ToDo: Throw errors around for non-existent directories
 
 __all__ = ['get_appdata_dir', 'get_default_config_dir', 'get_default_log_dir',
            'get_default_data_dir', 'get_daily_directory', 'get_home_dir', 'get_main_dir',
-           'get_userdata_dir', 'get_artwork_dir', 'get_module_app_data_path']
+           'get_userdata_dir', 'get_artwork_dir', 'get_module_appdata_path']
 
 import datetime
 import os
 import sys
+import warnings
 from typing import Optional
 
 
@@ -154,8 +155,19 @@ def get_daily_directory(timestamp: Optional[datetime.datetime] = None, root: Opt
     return daily_path
 
 
+def get_module_appdata_path(cls_name: str, module_base: str, module_name: str) -> str:
+    """ Constructs the appData file path for the given qudi module """
+    assert cls_name and module_name and module_base, 'empty strings encountered'
+    return os.path.join(get_appdata_dir(create_missing=True),
+                        f'status-{module_base.lower()}-{cls_name}-{module_name}.cfg')
+
+
 def get_module_app_data_path(cls_name: str, module_base: str, module_name: str) -> str:
-    """ Constructs the appData file path for the given qudi module
-    """
-    file_name = f'status-{cls_name}_{module_base}_{module_name}.cfg'
-    return os.path.join(get_appdata_dir(), file_name)
+    """ Deprecated """
+    warnings.warn(
+        'qudi.util.paths.get_module_app_data_path has been deprecated. Use '
+        'qudi.util.paths.get_module_appdata_path instead.',
+        DeprecationWarning,
+        stacklevel=2
+    )
+    return get_module_appdata_path(cls_name, module_base, module_name)

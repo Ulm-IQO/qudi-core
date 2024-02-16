@@ -32,9 +32,13 @@ acquisition with a timeout
 `current_is_main_thread` to `qudi.util.helpers` for easy handling of `QObject` thread affinity
 - Added `qudi.util.yaml.YamlFileHandler` helper object to easily dump/load/clear/check a qudi 
 status file
+- Global config option `default_data_dir` accepts strings with a leading `~` character to be 
+expanded into the current users home directory
 
 ### Other
 - Deprecated calling `qudi.core.module.Base.module_state` and `Connector` meta attributes.
+- Deprecated `qudi.util.paths.get_module_app_data_path` in favor of 
+`qudi.util.paths.get_module_appdata_path`
 
 
 ## Version 1.5.0
