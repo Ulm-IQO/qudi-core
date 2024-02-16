@@ -15,12 +15,12 @@ jobs:
           python -m pip install --upgrade pip
           pip install -e ".[dev-docs]"
       - name: Lint with Ruff
-        run: ruff --output-format=json-lines . >> lint.json
+        run: ruff --output-format=json-lines . >> $GITHUB_WORKSPACE/lint.json
         # run: ruff --output-format=json-lines . >> $GITHUB_STEP_SUMMARY
         # continue-on-error: true
       - name: Upload test report
         uses: actions/upload-artifact@v4
         with:
           name: ruff-lint-report
-          path: ~/lint.json
+          path: $GITHUB_WORKSPACE/lint.json
         if: ${{ always() }}
