@@ -15,5 +15,5 @@ jobs:
           pip install -e ".[dev-docs]"
       - name: Lint with Ruff
         run: |
-          ruff check . --output-format=github .
+          ruff --output-format=github check .
         continue-on-error: true
