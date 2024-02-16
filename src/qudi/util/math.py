@@ -19,7 +19,7 @@ You should have received a copy of the GNU Lesser General Public License along w
 If not, see <https://www.gnu.org/licenses/>.
 """
 
-__all__ = ('compute_ft', 'ft_windows')
+__all__ = ("compute_ft", "ft_windows")
 
 import numpy as np
 from scipy import signal
@@ -31,22 +31,23 @@ from scipy import signal
 # constant offset factor will remain):
 #     MM=1000000  # choose a big number
 #     print(sum(signal.hanning(MM))/MM)
-ft_windows = {'none': {'func': np.ones, 'ampl_norm': 1.0},
-              'hamming': {'func': signal.hamming, 'ampl_norm': 1.0/0.54},
-              'hann': {'func': signal.hann, 'ampl_norm': 1.0/0.5},
-              'blackman': {'func': signal.blackman, 'ampl_norm': 1.0/0.42},
-              'triang': {'func': signal.triang, 'ampl_norm': 1.0/0.5},
-              'flattop': {'func': signal.flattop, 'ampl_norm': 1.0/0.2156},
-              'bartlett': {'func': signal.bartlett, 'ampl_norm': 1.0/0.5},
-              'parzen': {'func': signal.parzen, 'ampl_norm': 1.0/0.375},
-              'bohman': {'func': signal.bohman, 'ampl_norm': 1.0/0.4052847},
-              'blackmanharris': {'func': signal.blackmanharris, 'ampl_norm': 1.0/0.35875},
-              'nuttall': {'func': signal.nuttall, 'ampl_norm': 1.0/0.3635819},
-              'barthann': {'func': signal.barthann, 'ampl_norm': 1.0/0.5}
-              }
+ft_windows = {
+    "none": {"func": np.ones, "ampl_norm": 1.0},
+    "hamming": {"func": signal.hamming, "ampl_norm": 1.0 / 0.54},
+    "hann": {"func": signal.hann, "ampl_norm": 1.0 / 0.5},
+    "blackman": {"func": signal.blackman, "ampl_norm": 1.0 / 0.42},
+    "triang": {"func": signal.triang, "ampl_norm": 1.0 / 0.5},
+    "flattop": {"func": signal.flattop, "ampl_norm": 1.0 / 0.2156},
+    "bartlett": {"func": signal.bartlett, "ampl_norm": 1.0 / 0.5},
+    "parzen": {"func": signal.parzen, "ampl_norm": 1.0 / 0.375},
+    "bohman": {"func": signal.bohman, "ampl_norm": 1.0 / 0.4052847},
+    "blackmanharris": {"func": signal.blackmanharris, "ampl_norm": 1.0 / 0.35875},
+    "nuttall": {"func": signal.nuttall, "ampl_norm": 1.0 / 0.3635819},
+    "barthann": {"func": signal.barthann, "ampl_norm": 1.0 / 0.5},
+}
 
 
-def compute_ft(x_val, y_val, zeropad_num=0, window='none', base_corr=True, psd=False):
+def compute_ft(x_val, y_val, zeropad_num=0, window="none", base_corr=True, psd=False):
     """Compute the Discrete fourier Transform of the power spectral density
 
     @param numpy.array x_val: 1D array
@@ -105,14 +106,14 @@ def compute_ft(x_val, y_val, zeropad_num=0, window='none', base_corr=True, psd=F
     ampl_norm_fact = 1.0
     # apply window to data to account for spectral leakage:
     if window in ft_windows:
-        window_val = ft_windows[window]['func'](len(y_val))
+        window_val = ft_windows[window]["func"](len(y_val))
         corrected_y = corrected_y * window_val
         # to get the correct amplitude in the amplitude spectrum
-        ampl_norm_fact = ft_windows[window]['ampl_norm']
+        ampl_norm_fact = ft_windows[window]["ampl_norm"]
 
     # zeropad for sinc interpolation:
-    zeropad_arr = np.zeros(len(corrected_y)*(zeropad_num+1))
-    zeropad_arr[:len(corrected_y)] = corrected_y
+    zeropad_arr = np.zeros(len(corrected_y) * (zeropad_num + 1))
+    zeropad_arr[: len(corrected_y)] = corrected_y
 
     # Get the amplitude values from the fourier transformed y values.
     fft_y = np.abs(np.fft.fft(zeropad_arr))
@@ -125,12 +126,12 @@ def compute_ft(x_val, y_val, zeropad_num=0, window='none', base_corr=True, psd=F
     # The factor 2 accounts for the fact that just the half of the spectrum was taken. The
     # ampl_norm_fact is the normalization factor due to the applied window function (the offset
     # value in the window function):
-    fft_y = ((2/len(y_val)) * fft_y * ampl_norm_fact)**power_value
+    fft_y = ((2 / len(y_val)) * fft_y * ampl_norm_fact) ** power_value
 
     # Due to the sampling theorem you can only identify frequencies at half of the sample rate,
     # therefore the FT contains an almost symmetric spectrum (the asymmetry results from aliasing
     # effects). Therefore take the half of the values for the display.
-    middle = int((len(zeropad_arr)+1)//2)
+    middle = int((len(zeropad_arr) + 1) // 2)
 
     # sample spacing of x_axis, if x is a time axis than it corresponds to a timestep:
     x_spacing = np.round(x_val[-1] - x_val[-2], 12)
@@ -140,12 +141,12 @@ def compute_ft(x_val, y_val, zeropad_num=0, window='none', base_corr=True, psd=F
     fft_x = np.fft.fftfreq(len(zeropad_arr), d=x_spacing)
     return abs(fft_x[:middle]), fft_y[:middle]
 
-def normalize(arr:np.ndarray, axis=-1, order=2)->np.ndarray:
+
+def normalize(arr: np.ndarray, axis=-1, order=2) -> np.ndarray:
     """
     Taken from stack overflow
     https://stackoverflow.com/questions/21030391/how-to-normalize-a-numpy-array-to-a-unit-vector
     """
     l2 = np.atleast_1d(np.linalg.norm(arr, order, axis))
-    l2[l2==0] = 1
+    l2[l2 == 0] = 1
     return arr / np.expand_dims(l2, axis)
-

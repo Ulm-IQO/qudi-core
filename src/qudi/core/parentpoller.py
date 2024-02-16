@@ -21,7 +21,7 @@ You should have received a copy of the GNU Lesser General Public License along w
 If not, see <https://www.gnu.org/licenses/>.
 """
 
-__all__ = ['ParentPollerUnix', 'ParentPollerWindows']
+__all__ = ["ParentPollerUnix", "ParentPollerWindows"]
 
 import ctypes
 import os
@@ -34,35 +34,35 @@ logger = logging.getLogger(__name__)
 
 
 class ParentPollerUnix(Thread):
-    """ A Unix-specific daemon thread that terminates the program immediately
+    """A Unix-specific daemon thread that terminates the program immediately
     when the parent process no longer exists.
     """
 
     def __init__(self, quit_function=None):
-        """ Create the parentpoller.
+        """Create the parentpoller.
 
-            @param callable quitfunction: function to run before exiting
+        @param callable quitfunction: function to run before exiting
         """
         if quit_function is None:
             pass
         elif not callable(quit_function):
-            raise TypeError('argument quit_function must be a callable.')
+            raise TypeError("argument quit_function must be a callable.")
         super().__init__()
         self.daemon = True
         self.quit_function = quit_function
 
     def run(self):
-        """ Run the parentpoller.
-        """
+        """Run the parentpoller."""
         # We cannot use os.waitpid because it works only for child processes.
         from errno import EINTR
+
         while True:
             try:
                 if os.getppid() == 1:
                     if self.quit_function is None:
-                        logger.critical('Parent process died!')
+                        logger.critical("Parent process died!")
                     else:
-                        logger.critical('Parent process died! Qudi shutting down...')
+                        logger.critical("Parent process died! Qudi shutting down...")
                         self.quit_function()
                     return
             except OSError as e:
@@ -73,12 +73,12 @@ class ParentPollerUnix(Thread):
 
 
 class ParentPollerWindows(Thread):
-    """ A Windows-specific daemon thread that listens for a special event that signals an interrupt
+    """A Windows-specific daemon thread that listens for a special event that signals an interrupt
     and, optionally, terminates the program immediately when the parent process no longer exists.
     """
 
     def __init__(self, parent_handle, quit_function=None):
-        """ Create the parent poller.
+        """Create the parent poller.
 
         @param callable quit_function: Function to call for shutdown if parent process is dead.
         @param int parent_handle: The program will terminate immediately when this handle is
@@ -87,7 +87,7 @@ class ParentPollerWindows(Thread):
         if quit_function is None:
             pass
         elif not callable(quit_function):
-            raise TypeError('argument quit_function must be a callable.')
+            raise TypeError("argument quit_function must be a callable.")
         super().__init__()
         self.daemon = True
         self.quit_function = quit_function
@@ -95,8 +95,7 @@ class ParentPollerWindows(Thread):
         self._stop_requested = False
 
     def run(self):
-        """ Run the poll loop. This method never returns.
-        """
+        """Run the poll loop. This method never returns."""
         try:
             from _winapi import WAIT_OBJECT_0, INFINITE
         except ImportError:
@@ -105,7 +104,7 @@ class ParentPollerWindows(Thread):
         # Build the list of handle to listen on.
         handle_list = [self.parent_handle]
         arch = platform.architecture()[0]
-        c_int = ctypes.c_int64 if arch.startswith('64') else ctypes.c_int
+        c_int = ctypes.c_int64 if arch.startswith("64") else ctypes.c_int
 
         # Listen forever.
         while True:
@@ -114,10 +113,11 @@ class ParentPollerWindows(Thread):
                 return
 
             result = ctypes.windll.kernel32.WaitForMultipleObjects(
-                len(handle_list),                           # nCount
-                (c_int * len(handle_list))(*handle_list),   # lpHandles
-                False,                                      # bWaitAll
-                1000)                                       # dwMilliseconds
+                len(handle_list),  # nCount
+                (c_int * len(handle_list))(*handle_list),  # lpHandles
+                False,  # bWaitAll
+                1000,
+            )  # dwMilliseconds
 
             if result >= len(handle_list):
                 # Nothing happened. Probably timed out.
@@ -130,9 +130,9 @@ class ParentPollerWindows(Thread):
                 handle = handle_list[result - WAIT_OBJECT_0]
                 if handle == self.parent_handle:
                     if self.quit_function is None:
-                        logger.critical('Parent process died!')
+                        logger.critical("Parent process died!")
                     else:
-                        logger.critical('Parent process died! Qudi shutting down...')
+                        logger.critical("Parent process died! Qudi shutting down...")
                         self.quit_function()
                     return
 

@@ -41,19 +41,21 @@ class TaskMainWindow(QtWidgets.QMainWindow):
     def __init__(self, *args, tasks: Mapping[str, Type[ModuleTask]], **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.setWindowTitle('qudi: Taskrunner')
+        self.setWindowTitle("qudi: Taskrunner")
 
         # Create actions
-        icon_path = os.path.join(get_artwork_dir(), 'icons')
+        icon_path = os.path.join(get_artwork_dir(), "icons")
         self.action_quit = QtWidgets.QAction()
-        self.action_quit.setIcon(QtGui.QIcon(os.path.join(icon_path, 'application-exit')))
-        self.action_quit.setText('Close')
-        self.action_quit.setToolTip('Close')
+        self.action_quit.setIcon(
+            QtGui.QIcon(os.path.join(icon_path, "application-exit"))
+        )
+        self.action_quit.setText("Close")
+        self.action_quit.setToolTip("Close")
         self.action_quit.triggered.connect(self.close)
 
         # Create menu bar
         self.menubar = QtWidgets.QMenuBar()
-        menu = QtWidgets.QMenu('File')
+        menu = QtWidgets.QMenu("File")
         menu.addAction(self.action_quit)
         self.menubar.addMenu(menu)
         self.setMenuBar(self.menubar)
@@ -107,12 +109,14 @@ class TaskMainWindow(QtWidgets.QMainWindow):
             layout.addWidget(widget)
             groupbox.setLayout(layout)
             widget.sigStartTask.connect(self._get_start_task_callback(task_name))
-            widget.sigInterruptTask.connect(self._get_interrupt_task_callback(task_name))
+            widget.sigInterruptTask.connect(
+                self._get_interrupt_task_callback(task_name)
+            )
             self.tasks_layout.addWidget(groupbox)
             self.task_widgets[task_name] = widget
 
     def _clear_task_widgets(self) -> None:
-        """ Helper method to disconnect and delete all TaskWidgets and remove them from layout """
+        """Helper method to disconnect and delete all TaskWidgets and remove them from layout"""
         for widget in reversed(self.task_widgets):
             groupbox = widget.parent()
             widget.sigStartTask.disconnect()
@@ -122,15 +126,15 @@ class TaskMainWindow(QtWidgets.QMainWindow):
             groupbox.deleteLater()
         self.task_widgets = dict()
 
-    def _get_start_task_callback(self, task_name: str) -> Callable[[Dict[str, Any]], None]:
-
+    def _get_start_task_callback(
+        self, task_name: str
+    ) -> Callable[[Dict[str, Any]], None]:
         def callback(parameters: Dict[str, Any]) -> None:
             self.sigStartTask.emit(task_name, parameters)
 
         return callback
 
     def _get_interrupt_task_callback(self, task_name: str) -> Callable[[], None]:
-
         def callback() -> None:
             self.sigInterruptTask.emit(task_name)
 

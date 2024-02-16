@@ -19,15 +19,14 @@ You should have received a copy of the GNU Lesser General Public License along w
 If not, see <https://www.gnu.org/licenses/>.
 """
 
-__all__ = ['netobtain']
+__all__ = ["netobtain"]
 
 import rpyc.core.netref as _netref
 import rpyc.utils.classic as _classic
 
 
 def netobtain(obj):
-    """
-    """
+    """ """
     if isinstance(obj, _netref.BaseNetref):
         return _classic.obtain(obj)
     return obj

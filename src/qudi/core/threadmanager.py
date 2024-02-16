@@ -30,10 +30,11 @@ logger = get_logger(__name__)
 
 
 class ThreadManager(QtCore.QAbstractListModel):
-    """ This class keeps track of all the QThreads that are needed somewhere.
+    """This class keeps track of all the QThreads that are needed somewhere.
 
     Using this class is thread-safe.
     """
+
     _instance = None
     _lock = RecursiveMutex()
 
@@ -44,8 +45,8 @@ class ThreadManager(QtCore.QAbstractListModel):
                 cls._instance = weakref.ref(obj)
                 return obj
             raise RuntimeError(
-                'Only one ThreadManager instance per process possible (Singleton). Please use '
-                'ThreadManager.instance() to get a reference to the already created instance.'
+                "Only one ThreadManager instance per process possible (Singleton). Please use "
+                "ThreadManager.instance() to get a reference to the already created instance."
             )
 
     def __init__(self, *args, **kwargs):
@@ -66,7 +67,7 @@ class ThreadManager(QtCore.QAbstractListModel):
             return self._thread_names.copy()
 
     def get_new_thread(self, name):
-        """ Create and return a new QThread with objectName <name>
+        """Create and return a new QThread with objectName <name>
 
         @param str name: unique name of thread
 
@@ -83,7 +84,7 @@ class ThreadManager(QtCore.QAbstractListModel):
 
     @QtCore.Slot(QtCore.QThread)
     def register_thread(self, thread):
-        """ Add QThread to ThreadManager.
+        """Add QThread to ThreadManager.
 
         @param QtCore.QThread thread: thread to register with unique objectName
         """
@@ -101,12 +102,13 @@ class ThreadManager(QtCore.QAbstractListModel):
             self._threads.append(thread)
             self._thread_names.append(name)
             thread.finished.connect(
-                partial(self.unregister_thread, name=name), QtCore.Qt.QueuedConnection)
+                partial(self.unregister_thread, name=name), QtCore.Qt.QueuedConnection
+            )
             self.endInsertRows()
 
     @QtCore.Slot(object)
     def unregister_thread(self, name):
-        """ Remove thread from ThreadManager.
+        """Remove thread from ThreadManager.
 
         @param str name: unique thread name
         """
@@ -118,7 +120,7 @@ class ThreadManager(QtCore.QAbstractListModel):
                 if self._threads[index].isRunning():
                     self.quit_thread(name)
                     return
-                logger.debug('Cleaning up thread {0}.'.format(name))
+                logger.debug("Cleaning up thread {0}.".format(name))
                 self.beginRemoveRows(QtCore.QModelIndex(), index, index)
                 del self._threads[index]
                 del self._thread_names[index]
@@ -126,7 +128,7 @@ class ThreadManager(QtCore.QAbstractListModel):
 
     @QtCore.Slot(object)
     def quit_thread(self, name):
-        """ Stop event loop of QThread.
+        """Stop event loop of QThread.
 
         @param str name: unique thread name
         """
@@ -136,14 +138,16 @@ class ThreadManager(QtCore.QAbstractListModel):
             else:
                 thread = self.get_thread_by_name(name)
             if thread is None:
-                logger.debug('You tried quitting a nonexistent thread {0}.'.format(name))
+                logger.debug(
+                    "You tried quitting a nonexistent thread {0}.".format(name)
+                )
             else:
-                logger.debug('Quitting thread {0}.'.format(name))
+                logger.debug("Quitting thread {0}.".format(name))
                 thread.quit()
 
     @QtCore.Slot(object, int)
     def join_thread(self, name, time=None):
-        """ Wait for stop of QThread event loop.
+        """Wait for stop of QThread event loop.
 
         @param str name: unique thread name
         @param int time: timeout for waiting in msec
@@ -154,9 +158,11 @@ class ThreadManager(QtCore.QAbstractListModel):
             else:
                 thread = self.get_thread_by_name(name)
             if thread is None:
-                logger.debug('You tried waiting for a nonexistent thread {0}.'.format(name))
+                logger.debug(
+                    "You tried waiting for a nonexistent thread {0}.".format(name)
+                )
             else:
-                logger.debug('Waiting for thread {0} to end.'.format(name))
+                logger.debug("Waiting for thread {0} to end.".format(name))
                 if time is None:
                     thread.wait()
                 else:
@@ -164,17 +170,18 @@ class ThreadManager(QtCore.QAbstractListModel):
 
     @QtCore.Slot(int)
     def quit_all_threads(self, thread_timeout=10000):
-        """ Stop event loop of all QThreads.
-        """
+        """Stop event loop of all QThreads."""
         with self._lock:
-            logger.debug('Quit all threads.')
+            logger.debug("Quit all threads.")
             for thread in self._threads:
                 thread.quit()
                 if not thread.wait(int(thread_timeout)):
-                    logger.error('Waiting for thread {0} timed out.'.format(thread.objectName()))
+                    logger.error(
+                        "Waiting for thread {0} timed out.".format(thread.objectName())
+                    )
 
     def get_thread_by_name(self, name):
-        """ Get registered QThread instance by its objectName
+        """Get registered QThread instance by its objectName
 
         @param str name: objectName of the QThread to return
         @return QThread: The registered thread object
@@ -206,8 +213,12 @@ class ThreadManager(QtCore.QAbstractListModel):
 
         @return str: header data for given column/row and role
         """
-        if role == QtCore.Qt.DisplayRole and orientation == QtCore.Qt.Horizontal and section == 0:
-            return 'Thread Name'
+        if (
+            role == QtCore.Qt.DisplayRole
+            and orientation == QtCore.Qt.Horizontal
+            and section == 0
+        ):
+            return "Thread Name"
         return None
 
     def data(self, index, role):
@@ -221,16 +232,20 @@ class ThreadManager(QtCore.QAbstractListModel):
         """
         with self._lock:
             row = index.row()
-            if index.isValid() and role == QtCore.Qt.DisplayRole and 0 <= row < len(self._threads):
+            if (
+                index.isValid()
+                and role == QtCore.Qt.DisplayRole
+                and 0 <= row < len(self._threads)
+            ):
                 if index.column() == 0:
                     return self._thread_names[row]
             return None
 
     def flags(self, index):
-        """ Determines what can be done with entry cells in the table view.
+        """Determines what can be done with entry cells in the table view.
 
-          @param QModelIndex index: cell fo which the flags are requested
+        @param QModelIndex index: cell fo which the flags are requested
 
-          @return Qt.ItemFlags: actins allowed fotr this cell
+        @return Qt.ItemFlags: actins allowed fotr this cell
         """
         return QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable

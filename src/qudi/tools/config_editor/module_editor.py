@@ -20,7 +20,7 @@ You should have received a copy of the GNU Lesser General Public License along w
 If not, see <https://www.gnu.org/licenses/>.
 """
 
-__all__ = ['ModuleEditorWidget']
+__all__ = ["ModuleEditorWidget"]
 
 from PySide2 import QtCore, QtWidgets
 from typing import Optional, Mapping, Dict, Union, Any
@@ -31,15 +31,13 @@ from qudi.tools.config_editor.module_widgets import RemoteModuleConfigWidget
 
 
 class ModuleEditorWidget(QtWidgets.QStackedWidget):
-    """
-    """
+    """ """
 
     sigModuleRenamed = QtCore.Signal(str)
 
-    def __init__(self,
-                 qudi_modules: QudiModules,
-                 parent: Optional[QtWidgets.QWidget] = None
-                 ) -> None:
+    def __init__(
+        self, qudi_modules: QudiModules, parent: Optional[QtWidgets.QWidget] = None
+    ) -> None:
         super().__init__(parent=parent)
         self.setFrameShape(QtWidgets.QFrame.Shape.StyledPanel)
 
@@ -47,15 +45,16 @@ class ModuleEditorWidget(QtWidgets.QStackedWidget):
         self._qudi_modules = qudi_modules
 
         self.placeholder_label = QtWidgets.QLabel(
-            'Please select a module to configure from the tree view.'
+            "Please select a module to configure from the tree view."
         )
         font = self.placeholder_label.font()
         font.setBold(True)
         font.setPointSize(font.pointSize() + 4)
         self.placeholder_label.setFont(font)
         self.placeholder_label.setAlignment(QtCore.Qt.AlignCenter)
-        self.placeholder_label.setSizePolicy(QtWidgets.QSizePolicy.Expanding,
-                                             QtWidgets.QSizePolicy.Expanding)
+        self.placeholder_label.setSizePolicy(
+            QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding
+        )
         self.addWidget(self.placeholder_label)
 
         self._editor_layout = QtWidgets.QVBoxLayout()
@@ -64,10 +63,10 @@ class ModuleEditorWidget(QtWidgets.QStackedWidget):
         # Module name editor
         sub_layout = QtWidgets.QHBoxLayout()
         sub_layout.setStretch(1, 1)
-        label = QtWidgets.QLabel('* Module Name:')
+        label = QtWidgets.QLabel("* Module Name:")
         label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
         self.module_name_lineedit = QtWidgets.QLineEdit()
-        self.module_name_lineedit.setPlaceholderText('Enter locally unique module name')
+        self.module_name_lineedit.setPlaceholderText("Enter locally unique module name")
         self.module_name_lineedit.setFont(font)
         self.module_name_lineedit.textChanged.connect(self.sigModuleRenamed)
         sub_layout.addWidget(label)
@@ -107,40 +106,46 @@ class ModuleEditorWidget(QtWidgets.QStackedWidget):
         finally:
             self.module_name_lineedit.blockSignals(False)
 
-    def open_remote_module(self,
-                           name: Optional[str] = None,
-                           config: Optional[Mapping[str, Union[str, None]]] = None
-                           ) -> None:
+    def open_remote_module(
+        self,
+        name: Optional[str] = None,
+        config: Optional[Mapping[str, Union[str, None]]] = None,
+    ) -> None:
         if self._current_editor is not None:
             self.close_editor()
 
         self._current_editor = RemoteModuleConfigWidget(config=config)
         self._editor_layout.addWidget(self._current_editor)
-        self.set_module_name(name if name else '')
+        self.set_module_name(name if name else "")
         self.setCurrentIndex(1)
 
-    def open_local_module(self,
-                          module_class: str,
-                          named_modules: Mapping[str, str],
-                          name: Optional[str] = None,
-                          config: Optional[Dict[str, Union[str, bool, Dict[str, str], Dict[str, Any]]]] = None,
-                          ) -> None:
+    def open_local_module(
+        self,
+        module_class: str,
+        named_modules: Mapping[str, str],
+        name: Optional[str] = None,
+        config: Optional[
+            Dict[str, Union[str, bool, Dict[str, str], Dict[str, Any]]]
+        ] = None,
+    ) -> None:
         if self._current_editor is not None:
             self.close_editor()
 
         connectors = self._qudi_modules.module_connectors(module_class)
         config_options = self._qudi_modules.module_config_options(module_class)
-        valid_connector_targets = self._qudi_modules.module_connector_targets(module_class)
+        valid_connector_targets = self._qudi_modules.module_connector_targets(
+            module_class
+        )
         self._current_editor = LocalModuleConfigWidget(
             module_class=module_class,
             config_options=config_options,
             connectors=connectors,
             valid_connector_targets=valid_connector_targets,
             named_modules=named_modules,
-            config=config
+            config=config,
         )
         self._editor_layout.addWidget(self._current_editor)
-        self.set_module_name(name if name else '')
+        self.set_module_name(name if name else "")
         self.setCurrentIndex(1)
 
     def close_editor(self):

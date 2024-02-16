@@ -19,7 +19,7 @@ You should have received a copy of the GNU Lesser General Public License along w
 If not, see <https://www.gnu.org/licenses/>.
 """
 
-__all__ = ('ABCQObjectMeta', 'ModuleMeta', 'QObjectMeta', 'QudiObjectMeta')
+__all__ = ("ABCQObjectMeta", "ModuleMeta", "QObjectMeta", "QudiObjectMeta")
 
 from abc import ABCMeta
 from PySide2.QtCore import QObject
@@ -32,30 +32,31 @@ QObjectMeta = type(QObject)
 
 
 class ABCQObjectMeta(ABCMeta, QObjectMeta):
-    """ Metaclass for abstract QObject subclasses.
-    """
+    """Metaclass for abstract QObject subclasses."""
 
     def __new__(mcs, name, bases, attributes):
         cls = super(ABCQObjectMeta, mcs).__new__(mcs, name, bases, attributes)
         # Compute set of abstract method names
         abstracts = {
-            attr_name for attr_name, attr in attributes.items() if \
-            getattr(attr, '__isabstractmethod__', False)
+            attr_name
+            for attr_name, attr in attributes.items()
+            if getattr(attr, "__isabstractmethod__", False)
         }
         for base in bases:
-            for attr_name in getattr(base, '__abstractmethods__', set()):
+            for attr_name in getattr(base, "__abstractmethods__", set()):
                 attr = getattr(cls, attr_name, None)
-                if getattr(attr, '__isabstractmethod__', False):
+                if getattr(attr, "__isabstractmethod__", False):
                     abstracts.add(attr_name)
         cls.__abstractmethods__ = frozenset(abstracts)
         return cls
 
 
 class QudiObjectMeta(ABCQObjectMeta):
-    """ General purpose metaclass for abstract QObject subclasses that include qudi meta objects
+    """General purpose metaclass for abstract QObject subclasses that include qudi meta objects
     (Connector, StatusVar, ConfigOption).
     Collects all meta objects in new "_meta" class variable for easier access.
     """
+
     def __new__(mcs, name, bases, attributes):
         cls = super().__new__(mcs, name, bases, attributes)
 
@@ -74,30 +75,33 @@ class QudiObjectMeta(ABCQObjectMeta):
                 status_vars[attr_name] = attr
             elif isinstance(attr, ConfigOption):
                 config_opt[attr_name] = attr
-        meta.update({'connectors'      : connectors,
-                     'status_variables': status_vars,
-                     'config_options'  : config_opt})
-        setattr(cls, '_meta', meta)
+        meta.update(
+            {
+                "connectors": connectors,
+                "status_variables": status_vars,
+                "config_options": config_opt,
+            }
+        )
+        setattr(cls, "_meta", meta)
         return cls
 
 
 class ModuleMeta(QudiObjectMeta):
-    """ Metaclass for all qudi modules (GUI, logic and hardware)
-    """
+    """Metaclass for all qudi modules (GUI, logic and hardware)"""
 
     def __new__(mcs, name, bases, attributes):
         cls = super().__new__(mcs, name, bases, attributes)
 
         # Determine module base key and add to _meta dict
-        if getattr(cls, '_meta', None):
+        if getattr(cls, "_meta", None):
             for base in cls.mro():
-                if base.__name__ == 'GuiBase':
-                    cls._meta['base'] = 'gui'
+                if base.__name__ == "GuiBase":
+                    cls._meta["base"] = "gui"
                     break
-                elif base.__name__ == 'LogicBase':
-                    cls._meta['base'] = 'logic'
+                elif base.__name__ == "LogicBase":
+                    cls._meta["base"] = "logic"
                     break
-                elif base.__name__ == 'Base':
-                    cls._meta['base'] = 'hardware'
+                elif base.__name__ == "Base":
+                    cls._meta["base"] = "hardware"
                     break
         return cls

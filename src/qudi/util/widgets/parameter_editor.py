@@ -17,7 +17,7 @@ You should have received a copy of the GNU Lesser General Public License along w
 If not, see <https://www.gnu.org/licenses/>.
 """
 
-__all__ = ['ParameterEditor', 'ParameterEditorDialog']
+__all__ = ["ParameterEditor", "ParameterEditorDialog"]
 
 import inspect
 from typing import Any, Optional, Dict, Mapping, Callable
@@ -27,13 +27,20 @@ from qudi.util.parameters import ParameterWidgetMapper
 
 
 class ParameterEditor(QtWidgets.QWidget):
-    """ Dynamically created editor widget for callable parameters.
+    """Dynamically created editor widget for callable parameters.
     For best results use default values and simple type annotations in the callable to create the
     editor for.
     """
+
     INVALID = object()
 
-    def __init__(self, *args, func: Callable, values: Optional[Mapping[str, Any]] = None, **kwargs):
+    def __init__(
+        self,
+        *args,
+        func: Callable,
+        values: Optional[Mapping[str, Any]] = None,
+        **kwargs,
+    ):
         super().__init__(*args, **kwargs)
         if values is None:
             values = dict()
@@ -41,16 +48,18 @@ class ParameterEditor(QtWidgets.QWidget):
         layout = QtWidgets.QGridLayout()
         parameters = inspect.signature(func).parameters
         for row, (name, param) in enumerate(parameters.items()):
-            label = QtWidgets.QLabel(f'{name}:')
+            label = QtWidgets.QLabel(f"{name}:")
             label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
             editor = ParameterWidgetMapper.widget_for_parameter(param)
             if editor is None:
-                editor = QtWidgets.QLabel('Unknown argument type!')
+                editor = QtWidgets.QLabel("Unknown argument type!")
                 editor.setAlignment(QtCore.Qt.AlignCenter)
             else:
                 editor = editor()
                 # Attempt to set default value
-                if not ((param.default is inspect.Parameter.empty) and (name not in values)):
+                if not (
+                    (param.default is inspect.Parameter.empty) and (name not in values)
+                ):
                     try:
                         init_value = values[name]
                     except KeyError:
@@ -73,7 +82,7 @@ class ParameterEditor(QtWidgets.QWidget):
         self.setLayout(layout)
 
     def get_parameter_values(self) -> Dict[str, Any]:
-        """ Returns the current parameter values entered into the editor """
+        """Returns the current parameter values entered into the editor"""
         values = dict()
         for name, editor in self.parameter_editors.items():
             if isinstance(editor, QtWidgets.QLabel):
@@ -93,18 +102,24 @@ class ParameterEditor(QtWidgets.QWidget):
 
 
 class ParameterEditorDialog(QtWidgets.QDialog):
-    """ QDialog containing a ParameterEditor widget and OK, Cancel and Apply buttons.
-    """
-    def __init__(self, *args, func: Callable, values: Optional[Mapping[str, Any]] = None, **kwargs):
+    """QDialog containing a ParameterEditor widget and OK, Cancel and Apply buttons."""
+
+    def __init__(
+        self,
+        *args,
+        func: Callable,
+        values: Optional[Mapping[str, Any]] = None,
+        **kwargs,
+    ):
         super().__init__(*args, **kwargs)
         self.parameter_editor = ParameterEditor(func=func, values=values)
         self.scroll_area = QtWidgets.QScrollArea()
         self.scroll_area.setWidget(self.parameter_editor)
         self.button_box = QtWidgets.QDialogButtonBox(
-            QtWidgets.QDialogButtonBox.Ok |
-            QtWidgets.QDialogButtonBox.Cancel |
-            QtWidgets.QDialogButtonBox.Apply,
-            orientation=QtCore.Qt.Horizontal
+            QtWidgets.QDialogButtonBox.Ok
+            | QtWidgets.QDialogButtonBox.Cancel
+            | QtWidgets.QDialogButtonBox.Apply,
+            orientation=QtCore.Qt.Horizontal,
         )
         self.ok_button = self.button_box.button(QtWidgets.QDialogButtonBox.Ok)
         self.cancel_button = self.button_box.button(QtWidgets.QDialogButtonBox.Cancel)

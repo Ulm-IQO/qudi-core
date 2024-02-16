@@ -17,9 +17,23 @@ You should have received a copy of the GNU Lesser General Public License along w
 If not, see <https://www.gnu.org/licenses/>.
 """
 
-__all__ = ['csv_2_list', 'in_range', 'is_complex', 'is_complex_type', 'is_float', 'is_float_type',
-           'is_integer', 'is_integer_type', 'is_number', 'is_number_type', 'is_string',
-           'is_string_type', 'iter_modules_recursive', 'natural_sort', 'str_to_number']
+__all__ = [
+    "csv_2_list",
+    "in_range",
+    "is_complex",
+    "is_complex_type",
+    "is_float",
+    "is_float_type",
+    "is_integer",
+    "is_integer_type",
+    "is_number",
+    "is_number_type",
+    "is_string",
+    "is_string_type",
+    "iter_modules_recursive",
+    "natural_sort",
+    "str_to_number",
+]
 
 import re
 import os
@@ -30,9 +44,10 @@ from typing import Union, Optional, Iterable, List, Any, Type, Tuple, Callable
 _RealNumber = Union[int, float]
 
 
-def iter_modules_recursive(paths: Union[str, Iterable[str]],
-                           prefix: Optional[str] = '') -> List[pkgutil.ModuleInfo]:
-    """ Has the same signature as pkgutil.iter_modules() but extends the functionality by walking
+def iter_modules_recursive(
+    paths: Union[str, Iterable[str]], prefix: Optional[str] = ""
+) -> List[pkgutil.ModuleInfo]:
+    """Has the same signature as pkgutil.iter_modules() but extends the functionality by walking
     through the entire directory tree and concatenating the return values of pkgutil.iter_modules()
     for each directory.
 
@@ -49,20 +64,24 @@ def iter_modules_recursive(paths: Union[str, Iterable[str]],
     for search_top in paths:
         for root, dirs, files in os.walk(search_top):
             rel_path = os.path.relpath(root, search_top)
-            if rel_path and rel_path != '.' and rel_path[0] in '._':
+            if rel_path and rel_path != "." and rel_path[0] in "._":
                 # Prevent os.walk to descent further down this tree branch
                 dirs.clear()
                 # Ignore this directory
                 continue
             # Resolve current module prefix
-            if not rel_path or rel_path == '.':
+            if not rel_path or rel_path == ".":
                 curr_prefix = prefix
             else:
-                curr_prefix = prefix + '.'.join(rel_path.split(os.sep)) + '.'
+                curr_prefix = prefix + ".".join(rel_path.split(os.sep)) + "."
             # find modules and packages in current dir
             tmp = pkgutil.iter_modules([root], prefix=curr_prefix)
             module_infos.extend(
-                [mod_inf for mod_inf in tmp if not mod_inf.name.rsplit('.', 1)[-1].startswith('__')]
+                [
+                    mod_inf
+                    for mod_inf in tmp
+                    if not mod_inf.name.rsplit(".", 1)[-1].startswith("__")
+                ]
             )
     return module_infos
 
@@ -75,67 +94,76 @@ def natural_sort(iterable: Iterable[Any]) -> List[Any]:
     @param str[] iterable: Iterable with str items to sort
     @return list: sorted list of strings
     """
+
     def conv(s):
         return int(s) if s.isdigit() else s
+
     try:
-        return sorted(iterable, key=lambda key: [conv(i) for i in re.split(r'(\d+)', key)])
+        return sorted(
+            iterable, key=lambda key: [conv(i) for i in re.split(r"(\d+)", key)]
+        )
     except:
         return sorted(iterable)
 
 
 def is_number(test_value: Any) -> bool:
-    """ Check whether passed value is a number """
+    """Check whether passed value is a number"""
     return is_integer(test_value) or is_float(test_value) or is_complex(test_value)
 
 
 def is_number_type(test_obj: Type) -> bool:
-    """ Check whether passed object is a number type """
-    return is_integer_type(test_obj) or is_float_type(test_obj) or is_complex_type(test_obj)
+    """Check whether passed object is a number type"""
+    return (
+        is_integer_type(test_obj)
+        or is_float_type(test_obj)
+        or is_complex_type(test_obj)
+    )
 
 
 def is_integer(test_value: Any) -> bool:
-    """ Check all available integer representations """
+    """Check all available integer representations"""
     return isinstance(test_value, (int, np.integer))
 
 
 def is_integer_type(test_obj: Type) -> bool:
-    """ Check if passed object is an integer type """
+    """Check if passed object is an integer type"""
     return issubclass(test_obj, (int, np.integer))
 
 
 def is_float(test_value: Any) -> bool:
-    """ Check all available float representations """
+    """Check all available float representations"""
     return isinstance(test_value, (float, np.floating))
 
 
 def is_float_type(test_obj: Type) -> bool:
-    """ Check if passed object is a float type """
+    """Check if passed object is a float type"""
     return issubclass(test_obj, (float, np.floating))
 
 
 def is_complex(test_value: Any) -> bool:
-    """ Check all available complex representations """
+    """Check all available complex representations"""
     return isinstance(test_value, (complex, np.complexfloating))
 
 
 def is_complex_type(test_obj: Type) -> bool:
-    """ Check if passed object is a complex type """
+    """Check if passed object is a complex type"""
     return issubclass(test_obj, (complex, np.complexfloating))
 
 
 def is_string(test_value: Any) -> bool:
-    """ Check all available string representations """
+    """Check all available string representations"""
     return isinstance(test_value, (str, np.str_, np.string_))
 
 
 def is_string_type(test_obj: Type) -> bool:
-    """ Check if passed object is a string type """
+    """Check if passed object is a string type"""
     return issubclass(test_obj, (str, np.str_, np.string_))
 
 
-def in_range(value: _RealNumber, lower_limit: _RealNumber,
-             upper_limit: _RealNumber) -> Tuple[bool, _RealNumber]:
-    """ Check if a value is in a given range an return closest possible value in range.
+def in_range(
+    value: _RealNumber, lower_limit: _RealNumber, upper_limit: _RealNumber
+) -> Tuple[bool, _RealNumber]:
+    """Check if a value is in a given range an return closest possible value in range.
     Also check the range.
     Return value is clipped to range.
     """
@@ -149,7 +177,9 @@ def in_range(value: _RealNumber, lower_limit: _RealNumber,
     return True, value
 
 
-def csv_2_list(csv_string: str, str_2_val: Optional[Callable[[str], Any]] = None) -> List[Any]:
+def csv_2_list(
+    csv_string: str, str_2_val: Optional[Callable[[str], Any]] = None
+) -> List[Any]:
     """
     Parse a list literal (with or without square brackets) given as string containing
     comma-separated int or float values to a python list.
@@ -163,27 +193,30 @@ def csv_2_list(csv_string: str, str_2_val: Optional[Callable[[str], Any]] = None
                   function.
     """
     if not isinstance(csv_string, str):
-        raise TypeError('string_2_list accepts only str type input.')
+        raise TypeError("string_2_list accepts only str type input.")
 
     if csv_string == "":
         return []
 
-    csv_string = csv_string.replace('[', '').replace(']', '')  # Remove square brackets
-    csv_string = csv_string.replace('(', '').replace(')', '')  # Remove round brackets
-    csv_string = csv_string.replace('{', '').replace('}', '')  # Remove curly brackets
-    csv_string = csv_string.strip().strip(',')  # Remove trailing/leading blanks and commas
+    csv_string = csv_string.replace("[", "").replace("]", "")  # Remove square brackets
+    csv_string = csv_string.replace("(", "").replace(")", "")  # Remove round brackets
+    csv_string = csv_string.replace("{", "").replace("}", "")  # Remove curly brackets
+    csv_string = csv_string.strip().strip(
+        ","
+    )  # Remove trailing/leading blanks and commas
 
     # Cast each str value to float if no explicit cast function is given by parameter str_2_val.
     if str_2_val is None:
-        csv_list = [str_to_number(val_str) for val_str in csv_string.split(',')]
+        csv_list = [str_to_number(val_str) for val_str in csv_string.split(",")]
     else:
-        csv_list = [str_2_val(val_str.strip()) for val_str in csv_string.split(',')]
+        csv_list = [str_2_val(val_str.strip()) for val_str in csv_string.split(",")]
     return csv_list
 
 
-def str_to_number(str_value: str,
-                  return_failed: Optional[bool] = False) -> Union[int, float, complex, str]:
-    """ Parse a string into either int, float or complex (in that order) """
+def str_to_number(
+    str_value: str, return_failed: Optional[bool] = False
+) -> Union[int, float, complex, str]:
+    """Parse a string into either int, float or complex (in that order)"""
     try:
         return int(str_value)
     except ValueError:
@@ -197,5 +230,5 @@ def str_to_number(str_value: str,
                     return str_value
                 else:
                     raise ValueError(
-                        f'Could not convert string to int, float or complex: \'{str_value}\''
+                        f"Could not convert string to int, float or complex: '{str_value}'"
                     )

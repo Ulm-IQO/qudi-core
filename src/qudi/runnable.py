@@ -26,12 +26,11 @@ import os
 
 
 def main():
-    """
-    """
+    """ """
     myenv = os.environ.copy()
 
     # Set parent process PID as environment variable for qudi main process
-    if sys.platform == 'win32':
+    if sys.platform == "win32":
         try:
             from _winapi import DuplicateHandle, GetCurrentProcess
             from _winapi import DUPLICATE_SAME_ACCESS
@@ -40,27 +39,29 @@ def main():
             from _subprocess import DUPLICATE_SAME_ACCESS
         pid = GetCurrentProcess()
         handle = DuplicateHandle(pid, pid, pid, 0, True, DUPLICATE_SAME_ACCESS)
-        myenv['QUDI_PARENT_PID'] = str(int(handle))
+        myenv["QUDI_PARENT_PID"] = str(int(handle))
     else:
-        myenv['QUDI_PARENT_PID'] = str(os.getpid())
+        myenv["QUDI_PARENT_PID"] = str(os.getpid())
 
-    argv = [sys.executable, '-m', 'core'] + sys.argv[1:]
+    argv = [sys.executable, "-m", "core"] + sys.argv[1:]
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
     while True:
-        process = subprocess.Popen(argv,
-                                   close_fds=False,
-                                   env=myenv,
-                                   stdin=sys.stdin,
-                                   stdout=sys.stdout,
-                                   stderr=sys.stderr,
-                                   shell=False)
+        process = subprocess.Popen(
+            argv,
+            close_fds=False,
+            env=myenv,
+            stdin=sys.stdin,
+            stdout=sys.stdout,
+            stderr=sys.stderr,
+            shell=False,
+        )
         try:
             retval = process.wait()
             if retval == 0:
                 break
             elif retval == 42:
-                print('Restarting...')
+                print("Restarting...")
                 continue
             elif retval == 2:
                 # invalid commandline argument
@@ -69,13 +70,15 @@ def main():
                 # called if QFatal occurs
                 break
             elif retval == 4:
-                print('Import Error: Qudi could not be started due to missing packages.')
+                print(
+                    "Import Error: Qudi could not be started due to missing packages."
+                )
                 sys.exit(retval)
             else:
-                print('Unexpected return value {0}. Exiting.'.format(retval))
+                print("Unexpected return value {0}. Exiting.".format(retval))
                 sys.exit(retval)
         except KeyboardInterrupt:
-            print('\nQudi terminated by keyboard interrupt event!')
+            print("\nQudi terminated by keyboard interrupt event!")
             try:
                 process.terminate()
                 process.wait()
@@ -88,5 +91,5 @@ def main():
             raise
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

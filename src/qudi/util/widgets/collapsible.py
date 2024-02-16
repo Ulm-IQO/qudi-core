@@ -20,7 +20,7 @@ You should have received a copy of the GNU Lesser General Public License along w
 If not, see <https://www.gnu.org/licenses/>.
 """
 
-__all__ = ['CollapsibleWidget']
+__all__ = ["CollapsibleWidget"]
 
 
 from PySide2 import QtCore, QtWidgets
@@ -28,16 +28,17 @@ from typing import Optional
 
 
 class CollapsibleWidget(QtWidgets.QWidget):
-    """ ToDo: Document
-    """
+    """ToDo: Document"""
 
     sigCollapsedChanged = QtCore.Signal(bool)  # True: Collapsed, False: Expanded
 
-    def __init__(self,
-                 widget: QtWidgets.QWidget,
-                 title: Optional[str] = '',
-                 animation_duration: Optional[float] = 0.2,
-                 parent: Optional[QtWidgets.QWidget] = None):
+    def __init__(
+        self,
+        widget: QtWidgets.QWidget,
+        title: Optional[str] = "",
+        animation_duration: Optional[float] = 0.2,
+        parent: Optional[QtWidgets.QWidget] = None,
+    ):
         super().__init__(parent=parent)
         if animation_duration is None:
             animation_duration = 0.2
@@ -46,14 +47,18 @@ class CollapsibleWidget(QtWidgets.QWidget):
 
         self.expand_collapse_button = QtWidgets.QToolButton()
         self.expand_collapse_button.setStyleSheet(
-            'QToolButton { border: none; background-color: none; }'
+            "QToolButton { border: none; background-color: none; }"
         )
-        self.expand_collapse_button.setToolButtonStyle(QtCore.Qt.ToolButtonTextBesideIcon)
+        self.expand_collapse_button.setToolButtonStyle(
+            QtCore.Qt.ToolButtonTextBesideIcon
+        )
         self.expand_collapse_button.setArrowType(QtCore.Qt.RightArrow)
-        self.expand_collapse_button.setText(title if title else '')
+        self.expand_collapse_button.setText(title if title else "")
         self.expand_collapse_button.setCheckable(True)
 
-        widget.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Fixed)
+        widget.setSizePolicy(
+            QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Fixed
+        )
         widget.setMaximumHeight(0)
         widget.setMinimumHeight(0)
 
@@ -67,7 +72,9 @@ class CollapsibleWidget(QtWidgets.QWidget):
         # Animations to adjust max and min height of this widget and content widget
         self._min_height_animation = QtCore.QPropertyAnimation(self, b"minimumHeight")
         self._max_height_animation = QtCore.QPropertyAnimation(self, b"maximumHeight")
-        self._widget_max_height_animation = QtCore.QPropertyAnimation(widget, b"maximumHeight")
+        self._widget_max_height_animation = QtCore.QPropertyAnimation(
+            widget, b"maximumHeight"
+        )
         collapsed_height = self.sizeHint().height() - widget.maximumHeight()
         widget_height = widget.sizeHint().height()
         self._min_height_animation.setStartValue(collapsed_height)
@@ -96,7 +103,7 @@ class CollapsibleWidget(QtWidgets.QWidget):
 
     @property
     def animation_duration(self) -> float:
-        return self._min_height_animation.duration() / 1000.
+        return self._min_height_animation.duration() / 1000.0
 
     def set_collapsed(self, collapse: bool) -> None:
         self.expand_collapse_button.setChecked(not collapse)

@@ -20,15 +20,14 @@ You should have received a copy of the GNU Lesser General Public License along w
 If not, see <https://www.gnu.org/licenses/>.
 """
 
-__all__ = ['DoubleSlider']
+__all__ = ["DoubleSlider"]
 
 from PySide2 import QtCore, QtWidgets
 
 
 class DoubleSlider(QtWidgets.QSlider):
-    """
+    """ """
 
-    """
     doubleValueChanged = QtCore.Signal(float)
     doubleSliderMoved = QtCore.Signal(float)
     doubleRangeChanged = QtCore.Signal(float, float)
@@ -65,7 +64,9 @@ class DoubleSlider(QtWidgets.QSlider):
 
     def value(self):
         int_val = super().value()
-        return self.minimum() + (self.maximum() - self.minimum()) * (int_val / self._step_number)
+        return self.minimum() + (self.maximum() - self.minimum()) * (
+            int_val / self._step_number
+        )
 
     def setValue(self, val):
         max_val = self.maximum()
@@ -86,7 +87,7 @@ class DoubleSlider(QtWidgets.QSlider):
         """
         number_of_steps = int(number_of_steps)
         if number_of_steps < 1:
-            raise ValueError('Number of steps must be larger than 0.')
+            raise ValueError("Number of steps must be larger than 0.")
         self._step_number = number_of_steps - 1  # Include 0 as position
         super().setRange(0, self._step_number)
         return
@@ -94,13 +95,17 @@ class DoubleSlider(QtWidgets.QSlider):
     @QtCore.Slot(int)
     def __translate_value_changed(self, int_val):
         self.doubleValueChanged.emit(
-            self.minimum() + (self.maximum() - self.minimum()) * (int_val / self._step_number))
+            self.minimum()
+            + (self.maximum() - self.minimum()) * (int_val / self._step_number)
+        )
         return
 
     @QtCore.Slot(int)
     def __translate_slider_moved(self, int_val):
         self.doubleSliderMoved.emit(
-            self.minimum() + (self.maximum() - self.minimum()) * (int_val / self._step_number))
+            self.minimum()
+            + (self.maximum() - self.minimum()) * (int_val / self._step_number)
+        )
         return
 
     @QtCore.Slot()

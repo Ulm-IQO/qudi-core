@@ -19,46 +19,57 @@ You should have received a copy of the GNU Lesser General Public License along w
 If not, see <https://www.gnu.org/licenses/>.
 """
 
-__all__ = ['ToggleSwitch']
+__all__ = ["ToggleSwitch"]
 
 from PySide2 import QtWidgets, QtCore, QtGui
 
 
 class ToggleSwitch(QtWidgets.QAbstractButton):
-    """ A mobile/touch inspired toggle switch to switch between two states.
-    """
+    """A mobile/touch inspired toggle switch to switch between two states."""
 
     sigStateChanged = QtCore.Signal(str)
 
-    def __init__(self, parent=None, state_names=None, thumb_track_ratio=1, scale_text=True,
-                 display_text=True):
+    def __init__(
+        self,
+        parent=None,
+        state_names=None,
+        thumb_track_ratio=1,
+        scale_text=True,
+        display_text=True,
+    ):
         super().__init__(parent=parent)
         self.setCheckable(True)
-        self.setSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
+        self.setSizePolicy(
+            QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred
+        )
 
         # check state_names
         if state_names is None:
             self._state_names = None
-        elif len(state_names) != 2 or not all(isinstance(n, str) and n != '' for n in state_names):
+        elif len(state_names) != 2 or not all(
+            isinstance(n, str) and n != "" for n in state_names
+        ):
             raise ValueError(
-                f'state_names must be None or sequence of exactly 2 non-empty strings. '
-                f'Received: {state_names}'
+                f"state_names must be None or sequence of exactly 2 non-empty strings. "
+                f"Received: {state_names}"
             )
         else:
             self._state_names = tuple(state_names)
         # check thumb_track_ratio
         if thumb_track_ratio <= 0:
             raise ValueError(
-                f'thumb_track_ratio must have a value > 0. Received: {thumb_track_ratio}'
+                f"thumb_track_ratio must have a value > 0. Received: {thumb_track_ratio}"
             )
         self._thumb_track_ratio = thumb_track_ratio
         # check scale_text
         if not isinstance(scale_text, bool):
-            raise ValueError(f'scale_text must be bool type. Received: {scale_text}')
+            raise ValueError(f"scale_text must be bool type. Received: {scale_text}")
         self._scale_text = scale_text
         # check display_text
         if not isinstance(display_text, bool):
-            raise ValueError(f'display_text must be bool type. Received: {display_text}')
+            raise ValueError(
+                f"display_text must be bool type. Received: {display_text}"
+            )
         self._display_text = display_text if self._state_names else False
         self.__display_text = self._display_text
 
@@ -81,12 +92,18 @@ class ToggleSwitch(QtWidgets.QAbstractButton):
         if self._thumb_track_ratio > 1:
             self._track_colors = (palette.dark(), palette.highlight())
             self._thumb_colors = (palette.light(), palette.highlight())
-            self._text_colors = (palette.text().color(), palette.highlightedText().color())
+            self._text_colors = (
+                palette.text().color(),
+                palette.highlightedText().color(),
+            )
             self._track_opacity = 0.5
         else:
             self._track_colors = (palette.dark(), palette.highlight())
             self._thumb_colors = (palette.light(), palette.highlightedText())
-            self._text_colors = (palette.text().color(), palette.highlightedText().color())
+            self._text_colors = (
+                palette.text().color(),
+                palette.highlightedText().color(),
+            )
             self._track_opacity = 1
 
         # property value for current thumb position
@@ -96,7 +113,9 @@ class ToggleSwitch(QtWidgets.QAbstractButton):
         self.clicked.connect(self._notify_state_change)
 
         # set up the animation
-        self._slider_animation = QtCore.QPropertyAnimation(self, b'thumb_position', self)
+        self._slider_animation = QtCore.QPropertyAnimation(
+            self, b"thumb_position", self
+        )
         self._slider_animation.finished.connect(self._finish_animation)
 
     @QtCore.Slot()
@@ -109,12 +128,15 @@ class ToggleSwitch(QtWidgets.QAbstractButton):
         metrics = QtGui.QFontMetrics(self.font())
         if self._display_text:
             self._default_text_size = QtCore.QSize(
-                max(metrics.horizontalAdvance(f' {text} ') for text in self._state_names),
-                metrics.height()
+                max(
+                    metrics.horizontalAdvance(f" {text} ") for text in self._state_names
+                ),
+                metrics.height(),
             )
         else:
-            self._default_text_size = QtCore.QSize(metrics.horizontalAdvance(' OFF '),
-                                                   metrics.height())
+            self._default_text_size = QtCore.QSize(
+                metrics.horizontalAdvance(" OFF "), metrics.height()
+            )
         if self._thumb_track_ratio <= 1:
             height = self._default_text_size.height() * 1.5
         else:
@@ -146,7 +168,9 @@ class ToggleSwitch(QtWidgets.QAbstractButton):
             font.setPixelSize(max_height)
             metrics = QtGui.QFontMetrics(font)
             text_width = max(
-                metrics.horizontalAdvance(f' {text} ') for text in self._state_names if text
+                metrics.horizontalAdvance(f" {text} ")
+                for text in self._state_names
+                if text
             )
             if text_width > max_width:
                 text_scale = max_width / text_width
@@ -155,7 +179,7 @@ class ToggleSwitch(QtWidgets.QAbstractButton):
 
         metrics = QtGui.QFontMetrics(self.font())
         self._current_text_width = max(
-            metrics.horizontalAdvance(f' {text} ') for text in self._state_names
+            metrics.horizontalAdvance(f" {text} ") for text in self._state_names
         )
         self.__display_text = True
 
@@ -181,7 +205,7 @@ class ToggleSwitch(QtWidgets.QAbstractButton):
     @QtCore.Slot()
     def _notify_state_change(self):
         state = self.current_state
-        self.sigStateChanged.emit(state if isinstance(state, str) else '')
+        self.sigStateChanged.emit(state if isinstance(state, str) else "")
 
     @property
     def current_state(self):
@@ -190,7 +214,11 @@ class ToggleSwitch(QtWidgets.QAbstractButton):
 
     @property
     def _thumb_end(self):
-        return self.width() - self._thumb_origin if self.isChecked() else self._thumb_origin
+        return (
+            self.width() - self._thumb_origin
+            if self.isChecked()
+            else self._thumb_origin
+        )
 
     @property
     def _track_color(self):
@@ -253,33 +281,39 @@ class ToggleSwitch(QtWidgets.QAbstractButton):
         p.setPen(QtCore.Qt.NoPen)
         p.setBrush(track_brush)
         p.setOpacity(track_opacity)
-        p.drawRoundedRect(self._track_margin,
-                          max(0, self.height() / 2 - self._track_radius),
-                          max(0, self.width() - 2 * self._track_margin),
-                          2 * self._track_radius,
-                          self._track_radius,
-                          self._track_radius)
+        p.drawRoundedRect(
+            self._track_margin,
+            max(0, self.height() / 2 - self._track_radius),
+            max(0, self.width() - 2 * self._track_margin),
+            2 * self._track_radius,
+            self._track_radius,
+            self._track_radius,
+        )
 
         # draw text if necessary
         if self.__display_text and self._current_text_width > 0:
             p.setPen(text_color)
             p.setOpacity(1.0)
             p.setFont(self.font())
-            p.drawText(self._track_margin,
-                       self.height() / 2 - self._track_radius,
-                       self.width() - 2 * self._track_margin,
-                       2 * self._track_radius,
-                       QtCore.Qt.AlignCenter,
-                       self.current_state)
+            p.drawText(
+                self._track_margin,
+                self.height() / 2 - self._track_radius,
+                self.width() - 2 * self._track_margin,
+                2 * self._track_radius,
+                QtCore.Qt.AlignCenter,
+                self.current_state,
+            )
 
         # draw thumb
         p.setPen(QtCore.Qt.NoPen)
         p.setBrush(thumb_brush)
         p.setOpacity(1.0)
-        p.drawEllipse(self._thumb_position - self._thumb_radius,
-                      int(round(self.height()/2 - self._thumb_radius)),
-                      2 * self._thumb_radius,
-                      2 * self._thumb_radius)
+        p.drawEllipse(
+            self._thumb_position - self._thumb_radius,
+            int(round(self.height() / 2 - self._thumb_radius)),
+            2 * self._thumb_radius,
+            2 * self._thumb_radius,
+        )
 
     def mouseReleaseEvent(self, event):
         super().mouseReleaseEvent(event)

@@ -19,8 +19,13 @@ You should have received a copy of the GNU Lesser General Public License along w
 If not, see <https://www.gnu.org/licenses/>.
 """
 
-__all__ = ['install_kernel', 'uninstall_kernel', 'QudiIPythonKernel', 'QudiKernelClient',
-           'QudiKernelService']
+__all__ = [
+    "install_kernel",
+    "uninstall_kernel",
+    "QudiIPythonKernel",
+    "QudiKernelClient",
+    "QudiKernelService",
+]
 
 import os
 import sys
@@ -37,26 +42,28 @@ from qudi.core.config import Configuration, ValidationError, YAMLError
 def install_kernel():
     from jupyter_client.kernelspec import KernelSpecManager
 
-    print('> Installing qudi kernel...')
+    print("> Installing qudi kernel...")
     try:
         # prepare temporary kernelspec folder
-        tempdir = tempfile.mkdtemp(suffix='_kernels')
-        path = os.path.join(tempdir, 'qudi')
+        tempdir = tempfile.mkdtemp(suffix="_kernels")
+        path = os.path.join(tempdir, "qudi")
         kernel_path = os.path.abspath(__file__)
         os.mkdir(path)
 
         kernel_dict = {
-            'argv': [sys.executable, kernel_path, '-f', '{connection_file}'],
-            'display_name': 'qudi',
-            'language': 'python'
+            "argv": [sys.executable, kernel_path, "-f", "{connection_file}"],
+            "display_name": "qudi",
+            "language": "python",
         }
         # write the kernelspec file
-        with open(os.path.join(path, 'kernel.json'), 'w') as f:
+        with open(os.path.join(path, "kernel.json"), "w") as f:
             json.dump(kernel_dict, f, indent=1)
 
         # install kernelspec folder
         kernel_spec_manager = KernelSpecManager()
-        dest = kernel_spec_manager.install_kernel_spec(path, kernel_name='qudi', user=True)
+        dest = kernel_spec_manager.install_kernel_spec(
+            path, kernel_name="qudi", user=True
+        )
         print(f'> Successfully installed kernelspec "qudi" in {dest}')
     finally:
         if os.path.isdir(tempdir):
@@ -66,9 +73,9 @@ def install_kernel():
 def uninstall_kernel():
     from jupyter_client.kernelspec import KernelSpecManager
 
-    print('> Uninstalling qudi kernel...')
+    print("> Uninstalling qudi kernel...")
     try:
-        KernelSpecManager().remove_kernel_spec('qudi')
+        KernelSpecManager().remove_kernel_spec("qudi")
     except KeyError:
         print('> No kernelspec "qudi" found')
     else:
@@ -76,19 +83,18 @@ def uninstall_kernel():
 
 
 class QudiKernelService(rpyc.Service):
-    """
-    """
+    """ """
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._background_server = None
 
     def on_connect(self, conn):
-        logging.warning('Qudi IPython kernel connected to local module service.')
+        logging.warning("Qudi IPython kernel connected to local module service.")
         self._background_server = rpyc.BgServingThread(conn)
 
     def on_disconnect(self, conn):
-        logging.warning('Qudi IPython kernel disconnected from local module service.')
+        logging.warning("Qudi IPython kernel disconnected from local module service.")
         try:
             self._background_server.stop()
         except:
@@ -101,8 +107,7 @@ class QudiKernelService(rpyc.Service):
 
 
 class QudiKernelClient:
-    """
-    """
+    """ """
 
     def __init__(self):
         self.service_instance = QudiKernelService()
@@ -126,14 +131,18 @@ class QudiKernelClient:
             config.load()
         except (ValueError, ValidationError, YAMLError):
             pass
-        self.connection = rpyc.connect(host='localhost',
-                                       config={'allow_all_attrs': True,
-                                               'allow_setattr': True,
-                                               'allow_delattr': True,
-                                               'allow_pickle': True,
-                                               'sync_request_timeout': 3600},
-                                       port=config['namespace_server_port'],
-                                       service=self.service_instance)
+        self.connection = rpyc.connect(
+            host="localhost",
+            config={
+                "allow_all_attrs": True,
+                "allow_setattr": True,
+                "allow_delattr": True,
+                "allow_pickle": True,
+                "sync_request_timeout": 3600,
+            },
+            port=config["namespace_server_port"],
+            service=self.service_instance,
+        )
 
     def disconnect(self):
         if self.connection is not None:
@@ -146,15 +155,16 @@ class QudiKernelClient:
 
 
 class QudiIPythonKernel(IPythonKernel):
-    """
-    """
+    """ """
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._qudi_client = QudiKernelClient()
         self._qudi_client.connect()
         self._namespace_qudi_modules = set()
-        self._qudi_logger = self._qudi_client.get_logger(f'QudiIPythonKernel_{str(self.ident)}')
+        self._qudi_logger = self._qudi_client.get_logger(
+            f"QudiIPythonKernel_{str(self.ident)}"
+        )
         self.update_module_namespace()
         # Fixme: Dirty workaround after hours of searching on how to disable the insanely
         #  aggressive tab completion resolution of jedi that causes each descriptor (e.g. property)
@@ -175,8 +185,8 @@ class QudiIPythonKernel(IPythonKernel):
         removed = self._namespace_qudi_modules.difference(modules)
         for mod in removed:
             self.shell.user_ns.pop(mod, None)
-        self.shell.user_ns.pop('logger', None)
-        self.shell.push({'logger': self._qudi_logger})
+        self.shell.user_ns.pop("logger", None)
+        self.shell.push({"logger": self._qudi_logger})
         self.shell.push(modules)
         self._namespace_qudi_modules = set(modules)
 
@@ -191,10 +201,10 @@ class QudiIPythonKernel(IPythonKernel):
         return super().do_shutdown(restart)
 
 
-if __name__ == '__main__':
-    if len(sys.argv) == 2 and sys.argv[1] == 'install':
+if __name__ == "__main__":
+    if len(sys.argv) == 2 and sys.argv[1] == "install":
         install_kernel()
-    elif len(sys.argv) == 2 and sys.argv[1] == 'uninstall':
+    elif len(sys.argv) == 2 and sys.argv[1] == "uninstall":
         uninstall_kernel()
     else:
         from ipykernel.kernelapp import IPKernelApp

@@ -20,22 +20,33 @@ You should have received a copy of the GNU Lesser General Public License along w
 If not, see <https://www.gnu.org/licenses/>.
 """
 
-__all__ = ['FileHandler', 'FileHandlerBase', 'ParserError', 'ValidationError', 'YAMLError',
-           'DuplicateKeyError']
+__all__ = [
+    "FileHandler",
+    "FileHandlerBase",
+    "ParserError",
+    "ValidationError",
+    "YAMLError",
+    "DuplicateKeyError",
+]
 
 
 import os
 from typing import Any, Dict, Mapping
 
 from qudi.util.paths import get_default_config_dir, get_appdata_dir
-from qudi.util.yaml import yaml_dump, yaml_load, ParserError, YAMLError, DuplicateKeyError
+from qudi.util.yaml import (
+    yaml_dump,
+    yaml_load,
+    ParserError,
+    YAMLError,
+    DuplicateKeyError,
+)
 
 from .validator import validate_config, ValidationError
 
 
 class FileHandlerBase:
-    """ File handler base class providing static methods for handling raw qudi configuration files.
-    """
+    """File handler base class providing static methods for handling raw qudi configuration files."""
 
     @classmethod
     def _load(cls, path: str) -> Dict[str, Any]:
@@ -43,7 +54,7 @@ class FileHandlerBase:
 
     @classmethod
     def _dump(cls, path: str, config: Mapping[str, Any]) -> None:
-        if not path.endswith('.cfg'):
+        if not path.endswith(".cfg"):
             raise ValueError('Configuration file must have ".cfg" file extension.')
         path = cls._relative_to_absolute_path(path)
         os.makedirs(os.path.dirname(path), exist_ok=True)
@@ -51,31 +62,33 @@ class FileHandlerBase:
 
     @classmethod
     def set_default_path(cls, path: str) -> None:
-        """ Writes the given config file path to "<AppData>/qudi/load.cfg" to be used as default
-        config at the next start of qudi. """
+        """Writes the given config file path to "<AppData>/qudi/load.cfg" to be used as default
+        config at the next start of qudi."""
         # Write current config file path to load.cfg
         yaml_dump(
-            os.path.join(get_appdata_dir(create_missing=True), 'load.cfg'),
-            {'load_config_path': cls._relative_to_absolute_path(path)}
+            os.path.join(get_appdata_dir(create_missing=True), "load.cfg"),
+            {"load_config_path": cls._relative_to_absolute_path(path)},
         )
 
     @staticmethod
     def get_saved_path() -> str:
-        """ Tries to parse "<AppData>/qudi/load.cfg" and return the stored config file path.
+        """Tries to parse "<AppData>/qudi/load.cfg" and return the stored config file path.
         Raises FileNotFoundError if unsuccessful or if the recovered file path does not exist.
         """
         # Try loading config file path from last session
-        load_cfg = yaml_load(os.path.join(get_appdata_dir(), 'load.cfg'), ignore_missing=True)
-        file_path = load_cfg.get('load_config_path', '')
-        if os.path.exists(file_path) and file_path.endswith('.cfg'):
+        load_cfg = yaml_load(
+            os.path.join(get_appdata_dir(), "load.cfg"), ignore_missing=True
+        )
+        file_path = load_cfg.get("load_config_path", "")
+        if os.path.exists(file_path) and file_path.endswith(".cfg"):
             return file_path
 
         # Raise error if no last run config file could be found
-        raise FileNotFoundError('No config file path saved from previous qudi sessions')
+        raise FileNotFoundError("No config file path saved from previous qudi sessions")
 
     @staticmethod
     def get_default_path() -> str:
-        """ Tries to find config file named "default.cfg" in several locations with the following,
+        """Tries to find config file named "default.cfg" in several locations with the following,
         non-recursive search directory priority:
             1. <UserHome>/qudi/config/
             2. <AppData>/qudi/
@@ -83,21 +96,23 @@ class FileHandlerBase:
         Raises FileNotFoundError if no "default.cfg" file could be found in the above locations.
         """
         # Try default.cfg in user home directory
-        file_path = os.path.join(get_default_config_dir(create_missing=False), 'default.cfg')
+        file_path = os.path.join(
+            get_default_config_dir(create_missing=False), "default.cfg"
+        )
         if os.path.exists(file_path):
             return file_path
 
         # Fall back to default.cfg in qudi AppData directory if possible
-        file_path = os.path.join(get_appdata_dir(create_missing=False), 'default.cfg')
+        file_path = os.path.join(get_appdata_dir(create_missing=False), "default.cfg")
         if os.path.exists(file_path):
             return file_path
 
         # Raise error if no config file could be found
-        raise FileNotFoundError('No config file could be found in default directories')
+        raise FileNotFoundError("No config file could be found in default directories")
 
     @staticmethod
     def _relative_to_absolute_path(path):
-        """ Helper method converting given relative path to an existing absolute path.
+        """Helper method converting given relative path to an existing absolute path.
         Prepends directories to given path with the following priority until an existing path has
         been created:
             1. <UserHome>/qudi/config/
@@ -122,14 +137,14 @@ class FileHandlerBase:
 
 
 class FileHandler(FileHandlerBase):
-    """ File handler class providing static methods for handling raw qudi configuration files.
+    """File handler class providing static methods for handling raw qudi configuration files.
     Also applies qudi configuration validation and default value insertion upon loading/dumping
     configuration files.
     """
 
     @classmethod
     def load(cls, path: str) -> Dict[str, Any]:
-        """ Load and validate a qudi configuration file from disk.
+        """Load and validate a qudi configuration file from disk.
         Raises jsonschema.ValidationError if validation fails.
         """
         config = cls._load(path)
@@ -138,7 +153,7 @@ class FileHandler(FileHandlerBase):
 
     @classmethod
     def dump(cls, path: str, config: Dict[str, Any]) -> None:
-        """ Validate and dump a qudi configuration file to disk.
+        """Validate and dump a qudi configuration file to disk.
         Raises jsonschema.ValidationError if validation fails.
         """
         validate_config(config)

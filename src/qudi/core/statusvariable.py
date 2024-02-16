@@ -20,7 +20,7 @@ You should have received a copy of the GNU Lesser General Public License along w
 If not, see <https://www.gnu.org/licenses/>.
 """
 
-__all__ = ['StatusVar']
+__all__ = ["StatusVar"]
 
 import copy
 import inspect
@@ -28,12 +28,18 @@ from typing import Callable, Any, Optional
 
 
 class StatusVar:
-    """ This class defines a status variable that is loaded before activation and saved after
+    """This class defines a status variable that is loaded before activation and saved after
     deactivation.
     """
 
-    def __init__(self, name: Optional[str] = None, default: Optional[Any] = None, *,
-                 constructor: Optional[Callable] = None, representer: Optional[Callable] = None):
+    def __init__(
+        self,
+        name: Optional[str] = None,
+        default: Optional[Any] = None,
+        *,
+        constructor: Optional[Callable] = None,
+        representer: Optional[Callable] = None,
+    ):
         """
         @param name: identifier of the status variable when stored
         @param default: default value for the status variable when a saved version is not present
@@ -60,19 +66,21 @@ class StatusVar:
         return self.copy()
 
     def copy(self, **kwargs):
-        """ Create a new instance of StatusVar with copied and updated values.
+        """Create a new instance of StatusVar with copied and updated values.
 
         @param kwargs: Additional or overridden parameters for the constructor of this class
         """
-        newargs = {'name': self.name,
-                   'default': copy.deepcopy(self.default),
-                   'constructor': self.constructor_function,
-                   'representer': self.representer_function}
+        newargs = {
+            "name": self.name,
+            "default": copy.deepcopy(self.default),
+            "constructor": self.constructor_function,
+            "representer": self.representer_function,
+        }
         newargs.update(kwargs)
         return StatusVar(**newargs)
 
     def constructor(self, func: Callable) -> Callable:
-        """ This is the decorator for declaring constructor function for this StatusVar.
+        """This is the decorator for declaring constructor function for this StatusVar.
 
         @param func: constructor function for this StatusVar
         @return: return the original function so this can be used as a decorator
@@ -81,7 +89,7 @@ class StatusVar:
         return func
 
     def representer(self, func: Callable) -> Callable:
-        """ This is the decorator for declaring a representer function for this StatusVar.
+        """This is the decorator for declaring a representer function for this StatusVar.
 
         @param func: representer function for this StatusVar
         @return: return the original function so this can be used as a decorator
@@ -91,11 +99,14 @@ class StatusVar:
 
     @staticmethod
     def _assert_func_signature(func: Callable) -> Callable:
-        assert callable(func), 'StatusVar constructor/representer must be callable'
+        assert callable(func), "StatusVar constructor/representer must be callable"
         params = tuple(inspect.signature(func).parameters)
-        assert 0 < len(params) < 3, 'StatusVar constructor/representer must be function with ' \
-                                    '1 (static) or 2 (bound method) parameters.'
+        assert 0 < len(params) < 3, (
+            "StatusVar constructor/representer must be function with "
+            "1 (static) or 2 (bound method) parameters."
+        )
         if len(params) == 1:
+
             def wrapper(instance, value):
                 return func(value)
 

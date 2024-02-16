@@ -22,7 +22,7 @@ You should have received a copy of the GNU Lesser General Public License along w
 If not, see <https://www.gnu.org/licenses/>.
 """
 
-__all__ = ['Mutex', 'RecursiveMutex']
+__all__ = ["Mutex", "RecursiveMutex"]
 
 from PySide2.QtCore import QMutex as _QMutex
 from PySide2.QtCore import QRecursiveMutex as _QRecursiveMutex
@@ -33,15 +33,17 @@ _RealNumber = Union[int, float]
 
 
 class Mutex(_QMutex):
-    """ Extends QMutex which serves as access serialization between threads.
+    """Extends QMutex which serves as access serialization between threads.
 
     This class provides:
     * Drop-in replacement for threading.Lock
     * Context management (enter/exit)
     """
 
-    def acquire(self, blocking: Optional[bool] = True, timeout: Optional[_RealNumber] = -1) -> bool:
-        """ Mimics threading.Lock.acquire() to allow this class as a drop-in replacement.
+    def acquire(
+        self, blocking: Optional[bool] = True, timeout: Optional[_RealNumber] = -1
+    ) -> bool:
+        """Mimics threading.Lock.acquire() to allow this class as a drop-in replacement.
 
         @param bool blocking: If True, this method will be blocking (indefinitely or for up to
                               <timeout> seconds) until the mutex has been locked. If False this
@@ -56,12 +58,11 @@ class Mutex(_QMutex):
         return self.tryLock()
 
     def release(self) -> None:
-        """ Mimics threading.Lock.release() to allow this class as a drop-in replacement.
-        """
+        """Mimics threading.Lock.release() to allow this class as a drop-in replacement."""
         self.unlock()
 
     def __enter__(self):
-        """ Enter context.
+        """Enter context.
 
         @return Mutex: this mutex
         """
@@ -69,7 +70,7 @@ class Mutex(_QMutex):
         return self
 
     def __exit__(self, *args):
-        """ Exit context.
+        """Exit context.
 
         @param args: context arguments (type, value, traceback)
         """
@@ -79,9 +80,10 @@ class Mutex(_QMutex):
 # Compatibility workaround for PySide2 vs. PySide6. In PySide2 we need to use QMutex with an
 # initializer argument to construct a recursive mutex but in PySide6 we need to subclass
 # QRecursiveMutex. Check if QRecursiveMutex class has all API members (indicating it's PySide6).
-if all(hasattr(_QRecursiveMutex, attr) for attr in ('lock', 'unlock', 'tryLock')):
+if all(hasattr(_QRecursiveMutex, attr) for attr in ("lock", "unlock", "tryLock")):
+
     class RecursiveMutex(_QRecursiveMutex):
-        """ Extends QRecursiveMutex which serves as access serialization between threads.
+        """Extends QRecursiveMutex which serves as access serialization between threads.
 
         This class provides:
         * Drop-in replacement for threading.Lock
@@ -91,9 +93,10 @@ if all(hasattr(_QRecursiveMutex, attr) for attr in ('lock', 'unlock', 'tryLock')
         refactoring your code to use a simple mutex before using this object.
         """
 
-        def acquire(self, blocking: Optional[bool] = True,
-                    timeout: Optional[_RealNumber] = -1) -> bool:
-            """ Mimics threading.Lock.acquire() to allow this class as a drop-in replacement.
+        def acquire(
+            self, blocking: Optional[bool] = True, timeout: Optional[_RealNumber] = -1
+        ) -> bool:
+            """Mimics threading.Lock.acquire() to allow this class as a drop-in replacement.
 
             @param bool blocking: If True, this method will be blocking (indefinitely or for up to
                                   <timeout> seconds) until the mutex has been locked. If False this
@@ -108,12 +111,11 @@ if all(hasattr(_QRecursiveMutex, attr) for attr in ('lock', 'unlock', 'tryLock')
             return self.tryLock()
 
         def release(self) -> None:
-            """ Mimics threading.Lock.release() to allow this class as a drop-in replacement.
-            """
+            """Mimics threading.Lock.release() to allow this class as a drop-in replacement."""
             self.unlock()
 
         def __enter__(self):
-            """ Enter context.
+            """Enter context.
 
             @return RecursiveMutex: this mutex
             """
@@ -121,14 +123,15 @@ if all(hasattr(_QRecursiveMutex, attr) for attr in ('lock', 'unlock', 'tryLock')
             return self
 
         def __exit__(self, *args):
-            """ Exit context.
+            """Exit context.
 
             @param args: context arguments (type, value, traceback)
             """
             self.unlock()
 else:
+
     class RecursiveMutex(Mutex):
-        """ Extends QRecursiveMutex which serves as access serialization between threads.
+        """Extends QRecursiveMutex which serves as access serialization between threads.
 
         This class provides:
         * Drop-in replacement for threading.Lock
@@ -137,5 +140,6 @@ else:
         NOTE: A recursive mutex is much more expensive than using a regular mutex. So consider
         refactoring your code to use a simple mutex before using this object.
         """
+
         def __init__(self):
             super().__init__(_QMutex.Recursive)

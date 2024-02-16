@@ -20,7 +20,7 @@ You should have received a copy of the GNU Lesser General Public License along w
 If not, see <https://www.gnu.org/licenses/>.
 """
 
-__all__ = ('main', 'ConfigurationEditorMainWindow', 'ConfigurationEditor')
+__all__ = ("main", "ConfigurationEditorMainWindow", "ConfigurationEditor")
 
 import os
 import sys
@@ -37,30 +37,33 @@ from qudi.tools.config_editor.module_finder import QudiModules
 
 try:
     import matplotlib
-    matplotlib.use('agg')
+
+    matplotlib.use("agg")
 except ImportError:
     pass
 
 # Enable the High DPI scaling support of Qt5
-os.environ['QT_ENABLE_HIGHDPI_SCALING'] = '1'
+os.environ["QT_ENABLE_HIGHDPI_SCALING"] = "1"
 
-if sys.platform == 'win32':
+if sys.platform == "win32":
     # Set QT_LOGGING_RULES environment variable to suppress qt.svg related warnings that otherwise
     # spam the log due to some known Qt5 bugs, e.g. https://bugreports.qt.io/browse/QTBUG-52079
-    os.environ['QT_LOGGING_RULES'] = 'qt.svg.warning=false'
+    os.environ["QT_LOGGING_RULES"] = "qt.svg.warning=false"
 else:
     # The following will prevent Qt to spam the logs on X11 systems with enough messages
     # to significantly slow the program down. Most of those warnings should have been
     # notice level or lower. This is a known problem since Qt does not fully comply to X11.
-    os.environ['QT_LOGGING_RULES'] = '*.debug=false;*.info=false;*.notice=false;*.warning=false'
+    os.environ[
+        "QT_LOGGING_RULES"
+    ] = "*.debug=false;*.info=false;*.notice=false;*.warning=false"
 
 
 class ConfigurationEditor(QtWidgets.QMainWindow):
-    """
-    """
+    """ """
+
     def __init__(self, parent: Optional[QtWidgets.QWidget] = None) -> None:
         super().__init__(parent=parent)
-        self.setWindowTitle('Qudi Config Editor')
+        self.setWindowTitle("Qudi Config Editor")
         screen_size = QtWidgets.QApplication.instance().primaryScreen().availableSize()
         self.resize((screen_size.width() * 3) // 4, (screen_size.height() * 3) // 4)
 
@@ -68,14 +71,20 @@ class ConfigurationEditor(QtWidgets.QMainWindow):
 
         self.module_tree_widget = ConfigModulesTreeWidget()
         self.module_tree_widget.itemChanged.connect(self._module_renamed_by_tree)
-        self.module_tree_widget.itemSelectionChanged.connect(self._module_selection_changed)
+        self.module_tree_widget.itemSelectionChanged.connect(
+            self._module_selection_changed
+        )
 
-        self.module_config_editor = ModuleEditorWidget(qudi_modules=self.qudi_environment)
-        self.module_config_editor.sigModuleRenamed.connect(self._module_renamed_by_editor)
+        self.module_config_editor = ModuleEditorWidget(
+            qudi_modules=self.qudi_environment
+        )
+        self.module_config_editor.sigModuleRenamed.connect(
+            self._module_renamed_by_editor
+        )
 
         self.global_config_editor = GlobalEditorWidget()
 
-        label = QtWidgets.QLabel('Included Modules')
+        label = QtWidgets.QLabel("Included Modules")
         label.setAlignment(QtCore.Qt.AlignCenter)
         font = label.font()
         font.setBold(True)
@@ -89,13 +98,15 @@ class ConfigurationEditor(QtWidgets.QMainWindow):
         left_widget = QtWidgets.QWidget()
         left_widget.setLayout(layout)
 
-        label = QtWidgets.QLabel('Module Configuration')
+        label = QtWidgets.QLabel("Module Configuration")
         label.setAlignment(QtCore.Qt.AlignCenter)
         label.setFont(font)
         layout = QtWidgets.QVBoxLayout()
         layout.addWidget(label)
         layout.addWidget(self.module_config_editor)
-        label = QtWidgets.QLabel('Mandatory fields/options/connectors are marked with *')
+        label = QtWidgets.QLabel(
+            "Mandatory fields/options/connectors are marked with *"
+        )
         font = label.font()
         font.setBold(True)
         label.setFont(font)
@@ -114,28 +125,28 @@ class ConfigurationEditor(QtWidgets.QMainWindow):
         self.setCentralWidget(splitter)
 
         # Main window actions
-        icon_dir = os.path.join(get_main_dir(), 'artwork', 'icons')
-        quit_icon = QtGui.QIcon(os.path.join(icon_dir, 'application-exit'))
-        self.quit_action = QtWidgets.QAction(quit_icon, 'Quit')
-        self.quit_action.setShortcut(QtGui.QKeySequence('Ctrl+Q'))
-        load_icon = QtGui.QIcon(os.path.join(icon_dir, 'document-open'))
-        self.load_action = QtWidgets.QAction(load_icon, 'Load')
-        self.load_action.setShortcut(QtGui.QKeySequence('Ctrl+L'))
-        self.load_action.setToolTip('Load a qudi configuration to edit from file.')
-        save_icon = QtGui.QIcon(os.path.join(icon_dir, 'document-save'))
-        self.save_action = QtWidgets.QAction(save_icon, 'Save')
-        self.save_action.setShortcut(QtGui.QKeySequence('Ctrl+S'))
-        self.save_action.setToolTip('Save the current qudi configuration to file.')
-        self.save_as_action = QtWidgets.QAction('Save as ...')
-        new_icon = QtGui.QIcon(os.path.join(icon_dir, 'document-new'))
-        self.new_action = QtWidgets.QAction(new_icon, 'New')
-        self.new_action.setShortcut(QtGui.QKeySequence('Ctrl+N'))
-        self.new_action.setToolTip('Create a new qudi configuration from scratch.')
-        select_icon = QtGui.QIcon(os.path.join(icon_dir, 'configure'))
-        self.select_modules_action = QtWidgets.QAction(select_icon, 'Select Modules')
-        self.select_modules_action.setShortcut(QtGui.QKeySequence('Ctrl+M'))
+        icon_dir = os.path.join(get_main_dir(), "artwork", "icons")
+        quit_icon = QtGui.QIcon(os.path.join(icon_dir, "application-exit"))
+        self.quit_action = QtWidgets.QAction(quit_icon, "Quit")
+        self.quit_action.setShortcut(QtGui.QKeySequence("Ctrl+Q"))
+        load_icon = QtGui.QIcon(os.path.join(icon_dir, "document-open"))
+        self.load_action = QtWidgets.QAction(load_icon, "Load")
+        self.load_action.setShortcut(QtGui.QKeySequence("Ctrl+L"))
+        self.load_action.setToolTip("Load a qudi configuration to edit from file.")
+        save_icon = QtGui.QIcon(os.path.join(icon_dir, "document-save"))
+        self.save_action = QtWidgets.QAction(save_icon, "Save")
+        self.save_action.setShortcut(QtGui.QKeySequence("Ctrl+S"))
+        self.save_action.setToolTip("Save the current qudi configuration to file.")
+        self.save_as_action = QtWidgets.QAction("Save as ...")
+        new_icon = QtGui.QIcon(os.path.join(icon_dir, "document-new"))
+        self.new_action = QtWidgets.QAction(new_icon, "New")
+        self.new_action.setShortcut(QtGui.QKeySequence("Ctrl+N"))
+        self.new_action.setToolTip("Create a new qudi configuration from scratch.")
+        select_icon = QtGui.QIcon(os.path.join(icon_dir, "configure"))
+        self.select_modules_action = QtWidgets.QAction(select_icon, "Select Modules")
+        self.select_modules_action.setShortcut(QtGui.QKeySequence("Ctrl+M"))
         self.select_modules_action.setToolTip(
-            'Open an editor to select the modules to include in config.'
+            "Open an editor to select the modules to include in config."
         )
         # Connect actions
         self.quit_action.triggered.connect(self.close)
@@ -147,7 +158,7 @@ class ConfigurationEditor(QtWidgets.QMainWindow):
 
         # Create menu bar
         menu_bar = QtWidgets.QMenuBar()
-        file_menu = QtWidgets.QMenu('File')
+        file_menu = QtWidgets.QMenu("File")
         menu_bar.addMenu(file_menu)
         file_menu.addAction(self.new_action)
         file_menu.addSeparator()
@@ -156,7 +167,7 @@ class ConfigurationEditor(QtWidgets.QMainWindow):
         file_menu.addAction(self.save_as_action)
         file_menu.addSeparator()
         file_menu.addAction(self.quit_action)
-        file_menu = QtWidgets.QMenu('Edit')
+        file_menu = QtWidgets.QMenu("Edit")
         menu_bar.addMenu(file_menu)
         file_menu.addAction(self.select_modules_action)
         self.setMenuBar(menu_bar)
@@ -188,21 +199,21 @@ class ConfigurationEditor(QtWidgets.QMainWindow):
         item = selected_items[0]
         if item is not self._editor_item:
             base = item.parent().text(0).lower()
-            module = f'{base}.{item.text(2)}'
+            module = f"{base}.{item.text(2)}"
             name = item.text(1)
 
             # Get current module config dict
             config = self._config_map.get(base, dict()).get(name, None)
 
             # Sort out available connectors and targets as well as module config options
-            if module == '<REMOTE MODULE>':
+            if module == "<REMOTE MODULE>":
                 self.module_config_editor.open_remote_module(name, config=config)
             else:
                 self.module_config_editor.open_local_module(
                     module_class=module,
                     named_modules=self.module_tree_widget.modules[0],
                     name=name,
-                    config=config
+                    config=config,
                 )
             self._editor_item = item
 
@@ -211,22 +222,26 @@ class ConfigurationEditor(QtWidgets.QMainWindow):
         self.module_config_editor.close_editor()
         available = self.qudi_environment.available_modules
         named_selected, unnamed_selected = self.module_tree_widget.modules
-        selector_dialog = ModuleSelector(available_modules=available,
-                                         named_modules=named_selected,
-                                         unnamed_modules=unnamed_selected)
+        selector_dialog = ModuleSelector(
+            available_modules=available,
+            named_modules=named_selected,
+            unnamed_modules=unnamed_selected,
+        )
         if selector_dialog.exec_():
             # Recycle old module names if identical modules are selected but not named
             new_named_selected, new_unnamed_selected = selector_dialog.selected_modules
             recycled_named_selected = {
-                name: mod for name, mod in named_selected.items() if
-                (name not in new_named_selected) and (mod in new_unnamed_selected)
+                name: mod
+                for name, mod in named_selected.items()
+                if (name not in new_named_selected) and (mod in new_unnamed_selected)
             }
             new_named_selected.update(recycled_named_selected)
             for mod in recycled_named_selected.values():
                 new_unnamed_selected.remove(mod)
             # Set modules in main window
-            self.module_tree_widget.set_modules(named_modules=new_named_selected,
-                                                unnamed_modules=new_unnamed_selected)
+            self.module_tree_widget.set_modules(
+                named_modules=new_named_selected, unnamed_modules=new_unnamed_selected
+            )
 
     def new_config(self):
         self._current_file_path = None
@@ -239,9 +254,10 @@ class ConfigurationEditor(QtWidgets.QMainWindow):
     def prompt_load_config(self):
         file_path = QtWidgets.QFileDialog.getOpenFileName(
             self,
-            'Qudi Config Editor: Load Configuration...',
+            "Qudi Config Editor: Load Configuration...",
             get_default_config_dir(),
-            'Config files (*.cfg)')[0]
+            "Config files (*.cfg)",
+        )[0]
         if file_path:
             self.module_config_editor.close_editor()
             config = Configuration()
@@ -249,17 +265,19 @@ class ConfigurationEditor(QtWidgets.QMainWindow):
             self._config_map = config.config_map
             self._current_file_path = file_path
             modules = self._get_modules_from_config(self._config_map)
-            global_cfg = self._config_map.get('global', dict())
+            global_cfg = self._config_map.get("global", dict())
             self.module_tree_widget.set_modules(named_modules=modules)
             self.global_config_editor.open_editor(global_cfg)
 
     def prompt_save_config(self):
         file_path = QtWidgets.QFileDialog.getSaveFileName(
             self,
-            'Qudi Config Editor: Save Configuration...',
-            get_default_config_dir() if self._current_file_path is None else os.path.dirname(
-                self._current_file_path),
-            'Config files (*.cfg)')[0]
+            "Qudi Config Editor: Save Configuration...",
+            get_default_config_dir()
+            if self._current_file_path is None
+            else os.path.dirname(self._current_file_path),
+            "Config files (*.cfg)",
+        )[0]
         if file_path:
             config = Configuration(config=self._config_map)
             config.dump(file_path)
@@ -268,10 +286,11 @@ class ConfigurationEditor(QtWidgets.QMainWindow):
     def prompt_overwrite(self, file_path):
         answer = QtWidgets.QMessageBox.question(
             self,
-            'Qudi Config Editor: Overwrite?',
+            "Qudi Config Editor: Overwrite?",
             f'Do you really want to overwrite existing Qudi configuration at\n"{file_path}"?',
             QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No,
-            QtWidgets.QMessageBox.No)
+            QtWidgets.QMessageBox.No,
+        )
         return answer == QtWidgets.QMessageBox.Yes
 
     def save_config(self):
@@ -290,11 +309,11 @@ class ConfigurationEditor(QtWidgets.QMainWindow):
     def prompt_close(self):
         answer = QtWidgets.QMessageBox.question(
             self,
-            'Qudi Config Editor: Quit?',
-            'Do you really want to quit the Qudi configuration editor?\nAll unsaved work will be '
-            'lost.',
+            "Qudi Config Editor: Quit?",
+            "Do you really want to quit the Qudi configuration editor?\nAll unsaved work will be "
+            "lost.",
             QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No,
-            QtWidgets.QMessageBox.No
+            QtWidgets.QMessageBox.No,
         )
         return answer == QtWidgets.QMessageBox.Yes
 
@@ -306,13 +325,21 @@ class ConfigurationEditor(QtWidgets.QMainWindow):
 
     @staticmethod
     def _get_modules_from_config(config: Mapping[str, Any]) -> Dict[str, str]:
-        modules = {name: 'gui.' + cfg.get('module.Class', '<REMOTE MODULE>') for name, cfg in
-                   config.get('gui', dict()).items()}
-        modules.update({name: 'logic.' + cfg.get('module.Class', '<REMOTE MODULE>') for name, cfg in
-                        config.get('logic', dict()).items()})
+        modules = {
+            name: "gui." + cfg.get("module.Class", "<REMOTE MODULE>")
+            for name, cfg in config.get("gui", dict()).items()
+        }
         modules.update(
-            {name: 'hardware.' + cfg.get('module.Class', '<REMOTE MODULE>') for name, cfg in
-             config.get('hardware', dict()).items()}
+            {
+                name: "logic." + cfg.get("module.Class", "<REMOTE MODULE>")
+                for name, cfg in config.get("logic", dict()).items()
+            }
+        )
+        modules.update(
+            {
+                name: "hardware." + cfg.get("module.Class", "<REMOTE MODULE>")
+                for name, cfg in config.get("hardware", dict()).items()
+            }
         )
         return modules
 
@@ -344,11 +371,11 @@ class ConfigurationEditor(QtWidgets.QMainWindow):
 
 
 class ConfigurationEditorApp(QtWidgets.QApplication):
-    """
-    """
+    """ """
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        app_icon = QtGui.QIcon(os.path.join(get_artwork_dir(), 'logo', 'logo-qudi.svg'))
+        app_icon = QtGui.QIcon(os.path.join(get_artwork_dir(), "logo", "logo-qudi.svg"))
         self.setWindowIcon(app_icon)
 
 
@@ -361,5 +388,5 @@ def main():
     sys.exit(app.exec_())
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
