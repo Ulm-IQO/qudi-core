@@ -146,8 +146,7 @@ class Gui(QtCore.QObject):
         self._sigBalloonMessage.connect(self.balloon_message, QtCore.Qt.QueuedConnection)
 
         self._configure_pyqtgraph(use_opengl)
-        self.main_gui_module = QudiMainGui(qudi_main_weakref=weakref.ref(qudi_instance),
-                                           name='qudi_main_gui')
+        self.main_gui_module = QudiMainGui(qudi_main=qudi_instance, name='qudi_main_gui')
         self.system_tray_icon.managerAction.triggered.connect(self.activate_main_gui,
                                                               QtCore.Qt.QueuedConnection)
         self.system_tray_icon.quitAction.triggered.connect(qudi_instance.quit,
@@ -380,12 +379,12 @@ class Gui(QtCore.QObject):
     @QtCore.Slot(str, str, str)
     def _tray_module_action_changed(self, base, module_name, state):
         if self.system_tray_icon and base == 'gui':
-            if state == 'deactivated':
-                self.system_tray_icon.remove_action(module_name)
-            else:
+            if state == 'activated':
                 mod_manager = ModuleManager.instance()
                 try:
                     module_inst = mod_manager[module_name].instance
                 except KeyError:
                     return
                 self.system_tray_icon.add_action(module_name, module_inst.show)
+            else:
+                self.system_tray_icon.remove_action(module_name)

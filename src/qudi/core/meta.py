@@ -19,10 +19,11 @@ You should have received a copy of the GNU Lesser General Public License along w
 If not, see <https://www.gnu.org/licenses/>.
 """
 
-__all__ = ('ABCQObjectMeta', 'ModuleMeta', 'QObjectMeta', 'QudiObjectMeta')
+__all__ = ['ABCQObjectMeta', 'QObjectMeta', 'QudiObjectMeta']
 
 from abc import ABCMeta
-from PySide2.QtCore import QObject
+from PySide2.QtCore import QObject, Signal
+
 from qudi.core.statusvariable import StatusVar
 from qudi.core.connector import Connector
 from qudi.core.configoption import ConfigOption
@@ -32,9 +33,7 @@ QObjectMeta = type(QObject)
 
 
 class ABCQObjectMeta(ABCMeta, QObjectMeta):
-    """ Metaclass for abstract QObject subclasses.
-    """
-
+    """ Metaclass for abstract QObject subclasses """
     def __new__(mcs, name, bases, attributes):
         cls = super(ABCQObjectMeta, mcs).__new__(mcs, name, bases, attributes)
         # Compute set of abstract method names
@@ -52,52 +51,34 @@ class ABCQObjectMeta(ABCMeta, QObjectMeta):
 
 
 class QudiObjectMeta(ABCQObjectMeta):
-    """ General purpose metaclass for abstract QObject subclasses that include qudi meta objects
+    """ General purpose metaclass for abstract QObject subclasses that include qudi meta attributes
     (Connector, StatusVar, ConfigOption).
-    Collects all meta objects in new "_meta" class variable for easier access.
+    Collects all meta attributes in new "_meta" class variable for easier access.
+    Also collects QtCore.Signal attribute names for easier maintenance and access.
     """
     def __new__(mcs, name, bases, attributes):
         cls = super().__new__(mcs, name, bases, attributes)
 
-        meta = dict()
-
         # Collect qudi module meta attributes (Connector, StatusVar, ConfigOption) and put them
         # in the class variable dict "_meta" for easy bookkeeping and access.
-        connectors = dict()
-        status_vars = dict()
-        config_opt = dict()
-        for attr_name in dir(cls):
-            attr = getattr(cls, attr_name, None)
+        base_meta = getattr(cls, '_meta', dict())  # extend shallow copy of _meta dicts if existent
+
+        connectors = base_meta.get('connectors', dict()).copy()
+        status_vars = base_meta.get('status_variables', dict()).copy()
+        config_opt = base_meta.get('config_options', dict()).copy()
+        signals = base_meta.get('signals', dict()).copy()
+        for attr_name, attr in cls.__dict__.items():
             if isinstance(attr, Connector):
                 connectors[attr_name] = attr
             elif isinstance(attr, StatusVar):
                 status_vars[attr_name] = attr
             elif isinstance(attr, ConfigOption):
                 config_opt[attr_name] = attr
-        meta.update({'connectors'      : connectors,
+            elif isinstance(attr, Signal):
+                signals[attr_name] = attr_name
+
+        cls._meta = {'connectors'      : connectors,
                      'status_variables': status_vars,
-                     'config_options'  : config_opt})
-        setattr(cls, '_meta', meta)
-        return cls
-
-
-class ModuleMeta(QudiObjectMeta):
-    """ Metaclass for all qudi modules (GUI, logic and hardware)
-    """
-
-    def __new__(mcs, name, bases, attributes):
-        cls = super().__new__(mcs, name, bases, attributes)
-
-        # Determine module base key and add to _meta dict
-        if getattr(cls, '_meta', None):
-            for base in cls.mro():
-                if base.__name__ == 'GuiBase':
-                    cls._meta['base'] = 'gui'
-                    break
-                elif base.__name__ == 'LogicBase':
-                    cls._meta['base'] = 'logic'
-                    break
-                elif base.__name__ == 'Base':
-                    cls._meta['base'] = 'hardware'
-                    break
+                     'config_options'  : config_opt,
+                     'signals'         : signals}
         return cls

@@ -18,22 +18,21 @@ See the GNU Lesser General Public License for more details.
 You should have received a copy of the GNU Lesser General Public License along with qudi.
 If not, see <https://www.gnu.org/licenses/>.
 """
-import logging
+
 import os
 import copy
-import uuid
 import warnings
 from abc import abstractmethod
-from uuid import uuid4
 from enum import Enum
+from uuid import uuid4, UUID
 from PySide2 import QtCore, QtGui, QtWidgets
-from typing import Any, Mapping, Optional, Callable, Union, Dict
+from typing import Any, Mapping, Optional, Callable, Union, Dict, Final, MutableMapping, final
 
-from qudi.core.configoption import MissingOption
+from qudi.core.configoption import MissingAction
 from qudi.core.statusvariable import StatusVar
 from qudi.util.paths import get_module_app_data_path, get_daily_directory, get_default_data_dir
 from qudi.util.yaml import yaml_load, yaml_dump
-from qudi.core.meta import ModuleMeta
+from qudi.core.object import QudiObject
 from qudi.core.logger import get_logger
 from qudi.util.helpers import current_is_native_thread
 
@@ -130,6 +129,7 @@ class ModuleStateMachine(QtCore.QObject):
     def __init__(self, module_instance: 'Base'):
         super().__init__(parent=module_instance)
         self._current_state = ModuleState.DEACTIVATED
+        self.__warned = False
 
     def __getattr__(self, item):
         """ Make convenience state checking properties of ModuleState enum available through
@@ -148,14 +148,16 @@ class ModuleStateMachine(QtCore.QObject):
 
     def __call__(self) -> str:
         """ For backwards compatibility """
-        warnings.warn(
-            'Being able to call ModuleStateMachine to get a string representation of the '
-            'ModuleState Enum is deprecated and will be removed in the future. Please compare '
-            '("==") ModuleStateMachine directly with ModuleState or use '
-            'ModuleStateMachine.current.value if you must have the string representation.',
-            DeprecationWarning,
-            stacklevel=2
-        )
+        if not self.__warned:
+            warnings.warn(
+                'Being able to call ModuleStateMachine to get a string representation of the '
+                'ModuleState Enum is deprecated and will be removed in the future. Please compare '
+                '("==") ModuleStateMachine directly with ModuleState or use '
+                'ModuleStateMachine.current.value if you must have the string representation.',
+                DeprecationWarning,
+                stacklevel=2
+            )
+            self.__warned = True
         return self.current.value
 
     def __eq__(self, other) -> bool:
@@ -255,118 +257,63 @@ class ModuleStateMachine(QtCore.QObject):
                                    'the modules native thread')
 
 
-class Base(QtCore.QObject, metaclass=ModuleMeta):
-    """ Base class for all loadable modules
+class Base(QudiObject):
+    """ Base class for all loadable modules. Hardware interface classes must inherit this
+    (or hardware modules that do not inherit an interface).
 
-    * Ensure that the program will not die during the load of modules
-    * Initialize modules
-    * Provides a self identification of the used module
-    * per-module logging facility
-    * Provides a self de-initialization of the used module
-    * Get your own configuration (for save)
-    * Get name of status variables
-    * Get status variables
-    * Reload module data (from saved variables)
+    Does not run its own Qt event loop by default. In the rare case a hardware module needs its
+    own event loop, overwrite and set the class attribute "_threaded = True" in the hardware
+    implementation class.
+
+    Each module name will be assigned a UUID which will remain the same for multiple instantiations
+    with the same module name.
     """
-    _threaded = False
+    _threaded: bool = False
 
     is_module_threaded = ThreadedDescriptor()
     module_base = ModuleBaseDescriptor()
 
-    # FIXME: This __new__ implementation has the sole purpose to circumvent a known PySide2(6) bug.
-    #  See https://bugreports.qt.io/browse/PYSIDE-1434 for more details.
-    def __new__(cls, *args, **kwargs):
-        abstract = getattr(cls, '__abstractmethods__', frozenset())
-        if abstract:
-            raise TypeError(f'Can\'t instantiate abstract class "{cls.__name__}" '
-                            f'with abstract methods {set(abstract)}')
-        return super().__new__(cls, *args, **kwargs)
+    sigStateChanged = QtCore.Signal(ModuleState)
 
-    def __init__(self, qudi_main_weakref: Any, name: str,
-                 config: Optional[Mapping[str, Any]] = None,
-                 callbacks: Optional[Mapping[str, Callable]] = None, **kwargs):
-        """ Initialise Base instance. Set up its state machine and initialize ConfigOption meta
-        attributes from given config.
+    __url_uuid_map: Final[Dict[str, UUID]] = dict()  # Same module url will result in same UUID
 
-        @param object self: the object being initialised
-        @param str name: unique name for this module instance
-        @param dict configuration: parameters from the configuration file
-        @param dict callbacks: dict specifying functions to be run on state machine transitions
+    def __init__(self,
+                 qudi_main: Any,
+                 name: str,
+                 options: Optional[Mapping[str, Any]] = None,
+                 connections: Optional[MutableMapping[str, Any]] = None):
+        """ Initialize Base instance. Set up its state machine, initializes ConfigOption meta
+        attributes from given config and connects activated module dependencies.
         """
-        super().__init__(**kwargs)
+        mod_url = f'{self.__class__.__module__}.{self.__class__.__name__}::{name}'
+        try:
+            uuid = self.__url_uuid_map[mod_url]
+        except KeyError:
+            uuid = uuid4()
+            self.__url_uuid_map[mod_url] = uuid
+        super().__init__(
+            options=options,
+            connections=connections,
+            appdata_filepath=get_module_app_data_path(self.__class__.__name__,
+                                                      self.module_base.value,
+                                                      name),
+            logger_nametag=name,
+            uuid=uuid
+        )
 
-        if config is None:
-            config = dict()
-        if callbacks is None:
-            callbacks = dict()
-
-        # Keep weak reference to qudi main instance
-        self.__qudi_main_weakref = qudi_main_weakref
-
-        # Create logger instance for module
-        self.__logger = get_logger(f'{self.__module__}.{self.__class__.__name__}')
-
-        # Create a copy of the _meta class dict and attach it to the created instance
-        self._meta = copy.deepcopy(self._meta)
-        # Add additional meta info to _meta dict
-        self._meta['name'] = name
-        self._meta['uuid'] = uuid4()
-        self._meta['configuration'] = copy.deepcopy(config)
-
-        # set instance attributes according to config_option meta objects
-        self.__initialize_config_options(config)
-
-        # set instance attributes according to connector meta objects
-        self.__initialize_connectors()
-
-        # Initialize module FSM
+        # Keep reference to qudi main instance
+        self.__qudi_main = qudi_main
+        # Add additional module info
+        self.__module_name = name
+        self.__module_url = mod_url
+        # Initialize module state
         self.module_state = ModuleStateMachine(module_instance=self)
+        self.__warned = False
 
-    def __initialize_config_options(self, config: Optional[Mapping[str, Any]]) -> None:
-        for attr_name, cfg_opt in self._meta['config_options'].items():
-            if cfg_opt.name in config:
-                cfg_val = copy.deepcopy(config[cfg_opt.name])
-            else:
-                if cfg_opt.missing == MissingOption.error:
-                    raise ValueError(
-                        f'Required ConfigOption "{cfg_opt.name}" not given in configuration.\n'
-                        f'Configuration is: {config}'
-                    )
-                msg = f'No ConfigOption "{cfg_opt.name}" configured, using default value ' \
-                      f'"{cfg_opt.default}" instead.'
-                cfg_val = copy.deepcopy(cfg_opt.default)
-                if cfg_opt.missing == MissingOption.warn:
-                    self.log.warning(msg)
-                elif cfg_opt.missing == MissingOption.info:
-                    self.log.info(msg)
-            if cfg_opt.check(cfg_val):
-                cfg_val = cfg_opt.convert(cfg_val)
-                if cfg_opt.constructor_function is not None:
-                    cfg_val = cfg_opt.constructor_function(self, cfg_val)
-                setattr(self, attr_name, cfg_val)
-
-    def __initialize_connectors(self) -> None:
-        for attr_name, conn in self._meta['connectors'].items():
-            setattr(self, attr_name, conn)
-
-    def __eq__(self, other):
-        if isinstance(other, Base):
-            return self.module_uuid == other.module_uuid
-        return super().__eq__(other)
-
-    def __hash__(self):
-        return self.module_uuid.int
-
-    @QtCore.Slot()
-    def move_to_main_thread(self) -> None:
-        """ Method that will move this module into the main/manager thread.
-        """
-        if QtCore.QThread.currentThread() != self.thread():
-            QtCore.QMetaObject.invokeMethod(self,
-                                            'move_to_main_thread',
-                                            QtCore.Qt.BlockingQueuedConnection)
-        else:
-            self.moveToThread(QtCore.QCoreApplication.instance().thread())
+    @property
+    @final
+    def _qudi_main(self) -> Any:
+        return self.__qudi_main
 
     @property
     def module_thread(self) -> Union[QtCore.QThread, None]:
@@ -382,13 +329,20 @@ class Base(QtCore.QObject, metaclass=ModuleMeta):
         """ Read-only property returning the module name of this module instance as specified in the
         config.
         """
-        return self._meta['name']
+        return self.__module_name
 
     @property
-    def module_uuid(self) -> uuid.UUID:
-        """ Read-only property returning a unique uuid for this module instance.
-        """
-        return self._meta['uuid']
+    def module_uuid(self) -> UUID:
+        """ Backwards compatibility. To be removed. """
+        if not self.__warned:
+            warnings.warn(
+                'Base.module_uuid is deprecated and will be removed in the future. '
+                'Please use Base.uuid instead.',
+                DeprecationWarning,
+                stacklevel=2
+            )
+            self.__warned = True
+        return self.uuid
 
     @property
     def module_default_data_dir(self) -> str:
@@ -406,134 +360,23 @@ class Base(QtCore.QObject, metaclass=ModuleMeta):
             data_dir = os.path.join(data_root, self.module_name)
         return data_dir
 
-    @property
-    def module_status_variables(self) -> Dict[str, Any]:
-        variables = dict()
-        try:
-            for attr_name, var in self._meta['status_variables'].items():
-                if hasattr(self, attr_name):
-                    value = getattr(self, attr_name)
-                    if not isinstance(value, StatusVar):
-                        if var.representer_function is not None:
-                            value = var.representer_function(self, value)
-                        variables[var.name] = value
-        except:
-            self.log.exception('Error while collecting status variables:')
-        return variables
-
-    @property
-    def _qudi_main(self) -> Any:
-        qudi_main = self.__qudi_main_weakref()
-        if qudi_main is None:
-            raise RuntimeError(
-                'Unexpected missing qudi main instance. It has either been deleted or garbage '
-                'collected.'
-            )
-        return qudi_main
-
-    @property
-    def log(self) -> logging.Logger:
-        """ Returns the module logger instance
-        """
-        return self.__logger
-
-    def load_status_variables(self) -> None:
-        """ Load status variables from app data directory on disc.
-        """
-        # Load status variables from app data directory
-        file_path = get_module_app_data_path(self.__class__.__name__,
-                                             self.module_base,
-                                             self.module_name)
-        try:
-            variables = yaml_load(file_path, ignore_missing=True)
-        except:
-            variables = dict()
-            self.log.exception('Failed to load status variables:')
-
-        # Set instance attributes according to StatusVar meta objects
-        try:
-            for attr_name, var in self._meta['status_variables'].items():
-                value = variables.get(var.name, copy.deepcopy(var.default))
-                if var.constructor_function is not None:
-                    value = var.constructor_function(self, value)
-                setattr(self, attr_name, value)
-        except:
-            self.log.exception('Error while settings status variables:')
-
-    def dump_status_variables(self) -> None:
-        """ Dump status variables to app data directory on disc.
-
-        This method can also be used to manually dump status variables independent of the automatic
-        dump during module deactivation.
-        """
-        file_path = get_module_app_data_path(self.__class__.__name__,
-                                             self.module_base,
-                                             self.module_name)
-        # collect StatusVar values into dictionary
-        variables = self.module_status_variables
-        # Save to file if any StatusVars have been found
-        if variables:
-            try:
-                yaml_dump(file_path, variables)
-            except:
-                self.log.exception('Failed to save status variables:')
-
-    def _send_balloon_message(self, title: str, message: str, time: Optional[float] = None,
+    def _send_balloon_message(self,
+                              title: str,
+                              message: str,
+                              time: Optional[float] = None,
                               icon: Optional[QtGui.QIcon] = None) -> None:
-        qudi_main = self.__qudi_main_weakref()
-        if qudi_main is None:
-            return
-        if qudi_main.gui is None:
+        if self.__qudi_main.gui is None:
             log = get_logger('balloon-message')
             log.warning(f'{title}:\n{message}')
             return
-        qudi_main.gui.balloon_message(title, message, time, icon)
+        self.__qudi_main.gui.balloon_message(title, message, time, icon)
 
-    def _send_pop_up_message(self, title: str, message: str):
-        qudi_main = self.__qudi_main_weakref()
-        if qudi_main is None:
-            return
-        if qudi_main.gui is None:
+    def _send_pop_up_message(self, title: str, message: str) -> None:
+        if self.__qudi_main.gui is None:
             log = get_logger('pop-up-message')
             log.warning(f'{title}:\n{message}')
             return
-        qudi_main.gui.pop_up_message(title, message)
-
-    def connect_modules(self, connections: Mapping[str, Any]) -> None:
-        """ Connects given modules (values) to their respective Connector (keys).
-
-        DO NOT CALL THIS METHOD UNLESS YOU KNOW WHAT YOU ARE DOING!
-        """
-        # Sanity checks
-        conn_names = set(conn.name for conn in self._meta['connectors'].values())
-        mandatory_conn = set(
-            conn.name for conn in self._meta['connectors'].values() if not conn.optional
-        )
-        configured_conn = set(connections)
-        if not configured_conn.issubset(conn_names):
-            raise KeyError(f'Mismatch of connectors in configuration {configured_conn} and module '
-                           f'Connector meta objects {conn_names}.')
-        if not mandatory_conn.issubset(configured_conn):
-            raise ValueError(f'Not all mandatory connectors are specified in config.\n'
-                             f'Mandatory connectors are: {mandatory_conn}')
-
-        # Iterate through module connectors and connect them if possible
-        for conn in self._meta['connectors'].values():
-            target = connections.get(conn.name, None)
-            if target is None:
-                continue
-            if conn.is_connected:
-                raise RuntimeError(f'Connector "{conn.name}" already connected.\n'
-                                   f'Call "disconnect_modules()" before trying to reconnect.')
-            conn.connect(target)
-
-    def disconnect_modules(self) -> None:
-        """ Disconnects all Connector instances for this module.
-
-        DO NOT CALL THIS METHOD UNLESS YOU KNOW WHAT YOU ARE DOING!
-        """
-        for conn in self._meta['connectors'].values():
-            conn.disconnect()
+        self.__qudi_main.gui.pop_up_message(title, message)
 
     @abstractmethod
     def on_activate(self) -> None:
@@ -551,13 +394,14 @@ class Base(QtCore.QObject, metaclass=ModuleMeta):
 class LogicBase(Base):
     """
     """
-    _threaded = True
+    _threaded: bool = True
 
 
 class GuiBase(Base):
-    """This is the GUI base class. It provides functions that every GUI module should have.
+    """ This is the GUI base class. It provides functions that every GUI module should have.
     """
-    _threaded = False
+    _threaded: Final[bool] = False
+
     __window_geometry = StatusVar(name='_GuiBase__window_geometry', default=None)
     __window_state = StatusVar(name='_GuiBase__window_state', default=None)
 

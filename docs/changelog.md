@@ -3,10 +3,27 @@
 ## Pre-Release
 
 ### Breaking Changes
-None
+- Got rid of the `fysom` package for qudi module state machines. This increases complexity and 
+readability for these very easy state machines and concentrates state transition procedure in the 
+FSM itself.
+- Intoduced new enum types `ModuleState` and `ModuleBase` in `qudi.core.module` for state and 
+module base type representation.
+- Changed `qudi.core.module.Base` properties `is_module_threaded` and `module_base` to read-only 
+class descriptors
+- Turned `ConfigOption`, `StatusVar` and `Connector` into descriptors, eliminating the need to call 
+or explicitly construct them
+- Combined meta object, id, logging and appdata functionality in new general purpose 
+`QudiObjectMeta` and `QudiObject` (meta)classes. This new object serves as base class for 
+`qudi.core.module.Base`
+- `Connector` and `ConfigOption` now need to be initialized in `QudiObject.__init__`
+- Refactoring of `qudi.util.overload.OverloadProxy` which is now a subclass of a more general 
+object proxy found in the new module `qudi.util.proxy`.
+- Adjusted `ModuleManager` according to the meta object changes in `qudi.core.module`. Now there is 
+no more distinction between `loaded` and `activated` module state. Module `__init__` is called upon 
+activation and it is destroyed upon deactivation.
 
 ### Bugfixes
-None
+- Python module reload during runtime is now only performed if explicitly requested by the user
 
 ### New Features
 - New context manager `qudi.util.mutex.acquire_timeout` to facilitate (Recursive)Mutex/(R)Lock 
@@ -17,15 +34,8 @@ acquisition with a timeout
 status file
 
 ### Other
-- Refactoring of `qudi.util.overload.OverloadProxy` which is now a subclass of a more general 
-object proxy found in the new module `qudi.util.proxy`.
-- Got rid of the `fysom` package for qudi module state machines. This increases complexity and 
-readability for these very easy state machines and concentrates state transition procedure in the 
-FSM itself.
-- Intoduced new enum types `ModuleState` and `ModuleBase` in `qudi.core.module` for state and 
-module base type representation.
-- Changed `qudi.core.module.Base` properties `is_module_threaded` and `module_base` to read-only 
-class descriptors
+- Deprecated calling `qudi.core.module.Base.module_state` and `Connector` meta attributes.
+
 
 ## Version 1.5.0
 Released on 16.11.2023

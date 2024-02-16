@@ -130,13 +130,13 @@ class OverloadProxy(CachedObjectProxy):
     attribute in the object represented by this proxy by normal "pythonic" means without the
     additional key-mapping lookup usually required by OverloadedAttribute.
     """
-    __warning_sent = False
 
-    __slots__ = ['_overload_key']
+    __slots__ = ['_overload_key', '__warning_sent']
 
     def __init__(self, obj: Any, overload_key: str):
         super().__init__(obj)
         object.__setattr__(self, '_overload_key', overload_key)
+        object.__setattr__(self, '__warning_sent', False)
 
     # proxying (special cases)
     def __getattribute__(self, name):
@@ -160,7 +160,7 @@ class OverloadProxy(CachedObjectProxy):
         super().__setattr__(name, value)
 
     def __call__(self):
-        if not OverloadProxy.__warning_sent:
+        if not object.__getattribute__(self, '__warning_sent'):
             warnings.warn(
                 'Calling a qudi module Connector meta attribute has been deprecated and will be '
                 'removed in the future. Please use the connected module directly as a normal '
@@ -168,5 +168,5 @@ class OverloadProxy(CachedObjectProxy):
                 DeprecationWarning,
                 stacklevel=2
             )
-            OverloadProxy.__warning_sent = True
+            object.__setattr__(self, '__warning_sent', True)
         return self
