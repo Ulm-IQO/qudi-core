@@ -23,13 +23,13 @@ __all__ = ['StatusVar', 'ConfigOption', 'Connector', 'Base', 'LogicBase', 'GuiBa
 
 import os
 from importlib import metadata
-__version__ = metadata.version('qudi-core')
-
-# Set QT_API environment variable to PySide2
-os.environ['QT_API'] = 'pyside2'
-
 from qudi.core.statusvariable import StatusVar
 from qudi.core.configoption import ConfigOption
 from qudi.core.connector import Connector
 from qudi.core.module import Base, LogicBase, GuiBase
 from qudi.core.logger import get_logger
+__version__ = metadata.version('qudi-core')
+
+# Set QT_API environment variable to PySide2
+os.environ['QT_API'] = 'pyside2'
+

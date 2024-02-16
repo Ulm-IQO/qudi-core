@@ -176,7 +176,7 @@ class ModuleScript(QtCore.QObject, metaclass=QudiObjectMeta):
             with self._thread_lock:
                 self._success = True
         except ModuleScriptInterrupted:
-            self.log.info(f'Main run method interrupted')
+            self.log.info('Main run method interrupted')
         except:
             self.log.exception('Exception during main run method:')
             raise

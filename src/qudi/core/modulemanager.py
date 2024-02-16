@@ -25,7 +25,7 @@ import copy
 import weakref
 import fysom
 
-from typing import FrozenSet, Iterable
+from typing import FrozenSet
 from functools import partial
 from PySide2 import QtCore
 
@@ -706,7 +706,7 @@ class ManagedModule(QtCore.QObject):
                         self._instance = mod_class(qudi_main_weakref=self._qudi_main_ref,
                                                    name=self._name,
                                                    config=self._options)
-                    except BaseException as e:
+                    except BaseException:
                         self._instance = None
                         raise RuntimeError(f'Error during initialization of qudi module '
                                            f'"qudi.{self._base}.{self._module}.{self._class}"')

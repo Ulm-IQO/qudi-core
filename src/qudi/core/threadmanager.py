@@ -19,7 +19,6 @@ You should have received a copy of the GNU Lesser General Public License along w
 If not, see <https://www.gnu.org/licenses/>.
 """
 
-import logging
 import weakref
 from functools import partial
 from PySide2 import QtCore

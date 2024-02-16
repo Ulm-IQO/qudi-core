@@ -24,7 +24,7 @@ If not, see <https://www.gnu.org/licenses/>.
 __all__ = ['ModuleTask', 'ModuleTaskStateMachine']
 
 
-from fysom import Fysom, Canceled
+from fysom import Fysom
 from PySide2 import QtCore
 from typing import Mapping, Any, Optional, Callable, Union
 
@@ -119,7 +119,7 @@ class ModuleTask(ModuleScript):
         """
         if self.running:
             self.log.error(
-                f'Unable to run. Task is already running or has been interrupted immediately.'
+                'Unable to run. Task is already running or has been interrupted immediately.'
             )
         else:
             self._state_machine.start()
@@ -152,7 +152,7 @@ class ModuleTask(ModuleScript):
         """ FSM startup callback. This will call _setup and set status flags accordingly.
         Resets last task result. Handles task interrupts during execution of _setup method.
         """
-        self.log.debug(f'Running setup')
+        self.log.debug('Running setup')
         self.sigStateChanged.emit(event.dst)
         self.result = None
         with self._thread_lock:
@@ -166,7 +166,7 @@ class ModuleTask(ModuleScript):
             self._check_interrupt()
             skip_run = False
         except ModuleScriptInterrupted:
-            self.log.info(f'Setup interrupted')
+            self.log.info('Setup interrupted')
         except:
             self.log.exception('Exception during setup:')
             raise
@@ -188,7 +188,7 @@ class ModuleTask(ModuleScript):
             with self._thread_lock:
                 self._success = True
         except ModuleScriptInterrupted:
-            self.log.info(f'Main run method interrupted')
+            self.log.info('Main run method interrupted')
         except:
             self.log.exception('Exception during main run method:')
             raise
@@ -199,7 +199,7 @@ class ModuleTask(ModuleScript):
         """ FSM callback to always call _cleanup method in the end regardless of task success.
         Handles task interrupts during execution of _run method.
         """
-        self.log.debug(f'Running cleanup')
+        self.log.debug('Running cleanup')
         self.sigStateChanged.emit(event.dst)
         try:
             self._cleanup()

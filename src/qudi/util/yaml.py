@@ -97,7 +97,7 @@ class SafeRepresenter(_yaml.SafeRepresenter):
             cls = getattr(mod, class_name)
             assert data == cls[data.name]
         except (AttributeError, ImportError, AssertionError):
-            raise TypeError(f'Data can not be represented as enum.Enum.')
+            raise TypeError('Data can not be represented as enum.Enum.')
         return self.represent_scalar(tag='tag:yaml.org,2002:enum',
                                      value=f'{module}.{class_name}[{data.name}]')
 
@@ -111,7 +111,7 @@ class SafeRepresenter(_yaml.SafeRepresenter):
             cls = getattr(mod, class_name)
             assert data == cls(data.value)
         except (AttributeError, ImportError, AssertionError):
-            raise TypeError(f'Data can not be represented as enum.Flag')
+            raise TypeError('Data can not be represented as enum.Flag')
         return self.represent_scalar(tag='tag:yaml.org,2002:flag',
                                      value=f'{module}.{class_name}({data.value:d})')
 

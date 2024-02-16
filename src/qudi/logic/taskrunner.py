@@ -152,7 +152,7 @@ class TaskRunnerLogic(LogicBase):
                 raise TypeError('ModuleTask kwargs must be mapping with str type keys')
             task.kwargs = arguments
         except:
-            self.log.exception(f'Exception during setting of arguments for ModuleTask:')
+            self.log.exception('Exception during setting of arguments for ModuleTask:')
             raise
 
     def __activate_connect_task_modules(self, name: str, task: ModuleTask) -> None:

@@ -84,11 +84,11 @@ class QudiKernelService(rpyc.Service):
         self._background_server = None
 
     def on_connect(self, conn):
-        logging.warning(f'Qudi IPython kernel connected to local module service.')
+        logging.warning('Qudi IPython kernel connected to local module service.')
         self._background_server = rpyc.BgServingThread(conn)
 
     def on_disconnect(self, conn):
-        logging.warning(f'Qudi IPython kernel disconnected from local module service.')
+        logging.warning('Qudi IPython kernel disconnected from local module service.')
         try:
             self._background_server.stop()
         except:

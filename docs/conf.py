@@ -58,6 +58,10 @@ numpydoc_show_class_members = False
 numpydoc_show_inherited_class_members = False
 numpydoc_class_members_toctree = False
 
+# This gives the full name of the inherited classes in the documentation. It would be better if we could
+# just reference the documentation externally with intersphinx but it's not working correctly. Sphinx
+# ends up documenting the entire inherited base class instead of just linking to it. It could be a problem
+# caused by numpydoc, not sure yet.
 def process_bases(app, name, obj, options, bases):
     for i, base in enumerate(bases):
         bases[i] = ':py:class:`' + base.__module__ + '.' + base.__name__ + '`'

@@ -20,7 +20,7 @@ You should have received a copy of the GNU Lesser General Public License along w
 If not, see <https://www.gnu.org/licenses/>.
 """
 
-from typing import Iterable, Sequence, Mapping, Union, Any, Optional, Tuple
+from typing import Iterable, Sequence, Mapping, Optional, Tuple
 
 from qudi.core.scripting.moduletask import ModuleTask
 from qudi.core.connector import Connector

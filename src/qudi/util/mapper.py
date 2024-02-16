@@ -405,7 +405,7 @@ class Mapper:
         # define key
         key = (widget, widget_property_name)
         # check that key has a mapping
-        if not key in self._mappings:
+        if key not in self._mappings:
             raise RuntimeError(f'Widget "{repr(widget)}" is not mapped.')
         # disconnect signals
         self._mappings[key]['widget_property_notifier'].disconnect(

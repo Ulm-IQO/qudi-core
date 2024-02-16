@@ -25,7 +25,6 @@ __all__ = ['MouseTrackingViewBox', 'DataSelectionViewBox', 'RubberbandZoomViewBo
            'RubberbandZoomSelectionViewBox', 'RubberbandZoomMixin', 'DataSelectionMixin',
            'MouseTrackingMixin', 'SelectionMode']
 
-import warnings
 from typing import Optional, Union, Any, Tuple, Sequence, List, Dict
 from enum import IntEnum
 
