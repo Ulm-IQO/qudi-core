@@ -1,4 +1,4 @@
-`index <../index.md>`__
+`index <../index.rst>`__
 
 --------------
 
@@ -271,4 +271,4 @@ class. The same is true for hiding the overloading semantics using
 
 --------------
 
-`index <../index.md>`__
+`index <../index.rst>`__

@@ -1,4 +1,4 @@
-`index <../index.md>`__
+`index <../index.rst>`__
 
 --------------
 
@@ -17,4 +17,4 @@ WORK IN PROGRESS
 
 --------------
 
-`index <../index.md>`__
+`index <../index.rst>`__

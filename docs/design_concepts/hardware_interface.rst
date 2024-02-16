@@ -1,4 +1,4 @@
-`index <../index.md>`__
+`index <../index.rst>`__
 
 --------------
 
@@ -156,4 +156,4 @@ explicitly specifying a specific device model.
 
 --------------
 
-`index <../index.md>`__
+`index <../index.rst>`__

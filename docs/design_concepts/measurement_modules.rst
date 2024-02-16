@@ -1,4 +1,4 @@
-`index <../index.md>`__
+`index <../index.rst>`__
 
 --------------
 
@@ -30,7 +30,7 @@ If an application requires hardware instrumentation you also need qudi
 hardware modules to provide abstracted hardware interfaces to logic
 modules. If you want to know more about hardware abstraction in qudi,
 please read the `hardware interface
-documentation <hardware_interface.md>`__.
+documentation <hardware_interface.rst>`__.
 
 Having a logic module and possibly a hardware module is the bare minimum
 of a qudi measurement application. The logic module provides a set of
@@ -246,7 +246,7 @@ The connection to another module is done by the
 the dependency of a module on another module further down the hierarchy,
 i.e. it opens up a control flow path to another module.
 
-See the `qudi connectors documentation <connectors.md>`__ for more
+See the `qudi connectors documentation <connectors.rst>`__ for more
 details on how connectors work.
 
 Generally the control flow between modules should be signal-driven
@@ -358,4 +358,4 @@ modules, each running in its own thread.
 
 --------------
 
-`index <../index.md>`__
+`index <../index.rst>`__

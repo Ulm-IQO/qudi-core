@@ -1,4 +1,4 @@
-`index <../index.md>`__
+`index <../index.rst>`__
 
 --------------
 
@@ -399,4 +399,4 @@ considered thread-safe.
 
 --------------
 
-`index <../index.md>`__
+`index <../index.rst>`__

@@ -1,4 +1,4 @@
-`index <../index.md>`__
+`index <../index.rst>`__
 
 --------------
 
@@ -438,4 +438,4 @@ provided by the Institute for Quantum Optics
 
 --------------
 
-`index <../index.md>`__
+`index <../index.rst>`__

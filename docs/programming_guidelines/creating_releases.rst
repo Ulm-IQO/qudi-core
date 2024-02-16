@@ -1,4 +1,4 @@
-`index <../index.md>`__
+`index <../index.rst>`__
 
 --------------
 
@@ -10,7 +10,7 @@ How to create a new qudi-core release
 
 Create a single commit that includes three changes: - Update version
 number in file ``/Version``. The scheme is ``Major.Minor.Hotfix``. -
-Rename “Pre-Release” section in ``/docs/changelog.md`` to “Version
+Rename “Pre-Release” section in ``/docs/changelog.rst`` to “Version
 x.y.z” and add release date below. Create new empty “Pre-Release”
 template (subsections) at the top of the file. The head of the file
 should look like this: \``\` # Changelog
@@ -66,7 +66,7 @@ with the release!**
    |GitHub create a release tag screenshot|
 3. Set name for the release to ``Release vX.Y.Z`` with respective
    version number inserted.
-4. Copy over the section of ``/docs/changelog.md`` corresponding to the
+4. Copy over the section of ``/docs/changelog.rst`` corresponding to the
    release and insert it in the release description field. Remove the
    section header, i.e. the ``Version vX.Y.Z`` part.
 5. Now your release form should look like the screenshot below. If you
@@ -81,7 +81,7 @@ Congratulations! You have successfully published a release of
 
 --------------
 
-`index <../index.md>`__
+`index <../index.rst>`__
 
 .. |GitHub draft a new release screenshot| image:: ../images/github-draft-new-release-screenshot.png
 .. |GitHub create a release tag screenshot| image:: ../images/github-release-tag-screenshot.png

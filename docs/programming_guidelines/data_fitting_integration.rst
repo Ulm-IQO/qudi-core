@@ -1,4 +1,4 @@
-`index <../index.md>`__
+`index <../index.rst>`__
 
 --------------
 
@@ -13,4 +13,4 @@ and fit constraint configuration.
 
 --------------
 
-`index <../index.md>`__
+`index <../index.rst>`__

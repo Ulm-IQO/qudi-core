@@ -1,4 +1,4 @@
-`index <index.md>`__
+`index <index.rst>`__
 
 --------------
 
@@ -103,4 +103,4 @@ and copyright disclaimers are listed below:
 
 --------------
 
-`index <index.md>`__
+`index <index.rst>`__
