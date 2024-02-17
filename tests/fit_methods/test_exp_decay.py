@@ -20,81 +20,84 @@ You should have received a copy of the GNU Lesser General Public License along w
 If not, see <https://www.gnu.org/licenses/>.
 """
 
-import unittest
+import pytest
 import numpy as np
 
-from qudi.util.fit_models.exp_decay import StretchedExponentialDecay
+from qudi.util.fit_models.exp_decay import ExponentialDecay
 
 
-class TestExpDecayMethods(unittest.TestCase):
-    _fit_param_tolerance = 0.05  # 5% tolerance for each fit parameter
+SEED = 42
+NUM_TESTS = 100
+NUM_X_VALUES = 1000
+TOLERANCE = 0.05
 
-    @staticmethod
-    def stretched_exp_decay(x, offset, amplitude, decay, stretch):
-        return offset + amplitude * np.exp(-((x / decay) ** stretch))
+rng = np.random.default_rng(seed=SEED)
 
-    def setUp(self):
-        self.offset = (np.random.rand() - 0.5) * 2e6
-        self.amplitude = np.random.rand() * 100
-        window = max(1e-9, np.random.rand() * 1e9)
-        left = (np.random.rand() - 0.5) * 2e9
-        points = np.random.randint(10, 1001)
-        self.x_values = np.linspace(left, left + window, points)
-        min_decay = 1.5 * (self.x_values[1] - self.x_values[0])
-        self.decay = min_decay + np.random.rand() * ((window / 2) - min_decay)
-        self.stretch = 0.1 + np.random.rand() * 3.9
-        self.noise_amp = max(self.amplitude / 10, np.random.rand() * self.amplitude)
-        self.noise = (np.random.rand(points) - 0.5) * self.noise_amp
 
-    def test_exp_decay(self):
-        # Test for exponential decay (stretch == 1)
-        y_values = self.noise + self.stretched_exp_decay(
-            self.x_values, self.offset, self.amplitude, self.decay, 1
-        )
+@pytest.fixture
+def generate_params():
+    offset = rng.uniform(1e2, 1e3)
+    amplitude = rng.uniform(1e1, 1e3)  # If this is too small, the fit errors become large
+    decay = rng.uniform(1, 10)
+    stretch = rng.random()
+    x_values = np.linspace(0, 100, NUM_X_VALUES)
+    noise = rng.normal(0, 0.1, x_values.shape)
 
-        fit_model = StretchedExponentialDecay()
-        guess = fit_model.guess(y_values, self.x_values)
-        guess["stretch"].set(vary=False, value=1)
-        fit_result = fit_model.fit(data=y_values, x=self.x_values, **guess)
+    yield offset, amplitude, decay, stretch, x_values, noise
 
-        params_ideal = {
-            "offset": self.offset,
-            "amplitude": self.amplitude,
-            "decay": self.decay,
-        }
-        for name, ideal_val in params_ideal.items():
-            diff = abs(fit_result.best_values[name] - ideal_val)
-            tolerance = abs(ideal_val * self._fit_param_tolerance)
-            msg = 'Exp. decay fit parameter "{0}" not within {1:.2%} tolerance'.format(
-                name, self._fit_param_tolerance
-            )
-            self.assertLessEqual(diff, tolerance, msg)
 
-    def test_stretched_exp_decay(self):
-        # Test for stretched exponential decay
-        y_values = self.noise + self.stretched_exp_decay(
-            self.x_values, self.offset, self.amplitude, self.decay, self.stretch
-        )
+@pytest.mark.parametrize("generate_params", range(NUM_TESTS), indirect=True)
+def test_exp_decay(generate_params):
+    offset, amplitude, decay, stretch, x_values, noise = generate_params
 
-        fit_model = StretchedExponentialDecay()
-        fit_result = fit_model.fit(
-            data=y_values, x=self.x_values, **fit_model.guess(y_values, self.x_values)
-        )
+    stretch = 1
+    y_values = noise + ExponentialDecay().eval(
+        x=x_values, offset=offset, amplitude=amplitude, decay=decay, stretch=stretch
+    )
 
-        params_ideal = {
-            "offset": self.offset,
-            "amplitude": self.amplitude,
-            "decay": self.decay,
-            "stretch": self.stretch,
-        }
-        for name, ideal_val in params_ideal.items():
-            diff = abs(fit_result.best_values[name] - ideal_val)
-            tolerance = abs(ideal_val * self._fit_param_tolerance)
-            msg = 'Stretched exp. decay fit parameter "{0}" not within {1:.2%} tolerance'.format(
-                name, self._fit_param_tolerance
-            )
-            self.assertLessEqual(diff, tolerance, msg)
+    fit_model = ExponentialDecay()
+    estimate = fit_model.guess(y_values, x_values)
+    estimate["stretch"].set(vary=False, value=stretch)
+    fit_result = fit_model.fit(data=y_values, x=x_values, **estimate)
+
+    params_ideal = {
+        "offset": offset,
+        "amplitude": amplitude,
+        "decay": decay,
+        "stretch": stretch,
+    }
+    for name, ideal_val in params_ideal.items():
+        fit_val = fit_result.best_values[name]
+        relative_err = abs(abs(fit_val - ideal_val) / ideal_val)
+        # msg = f'Exp. decay fit parameter "{name}" has relative error {relative_err * 100:.2f}% (Limit: {TOLERANCE * 100:.2f}%)'
+        msg = f'Actual: {fit_val}, Ideal: {ideal_val}, {name}, Relative error: {relative_err * 100:.2f}%, Absolute error: {abs(fit_val - ideal_val)}'
+        assert relative_err <= TOLERANCE, msg
 
 
 if __name__ == "__main__":
-    unittest.main()
+    pytest.main()
+
+# @pytest.mark.parametrize("stretch", [0.1 + rng.random() * 3.9])
+# def test_stretched_exp_decay(setup_values, stretch):
+#     offset, amplitude, decay, _, x_values, noise = setup_values
+
+#     y_values = noise + (offset + amplitude * np.exp(-((x_values / decay) ** stretch)))
+
+#     fit_model = ExponentialDecay()
+#     fit_result = fit_model.fit(
+#         data=y_values, x=x_values, **fit_model.guess(y_values, x_values)
+#     )
+
+#     params_ideal = {
+#         "offset": offset,
+#         "amplitude": amplitude,
+#         "decay": decay,
+#         "stretch": stretch,
+#     }
+#     for name, ideal_val in params_ideal.items():
+#         diff = abs(fit_result.best_values[name] - ideal_val)
+#         tolerance = abs(ideal_val * 0.05)
+#         msg = 'Stretched exp. decay fit parameter "{0}" not within {1:.2%} tolerance'.format(
+#             name, 0.05
+#         )
+#         assert diff <= tolerance

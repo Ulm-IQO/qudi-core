@@ -26,6 +26,7 @@ import warnings
 import numpy as np
 from scipy.ndimage import filters
 from qudi.util.fit_models.model import FitModelBase, estimator
+from lmfit.models import ExponentialModel
 
 
 def multiple_exponential_decay(x, amplitudes, decays, stretches):
@@ -63,6 +64,13 @@ class ExponentialDecay(FitModelBase):
         return offset + multiple_exponential_decay(
             x, (amplitude,), (decay,), (stretch,)
         )
+    
+    def guess(self, data, x=None, **kwargs):
+        model = ExponentialModel()
+        params = model.guess(data, x=x, **kwargs)
+        params.add(name="offset", value=0.0, min=-np.inf, max=np.inf)
+        params.add(name="stretch", value=1.0, min=-np.inf, max=np.inf)
+        return params
 
     @estimator("Decay")
     def estimate_decay(self, data, x):
