@@ -3,6 +3,7 @@
 ![PyPI release](https://github.com/Ulm-IQO/qudi-core/actions/workflows/release_pypi.yml/badge.svg)
 [![Documentation Status](https://readthedocs.org/projects/qudi-core-testing/badge/?version=latest)](https://qudi-core-testing.readthedocs.io/en/latest/?badge=latest)
 [![Ruff](https://github.com/prithviulm/qudi-core/actions/workflows/ruff.yml/badge.svg)](https://github.com/prithviulm/qudi-core/actions/workflows/ruff.yml)
+[![Testing](https://github.com/prithviulm/qudi-core/actions/workflows/test.yml/badge.svg)](https://github.com/prithviulm/qudi-core/actions/workflows/test.yml)
 
 ---
 The qudi-core repository represents the base installation for the `qudi` Python package.
