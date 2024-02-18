@@ -24,7 +24,7 @@ __all__ = ("ExponentialDecay", "multiple_exponential_decay")
 
 import warnings
 import numpy as np
-from scipy.ndimage import filters
+from scipy.ndimage import gaussian_filter1d
 from qudi.util.fit_models.model import FitModelBase, estimator
 from lmfit.models import ExponentialModel
 
@@ -64,12 +64,12 @@ class ExponentialDecay(FitModelBase):
         return offset + multiple_exponential_decay(
             x, (amplitude,), (decay,), (stretch,)
         )
-    
+
     def guess(self, data, x=None, **kwargs):
         model = ExponentialModel()
         params = model.guess(data, x=x, **kwargs)
         params.add(name="offset", value=0.0, min=-np.inf, max=np.inf)
-        params.add(name="stretch", value=1.0, min=-np.inf, max=np.inf)
+        params.add(name="stretch", value=1.0, min=0.0, max=np.inf)
         return params
 
     @estimator("Decay")
@@ -80,7 +80,7 @@ class ExponentialDecay(FitModelBase):
             data_smoothed = data.copy()
         else:
             sigma = max(1, int(round(len(data) / 10)))
-            data_smoothed = filters.gaussian_filter1d(data, sigma=sigma)
+            data_smoothed = gaussian_filter1d(data, sigma=sigma)
 
         # Calculate mean value of first and last 10% of data array. Take the latter as offset.
         mean_len = max(1, len(x) // 10)
@@ -135,13 +135,13 @@ class ExponentialDecay(FitModelBase):
     @estimator("Decay (no offset)")
     def estimate_decay_no_offset(self, data, x):
         estimate = self.estimate_decay(data, x)
-        estimate["offset"].set(value=0, min=-np.inf, max=np.inf, vary=False)
+        estimate["offset"].set(value=0, vary=False)
         return estimate
 
     @estimator("Stretched Decay (no offset)")
     def estimate_stretched_decay_no_offset(self, data, x):
         estimate = self.estimate_stretched_decay(data, x)
-        estimate["offset"].set(value=0, min=-np.inf, max=np.inf, vary=False)
+        estimate["offset"].set(value=0, vary=False)
         return estimate
 
 
