@@ -26,7 +26,6 @@ import warnings
 import numpy as np
 from scipy.ndimage import gaussian_filter1d
 from qudi.util.fit_models.model import FitModelBase, estimator
-from lmfit.models import ExponentialModel
 
 
 def multiple_exponential_decay(x, amplitudes, decays, stretches):
@@ -64,13 +63,6 @@ class ExponentialDecay(FitModelBase):
         return offset + multiple_exponential_decay(
             x, (amplitude,), (decay,), (stretch,)
         )
-
-    def guess(self, data, x=None, **kwargs):
-        model = ExponentialModel()
-        params = model.guess(data, x=x, **kwargs)
-        params.add(name="offset", value=0.0, min=-np.inf, max=np.inf)
-        params.add(name="stretch", value=1.0, min=0.0, max=np.inf)
-        return params
 
     @estimator("Decay")
     def estimate_decay(self, data, x):
@@ -117,11 +109,11 @@ class ExponentialDecay(FitModelBase):
 
         estimate = self.make_params()
         if start_mean < offset:
-            estimate["amplitude"].set(value=-amplitude, max=0)
+            estimate["amplitude"].set(value=-amplitude, vary=True)
         else:
-            estimate["amplitude"].set(value=amplitude, min=0)
-        estimate["offset"].set(value=offset)
-        estimate["decay"].set(value=decay, min=2 * min(abs(np.ediff1d(x))))
+            estimate["amplitude"].set(value=amplitude, vary=True)
+        estimate["offset"].set(value=offset, vary=True)
+        estimate["decay"].set(value=decay, min=2 * min(abs(np.ediff1d(x))), vary=True)
         estimate["stretch"].set(value=1, vary=False)
         return estimate
 
@@ -135,13 +127,13 @@ class ExponentialDecay(FitModelBase):
     @estimator("Decay (no offset)")
     def estimate_decay_no_offset(self, data, x):
         estimate = self.estimate_decay(data, x)
-        estimate["offset"].set(value=0, vary=False)
+        estimate["offset"].set(value=0, min=-np.inf, max=np.inf, vary=False)
         return estimate
 
     @estimator("Stretched Decay (no offset)")
     def estimate_stretched_decay_no_offset(self, data, x):
         estimate = self.estimate_stretched_decay(data, x)
-        estimate["offset"].set(value=0, vary=False)
+        estimate["offset"].set(value=0, min=-np.inf, max=np.inf, vary=False)
         return estimate
 
 
