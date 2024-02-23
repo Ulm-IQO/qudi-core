@@ -27,123 +27,90 @@ import pytest
 SEED = 42
 # SEED = None
 rng = np.random.default_rng(SEED)
-_fit_param_tolerance = 0.05  # 5% tolerance for each fit parameter
+fit_param_rel_tol = 0.05  # 5% tolerance for each fit parameter
+NUM_TESTS = 50
+
+estimators = ExponentialDecay().estimators.keys()
 
 
 def stretched_exp_decay(x, offset, amplitude, decay, stretch):
     return offset + amplitude * np.exp(-((x / decay) ** stretch))
 
+
+@pytest.fixture
 def generate_params():
-    offset = (rng.random() - 0.5) * 2e2
-    amplitude = rng.random() * 1e4
-    window = rng.integers(1, 2e1)
-    left = rng.random()
-    points = rng.integers(100, 1001)
-    x_values = np.linspace(left, left + window, points)
-    min_decay = 1.5 * (x_values[1] - x_values[0])
-    decay = min_decay + rng.random() * ((window / 2) - min_decay)
-    stretch = 0.1 + rng.random() * 3.9
-    noise_amp = max(amplitude / 10, rng.random() * amplitude)
-    noise = rng.uniform(-1, 1, points) * noise_amp * 0
+    amplitude = 1e3 + rng.random() * 1e4
 
-    return offset, amplitude, decay, stretch, noise, x_values
+    offset = amplitude * rng.uniform(0.05, 0.1)
+
+    window = rng.integers(1e1, 1e3)
+    points = np.round(window * rng.uniform(1, 10)).astype(int)
+    x_values = np.linspace(0, window, points)
+
+    min_decay = (x_values[1] - x_values[0]) * window
+    decay = min_decay * rng.uniform(0, 2)  # smaller means faster decay
+    # decay = min_decay * rng.uniform(1, 2)
+
+    stretch = 1 + rng.random()
+
+    noise_std = 0.01
+    noise = rng.normal(1, noise_std, points)
+
+    yield offset, amplitude, decay, stretch, noise, x_values
 
 
-def test_exp_decay_odmr_logic():
- 
-    offset, amplitude, decay, stretch, noise, x_values = generate_params()
+@pytest.mark.parametrize(
+    "generate_params", [generate_params for _ in range(NUM_TESTS)], indirect=True
+)
+@pytest.mark.parametrize("estimator", estimators)
+def test_exp_decay(generate_params, estimator):
+    offset, amplitude, decay, stretch, noise, x_values = generate_params
 
-    stretch = 1.0
+    if estimator == "Decay":
+        stretch = 1.0
+    elif estimator == "Decay (no offset)":
+        stretch = 1.0
+        offset = 0.0
+    elif estimator == "Stretched Decay (no offset)":
+        offset = 0.0
+    elif estimator == "Stretched Decay":
+        pass
+    else:
+        raise ValueError(f"Unknown estimator: {estimator}")
 
-    y_values = noise + stretched_exp_decay(
+    parameters_ideal = {
+        "amplitude": amplitude,
+        "offset": offset,
+        "decay": decay,
+        "stretch": stretch,
+    }
+
+    y_values = noise * stretched_exp_decay(
         x_values,
         offset,
         amplitude,
         decay,
         stretch,
     )
-    
+
     model = ExponentialDecay()
-    estimator = "Decay"
-    add_parameters = None
+    parameters = model.estimators[estimator](y_values, x_values)
 
-    # Assume these are None for now until I figure out where they come from
-
-    # add_parameters = config.custom_parameters
-    if estimator is None:
-        parameters = model.make_params()
-    else:
-        parameters = model.estimators[estimator](y_values, x_values)
-    if add_parameters is not None:
-        for name, param in add_parameters.items():
-            parameters[name] = param
     result = model.fit(y_values, parameters, x=x_values)
 
-    parameters_ideal = {
-        "amplitude": amplitude,
-        "offset": offset,
-        "decay": decay,
-    }
-
-    # What the heck are high res fits?
-    # # Mutate lmfit.ModelResult object to include high-resolution result curve
-    # high_res_x = np.linspace(
-    #     self.x_values[0], self.x_values[-1], len(self.x_values) * 10
-    # )
-    # result.high_res_best_fit = (
-    #     high_res_x,
-    #     model.eval(**result.best_values, x=high_res_x),
-    # )
-
-    print(result.best_values["amplitude"] / amplitude)
     # Check if the fit parameters are within the expected range
     for param, ideal_val in parameters_ideal.items():
-        delta = abs(ideal_val - result.best_values[param])
-        tol = abs(ideal_val * _fit_param_tolerance) 
-        msg = f'Exp. decay fit parameter "{param}" has delta {delta:.2f} (Limit: {tol:.2f})'
+        try:
+            rel_err = abs(abs(ideal_val - result.best_values[param]) / ideal_val)
+            msg = f'Exp. decay fit parameter "{param}" has relative error {rel_err * 100 :.2f}% (Limit: {fit_param_rel_tol * 100:.2f}%)'
 
-        assert delta <= tol, msg
+        except ZeroDivisionError:
+            assert (
+                ideal_val == result.best_values[param]
+            ), f'Exp. decay fit parameter "{param}" is {result.best_values[param]} (expected: {ideal_val})'
+
+        assert rel_err <= fit_param_rel_tol, msg
 
 
-# def test_stretched_exp_decay(self):
-#     y_values = self.noise + self.stretched_exp_decay(
-#         self.x_values,
-#         self.offset,
-#         self.amplitude,
-#         self.decay,
-#         self.stretch,
-#     )
-
-#     model = ExponentialDecay()
-#     # Assume these are None for now until I figure out where they come from
-#     estimator = None
-#     add_parameters = None
-
-#     # estimator = config.estimator
-#     # add_parameters = config.custom_parameters
-#     if estimator is None:
-#         parameters = model.make_params()
-#     else:
-#         parameters = model.estimators[estimator](y_values, self.x_values)
-#     if add_parameters is not None:
-#         for name, param in add_parameters.items():
-#             parameters[name] = param
-#     result = model.fit(y_values, parameters, x=self.x_values)
-
-#     # What the heck are high res fits?
-#     # # Mutate lmfit.ModelResult object to include high-resolution result curve
-#     # high_res_x = np.linspace(
-#     #     self.x_values[0], self.x_values[-1], len(self.x_values) * 10
-#     # )
-#     # result.high_res_best_fit = (
-#     #     high_res_x,
-#     #     model.eval(**result.best_values, x=high_res_x),
-#     # )
-
-#     # Check if the fit parameters are within the expected range
-#     for name, ideal_val in result.best_values.items():
-#         diff = abs(ideal_val - result.best_values[name])
-#         tolerance = abs(ideal_val * self._fit_param_tolerance)
-#         msg = f'Exp. decay fit parameter "{name}" has relative error {tolerance * 100:.2f}% (Limit: {self._fit_param_tolerance * 100:.2f}%)'
-
-#         assert diff <= tolerance, msg
+if __name__ == "__main__":
+    pytest.main()
