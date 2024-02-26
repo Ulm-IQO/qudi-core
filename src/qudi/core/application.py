@@ -29,7 +29,11 @@ import faulthandler
 from logging import DEBUG, INFO
 from PySide2 import QtCore, QtWidgets
 
-from qudi.core.logger import init_rotating_file_handler, init_record_model_handler, clear_handlers
+from qudi.core.logger import (
+    init_rotating_file_handler,
+    init_record_model_handler,
+    clear_handlers,
+)
 from qudi.core.logger import get_logger, set_log_level
 from qudi.util.paths import get_default_log_dir
 from qudi.util.mutex import Mutex
@@ -46,6 +50,7 @@ from qudi.core.servers import RemoteModulesServer, QudiNamespaceServer
 # This causes qudi to not be able to spawn matplotlib GUIs (by calling matplotlib.pyplot.show())
 try:
     import matplotlib as _mpl
+
     _mpl.use('Agg')
 except ImportError:
     pass
@@ -61,19 +66,24 @@ else:
     # The following will prevent Qt to spam the logs on X11 systems with enough messages
     # to significantly slow the program down. Most of those warnings should have been
     # notice level or lower. This is a known problem since Qt does not fully comply to X11.
-    os.environ['QT_LOGGING_RULES'] = '*.debug=false;*.info=false;*.notice=false;*.warning=false'
+    os.environ[
+        'QT_LOGGING_RULES'
+    ] = '*.debug=false;*.info=false;*.notice=false;*.warning=false'
 
 # Make icons work on non-X11 platforms, import a custom theme
 if sys.platform == 'win32':
     try:
         import ctypes
+
         myappid = 'qudicore-app'  # arbitrary string
         ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
     except ImportError:
         raise
     except:
-        print('SetCurrentProcessExplicitAppUserModelID failed! This is probably not Microsoft '
-              'Windows!')
+        print(
+            'SetCurrentProcessExplicitAppUserModelID failed! This is probably not Microsoft '
+            'Windows!'
+        )
 
 # Set default Qt locale to "C" in order to avoid surprises with number formats and other things
 # QtCore.QLocale.setDefault(QtCore.QLocale('en_US'))
@@ -81,9 +91,8 @@ QtCore.QLocale.setDefault(QtCore.QLocale.c())
 
 
 class Qudi(QtCore.QObject):
-    """
+    """ """
 
-    """
     _instance = None
     _run_lock = Mutex()
     _quit_lock = Mutex()
@@ -104,12 +113,16 @@ class Qudi(QtCore.QObject):
         # CLI arguments
         self.no_gui = bool(no_gui)
         self.debug_mode = bool(debug)
-        self.log_dir = str(log_dir) if os.path.isdir(log_dir) else get_default_log_dir(
-            create_missing=True)
+        self.log_dir = (
+            str(log_dir)
+            if os.path.isdir(log_dir)
+            else get_default_log_dir(create_missing=True)
+        )
 
         # Disable pyqtgraph "application exit workarounds" because they cause errors on exit
         try:
             import pyqtgraph
+
             pyqtgraph.setConfigOption('exitCleanup', False)
         except ImportError:
             pass
@@ -125,7 +138,9 @@ class Qudi(QtCore.QObject):
         set_log_level(DEBUG if self.debug_mode else INFO)
 
         # Set up logger for qudi main instance
-        self.log = get_logger(__class__.__name__)  # will be "qudi.Qudi" in custom logger
+        self.log = get_logger(
+            __class__.__name__
+        )  # will be "qudi.Qudi" in custom logger
         sys.excepthook = self._qudi_excepthook
 
         # Load configuration from disc if possible
@@ -133,10 +148,14 @@ class Qudi(QtCore.QObject):
         try:
             self.configuration.load(config_file, set_default=True)
         except ValueError:
-            self.log.info('No qudi configuration file specified. Using empty default config.')
+            self.log.info(
+                'No qudi configuration file specified. Using empty default config.'
+            )
         except (ValidationError, YAMLError):
-            self.log.exception('Invalid qudi configuration file specified. '
-                               'Falling back to default config.')
+            self.log.exception(
+                'Invalid qudi configuration file specified. '
+                'Falling back to default config.'
+            )
 
         # initialize thread manager and module manager
         self.thread_manager = ThreadManager(parent=self)
@@ -157,7 +176,9 @@ class Qudi(QtCore.QObject):
                 ssl_version=remote_server_config.get('ssl_version', None),
                 cert_reqs=remote_server_config.get('cert_reqs', None),
                 ciphers=remote_server_config.get('ciphers', None),
-                force_remote_calls_by_value=self.configuration['force_remote_calls_by_value']
+                force_remote_calls_by_value=self.configuration[
+                    'force_remote_calls_by_value'
+                ],
             )
         else:
             self.remote_modules_server = None
@@ -166,7 +187,9 @@ class Qudi(QtCore.QObject):
             qudi=self,
             name='local-namespace-server',
             port=self.configuration['namespace_server_port'],
-            force_remote_calls_by_value=self.configuration['force_remote_calls_by_value']
+            force_remote_calls_by_value=self.configuration[
+                'force_remote_calls_by_value'
+            ],
         )
         self.watchdog = None
         self.gui = None
@@ -178,12 +201,13 @@ class Qudi(QtCore.QObject):
         # Set qudi style for matplotlib
         try:
             import matplotlib.pyplot as plt
+
             plt.style.use(QudiMatplotlibStyle.style)
         except ImportError:
             pass
 
     def _qudi_excepthook(self, ex_type, ex_value, ex_traceback):
-        """ Handler function to be used as sys.excepthook. Should forward all unhandled exceptions
+        """Handler function to be used as sys.excepthook. Should forward all unhandled exceptions
         to logging module.
         """
         # Use default sys.excepthook if exception is exotic/no subclass of Exception.
@@ -244,14 +268,15 @@ class Qudi(QtCore.QObject):
 
     @QtCore.Slot()
     def _configure_qudi(self):
-        """
-        """
+        """ """
         if self.configuration.file_path is None:
             print('> Applying default configuration...')
             self.log.info('Applying default configuration...')
         else:
             print(f'> Applying configuration from "{self.configuration.file_path}"...')
-            self.log.info(f'Applying configuration from "{self.configuration.file_path}"...')
+            self.log.info(
+                f'Applying configuration from "{self.configuration.file_path}"...'
+            )
 
         # Clear all qudi modules
         self.module_manager.clear()
@@ -265,13 +290,15 @@ class Qudi(QtCore.QObject):
             # Create ManagedModule instance by adding each module to ModuleManager
             for module_name, module_cfg in self.configuration[base].items():
                 try:
-                    self.module_manager.add_module(name=module_name,
-                                                   base=base,
-                                                   configuration=module_cfg)
+                    self.module_manager.add_module(
+                        name=module_name, base=base, configuration=module_cfg
+                    )
                 except:
                     self.module_manager.remove_module(module_name, ignore_missing=True)
-                    self.log.exception(f'Unable to create ManagedModule instance for {base} '
-                                       f'module "{module_name}"')
+                    self.log.exception(
+                        f'Unable to create ManagedModule instance for {base} '
+                        f'module "{module_name}"'
+                    )
 
         print('> Qudi configuration complete!')
         self.log.info('Qudi configuration complete!')
@@ -279,7 +306,9 @@ class Qudi(QtCore.QObject):
     def _start_gui(self):
         if self.no_gui:
             return
-        self.gui = Gui(qudi_instance=self, stylesheet_path=self.configuration['stylesheet'])
+        self.gui = Gui(
+            qudi_instance=self, stylesheet_path=self.configuration['stylesheet']
+        )
         if not self.configuration['hide_manager_window']:
             self.gui.activate_main_gui()
 
@@ -294,14 +323,15 @@ class Qudi(QtCore.QObject):
                 self.log.exception(f'Unable to activate autostart module "{module}":')
 
     def run(self):
-        """
-        """
+        """ """
         with self._run_lock:
             if self._is_running:
                 raise RuntimeError('Qudi is already running!')
 
             # Notify startup
-            startup_info = f'Starting qudi{" in debug mode..." if self.debug_mode else "..."}'
+            startup_info = (
+                f'Starting qudi{" in debug mode..." if self.debug_mode else "..."}'
+            )
             self.log.info(startup_info)
             print(f'> {startup_info}')
 
@@ -343,7 +373,7 @@ class Qudi(QtCore.QObject):
             sys.exit(exit_code)
 
     def _exit(self, prompt=True, restart=False):
-        """ Shutdown qudi. Nicely request that all modules shut down if prompt is True.
+        """Shutdown qudi. Nicely request that all modules shut down if prompt is True.
         Signal restart to parent process (if present) via exitcode 42 if restart is True.
         """
         with self._quit_lock:
@@ -363,7 +393,9 @@ class Qudi(QtCore.QObject):
 
                 if self.no_gui:
                     # command line prompt
-                    question = '\nSome modules are still locked. ' if locked_modules else '\n'
+                    question = (
+                        '\nSome modules are still locked. ' if locked_modules else '\n'
+                    )
                     if restart:
                         question += 'Do you really want to restart qudi (y/N)?: '
                     else:
@@ -397,7 +429,9 @@ class Qudi(QtCore.QObject):
                 try:
                     self.remote_modules_server.stop()
                 except:
-                    self.log.exception('Exception during shutdown of remote modules server:')
+                    self.log.exception(
+                        'Exception during shutdown of remote modules server:'
+                    )
             try:
                 self.local_namespace_server.stop()
             except:
