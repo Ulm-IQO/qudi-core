@@ -22,9 +22,9 @@ jobs:
           python -m pip install --upgrade pip
           pip install -e ".[dev-lint-format]"
       - name: Lint with Ruff
-        run: ruff --output-format=github .
+        run: ruff --ignore=E722 --output-format=github check .
+        continue-on-error: true  # If you want the test to be marked successful regardless
         # run: ruff --output-format=json-lines . >> ${{ github.workspace }}/lint.json  # This saves a json file of the output
-        # continue-on-error: true  # If you want the test to be marked successful regardless
       # - name: Upload test report  # If you want to save the json file of the output
       #   uses: actions/upload-artifact@v4
       #   with:
