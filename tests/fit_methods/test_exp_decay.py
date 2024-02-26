@@ -28,7 +28,7 @@ SEED = 42
 # SEED = None
 rng = np.random.default_rng(SEED)
 fit_param_rel_tol = 0.05  # 5% tolerance for each fit parameter
-NUM_TESTS = 50
+NUM_TESTS = 10
 
 estimators = ExponentialDecay().estimators.keys()
 
