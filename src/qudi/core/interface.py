@@ -19,7 +19,7 @@ You should have received a copy of the GNU Lesser General Public License along w
 If not, see <https://www.gnu.org/licenses/>.
 """
 
-__all__ = ("ScalarConstraint",)
+__all__ = ('ScalarConstraint',)
 
 import warnings
 
@@ -36,7 +36,7 @@ class ScalarConstraint:
     Constraint definition for a scalar variable hardware parameter.
     """
 
-    def __init__(self, min=0.0, max=0.0, step=0.0, default=0.0, unit=""):
+    def __init__(self, min=0.0, max=0.0, step=0.0, default=0.0, unit=''):
         # allowed minimum value for parameter
         self.min = min
         # allowed maximum value for parameter

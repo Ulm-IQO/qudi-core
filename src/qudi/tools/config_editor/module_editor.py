@@ -20,7 +20,7 @@ You should have received a copy of the GNU Lesser General Public License along w
 If not, see <https://www.gnu.org/licenses/>.
 """
 
-__all__ = ["ModuleEditorWidget"]
+__all__ = ['ModuleEditorWidget']
 
 from PySide2 import QtCore, QtWidgets
 from typing import Optional, Mapping, Dict, Union, Any
@@ -45,7 +45,7 @@ class ModuleEditorWidget(QtWidgets.QStackedWidget):
         self._qudi_modules = qudi_modules
 
         self.placeholder_label = QtWidgets.QLabel(
-            "Please select a module to configure from the tree view."
+            'Please select a module to configure from the tree view.'
         )
         font = self.placeholder_label.font()
         font.setBold(True)
@@ -63,10 +63,10 @@ class ModuleEditorWidget(QtWidgets.QStackedWidget):
         # Module name editor
         sub_layout = QtWidgets.QHBoxLayout()
         sub_layout.setStretch(1, 1)
-        label = QtWidgets.QLabel("* Module Name:")
+        label = QtWidgets.QLabel('* Module Name:')
         label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
         self.module_name_lineedit = QtWidgets.QLineEdit()
-        self.module_name_lineedit.setPlaceholderText("Enter locally unique module name")
+        self.module_name_lineedit.setPlaceholderText('Enter locally unique module name')
         self.module_name_lineedit.setFont(font)
         self.module_name_lineedit.textChanged.connect(self.sigModuleRenamed)
         sub_layout.addWidget(label)
@@ -116,7 +116,7 @@ class ModuleEditorWidget(QtWidgets.QStackedWidget):
 
         self._current_editor = RemoteModuleConfigWidget(config=config)
         self._editor_layout.addWidget(self._current_editor)
-        self.set_module_name(name if name else "")
+        self.set_module_name(name if name else '')
         self.setCurrentIndex(1)
 
     def open_local_module(
@@ -145,7 +145,7 @@ class ModuleEditorWidget(QtWidgets.QStackedWidget):
             config=config,
         )
         self._editor_layout.addWidget(self._current_editor)
-        self.set_module_name(name if name else "")
+        self.set_module_name(name if name else '')
         self.setCurrentIndex(1)
 
     def close_editor(self):

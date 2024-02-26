@@ -20,7 +20,7 @@ You should have received a copy of the GNU Lesser General Public License along w
 If not, see <https://www.gnu.org/licenses/>.
 """
 
-__all__ = ["LabelNudgeAxis", "label_nudged_plot_widget"]
+__all__ = ['LabelNudgeAxis', 'label_nudged_plot_widget']
 
 from PySide2.QtCore import QSizeF, QPointF
 from pyqtgraph import AxisItem, PlotWidget
@@ -30,12 +30,12 @@ from typing import Type
 def label_nudged_plot_widget(plot_widget_type: Type[PlotWidget]) -> Type[PlotWidget]:
     class NudgedPlotWidget(plot_widget_type):
         def __init__(self, **kwargs) -> None:
-            if "axisItems" not in kwargs:
-                bottom_axis = LabelNudgeAxis(orientation="bottom")
-                left_axis = LabelNudgeAxis(orientation="left")
+            if 'axisItems' not in kwargs:
+                bottom_axis = LabelNudgeAxis(orientation='bottom')
+                left_axis = LabelNudgeAxis(orientation='left')
                 bottom_axis.nudge = 0
                 left_axis.nudge = 0
-                kwargs["axisItems"] = {"bottom": bottom_axis, "left": left_axis}
+                kwargs['axisItems'] = {'bottom': bottom_axis, 'left': left_axis}
             super().__init__(**kwargs)
 
     return NudgedPlotWidget
@@ -46,7 +46,7 @@ class LabelNudgeAxis(AxisItem):
 
     @property
     def nudge(self):
-        if not hasattr(self, "_nudge"):
+        if not hasattr(self, '_nudge'):
             self._nudge = 5
         return self._nudge
 
@@ -64,16 +64,16 @@ class LabelNudgeAxis(AxisItem):
         br = self.label.boundingRect()
         p = QPointF(0, 0)
         size = self.size()
-        if self.orientation == "left":
+        if self.orientation == 'left':
             p.setY(int(size.height() / 2 + br.width() / 2))
             p.setX(-nudge)
-        elif self.orientation == "right":
+        elif self.orientation == 'right':
             p.setY(int(size.height() / 2 + br.width() / 2))
             p.setX(int(size.width() - br.height() + nudge))
-        elif self.orientation == "top":
+        elif self.orientation == 'top':
             p.setY(-nudge)
             p.setX(int(size.width() / 2.0 - br.width() / 2.0))
-        elif self.orientation == "bottom":
+        elif self.orientation == 'bottom':
             p.setX(int(size.width() / 2.0 - br.width() / 2.0))
             p.setY(int(size.height() - br.height() + nudge))
         self.label.setPos(p)

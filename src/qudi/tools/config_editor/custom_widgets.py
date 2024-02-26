@@ -20,7 +20,7 @@ You should have received a copy of the GNU Lesser General Public License along w
 If not, see <https://www.gnu.org/licenses/>.
 """
 
-__all__ = ["CustomItemsWidget", "CustomOptionsWidget", "CustomConnectorsWidget"]
+__all__ = ['CustomItemsWidget', 'CustomOptionsWidget', 'CustomConnectorsWidget']
 
 import os
 from PySide2 import QtCore, QtWidgets, QtGui
@@ -52,16 +52,16 @@ class CustomItemsWidget(QtWidgets.QWidget):
         layout.setColumnStretch(2, 1)
         self.setLayout(layout)
 
-        icons_dir = os.path.join(get_artwork_dir(), "icons")
+        icons_dir = os.path.join(get_artwork_dir(), 'icons')
         self.add_item_button = QtWidgets.QToolButton()
-        self.add_item_button.setIcon(QtGui.QIcon(os.path.join(icons_dir, "list-add")))
+        self.add_item_button.setIcon(QtGui.QIcon(os.path.join(icons_dir, 'list-add')))
         self.add_item_button.clicked.connect(self._add_item_clicked)
         self.item_name_lineedit = QtWidgets.QLineEdit()
         layout.addWidget(self.add_item_button, 0, 0, 1, 1)
         layout.addWidget(self.item_name_lineedit, 0, 1, 1, 2)
 
         # Remove icons reused for each custom item
-        self._remove_icon = QtGui.QIcon(os.path.join(icons_dir, "list-remove"))
+        self._remove_icon = QtGui.QIcon(os.path.join(icons_dir, 'list-remove'))
         # Keep track of custom item widgets
         self._item_widgets = dict()
 
@@ -90,22 +90,22 @@ class CustomItemsWidget(QtWidgets.QWidget):
 
     def add_item(self, name: str, value: Optional[str] = None) -> None:
         if not name:
-            raise ValueError("Item name must be non-empty string")
+            raise ValueError('Item name must be non-empty string')
         if name in self._forbidden_names:
             raise ValueError(
                 f'Item name to add "{name}" is one of the forbidden names:\n'
-                f"{set(self._forbidden_names)}"
+                f'{set(self._forbidden_names)}'
             )
         if name in self._item_widgets:
             raise ValueError(f'Item name to add "{name}" is already present')
 
-        label = QtWidgets.QLabel(f"{name}:")
+        label = QtWidgets.QLabel(f'{name}:')
         label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
         label.setTextInteractionFlags(QtCore.Qt.TextSelectableByMouse)
         label.setFocusPolicy(QtCore.Qt.FocusPolicy.NoFocus)
         if self._allowed_values:
             editor = QtWidgets.QComboBox()
-            editor.addItem("")
+            editor.addItem('')
             editor.addItems(self._allowed_values)
             editor.setSizeAdjustPolicy(QtWidgets.QComboBox.AdjustToContents)
         else:
@@ -184,14 +184,14 @@ class CustomOptionsWidget(CustomItemsWidget):
     ) -> None:
         super().__init__(forbidden_names=forbidden_names, config=config, parent=parent)
 
-        self.add_item_button.setToolTip("Add custom ConfigOption with given name.")
-        self.item_name_lineedit.setPlaceholderText("Enter custom ConfigOption name")
+        self.add_item_button.setToolTip('Add custom ConfigOption with given name.')
+        self.item_name_lineedit.setPlaceholderText('Enter custom ConfigOption name')
 
     @property
     def config(self) -> Dict[str, Any]:
         cfg = super().config
         for name, value in cfg.items():
-            if value == "":
+            if value == '':
                 cfg[name] = None
             else:
                 try:
@@ -203,13 +203,13 @@ class CustomOptionsWidget(CustomItemsWidget):
     def set_config(self, config: Union[None, Mapping[str, Any]]) -> None:
         if config:
             config = {
-                name: "" if val is None else repr(val) for name, val in config.items()
+                name: '' if val is None else repr(val) for name, val in config.items()
             }
         return super().set_config(config)
 
     def add_item(self, name: str, value: Optional[str] = None) -> None:
         super().add_item(name=name, value=value)
-        self._item_widgets[name][2].setPlaceholderText("text parsed by eval()")
+        self._item_widgets[name][2].setPlaceholderText('text parsed by eval()')
 
 
 class CustomConnectorsWidget(CustomItemsWidget):
@@ -229,5 +229,5 @@ class CustomConnectorsWidget(CustomItemsWidget):
             parent=parent,
         )
 
-        self.add_item_button.setToolTip("Add custom Connector with given name.")
-        self.item_name_lineedit.setPlaceholderText("Enter custom Connector name")
+        self.add_item_button.setToolTip('Add custom Connector with given name.')
+        self.item_name_lineedit.setPlaceholderText('Enter custom Connector name')

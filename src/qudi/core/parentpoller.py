@@ -21,7 +21,7 @@ You should have received a copy of the GNU Lesser General Public License along w
 If not, see <https://www.gnu.org/licenses/>.
 """
 
-__all__ = ["ParentPollerUnix", "ParentPollerWindows"]
+__all__ = ['ParentPollerUnix', 'ParentPollerWindows']
 
 import ctypes
 import os
@@ -46,7 +46,7 @@ class ParentPollerUnix(Thread):
         if quit_function is None:
             pass
         elif not callable(quit_function):
-            raise TypeError("argument quit_function must be a callable.")
+            raise TypeError('argument quit_function must be a callable.')
         super().__init__()
         self.daemon = True
         self.quit_function = quit_function
@@ -60,9 +60,9 @@ class ParentPollerUnix(Thread):
             try:
                 if os.getppid() == 1:
                     if self.quit_function is None:
-                        logger.critical("Parent process died!")
+                        logger.critical('Parent process died!')
                     else:
-                        logger.critical("Parent process died! Qudi shutting down...")
+                        logger.critical('Parent process died! Qudi shutting down...')
                         self.quit_function()
                     return
             except OSError as e:
@@ -87,7 +87,7 @@ class ParentPollerWindows(Thread):
         if quit_function is None:
             pass
         elif not callable(quit_function):
-            raise TypeError("argument quit_function must be a callable.")
+            raise TypeError('argument quit_function must be a callable.')
         super().__init__()
         self.daemon = True
         self.quit_function = quit_function
@@ -104,7 +104,7 @@ class ParentPollerWindows(Thread):
         # Build the list of handle to listen on.
         handle_list = [self.parent_handle]
         arch = platform.architecture()[0]
-        c_int = ctypes.c_int64 if arch.startswith("64") else ctypes.c_int
+        c_int = ctypes.c_int64 if arch.startswith('64') else ctypes.c_int
 
         # Listen forever.
         while True:
@@ -124,15 +124,15 @@ class ParentPollerWindows(Thread):
                 continue
             elif result < WAIT_OBJECT_0:
                 # wait failed, just give up and stop polling.
-                logger.critical("Parent poll failed!!!!!")
+                logger.critical('Parent poll failed!!!!!')
                 return
             else:
                 handle = handle_list[result - WAIT_OBJECT_0]
                 if handle == self.parent_handle:
                     if self.quit_function is None:
-                        logger.critical("Parent process died!")
+                        logger.critical('Parent process died!')
                     else:
-                        logger.critical("Parent process died! Qudi shutting down...")
+                        logger.critical('Parent process died! Qudi shutting down...')
                         self.quit_function()
                     return
 

@@ -90,6 +90,12 @@ qudi-config-editor = 'qudi.tools.config_editor.config_editor:main'
 qudi-uninstall-kernel = 'qudi.core.qudikernel:uninstall_kernel'
 qudi-install-kernel = 'qudi.core.qudikernel:install_kernel'
 
+[tool.ruff.format]
+quote-style = "single"
+
+[tool.ruff.lint.flake8-quotes]
+docstring-quotes = "double"
+
 # "sphinx-book-theme==1.1.1"
 # nbsphinx = "^0.8.8"
 # "pydata_sphinx_theme==0.15.2"

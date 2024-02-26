@@ -22,11 +22,11 @@ If not, see <https://www.gnu.org/licenses/>.
 """
 
 __all__ = (
-    "estimator",
-    "FitCompositeModelBase",
-    "FitCompositeModelMeta",
-    "FitModelBase",
-    "FitModelMeta",
+    'estimator',
+    'FitCompositeModelBase',
+    'FitCompositeModelMeta',
+    'FitModelBase',
+    'FitModelMeta',
 )
 
 import inspect
@@ -35,14 +35,14 @@ from lmfit import Model, CompositeModel
 
 
 def estimator(name):
-    assert isinstance(name, str) and name, "estimator name must be non-empty str"
+    assert isinstance(name, str) and name, 'estimator name must be non-empty str'
 
     def _decorator(func):
-        assert callable(func), "estimator must be callable"
+        assert callable(func), 'estimator must be callable'
         params = tuple(inspect.signature(func).parameters)
         assert len(params) == 3, (
-            "estimator must be bound method with 2 positional parameters. First parameter is the "
-            "y data array to use and second parameter is the corresponding independent variable."
+            'estimator must be bound method with 2 positional parameters. First parameter is the '
+            'y data array to use and second parameter is the corresponding independent variable.'
         )
         func._estimator_name = name
         func._estimator_independent_var = params[2]
@@ -63,13 +63,13 @@ class FitModelMeta(ABCMeta):
         cls._estimators = {
             attr._estimator_name: attr
             for attr in attrs.values()
-            if hasattr(attr, "_estimator_name")
+            if hasattr(attr, '_estimator_name')
         }
         independent_vars = {
             e._estimator_independent_var for e in cls._estimators.values()
         }
         assert len(independent_vars) < 2, (
-            "More than one independent variable name encountered in estimators. Use only the "
+            'More than one independent variable name encountered in estimators. Use only the '
             'independent variable name that has been used in the Models "_model_function".'
         )
 
@@ -86,13 +86,13 @@ class FitCompositeModelMeta(type):
         cls._estimators = {
             attr._estimator_name: attr
             for attr in attrs.values()
-            if hasattr(attr, "_estimator_name")
+            if hasattr(attr, '_estimator_name')
         }
         independent_vars = {
             e._estimator_independent_var for e in cls._estimators.values()
         }
         assert len(independent_vars) < 2, (
-            "More than one independent variable name encountered in estimators. Use only the "
+            'More than one independent variable name encountered in estimators. Use only the '
             'independent variable name that has been used in the Models "_model_function".'
         )
 
@@ -101,11 +101,11 @@ class FitModelBase(Model, metaclass=FitModelMeta):
     """ToDo: Document"""
 
     def __init__(self, **kwargs):
-        kwargs["name"] = self.__class__.__name__
+        kwargs['name'] = self.__class__.__name__
         super().__init__(self._model_function, **kwargs)
         assert (
             len(self.independent_vars) == 1
-        ), "Qudi fit models must contain exactly 1 independent variable."
+        ), 'Qudi fit models must contain exactly 1 independent variable.'
         # Shadow FitModelBase._estimators with a similar dict containing the bound method objects.
         # This instance-level dict has read-only access via property "estimators"
         self._estimators = {
@@ -134,11 +134,11 @@ class FitCompositeModelBase(CompositeModel, metaclass=FitCompositeModelMeta):
     """ToDo: Document"""
 
     def __init__(self, *args, **kwargs):
-        kwargs["name"] = self.__class__.__name__
+        kwargs['name'] = self.__class__.__name__
         super().__init__(*args, **kwargs)
         assert (
             len(self.independent_vars) == 1
-        ), "Qudi fit models must contain exactly 1 independent variable."
+        ), 'Qudi fit models must contain exactly 1 independent variable.'
         # Shadow FitCompositeModelBase._estimators with a similar dict containing the bound method
         # objects. This instance-level dict has read-only access via property "estimators"
         self._estimators = {

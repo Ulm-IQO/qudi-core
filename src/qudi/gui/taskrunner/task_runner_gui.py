@@ -33,7 +33,7 @@ class TaskRunnerGui(GuiBase):
     """
 
     # declare connectors
-    _task_runner = Connector(name="task_runner", interface="TaskRunnerLogic")
+    _task_runner = Connector(name='task_runner', interface='TaskRunnerLogic')
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -61,7 +61,7 @@ class TaskRunnerGui(GuiBase):
 
         # Set current task states
         for task_name, task_state in taskrunner.task_states.items():
-            if task_state != "stopped":
+            if task_state != 'stopped':
                 self._mw.task_started(task_name)
             else:
                 self._mw.task_finished(task_name, None, False)
@@ -77,7 +77,7 @@ class TaskRunnerGui(GuiBase):
 
     @QtCore.Slot()
     def _deactivate_self(self):
-        self._qudi_main.module_manager.deactivate_module(self._meta["name"])
+        self._qudi_main.module_manager.deactivate_module(self._meta['name'])
 
     def on_deactivate(self):
         """Hide window and stop ipython console."""

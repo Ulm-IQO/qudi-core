@@ -17,7 +17,7 @@ You should have received a copy of the GNU Lesser General Public License along w
 If not, see <https://www.gnu.org/licenses/>.
 """
 
-__all__ = ["ParameterEditor", "ParameterEditorDialog"]
+__all__ = ['ParameterEditor', 'ParameterEditorDialog']
 
 import inspect
 from typing import Any, Optional, Dict, Mapping, Callable
@@ -48,11 +48,11 @@ class ParameterEditor(QtWidgets.QWidget):
         layout = QtWidgets.QGridLayout()
         parameters = inspect.signature(func).parameters
         for row, (name, param) in enumerate(parameters.items()):
-            label = QtWidgets.QLabel(f"{name}:")
+            label = QtWidgets.QLabel(f'{name}:')
             label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
             editor = ParameterWidgetMapper.widget_for_parameter(param)
             if editor is None:
-                editor = QtWidgets.QLabel("Unknown argument type!")
+                editor = QtWidgets.QLabel('Unknown argument type!')
                 editor.setAlignment(QtCore.Qt.AlignCenter)
             else:
                 editor = editor()

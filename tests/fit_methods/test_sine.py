@@ -65,10 +65,10 @@ class TestSineMethods(unittest.TestCase):
         )
 
         params_ideal = {
-            "offset": self.offset,
-            "amplitude": self.amplitudes[0],
-            "frequency": self.frequencies[0],
-            "phase": self.phases[0],
+            'offset': self.offset,
+            'amplitude': self.amplitudes[0],
+            'frequency': self.frequencies[0],
+            'phase': self.phases[0],
         }
         for name, ideal_val in params_ideal.items():
             diff = abs(fit_result.best_values[name] - ideal_val)
@@ -101,13 +101,13 @@ class TestSineMethods(unittest.TestCase):
         )
 
         params_ideal = {
-            "offset": self.offset,
-            "amplitude_1": self.amplitudes[0],
-            "amplitude_2": self.amplitudes[1],
-            "frequency_1": self.frequencies[0],
-            "frequency_2": self.frequencies[0],
-            "phase_1": self.phases[0],
-            "phase_2": self.phases[1],
+            'offset': self.offset,
+            'amplitude_1': self.amplitudes[0],
+            'amplitude_2': self.amplitudes[1],
+            'frequency_1': self.frequencies[0],
+            'frequency_2': self.frequencies[0],
+            'phase_1': self.phases[0],
+            'phase_2': self.phases[1],
         }
         for name, ideal_val in params_ideal.items():
             diff = abs(fit_result.best_values[name] - ideal_val)
@@ -118,5 +118,5 @@ class TestSineMethods(unittest.TestCase):
             self.assertLessEqual(diff, tolerance, msg)
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     unittest.main()

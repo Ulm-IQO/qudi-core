@@ -29,9 +29,9 @@ class RemoteWidget(QtWidgets.QWidget):
         super().__init__(parent, **kwargs)
 
         # Create widgets
-        local_label = QtWidgets.QLabel("shared modules")
-        remote_label = QtWidgets.QLabel("remote modules")
-        self.server_label = QtWidgets.QLabel("Server URL")
+        local_label = QtWidgets.QLabel('shared modules')
+        remote_label = QtWidgets.QLabel('remote modules')
+        self.server_label = QtWidgets.QLabel('Server URL')
         self.shared_module_listview = QtWidgets.QListView()
         self.shared_module_listview.setUniformItemSizes(True)
         self.shared_module_listview.setAlternatingRowColors(True)

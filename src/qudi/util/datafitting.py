@@ -21,11 +21,11 @@ If not, see <https://www.gnu.org/licenses/>.
 """
 
 __all__ = (
-    "is_fit_model",
-    "get_all_fit_models",
-    "FitConfiguration",
-    "FitConfigurationsModel",
-    "FitContainer",
+    'is_fit_model',
+    'get_all_fit_models',
+    'FitConfiguration',
+    'FitConfigurationsModel',
+    'FitContainer',
 )
 
 import importlib
@@ -58,7 +58,7 @@ def is_fit_model(cls):
 # containing all importable fit model objects with names as keys.
 _fit_models = dict()
 for mod_finder in iter_modules_recursive(
-    _fit_models_ns.__path__, _fit_models_ns.__name__ + "."
+    _fit_models_ns.__path__, _fit_models_ns.__name__ + '.'
 ):
     try:
         _fit_models.update(
@@ -83,11 +83,11 @@ class FitConfiguration:
     """ """
 
     def __init__(self, name, model, estimator=None, custom_parameters=None):
-        assert isinstance(name, str), "FitConfiguration name must be str type."
-        assert name, "FitConfiguration name must be non-empty string."
+        assert isinstance(name, str), 'FitConfiguration name must be str type.'
+        assert name, 'FitConfiguration name must be non-empty string.'
         assert model in _fit_models, f'Invalid fit model name encountered: "{model}".'
         assert (
-            name != "No Fit"
+            name != 'No Fit'
         ), '"No Fit" is a reserved name for fit configs. Choose another.'
 
         self._name = name
@@ -139,28 +139,28 @@ class FitConfiguration:
         if value is not None:
             default_params = self.default_parameters
             invalid = set(value).difference(default_params)
-            assert not invalid, f"Invalid model parameters encountered: {invalid}"
+            assert not invalid, f'Invalid model parameters encountered: {invalid}'
             assert isinstance(
                 value, lmfit.Parameters
-            ), "Property custom_parameters must be of type <lmfit.Parameters>."
+            ), 'Property custom_parameters must be of type <lmfit.Parameters>.'
         self._custom_parameters = value.copy() if value is not None else None
 
     def to_dict(self):
         return {
-            "name": self._name,
-            "model": self._model,
-            "estimator": self._estimator,
-            "custom_parameters": None
+            'name': self._name,
+            'model': self._model,
+            'estimator': self._estimator,
+            'custom_parameters': None
             if self._custom_parameters is None
             else self._custom_parameters.dumps(),
         }
 
     @classmethod
     def from_dict(cls, dict_repr):
-        assert set(dict_repr) == {"name", "model", "estimator", "custom_parameters"}
-        if isinstance(dict_repr["custom_parameters"], str):
-            dict_repr["custom_parameters"] = lmfit.Parameters().loads(
-                dict_repr["custom_parameters"]
+        assert set(dict_repr) == {'name', 'model', 'estimator', 'custom_parameters'}
+        if isinstance(dict_repr['custom_parameters'], str):
+            dict_repr['custom_parameters'] = lmfit.Parameters().loads(
+                dict_repr['custom_parameters']
             )
         return cls(**dict_repr)
 
@@ -205,7 +205,7 @@ class FitConfigurationsModel(QtCore.QAbstractListModel):
             name not in self.configuration_names
         ), f'Fit config "{name}" already defined.'
         assert (
-            name != "No Fit"
+            name != 'No Fit'
         ), '"No Fit" is a reserved name for fit configs. Choose another.'
         config = FitConfiguration(name, model)
         new_row = len(self._fit_configurations)
@@ -242,7 +242,7 @@ class FitConfigurationsModel(QtCore.QAbstractListModel):
     def headerData(self, section, orientation, role=QtCore.Qt.DisplayRole):
         if role == QtCore.Qt.DisplayRole:
             if (orientation == QtCore.Qt.Horizontal) and (section == 0):
-                return "Fit Configurations"
+                return 'Fit Configurations'
             elif orientation == QtCore.Qt.Vertical:
                 try:
                     return self.configuration_names[section]
@@ -304,7 +304,7 @@ class FitConfigurationsModel(QtCore.QAbstractListModel):
             try:
                 config_objects.append(FitConfiguration.from_dict(cfg))
             except:
-                _log.warning(f"Unable to load fit configuration:\n{cfg}")
+                _log.warning(f'Unable to load fit configuration:\n{cfg}')
         self.beginResetModel()
         self._fit_configurations = config_objects
         self.endResetModel()
@@ -325,7 +325,7 @@ class FitContainer(QtCore.QObject):
         self._access_lock = Mutex()
         self._configuration_model = config_model
         self._last_fit_result = None
-        self._last_fit_config = "No Fit"
+        self._last_fit_config = 'No Fit'
 
         self._configuration_model.sigFitConfigurationsChanged.connect(
             self.sigFitConfigurationsChanged
@@ -349,9 +349,9 @@ class FitContainer(QtCore.QObject):
         with self._access_lock:
             if fit_config:
                 # Handle "No Fit" case
-                if fit_config == "No Fit":
+                if fit_config == 'No Fit':
                     self._last_fit_result = None
-                    self._last_fit_config = "No Fit"
+                    self._last_fit_config = 'No Fit'
                 else:
                     config = self._configuration_model.get_configuration_by_name(
                         fit_config
@@ -379,7 +379,7 @@ class FitContainer(QtCore.QObject):
                     self._last_fit_config, self._last_fit_result
                 )
                 return self._last_fit_config, self._last_fit_result
-            return "", None
+            return '', None
 
     @staticmethod
     def formatted_result(
@@ -387,7 +387,7 @@ class FitContainer(QtCore.QObject):
         parameters_units: Optional[Mapping[str, str]] = None,
     ) -> str:
         if fit_result is None:
-            return ""
+            return ''
         if parameters_units is None:
             parameters_units = dict()
 
@@ -397,9 +397,9 @@ class FitContainer(QtCore.QObject):
             stderr = np.nan if param.vary and stderr is None else stderr
 
             parameters_to_format[name] = {
-                "value": param.value,
-                "error": stderr,
-                "unit": parameters_units.get(name, ""),
+                'value': param.value,
+                'error': stderr,
+                'unit': parameters_units.get(name, ''),
             }
 
         return create_formatted_output(parameters_to_format)
@@ -408,7 +408,7 @@ class FitContainer(QtCore.QObject):
     def dict_result(
         fit_result: Union[None, lmfit.model.ModelResult],
         parameters_units: Optional[Mapping[str, str]] = None,
-        export_keys: Optional[Iterable[str]] = ("value", "stderr"),
+        export_keys: Optional[Iterable[str]] = ('value', 'stderr'),
     ) -> dict:
         if fit_result is None:
             return dict()
@@ -416,11 +416,11 @@ class FitContainer(QtCore.QObject):
             parameters_units = dict()
 
         fitparams = fit_result.result.params
-        export_dict = {"model": fit_result.model.name}
+        export_dict = {'model': fit_result.model.name}
 
         for key, res in fitparams.items():
             dict_i = {key: getattr(res, key) for key in export_keys}
-            dict_i["unit"] = parameters_units.get(key, "")
+            dict_i['unit'] = parameters_units.get(key, '')
             export_dict[key] = dict_i
 
         return export_dict

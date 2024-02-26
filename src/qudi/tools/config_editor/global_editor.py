@@ -20,7 +20,7 @@ You should have received a copy of the GNU Lesser General Public License along w
 If not, see <https://www.gnu.org/licenses/>.
 """
 
-__all__ = ["GlobalEditorWidget"]
+__all__ = ['GlobalEditorWidget']
 
 from PySide2 import QtCore, QtWidgets
 from typing import Optional, Mapping, Dict, Union, Any
@@ -34,7 +34,7 @@ class GlobalEditorWidget(QtWidgets.QStackedWidget):
         super().__init__(parent=parent)
 
         self.placeholder_label = QtWidgets.QLabel(
-            "Please load configuration from file\n" "or create a new one."
+            'Please load configuration from file\n' 'or create a new one.'
         )
         font = self.placeholder_label.font()
         font.setBold(True)

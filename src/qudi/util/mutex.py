@@ -22,7 +22,7 @@ You should have received a copy of the GNU Lesser General Public License along w
 If not, see <https://www.gnu.org/licenses/>.
 """
 
-__all__ = ["Mutex", "RecursiveMutex"]
+__all__ = ['Mutex', 'RecursiveMutex']
 
 from PySide2.QtCore import QMutex as _QMutex
 from PySide2.QtCore import QRecursiveMutex as _QRecursiveMutex
@@ -80,7 +80,7 @@ class Mutex(_QMutex):
 # Compatibility workaround for PySide2 vs. PySide6. In PySide2 we need to use QMutex with an
 # initializer argument to construct a recursive mutex but in PySide6 we need to subclass
 # QRecursiveMutex. Check if QRecursiveMutex class has all API members (indicating it's PySide6).
-if all(hasattr(_QRecursiveMutex, attr) for attr in ("lock", "unlock", "tryLock")):
+if all(hasattr(_QRecursiveMutex, attr) for attr in ('lock', 'unlock', 'tryLock')):
 
     class RecursiveMutex(_QRecursiveMutex):
         """Extends QRecursiveMutex which serves as access serialization between threads.

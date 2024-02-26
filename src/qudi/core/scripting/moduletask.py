@@ -21,7 +21,7 @@ You should have received a copy of the GNU Lesser General Public License along w
 If not, see <https://www.gnu.org/licenses/>.
 """
 
-__all__ = ["ModuleTask", "ModuleTaskStateMachine"]
+__all__ = ['ModuleTask', 'ModuleTaskStateMachine']
 
 
 from fysom import Fysom
@@ -58,15 +58,15 @@ class ModuleTaskStateMachine(Fysom, QtCore.QObject):
         #   src:    source state,
         #   dst:    destination state
         fsm_cfg = {
-            "initial": "stopped",
-            "events": [
-                {"name": "start", "src": "stopped", "dst": "starting"},
-                {"name": "run", "src": "starting", "dst": "running"},
-                {"name": "finish", "src": "running", "dst": "finishing"},
-                {"name": "terminate", "src": "finishing", "dst": "stopped"},
-                {"name": "skip_run", "src": "starting", "dst": "finishing"},
+            'initial': 'stopped',
+            'events': [
+                {'name': 'start', 'src': 'stopped', 'dst': 'starting'},
+                {'name': 'run', 'src': 'starting', 'dst': 'running'},
+                {'name': 'finish', 'src': 'running', 'dst': 'finishing'},
+                {'name': 'terminate', 'src': 'finishing', 'dst': 'stopped'},
+                {'name': 'skip_run', 'src': 'starting', 'dst': 'finishing'},
             ],
-            "callbacks": dict() if callbacks is None else callbacks,
+            'callbacks': dict() if callbacks is None else callbacks,
         }
 
         # Initialise state machine:
@@ -110,10 +110,10 @@ class ModuleTask(ModuleScript):
 
         # Set up state machine
         fsm_callbacks = {
-            "on_starting": self.__starting_callback,
-            "on_running": self.__running_callback,
-            "on_finishing": self.__finishing_callback,
-            "on_stopped": self.__stopped_callback,
+            'on_starting': self.__starting_callback,
+            'on_running': self.__running_callback,
+            'on_finishing': self.__finishing_callback,
+            'on_stopped': self.__stopped_callback,
         }
         self._state_machine = ModuleTaskStateMachine(
             callbacks=fsm_callbacks, parent=self
@@ -131,7 +131,7 @@ class ModuleTask(ModuleScript):
         """
         if self.running:
             self.log.error(
-                "Unable to run. Task is already running or has been interrupted immediately."
+                'Unable to run. Task is already running or has been interrupted immediately.'
             )
         else:
             self._state_machine.start()
@@ -164,7 +164,7 @@ class ModuleTask(ModuleScript):
         """FSM startup callback. This will call _setup and set status flags accordingly.
         Resets last task result. Handles task interrupts during execution of _setup method.
         """
-        self.log.debug("Running setup")
+        self.log.debug('Running setup')
         self.sigStateChanged.emit(event.dst)
         self.result = None
         with self._thread_lock:
@@ -178,9 +178,9 @@ class ModuleTask(ModuleScript):
             self._check_interrupt()
             skip_run = False
         except ModuleScriptInterrupted:
-            self.log.info("Setup interrupted")
+            self.log.info('Setup interrupted')
         except:
-            self.log.exception("Exception during setup:")
+            self.log.exception('Exception during setup:')
             raise
         finally:
             if skip_run:
@@ -193,7 +193,7 @@ class ModuleTask(ModuleScript):
         Handles task interrupts during execution of _run method.
         """
         self.log.debug(
-            f"Running main method with\n\targs: {self.args}\n\tkwargs: {self.kwargs}."
+            f'Running main method with\n\targs: {self.args}\n\tkwargs: {self.kwargs}.'
         )
         self.sigStateChanged.emit(event.dst)
         try:
@@ -202,9 +202,9 @@ class ModuleTask(ModuleScript):
             with self._thread_lock:
                 self._success = True
         except ModuleScriptInterrupted:
-            self.log.info("Main run method interrupted")
+            self.log.info('Main run method interrupted')
         except:
-            self.log.exception("Exception during main run method:")
+            self.log.exception('Exception during main run method:')
             raise
         finally:
             self._state_machine.finish()
@@ -213,14 +213,14 @@ class ModuleTask(ModuleScript):
         """FSM callback to always call _cleanup method in the end regardless of task success.
         Handles task interrupts during execution of _run method.
         """
-        self.log.debug("Running cleanup")
+        self.log.debug('Running cleanup')
         self.sigStateChanged.emit(event.dst)
         try:
             self._cleanup()
         except ModuleScriptInterrupted:
-            self.log.info("Cleanup interrupted")
+            self.log.info('Cleanup interrupted')
         except:
-            self.log.exception("Exception during cleanup:")
+            self.log.exception('Exception during cleanup:')
             raise
         finally:
             self._state_machine.terminate()

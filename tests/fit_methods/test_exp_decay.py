@@ -60,29 +60,29 @@ def generate_params():
 
 
 @pytest.mark.parametrize(
-    "generate_params", [generate_params for _ in range(NUM_TESTS)], indirect=True
+    'generate_params', [generate_params for _ in range(NUM_TESTS)], indirect=True
 )
-@pytest.mark.parametrize("estimator", estimators)
+@pytest.mark.parametrize('estimator', estimators)
 def test_exp_decay(generate_params, estimator):
     offset, amplitude, decay, stretch, noise, x_values = generate_params
 
-    if estimator == "Decay":
+    if estimator == 'Decay':
         stretch = 1.0
-    elif estimator == "Decay (no offset)":
+    elif estimator == 'Decay (no offset)':
         stretch = 1.0
         offset = 0.0
-    elif estimator == "Stretched Decay (no offset)":
+    elif estimator == 'Stretched Decay (no offset)':
         offset = 0.0
-    elif estimator == "Stretched Decay":
+    elif estimator == 'Stretched Decay':
         pass
     else:
-        raise ValueError(f"Unknown estimator: {estimator}")
+        raise ValueError(f'Unknown estimator: {estimator}')
 
     parameters_ideal = {
-        "amplitude": amplitude,
-        "offset": offset,
-        "decay": decay,
-        "stretch": stretch,
+        'amplitude': amplitude,
+        'offset': offset,
+        'decay': decay,
+        'stretch': stretch,
     }
 
     y_values = noise * stretched_exp_decay(
@@ -112,5 +112,5 @@ def test_exp_decay(generate_params, estimator):
         assert rel_err <= fit_param_rel_tol, msg
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     pytest.main()

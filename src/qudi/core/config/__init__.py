@@ -19,11 +19,11 @@ If not, see <https://www.gnu.org/licenses/>.
 """
 
 __all__ = [
-    "Configuration",
-    "ValidationError",
-    "ParserError",
-    "DuplicateKeyError",
-    "YAMLError",
+    'Configuration',
+    'ValidationError',
+    'ParserError',
+    'DuplicateKeyError',
+    'YAMLError',
 ]
 
 from .config import (

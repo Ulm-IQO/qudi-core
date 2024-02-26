@@ -21,7 +21,7 @@ You should have received a copy of the GNU Lesser General Public License along w
 If not, see <https://www.gnu.org/licenses/>.
 """
 
-__all__ = ["ConfigOption", "MissingOption"]
+__all__ = ['ConfigOption', 'MissingOption']
 
 import copy
 import inspect
@@ -48,7 +48,7 @@ class ConfigOption:
         name: Optional[str] = None,
         default: Optional[Any] = None,
         *,
-        missing: Optional[str] = "nothing",
+        missing: Optional[str] = 'nothing',
         constructor: Optional[Callable] = None,
         checker: Optional[Callable] = None,
         converter: Optional[Callable] = None,
@@ -93,12 +93,12 @@ class ConfigOption:
         @param kwargs: extra arguments or overrides for the constructor of this class
         """
         newargs = {
-            "name": self.name,
-            "default": copy.deepcopy(self.default),
-            "missing": self.missing.name,
-            "constructor": self.constructor_function,
-            "checker": self.checker,
-            "converter": self.converter,
+            'name': self.name,
+            'default': copy.deepcopy(self.default),
+            'missing': self.missing.name,
+            'constructor': self.constructor_function,
+            'checker': self.checker,
+            'converter': self.converter,
         }
         newargs.update(kwargs)
         return ConfigOption(**newargs)
@@ -126,11 +126,11 @@ class ConfigOption:
 
     @staticmethod
     def _assert_func_signature(func: Callable) -> Callable:
-        assert callable(func), "ConfigOption constructor must be callable"
+        assert callable(func), 'ConfigOption constructor must be callable'
         params = tuple(inspect.signature(func).parameters)
         assert 0 < len(params) < 3, (
-            "ConfigOption constructor must be function with "
-            "1 (static) or 2 (bound method) parameters."
+            'ConfigOption constructor must be function with '
+            '1 (static) or 2 (bound method) parameters.'
         )
         if len(params) == 1:
 

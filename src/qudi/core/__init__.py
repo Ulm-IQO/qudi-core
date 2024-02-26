@@ -20,13 +20,13 @@ If not, see <https://www.gnu.org/licenses/>.
 """
 
 __all__ = [
-    "StatusVar",
-    "ConfigOption",
-    "Connector",
-    "Base",
-    "LogicBase",
-    "GuiBase",
-    "get_logger",
+    'StatusVar',
+    'ConfigOption',
+    'Connector',
+    'Base',
+    'LogicBase',
+    'GuiBase',
+    'get_logger',
 ]
 
 import os
@@ -37,7 +37,7 @@ from qudi.core.connector import Connector
 from qudi.core.module import Base, LogicBase, GuiBase
 from qudi.core.logger import get_logger
 
-__version__ = metadata.version("qudi-core")
+__version__ = metadata.version('qudi-core')
 
 # Set QT_API environment variable to PySide2
-os.environ["QT_API"] = "pyside2"
+os.environ['QT_API'] = 'pyside2'

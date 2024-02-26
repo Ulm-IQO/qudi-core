@@ -20,12 +20,12 @@ If not, see <https://www.gnu.org/licenses/>.
 """
 
 __all__ = (
-    "create_formatted_output",
-    "get_relevant_digit",
-    "get_si_norm",
-    "get_unit_prefix_dict",
-    "round_value_to_error",
-    "ScaledFloat",
+    'create_formatted_output',
+    'get_relevant_digit',
+    'get_si_norm',
+    'get_unit_prefix_dict',
+    'round_value_to_error',
+    'ScaledFloat',
 )
 
 import math
@@ -45,23 +45,23 @@ def get_unit_prefix_dict():
     """
 
     unit_prefix_dict = {
-        "y": 1e-24,
-        "z": 1e-21,
-        "a": 1e-18,
-        "f": 1e-15,
-        "p": 1e-12,
-        "n": 1e-9,
-        "µ": 1e-6,
-        "m": 1e-3,
-        "": 1,
-        "k": 1e3,
-        "M": 1e6,
-        "G": 1e9,
-        "T": 1e12,
-        "P": 1e15,
-        "E": 1e18,
-        "Z": 1e21,
-        "Y": 1e24,
+        'y': 1e-24,
+        'z': 1e-21,
+        'a': 1e-18,
+        'f': 1e-15,
+        'p': 1e-12,
+        'n': 1e-9,
+        'µ': 1e-6,
+        'm': 1e-3,
+        '': 1,
+        'k': 1e3,
+        'M': 1e6,
+        'G': 1e9,
+        'T': 1e12,
+        'P': 1e15,
+        'E': 1e18,
+        'Z': 1e21,
+        'Y': 1e24,
     }
     return unit_prefix_dict
 
@@ -92,14 +92,14 @@ class ScaledFloat(float):
 
         # Zero makes the log crash and should not have a prefix
         if self == 0:
-            return ""
+            return ''
 
         exponent = math.floor(math.log10(abs(self)) / 3)
         if exponent < -8:
             exponent = -8
         if exponent > 8:
             exponent = 8
-        prefix = "yzafpnµm kMGTPEZY"
+        prefix = 'yzafpnµm kMGTPEZY'
         return prefix[8 + exponent].strip()
 
     @property
@@ -126,23 +126,23 @@ class ScaledFloat(float):
         """
         autoscale = False
         if len(fmt) >= 2:
-            if fmt[-2] == "r":
+            if fmt[-2] == 'r':
                 autoscale = True
                 fmt = fmt[:-2] + fmt[-1]
-            elif fmt[-1] == "r":
+            elif fmt[-1] == 'r':
                 autoscale = True
-                fmt = fmt[:-1] + "f"
-        elif fmt[-1] == "r":
+                fmt = fmt[:-1] + 'f'
+        elif fmt[-1] == 'r':
             autoscale = True
-            fmt = fmt[:-1] + "f"
+            fmt = fmt[:-1] + 'f'
         if autoscale:
             scale = self.scale
-            if scale == "u":
-                index = "micro"
+            if scale == 'u':
+                index = 'micro'
             else:
                 index = scale
             value = self / get_unit_prefix_dict()[index]
-            return "{:s} {:s}".format(value.__format__(fmt), scale)
+            return '{:s} {:s}'.format(value.__format__(fmt), scale)
         else:
             return super().__format__(fmt)
 
@@ -184,13 +184,13 @@ def create_formatted_output(param_dict, num_sig_digits=5):
     if fn is None:
         raise RuntimeError('Function "create_formatted_output" requires pyqtgraph.')
 
-    output_str = ""
+    output_str = ''
     atol = 1e-18  # absolute tolerance for the detection of zero.
 
     for entry in param_dict:
-        if param_dict[entry].get("error") is not None:
+        if param_dict[entry].get('error') is not None:
             value, error, digit = round_value_to_error(
-                param_dict[entry]["value"], param_dict[entry]["error"]
+                param_dict[entry]['value'], param_dict[entry]['error']
             )
 
             if (
@@ -199,9 +199,9 @@ def create_formatted_output(param_dict, num_sig_digits=5):
                 or np.isclose(error, 0.0, atol=atol)
                 or np.isinf(error)
             ):
-                sc_fact, unit_prefix = fn.siScale(param_dict[entry]["value"])
-                str_val = "{0:.{1}e}".format(
-                    param_dict[entry]["value"], num_sig_digits - 1
+                sc_fact, unit_prefix = fn.siScale(param_dict[entry]['value'])
+                str_val = '{0:.{1}e}'.format(
+                    param_dict[entry]['value'], num_sig_digits - 1
                 )
                 if np.isnan(float(str_val)):
                     value = np.NAN
@@ -209,8 +209,8 @@ def create_formatted_output(param_dict, num_sig_digits=5):
                     value = np.inf
                 else:
                     value = float(
-                        "{0:.{1}e}".format(
-                            param_dict[entry]["value"], num_sig_digits - 1
+                        '{0:.{1}e}'.format(
+                            param_dict[entry]['value'], num_sig_digits - 1
                         )
                     )
 
@@ -220,22 +220,22 @@ def create_formatted_output(param_dict, num_sig_digits=5):
                 # range, rather then from the value 1000 to 1, which is
                 # default.
                 sc_fact, unit_prefix = fn.siScale(error * 10)
-            output_str += "{0}: ({1} \u00B1 {2}) {3}{4} \n".format(
+            output_str += '{0}: ({1} \u00B1 {2}) {3}{4} \n'.format(
                 entry,
                 round(value * sc_fact, num_sig_digits - 1),
                 round(error * sc_fact, num_sig_digits - 1),
                 unit_prefix,
-                param_dict[entry]["unit"],
+                param_dict[entry]['unit'],
             )
         else:
             output_str += (
-                "{0}: ".format(entry)
+                '{0}: '.format(entry)
                 + fn.siFormat(
-                    param_dict[entry]["value"],
+                    param_dict[entry]['value'],
                     precision=num_sig_digits,
-                    suffix=param_dict[entry]["unit"],
+                    suffix=param_dict[entry]['unit'],
                 )
-                + " (fixed) \n"
+                + ' (fixed) \n'
             )
     return output_str
 
@@ -320,9 +320,9 @@ def round_value_to_error(value, error):
     else:
         round_digit = -(int(log_val))
 
-    first_err_digit = "{:e}".format(error)[0]
+    first_err_digit = '{:e}'.format(error)[0]
 
-    if first_err_digit in ("1", "2"):
+    if first_err_digit in ('1', '2'):
         round_digit += 1
 
     # Use the python round function, since np.round uses the __repr__ conversion

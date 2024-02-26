@@ -22,14 +22,14 @@ If not, see <https://www.gnu.org/licenses/>.
 """
 
 __all__ = [
-    "MouseTrackingViewBox",
-    "DataSelectionViewBox",
-    "RubberbandZoomViewBox",
-    "RubberbandZoomSelectionViewBox",
-    "RubberbandZoomMixin",
-    "DataSelectionMixin",
-    "MouseTrackingMixin",
-    "SelectionMode",
+    'MouseTrackingViewBox',
+    'DataSelectionViewBox',
+    'RubberbandZoomViewBox',
+    'RubberbandZoomSelectionViewBox',
+    'RubberbandZoomMixin',
+    'DataSelectionMixin',
+    'MouseTrackingMixin',
+    'SelectionMode',
 ]
 
 from typing import Optional, Union, Any, Tuple, Sequence, List, Dict
@@ -568,10 +568,10 @@ class RubberbandZoomMixin:
     try:
         from pyqtgraph import __version__ as __pyqtgraph_version
 
-        if __pyqtgraph_version == "0.12.4":
+        if __pyqtgraph_version == '0.12.4':
             raise RuntimeError(
-                "You are using an unupported version of pyqtgraph. Please re-install qudi-core "
-                "using pip or update pyqtgraph to a version != 0.12.4 manually."
+                'You are using an unupported version of pyqtgraph. Please re-install qudi-core '
+                'using pip or update pyqtgraph to a version != 0.12.4 manually.'
             )
     except ImportError:
         pass
@@ -580,19 +580,19 @@ class RubberbandZoomMixin:
         super().__init__(**kwargs)
         self._rubberband_zoom_selection_mode = self.SelectionMode.Disabled
         self._x_zoom_region = _LinearRegionItem(
-            orientation="vertical",
-            brush=kwargs.get("brush", None),
-            pen=kwargs.get("pen", None),
-            hoverBrush=kwargs.get("hover_brush", None),
-            hoverPen=kwargs.get("hover_pen", None),
+            orientation='vertical',
+            brush=kwargs.get('brush', None),
+            pen=kwargs.get('pen', None),
+            hoverBrush=kwargs.get('hover_brush', None),
+            hoverPen=kwargs.get('hover_pen', None),
             movable=False,
         )
         self._y_zoom_region = _LinearRegionItem(
-            orientation="horizontal",
-            brush=kwargs.get("brush", None),
-            pen=kwargs.get("pen", None),
-            hoverBrush=kwargs.get("hover_brush", None),
-            hoverPen=kwargs.get("hover_pen", None),
+            orientation='horizontal',
+            brush=kwargs.get('brush', None),
+            pen=kwargs.get('pen', None),
+            hoverBrush=kwargs.get('hover_brush', None),
+            hoverPen=kwargs.get('hover_pen', None),
             movable=False,
         )
 

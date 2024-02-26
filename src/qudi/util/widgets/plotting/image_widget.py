@@ -22,11 +22,11 @@ If not, see <https://www.gnu.org/licenses/>.
 """
 
 __all__ = [
-    "ImageWidget",
-    "MouseTrackingImageWidget",
-    "RubberbandZoomImageWidget",
-    "DataSelectionImageWidget",
-    "RubberbandZoomSelectionImageWidget",
+    'ImageWidget',
+    'MouseTrackingImageWidget',
+    'RubberbandZoomImageWidget',
+    'DataSelectionImageWidget',
+    'RubberbandZoomSelectionImageWidget',
 ]
 
 from typing import Union, Optional, Tuple, List, Dict

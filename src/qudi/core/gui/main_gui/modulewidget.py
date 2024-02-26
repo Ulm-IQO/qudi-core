@@ -40,23 +40,23 @@ class ModuleFrameWidget(QtWidgets.QWidget):
 
         # Create QToolButtons
         self.cleanup_button = QtWidgets.QToolButton()
-        self.cleanup_button.setObjectName("cleanupButton")
+        self.cleanup_button.setObjectName('cleanupButton')
         self.deactivate_button = QtWidgets.QToolButton()
-        self.deactivate_button.setObjectName("deactivateButton")
+        self.deactivate_button.setObjectName('deactivateButton')
         self.reload_button = QtWidgets.QToolButton()
-        self.reload_button.setObjectName("reloadButton")
+        self.reload_button.setObjectName('reloadButton')
 
         # Set icons for QToolButtons
-        icon_path = os.path.join(get_artwork_dir(), "icons")
-        self.cleanup_button.setIcon(QtGui.QIcon(os.path.join(icon_path, "edit-clear")))
+        icon_path = os.path.join(get_artwork_dir(), 'icons')
+        self.cleanup_button.setIcon(QtGui.QIcon(os.path.join(icon_path, 'edit-clear')))
         self.deactivate_button.setIcon(
-            QtGui.QIcon(os.path.join(icon_path, "edit-delete"))
+            QtGui.QIcon(os.path.join(icon_path, 'edit-delete'))
         )
-        self.reload_button.setIcon(QtGui.QIcon(os.path.join(icon_path, "view-refresh")))
+        self.reload_button.setIcon(QtGui.QIcon(os.path.join(icon_path, 'view-refresh')))
 
         # Create activation pushbutton
-        self.activate_button = QtWidgets.QPushButton("load/activate <module_name>")
-        self.activate_button.setObjectName("loadButton")
+        self.activate_button = QtWidgets.QPushButton('load/activate <module_name>')
+        self.activate_button.setObjectName('loadButton')
         self.activate_button.setCheckable(True)
         self.activate_button.setMinimumWidth(200)
         self.activate_button.setSizePolicy(
@@ -64,15 +64,15 @@ class ModuleFrameWidget(QtWidgets.QWidget):
         )
 
         # Create status label
-        self.status_label = QtWidgets.QLabel("Module status goes here...")
-        self.status_label.setObjectName("statusLabel")
+        self.status_label = QtWidgets.QLabel('Module status goes here...')
+        self.status_label.setObjectName('statusLabel')
 
         # Set tooltips
-        self.cleanup_button.setToolTip("Clean up module status file")
-        self.deactivate_button.setToolTip("Deactivate module")
-        self.reload_button.setToolTip("Reload module")
-        self.activate_button.setToolTip("Load this module and all its dependencies")
-        self.status_label.setToolTip("Displays module status information")
+        self.cleanup_button.setToolTip('Clean up module status file')
+        self.deactivate_button.setToolTip('Deactivate module')
+        self.reload_button.setToolTip('Reload module')
+        self.activate_button.setToolTip('Load this module and all its dependencies')
+        self.status_label.setToolTip('Displays module status information')
 
         # Combine all widgets in a layout and set as main layout
         layout = QtWidgets.QGridLayout()
@@ -83,7 +83,7 @@ class ModuleFrameWidget(QtWidgets.QWidget):
         layout.addWidget(self.status_label, 1, 0, 1, 4)
         self.setLayout(layout)
 
-        self._module_name = ""
+        self._module_name = ''
         if module_name:
             self.set_module_name(module_name)
 
@@ -95,19 +95,19 @@ class ModuleFrameWidget(QtWidgets.QWidget):
 
     def set_module_name(self, name):
         if name:
-            self.activate_button.setText("Load {0}".format(name))
+            self.activate_button.setText('Load {0}'.format(name))
             self._module_name = name
 
     def set_module_state(self, state):
-        if state == "not loaded":
-            self.activate_button.setText("Load {0}".format(self._module_name))
+        if state == 'not loaded':
+            self.activate_button.setText('Load {0}'.format(self._module_name))
             self.cleanup_button.setEnabled(True)
             self.deactivate_button.setEnabled(False)
             self.reload_button.setEnabled(False)
             if self.activate_button.isChecked():
                 self.activate_button.setChecked(False)
-        elif state == "deactivated":
-            self.activate_button.setText("Activate {0}".format(self._module_name))
+        elif state == 'deactivated':
+            self.activate_button.setText('Activate {0}'.format(self._module_name))
             self.cleanup_button.setEnabled(True)
             self.deactivate_button.setEnabled(False)
             self.reload_button.setEnabled(True)
@@ -120,7 +120,7 @@ class ModuleFrameWidget(QtWidgets.QWidget):
             self.reload_button.setEnabled(True)
             if not self.activate_button.isChecked():
                 self.activate_button.setChecked(True)
-        self.status_label.setText("Module is {0}".format(state))
+        self.status_label.setText('Module is {0}'.format(state))
 
     def set_module_app_data(self, exists):
         self.cleanup_button.setEnabled(exists)
@@ -196,7 +196,7 @@ class ModuleListModel(QtCore.QAbstractListModel):
     def reset_modules(self, state_dict, app_data_dict):
         if set(state_dict) != set(app_data_dict):
             raise RuntimeError(
-                "state_dict and app_data_dict must contain exactly the same keys."
+                'state_dict and app_data_dict must contain exactly the same keys.'
             )
         with self._lock:
             self.beginResetModel()
@@ -209,7 +209,7 @@ class ModuleListModel(QtCore.QAbstractListModel):
         with self._lock:
             if name not in self._module_states:
                 raise RuntimeError(
-                    f"Can not change module state in ModuleListModel. No module by the name "
+                    f'Can not change module state in ModuleListModel. No module by the name '
                     f'"{name}" found.'
                 )
             self._module_states[name] = state
@@ -224,7 +224,7 @@ class ModuleListModel(QtCore.QAbstractListModel):
         with self._lock:
             if name not in self._module_app_data:
                 raise RuntimeError(
-                    f"Can not change module app status in ModuleListModel. No module by the name "
+                    f'Can not change module app status in ModuleListModel. No module by the name '
                     f'"{name}" found.'
                 )
             self._module_app_data[name] = exists
@@ -324,18 +324,18 @@ class ModuleWidget(QtWidgets.QTabWidget):
             QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred
         )
         self.list_models = {
-            "gui": ModuleListModel(),
-            "logic": ModuleListModel(),
-            "hardware": ModuleListModel(),
+            'gui': ModuleListModel(),
+            'logic': ModuleListModel(),
+            'hardware': ModuleListModel(),
         }
         self.list_views = {
-            "gui": ModuleListView(),
-            "logic": ModuleListView(),
-            "hardware": ModuleListView(),
+            'gui': ModuleListView(),
+            'logic': ModuleListView(),
+            'hardware': ModuleListView(),
         }
-        self.addTab(self.list_views["gui"], "GUI")
-        self.addTab(self.list_views["logic"], "Logic")
-        self.addTab(self.list_views["hardware"], "Hardware")
+        self.addTab(self.list_views['gui'], 'GUI')
+        self.addTab(self.list_views['logic'], 'Logic')
+        self.addTab(self.list_views['hardware'], 'Hardware')
         for base, view in self.list_views.items():
             view.setModel(self.list_models[base])
             delegate = view.itemDelegate()

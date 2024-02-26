@@ -20,7 +20,7 @@ You should have received a copy of the GNU Lesser General Public License along w
 If not, see <https://www.gnu.org/licenses/>.
 """
 
-__all__ = ("ExponentialDecay", "multiple_exponential_decay")
+__all__ = ('ExponentialDecay', 'multiple_exponential_decay')
 
 import warnings
 import numpy as np
@@ -53,10 +53,10 @@ class ExponentialDecay(FitModelBase):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.set_param_hint("offset", value=0.0, min=-np.inf, max=np.inf)
-        self.set_param_hint("amplitude", value=1.0, min=-np.inf, max=np.inf)
-        self.set_param_hint("decay", value=1.0, min=0.0, max=np.inf)
-        self.set_param_hint("stretch", value=1.0, min=0.0, max=np.inf)
+        self.set_param_hint('offset', value=0.0, min=-np.inf, max=np.inf)
+        self.set_param_hint('amplitude', value=1.0, min=-np.inf, max=np.inf)
+        self.set_param_hint('decay', value=1.0, min=0.0, max=np.inf)
+        self.set_param_hint('stretch', value=1.0, min=0.0, max=np.inf)
 
     @staticmethod
     def _model_function(x, offset, amplitude, decay, stretch):
@@ -64,7 +64,7 @@ class ExponentialDecay(FitModelBase):
             x, (amplitude,), (decay,), (stretch,)
         )
 
-    @estimator("Decay")
+    @estimator('Decay')
     def estimate_decay(self, data, x):
         # Smooth very radically the provided data, so that noise fluctuations will not disturb the
         # parameter estimation.
@@ -103,37 +103,37 @@ class ExponentialDecay(FitModelBase):
             decay = 1 / np.sqrt(abs(poly_coef[0]))
             amplitude = np.exp(poly_coef[1])
         except:
-            warnings.warn("Estimation of decay constant and amplitude failed.")
+            warnings.warn('Estimation of decay constant and amplitude failed.')
             decay = abs(data[1] - data[0]) / abs(x[-1] - x[0]) / abs(data[-1] - data[0])
             amplitude = abs(start_mean - offset)
 
         estimate = self.make_params()
         if start_mean < offset:
-            estimate["amplitude"].set(value=-amplitude, vary=True)
+            estimate['amplitude'].set(value=-amplitude, vary=True)
         else:
-            estimate["amplitude"].set(value=amplitude, vary=True)
-        estimate["offset"].set(value=offset, vary=True)
-        estimate["decay"].set(value=decay, min=2 * min(abs(np.ediff1d(x))), vary=True)
-        estimate["stretch"].set(value=1, vary=False)
+            estimate['amplitude'].set(value=amplitude, vary=True)
+        estimate['offset'].set(value=offset, vary=True)
+        estimate['decay'].set(value=decay, min=2 * min(abs(np.ediff1d(x))), vary=True)
+        estimate['stretch'].set(value=1, vary=False)
         return estimate
 
-    @estimator("Stretched Decay")
+    @estimator('Stretched Decay')
     def estimate_stretched_decay(self, data, x):
         estimate = self.estimate_decay(data, x)
         # ToDo: Estimate stretch factor. Currently just a random starting point.
-        estimate["stretch"].set(value=2, min=0, max=np.inf, vary=True)
+        estimate['stretch'].set(value=2, min=0, max=np.inf, vary=True)
         return estimate
 
-    @estimator("Decay (no offset)")
+    @estimator('Decay (no offset)')
     def estimate_decay_no_offset(self, data, x):
         estimate = self.estimate_decay(data, x)
-        estimate["offset"].set(value=0, min=-np.inf, max=np.inf, vary=False)
+        estimate['offset'].set(value=0, min=-np.inf, max=np.inf, vary=False)
         return estimate
 
-    @estimator("Stretched Decay (no offset)")
+    @estimator('Stretched Decay (no offset)')
     def estimate_stretched_decay_no_offset(self, data, x):
         estimate = self.estimate_stretched_decay(data, x)
-        estimate["offset"].set(value=0, min=-np.inf, max=np.inf, vary=False)
+        estimate['offset'].set(value=0, min=-np.inf, max=np.inf, vary=False)
         return estimate
 
 
@@ -142,13 +142,13 @@ class DoubleExponentialDecay(FitModelBase):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.set_param_hint("offset", value=0.0, min=-np.inf, max=np.inf)
-        self.set_param_hint("amplitude_1", value=1.0, min=-np.inf, max=np.inf)
-        self.set_param_hint("amplitude_2", value=1.0, min=-np.inf, max=np.inf)
-        self.set_param_hint("decay_1", value=1.0, min=0.0, max=np.inf)
-        self.set_param_hint("decay_2", value=1.0, min=0.0, max=np.inf)
-        self.set_param_hint("stretch_1", value=1.0, min=0.0, max=np.inf)
-        self.set_param_hint("stretch_2", value=1.0, min=0.0, max=np.inf)
+        self.set_param_hint('offset', value=0.0, min=-np.inf, max=np.inf)
+        self.set_param_hint('amplitude_1', value=1.0, min=-np.inf, max=np.inf)
+        self.set_param_hint('amplitude_2', value=1.0, min=-np.inf, max=np.inf)
+        self.set_param_hint('decay_1', value=1.0, min=0.0, max=np.inf)
+        self.set_param_hint('decay_2', value=1.0, min=0.0, max=np.inf)
+        self.set_param_hint('stretch_1', value=1.0, min=0.0, max=np.inf)
+        self.set_param_hint('stretch_2', value=1.0, min=0.0, max=np.inf)
 
     @staticmethod
     def _model_function(

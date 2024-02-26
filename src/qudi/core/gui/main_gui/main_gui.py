@@ -45,8 +45,8 @@ class QudiMainGui(GuiBase):
     """
 
     # status vars
-    _console_font_size = StatusVar(name="console_font_size", default=10)
-    _show_error_popups = StatusVar(name="show_error_popups", default=True)
+    _console_font_size = StatusVar(name='console_font_size', default=10)
+    _show_error_popups = StatusVar(name='show_error_popups', default=True)
 
     def __init__(self, *args, **kwargs):
         """Create an instance of the module.
@@ -76,21 +76,21 @@ class QudiMainGui(GuiBase):
         version = self.get_qudi_version()
         if isinstance(version, str):
             self.mw.about_qudi_dialog.version_label.setText(
-                "version {0}".format(version)
+                'version {0}'.format(version)
             )
             self.mw.version_label.setText(
                 '<a style="color: cyan;"> version {0} </a>  configured from {1}'
-                "".format(version, self._qudi_main.configuration.file_path)
+                ''.format(version, self._qudi_main.configuration.file_path)
             )
         else:
             self.mw.about_qudi_dialog.version_label.setText(
                 '<a href="https://github.com/Ulm-IQO/qudi/commit/{0}" style="color: cyan;"> {0}'
-                " </a>, on branch {1}.".format(version[0], version[1])
+                ' </a>, on branch {1}.'.format(version[0], version[1])
             )
             self.mw.version_label.setText(
                 '<a href="https://github.com/Ulm-IQO/qudi/commit/{0}" style="color: cyan;"> {0}'
-                " </a>, on branch {1}, configured from {2}"
-                "".format(
+                ' </a>, on branch {1}, configured from {2}'
+                ''.format(
                     version[0], version[1], self._qudi_main.configuration.file_path
                 )
             )
@@ -209,12 +209,12 @@ class QudiMainGui(GuiBase):
             self.mw.remote_dockwidget.setVisible(False)
             self.mw.action_view_remote.setVisible(False)
         else:
-            server_config = self._qudi_main.configuration["remote_modules_server"]
-            host = server_config["address"]
-            port = server_config["port"]
+            server_config = self._qudi_main.configuration['remote_modules_server']
+            host = server_config['address']
+            port = server_config['port']
             self.mw.remote_widget.setVisible(True)
             self.mw.remote_widget.server_label.setText(
-                f"Server URL: rpyc://{host}:{port}/"
+                f'Server URL: rpyc://{host}:{port}/'
             )
             self.mw.remote_widget.shared_module_listview.setModel(
                 remote_server.service.shared_modules
@@ -260,7 +260,7 @@ class QudiMainGui(GuiBase):
 
         @param logging.LogRecord entry: log record as returned from logging module
         """
-        if entry.levelname in ("error", "critical"):
+        if entry.levelname in ('error', 'critical'):
             self.error_dialog.new_error(entry)
         return
 
@@ -269,20 +269,20 @@ class QudiMainGui(GuiBase):
         self._has_console = False
         try:
             # Create and start kernel process
-            kernel_manager = QtKernelManager(kernel_name="qudi", autorestart=False)
+            kernel_manager = QtKernelManager(kernel_name='qudi', autorestart=False)
             # kernel_manager.kernel.gui = 'qt4'
             kernel_manager.start_kernel()
 
             # create kernel client and connect to console widget
             banner = (
-                "This is an interactive IPython console. A reference to the running qudi "
+                'This is an interactive IPython console. A reference to the running qudi '
                 'instance can be accessed via "qudi". View the current namespace with dir().\n'
-                "Go, play.\n"
+                'Go, play.\n'
             )
             self.mw.console_widget.banner = banner
             self.mw.console_widget.font_size = self._console_font_size
             self.mw.console_widget.reset_font()
-            self.mw.console_widget.set_default_style(colors="linux")
+            self.mw.console_widget.set_default_style(colors='linux')
             kernel_client = kernel_manager.client()
             kernel_client.hb_channel.time_to_dead = 10.0
             kernel_client.hb_channel.kernel_died.connect(self.kernel_died_callback)
@@ -290,17 +290,17 @@ class QudiMainGui(GuiBase):
             self.mw.console_widget.kernel_manager = kernel_manager
             self.mw.console_widget.kernel_client = kernel_client
             self._has_console = True
-            self.log.info("IPython kernel for qudi main GUI successfully started.")
+            self.log.info('IPython kernel for qudi main GUI successfully started.')
         except jupyter_client.kernelspec.NoSuchKernel:
             self.log.warn(
-                "Qudi IPython kernelspec not installed.\n"
-                "IPython console and jupyter notebook integration not available.\n"
+                'Qudi IPython kernelspec not installed.\n'
+                'IPython console and jupyter notebook integration not available.\n'
                 'Run "qudi-install-kernel" from within the qudi Python environment to fix this. '
             )
         except:
             self.log.exception(
-                "Exception while trying to start IPython kernel for qudi main GUI. Qudi IPython "
-                "console not available."
+                'Exception while trying to start IPython kernel for qudi main GUI. Qudi IPython '
+                'console not available.'
             )
 
     @QtCore.Slot()
@@ -313,9 +313,9 @@ class QudiMainGui(GuiBase):
         if self._has_console:
             self._has_console = False
             self.log.error(
-                "Qudi IPython kernel has unexpectedly died. This can be caused by a corrupt qudi "
+                'Qudi IPython kernel has unexpectedly died. This can be caused by a corrupt qudi '
                 'kernelspec installation. Try to run "qudi-install-kernel" from within the qudi '
-                "Python environment and restart qudi."
+                'Python environment and restart qudi.'
             )
 
     def stop_jupyter_widget(self):
@@ -324,16 +324,16 @@ class QudiMainGui(GuiBase):
             self.mw.console_widget.kernel_client.stop_channels()
         except:
             self.log.exception(
-                "Exception while trying to shutdown qudi IPython client:"
+                'Exception while trying to shutdown qudi IPython client:'
             )
         try:
             self.mw.console_widget.kernel_manager.shutdown_kernel()
         except:
             self.log.exception(
-                "Exception while trying to shutdown qudi IPython kernel:"
+                'Exception while trying to shutdown qudi IPython kernel:'
             )
         self._has_console = False
-        self.log.info("IPython kernel process for qudi main GUI has shut down.")
+        self.log.info('IPython kernel process for qudi main GUI has shut down.')
 
     def keep_settings(self):
         """Write old values into settings dialog."""
@@ -398,7 +398,7 @@ class QudiMainGui(GuiBase):
             except InvalidGitRepositoryError:
                 pass
             except:
-                self.log.exception("Unexpected error while trying to get git repo:")
+                self.log.exception('Unexpected error while trying to get git repo:')
 
         # Try to get qudi.core version number
         try:
@@ -406,22 +406,22 @@ class QudiMainGui(GuiBase):
 
             return __version__
         except:
-            self.log.exception("Unexpected error while trying to get qudi version:")
-        return "unknown"
+            self.log.exception('Unexpected error while trying to get qudi version:')
+        return 'unknown'
 
     def load_configuration(self):
         """Ask the user for a file where the configuration should be loaded from"""
         filename = QtWidgets.QFileDialog.getOpenFileName(
             self.mw,
-            "Load Configuration",
+            'Load Configuration',
             get_default_config_dir(True),
-            "Configuration files (*.cfg)",
+            'Configuration files (*.cfg)',
         )[0]
         if filename:
             reply = QtWidgets.QMessageBox.question(
                 self.mw,
-                "Restart",
-                "Do you want to restart to use the configuration?\n"
+                'Restart',
+                'Do you want to restart to use the configuration?\n'
                 'Choosing "No" will use the selected config file for the next start of Qudi.',
                 QtWidgets.QMessageBox.Yes
                 | QtWidgets.QMessageBox.No
@@ -440,15 +440,15 @@ class QudiMainGui(GuiBase):
         """
         reply = QtWidgets.QMessageBox.question(
             self.mw,
-            "Open Configuration Editor",
-            "Do you want open the graphical qudi configuration editor to create or edit qudi "
-            "config files?\n",
+            'Open Configuration Editor',
+            'Do you want open the graphical qudi configuration editor to create or edit qudi '
+            'config files?\n',
             QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No,
             QtWidgets.QMessageBox.Yes,
         )
         if reply == QtWidgets.QMessageBox.Yes:
             process = subprocess.Popen(
-                args=[sys.executable, "-m", "tools.config_editor"],
+                args=[sys.executable, '-m', 'tools.config_editor'],
                 close_fds=False,
                 env=os.environ.copy(),
                 stdin=sys.stdin,

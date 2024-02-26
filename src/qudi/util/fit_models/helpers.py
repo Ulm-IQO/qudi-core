@@ -21,12 +21,12 @@ If not, see <https://www.gnu.org/licenses/>.
 """
 
 __all__ = (
-    "correct_offset_histogram",
-    "find_highest_peaks",
-    "estimate_double_peaks",
-    "estimate_triple_peaks",
-    "sort_check_data",
-    "smooth_data",
+    'correct_offset_histogram',
+    'find_highest_peaks',
+    'estimate_double_peaks',
+    'estimate_triple_peaks',
+    'sort_check_data',
+    'smooth_data',
 )
 
 import numpy as np
@@ -79,7 +79,7 @@ def find_highest_peaks(data, peak_count, allow_borders=True, **kwargs):
     """
     peak_count = int(peak_count)
     assert peak_count > 0, 'Parameter "peak_count" must be integer >= 1'
-    assert len(data) >= 5, "Data must contain at least 5 data points"
+    assert len(data) >= 5, 'Data must contain at least 5 data points'
 
     # Return early if all elements are the same
     if min(data) == max(data):
@@ -162,14 +162,14 @@ def estimate_double_peaks(data, x, minimum_distance=None):
         peak_widths = (x_spacing * 10, x_spacing * 10)
 
     estimate = {
-        "height": np.asarray(peak_heights),
-        "fwhm": np.asarray(peak_widths) * x_spacing,
-        "center": np.asarray(x[np.asarray(peak_indices)]),
+        'height': np.asarray(peak_heights),
+        'fwhm': np.asarray(peak_widths) * x_spacing,
+        'center': np.asarray(x[np.asarray(peak_indices)]),
     }
     limits = {
-        "height": ((0, 2 * data_span),) * 2,
-        "fwhm": ((x_spacing, x_span),) * 2,
-        "center": ((min(x) - x_span / 2, max(x) + x_span / 2),) * 2,
+        'height': ((0, 2 * data_span),) * 2,
+        'fwhm': ((x_spacing, x_span),) * 2,
+        'center': ((min(x) - x_span / 2, max(x) + x_span / 2),) * 2,
     }
     return estimate, limits
 
@@ -210,13 +210,13 @@ def estimate_triple_peaks(data, x, minimum_distance=None):
         peak_widths = (x_spacing * 10, x_spacing * 10, x_spacing * 10)
 
     estimate = {
-        "height": np.asarray(peak_heights),
-        "fwhm": np.asarray(peak_widths) * x_spacing,
-        "center": np.asarray(x[np.asarray(peak_indices)]),
+        'height': np.asarray(peak_heights),
+        'fwhm': np.asarray(peak_widths) * x_spacing,
+        'center': np.asarray(x[np.asarray(peak_indices)]),
     }
     limits = {
-        "height": ((0, 2 * data_span),) * 3,
-        "fwhm": ((x_spacing, x_span),) * 3,
-        "center": ((min(x) - x_span / 2, max(x) + x_span / 2),) * 3,
+        'height': ((0, 2 * data_span),) * 3,
+        'fwhm': ((x_spacing, x_span),) * 3,
+        'center': ((min(x) - x_span / 2, max(x) + x_span / 2),) * 3,
     }
     return estimate, limits

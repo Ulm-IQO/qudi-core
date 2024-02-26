@@ -19,7 +19,7 @@ You should have received a copy of the GNU Lesser General Public License along w
 If not, see <https://www.gnu.org/licenses/>.
 """
 
-__all__ = ["Connector"]
+__all__ = ['Connector']
 
 import weakref
 from typing import Any, Type, Union
@@ -103,7 +103,7 @@ class Connector:
     def copy(self, **kwargs):
         """Create a new instance of Connector with copied values and update"""
         return Connector(
-            kwargs.get("interface", self.interface),
-            kwargs.get("name", self.name),
-            kwargs.get("optional", self.optional),
+            kwargs.get('interface', self.interface),
+            kwargs.get('name', self.name),
+            kwargs.get('optional', self.optional),
         )

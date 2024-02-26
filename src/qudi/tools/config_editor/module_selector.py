@@ -18,7 +18,7 @@ You should have received a copy of the GNU Lesser General Public License along w
 If not, see <https://www.gnu.org/licenses/>.
 """
 
-__all__ = ["ModuleSelector"]
+__all__ = ['ModuleSelector']
 
 from PySide2 import QtWidgets, QtCore
 from typing import Optional, Iterable, List, Mapping, Tuple, Dict
@@ -40,7 +40,7 @@ class ModuleSelector(QtWidgets.QDialog):
     ) -> None:
         super().__init__(parent=parent)
 
-        self.setWindowTitle("Qudi Config Editor: Module Selection")
+        self.setWindowTitle('Qudi Config Editor: Module Selection')
         screen_size = QtWidgets.QApplication.instance().primaryScreen().availableSize()
         self.resize(screen_size.width() // 3, screen_size.height() // 3)
 
@@ -56,7 +56,7 @@ class ModuleSelector(QtWidgets.QDialog):
         # Create left side of splitter widget
         left_widget = QtWidgets.QWidget()
         layout = QtWidgets.QVBoxLayout()
-        label = QtWidgets.QLabel("Available Modules")
+        label = QtWidgets.QLabel('Available Modules')
         font = label.font()
         font.setPointSize(font.pointSize() + 4)
         font.setBold(True)
@@ -69,21 +69,21 @@ class ModuleSelector(QtWidgets.QDialog):
         right_widget = QtWidgets.QWidget()
         layout = QtWidgets.QGridLayout()
         right_widget.setLayout(layout)
-        label = QtWidgets.QLabel("Selected Modules")
+        label = QtWidgets.QLabel('Selected Modules')
         label.setFont(font)
-        self.add_remote_button = QtWidgets.QPushButton("Add Remote Module")
-        self.add_custom_button = QtWidgets.QPushButton("Add Custom Module")
+        self.add_remote_button = QtWidgets.QPushButton('Add Remote Module')
+        self.add_custom_button = QtWidgets.QPushButton('Add Custom Module')
         self.custom_module_lineedit = QtWidgets.QLineEdit()
         self.custom_module_lineedit.setPlaceholderText(
-            "Custom module name (module.Class)"
+            'Custom module name (module.Class)'
         )
         self.base_selection_combobox = QtWidgets.QComboBox()
-        self.base_selection_combobox.addItems(["GUI", "Logic", "Hardware"])
+        self.base_selection_combobox.addItems(['GUI', 'Logic', 'Hardware'])
         self.add_remote_button.clicked.connect(self._add_remote_module_clicked)
         self.add_custom_button.clicked.connect(self._add_custom_module_clicked)
         layout.addWidget(label, 0, 0, 1, 3)
         layout.addWidget(self.selected_treewidget, 1, 0, 1, 3)
-        label = QtWidgets.QLabel("Module Base:")
+        label = QtWidgets.QLabel('Module Base:')
         label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
         layout.addWidget(label, 2, 0)
         layout.addWidget(self.base_selection_combobox, 2, 1)
@@ -103,7 +103,7 @@ class ModuleSelector(QtWidgets.QDialog):
         # Create buttonbox for this dialog
 
         label = QtWidgets.QLabel(
-            "Include qudi modules by dragging them into the right field (press DEL to remove)."
+            'Include qudi modules by dragging them into the right field (press DEL to remove).'
         )
         label.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
         font = label.font()
@@ -134,15 +134,15 @@ class ModuleSelector(QtWidgets.QDialog):
     @QtCore.Slot()
     def _add_remote_module_clicked(self) -> None:
         base = self.base_selection_combobox.currentText().lower()
-        if base == "gui":
+        if base == 'gui':
             raise ValueError(
-                "Unable to add remote module.\nGUI modules can not be remote modules."
+                'Unable to add remote module.\nGUI modules can not be remote modules.'
             )
-        self.selected_treewidget.add_module(f"{base}.<REMOTE MODULE>")
+        self.selected_treewidget.add_module(f'{base}.<REMOTE MODULE>')
 
     @QtCore.Slot()
     def _add_custom_module_clicked(self) -> None:
         base = self.base_selection_combobox.currentText().lower()
         module = self.custom_module_lineedit.text().strip()
         if module:
-            self.selected_treewidget.add_module(f"{base}.{module}")
+            self.selected_treewidget.add_module(f'{base}.{module}')

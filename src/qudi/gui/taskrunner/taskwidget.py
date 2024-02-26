@@ -19,7 +19,7 @@ You should have received a copy of the GNU Lesser General Public License along w
 If not, see <https://www.gnu.org/licenses/>.
 """
 
-__all__ = ["TaskWidget"]
+__all__ = ['TaskWidget']
 
 import os
 from typing import Type, Optional, Dict, Tuple, Any, Iterable
@@ -78,10 +78,10 @@ class TaskWidget(QtWidgets.QWidget):
 
         # Create control button and state label. Arrange them in a sub-layout and connect button.
         # Also add animated busy-indicator
-        icon_dir = os.path.join(get_artwork_dir(), "icons")
-        self._play_icon = QtGui.QIcon(os.path.join(icon_dir, "media-playback-start"))
-        self._stop_icon = QtGui.QIcon(os.path.join(icon_dir, "media-playback-stop"))
-        self.state_label = QtWidgets.QLabel("stopped")
+        icon_dir = os.path.join(get_artwork_dir(), 'icons')
+        self._play_icon = QtGui.QIcon(os.path.join(icon_dir, 'media-playback-start'))
+        self._stop_icon = QtGui.QIcon(os.path.join(icon_dir, 'media-playback-stop'))
+        self.state_label = QtWidgets.QLabel('stopped')
         self.state_label.setAlignment(QtCore.Qt.AlignCenter)
         font = self.state_label.font()
         font.setBold(True)
@@ -135,14 +135,14 @@ class TaskWidget(QtWidgets.QWidget):
         for param_name, param in task_parameters.items():
             editor = ParameterWidgetMapper.widget_for_parameter(param)
             if editor is None:
-                editor = QtWidgets.QLabel("Unknown parameter type")
+                editor = QtWidgets.QLabel('Unknown parameter type')
                 editor.setSizePolicy(
                     QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Minimum
                 )
             else:
                 editor = editor()
                 # ToDo: Set default values here
-            label = QtWidgets.QLabel(f"{param_name}:")
+            label = QtWidgets.QLabel(f'{param_name}:')
             label.setAlignment(QtCore.Qt.AlignVCenter | QtCore.Qt.AlignRight)
             param_widgets[param_name] = (label, editor)
         return param_widgets

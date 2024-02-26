@@ -20,103 +20,103 @@ You should have received a copy of the GNU Lesser General Public License along w
 If not, see <https://www.gnu.org/licenses/>.
 """
 
-__all__ = ["config_schema", "local_module_config_schema", "remote_module_config_schema"]
+__all__ = ['config_schema', 'local_module_config_schema', 'remote_module_config_schema']
 
 from typing import Dict, Any
 
 
-__module_name_pattern = r"[a-zA-Z_]+[a-zA-Z0-9_]*"
+__module_name_pattern = r'[a-zA-Z_]+[a-zA-Z0-9_]*'
 
 
 def config_schema() -> Dict[str, Any]:
     """Creates and returns the JSON schema for a qudi configuration"""
     return {
-        "type": "object",
-        "additionalProperties": False,
-        "properties": {
-            "global": {
-                "type": "object",
-                "additionalProperties": True,
-                "default": dict(),
-                "properties": {
-                    "startup_modules": {
-                        "type": "array",
-                        "uniqueItems": True,
-                        "items": {
-                            "type": "string",
-                            "pattern": f"^{__module_name_pattern}$",
+        'type': 'object',
+        'additionalProperties': False,
+        'properties': {
+            'global': {
+                'type': 'object',
+                'additionalProperties': True,
+                'default': dict(),
+                'properties': {
+                    'startup_modules': {
+                        'type': 'array',
+                        'uniqueItems': True,
+                        'items': {
+                            'type': 'string',
+                            'pattern': f'^{__module_name_pattern}$',
                         },
-                        "default": list(),
+                        'default': list(),
                     },
-                    "remote_modules_server": {
-                        "type": ["null", "object"],
-                        "required": ["address", "port"],
-                        "default": None,
-                        "additionalProperties": False,
-                        "properties": {
-                            "address": {
-                                "type": "string",
+                    'remote_modules_server': {
+                        'type': ['null', 'object'],
+                        'required': ['address', 'port'],
+                        'default': None,
+                        'additionalProperties': False,
+                        'properties': {
+                            'address': {
+                                'type': 'string',
                             },
-                            "port": {"type": "integer", "minimum": 0, "maximum": 65535},
-                            "certfile": {"type": ["null", "string"], "default": None},
-                            "keyfile": {"type": ["null", "string"], "default": None},
+                            'port': {'type': 'integer', 'minimum': 0, 'maximum': 65535},
+                            'certfile': {'type': ['null', 'string'], 'default': None},
+                            'keyfile': {'type': ['null', 'string'], 'default': None},
                         },
                     },
-                    "namespace_server_port": {
-                        "type": "integer",
-                        "minimum": 0,
-                        "maximum": 65535,
-                        "default": 18861,
+                    'namespace_server_port': {
+                        'type': 'integer',
+                        'minimum': 0,
+                        'maximum': 65535,
+                        'default': 18861,
                     },
-                    "force_remote_calls_by_value": {"type": "boolean", "default": True},
-                    "hide_manager_window": {"type": "boolean", "default": False},
-                    "stylesheet": {
-                        "type": "string",
-                        "pattern": r"^[^.]+\.qss$",
-                        "default": "qdark.qss",
+                    'force_remote_calls_by_value': {'type': 'boolean', 'default': True},
+                    'hide_manager_window': {'type': 'boolean', 'default': False},
+                    'stylesheet': {
+                        'type': 'string',
+                        'pattern': r'^[^.]+\.qss$',
+                        'default': 'qdark.qss',
                     },
-                    "daily_data_dirs": {"type": "boolean", "default": True},
-                    "default_data_dir": {"type": ["null", "string"], "default": None},
-                    "extension_paths": {
-                        "type": "array",
-                        "uniqueItems": True,
-                        "items": {"type": "string"},
-                        "default": list(),
+                    'daily_data_dirs': {'type': 'boolean', 'default': True},
+                    'default_data_dir': {'type': ['null', 'string'], 'default': None},
+                    'extension_paths': {
+                        'type': 'array',
+                        'uniqueItems': True,
+                        'items': {'type': 'string'},
+                        'default': list(),
                     },
                 },
             },
-            "gui": {
-                "type": "object",
-                "propertyNames": {"pattern": f"^{__module_name_pattern}$"},
-                "additionalProperties": {"$ref": "#/$defs/local_module"},
-                "default": dict(),
+            'gui': {
+                'type': 'object',
+                'propertyNames': {'pattern': f'^{__module_name_pattern}$'},
+                'additionalProperties': {'$ref': '#/$defs/local_module'},
+                'default': dict(),
             },
-            "logic": {
-                "type": "object",
-                "propertyNames": {"pattern": f"^{__module_name_pattern}$"},
-                "additionalProperties": {
-                    "oneOf": [
-                        {"$ref": "#/$defs/local_module"},
-                        {"$ref": "#/$defs/remote_module"},
+            'logic': {
+                'type': 'object',
+                'propertyNames': {'pattern': f'^{__module_name_pattern}$'},
+                'additionalProperties': {
+                    'oneOf': [
+                        {'$ref': '#/$defs/local_module'},
+                        {'$ref': '#/$defs/remote_module'},
                     ]
                 },
-                "default": dict(),
+                'default': dict(),
             },
-            "hardware": {
-                "type": "object",
-                "propertyNames": {"pattern": f"^{__module_name_pattern}$"},
-                "additionalProperties": {
-                    "oneOf": [
-                        {"$ref": "#/$defs/local_module"},
-                        {"$ref": "#/$defs/remote_module"},
+            'hardware': {
+                'type': 'object',
+                'propertyNames': {'pattern': f'^{__module_name_pattern}$'},
+                'additionalProperties': {
+                    'oneOf': [
+                        {'$ref': '#/$defs/local_module'},
+                        {'$ref': '#/$defs/remote_module'},
                     ]
                 },
-                "default": dict(),
+                'default': dict(),
             },
         },
-        "$defs": {
-            "local_module": local_module_config_schema(),
-            "remote_module": remote_module_config_schema(),
+        '$defs': {
+            'local_module': local_module_config_schema(),
+            'remote_module': remote_module_config_schema(),
         },
     }
 
@@ -124,27 +124,27 @@ def config_schema() -> Dict[str, Any]:
 def local_module_config_schema() -> Dict[str, Any]:
     """Creates and returns the JSON schema for a single qudi local module configuration"""
     return {
-        "type": "object",
-        "required": ["module.Class"],
-        "additionalProperties": False,
-        "properties": {
-            "module.Class": {
-                "type": "string",
-                "pattern": f"^{__module_name_pattern}(\\.{__module_name_pattern})*$",
+        'type': 'object',
+        'required': ['module.Class'],
+        'additionalProperties': False,
+        'properties': {
+            'module.Class': {
+                'type': 'string',
+                'pattern': f'^{__module_name_pattern}(\\.{__module_name_pattern})*$',
             },
-            "allow_remote": {"type": "boolean", "default": False},
-            "connect": {
-                "type": "object",
-                "additionalProperties": {
-                    "type": "string",
-                    "pattern": f"^{__module_name_pattern}$",
+            'allow_remote': {'type': 'boolean', 'default': False},
+            'connect': {
+                'type': 'object',
+                'additionalProperties': {
+                    'type': 'string',
+                    'pattern': f'^{__module_name_pattern}$',
                 },
-                "default": dict(),
+                'default': dict(),
             },
-            "options": {
-                "type": "object",
-                "additionalProperties": True,
-                "default": dict(),
+            'options': {
+                'type': 'object',
+                'additionalProperties': True,
+                'default': dict(),
             },
         },
     }
@@ -153,19 +153,19 @@ def local_module_config_schema() -> Dict[str, Any]:
 def remote_module_config_schema() -> Dict[str, Any]:
     """Creates and returns the JSON schema for a single qudi remote module configuration"""
     return {
-        "type": "object",
-        "required": ["native_module_name", "address", "port"],
-        "additionalProperties": False,
-        "properties": {
-            "native_module_name": {
-                "type": "string",
-                "pattern": f"^{__module_name_pattern}$",
+        'type': 'object',
+        'required': ['native_module_name', 'address', 'port'],
+        'additionalProperties': False,
+        'properties': {
+            'native_module_name': {
+                'type': 'string',
+                'pattern': f'^{__module_name_pattern}$',
             },
-            "address": {
-                "type": "string",
+            'address': {
+                'type': 'string',
             },
-            "port": {"type": "integer", "minimum": 0, "maximum": 65535},
-            "certfile": {"type": ["null", "string"], "default": None},
-            "keyfile": {"type": ["null", "string"], "default": None},
+            'port': {'type': 'integer', 'minimum': 0, 'maximum': 65535},
+            'certfile': {'type': ['null', 'string'], 'default': None},
+            'keyfile': {'type': ['null', 'string'], 'default': None},
         },
     }

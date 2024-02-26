@@ -19,7 +19,7 @@ You should have received a copy of the GNU Lesser General Public License along w
 If not, see <https://www.gnu.org/licenses/>.
 """
 
-__all__ = ("scan_blink_correction",)
+__all__ = ('scan_blink_correction',)
 
 import numpy as np
 from scipy.ndimage import minimum_filter1d, maximum_filter1d
@@ -44,24 +44,24 @@ def scan_blink_correction(image, axis=1):
     """
 
     if not isinstance(image, np.ndarray):
-        _logger.error("Image must be 2D numpy array.")
+        _logger.error('Image must be 2D numpy array.')
         return image
     if image.ndim != 2:
-        _logger.error("Image must be 2D numpy array.")
+        _logger.error('Image must be 2D numpy array.')
         return image
     if axis != 0 and axis != 1:
-        _logger.error("Optional axis parameter must be either 0 or 1.")
+        _logger.error('Optional axis parameter must be either 0 or 1.')
         return image
 
     # Calculate median value of the image. This value is used for padding image boundaries during
     # filtering.
     median = np.median(image)
     # Apply a minimum filter along the chosen axis.
-    filt_img = minimum_filter1d(image, size=2, axis=axis, mode="constant", cval=median)
+    filt_img = minimum_filter1d(image, size=2, axis=axis, mode='constant', cval=median)
     # Apply a maximum filter along the chosen axis. Flip the previous filter result to avoid
     # translation of image features.
     filt_img = maximum_filter1d(
-        np.flip(filt_img, axis), size=2, axis=axis, mode="constant", cval=median
+        np.flip(filt_img, axis), size=2, axis=axis, mode='constant', cval=median
     )
     # Flip back the image to obtain original orientation and return result.
     return np.flip(filt_img, axis)

@@ -20,7 +20,7 @@ You should have received a copy of the GNU Lesser General Public License along w
 If not, see <https://www.gnu.org/licenses/>.
 """
 
-__all__ = ["DoubleSlider"]
+__all__ = ['DoubleSlider']
 
 from PySide2 import QtCore, QtWidgets
 
@@ -87,7 +87,7 @@ class DoubleSlider(QtWidgets.QSlider):
         """
         number_of_steps = int(number_of_steps)
         if number_of_steps < 1:
-            raise ValueError("Number of steps must be larger than 0.")
+            raise ValueError('Number of steps must be larger than 0.')
         self._step_number = number_of_steps - 1  # Include 0 as position
         super().setRange(0, self._step_number)
         return

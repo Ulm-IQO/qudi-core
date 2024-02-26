@@ -23,7 +23,7 @@ You should have received a copy of the GNU Lesser General Public License along w
 If not, see <https://www.gnu.org/licenses/>.
 """
 
-__all__ = ["AppWatchdog"]
+__all__ = ['AppWatchdog']
 
 import os
 import sys
@@ -46,19 +46,19 @@ class AppWatchdog(QtCore.QObject):
         self.__timer.start(1000)
 
         # Listen to SIGINT and terminate
-        if sys.platform == "win32":
+        if sys.platform == 'win32':
             signal.signal(signal.SIGINT, lambda *args: quit_function())
 
-        if "QUDI_PARENT_PID" not in os.environ:
+        if 'QUDI_PARENT_PID' not in os.environ:
             self.parent_handle = None
             self.parent_poller = None
             logger.warning(
-                "Qudi running unsupervised. Restart will not work. Instead Qudi will "
-                "exit with exitcode 42."
+                'Qudi running unsupervised. Restart will not work. Instead Qudi will '
+                'exit with exitcode 42.'
             )
         else:
-            self.parent_handle = int(os.environ["QUDI_PARENT_PID"])
-            if sys.platform == "win32":
+            self.parent_handle = int(os.environ['QUDI_PARENT_PID'])
+            if sys.platform == 'win32':
                 self.parent_poller = ParentPollerWindows(
                     self.parent_handle, quit_function
                 )

@@ -19,7 +19,7 @@ You should have received a copy of the GNU Lesser General Public License along w
 If not, see <https://www.gnu.org/licenses/>.
 """
 
-__all__ = ("LogSignalHandler", "LogTableModelHandler", "qt_message_handler")
+__all__ = ('LogSignalHandler', 'LogTableModelHandler', 'qt_message_handler')
 
 import logging
 from PySide2 import QtCore
@@ -71,7 +71,7 @@ def qt_message_handler(msg_type, context, msg):
     """
     A message handler handling Qt5 messages.
     """
-    logger = logging.getLogger("Qt")
+    logger = logging.getLogger('Qt')
     if msg_type == QtCore.QtDebugMsg:
         logger.debug(msg)
     elif msg_type == QtCore.QtInfoMsg:
@@ -83,5 +83,5 @@ def qt_message_handler(msg_type, context, msg):
     else:
         import traceback
 
-        traceback_str = "".join(traceback.format_stack())
-        logger.critical(f"Fatal error occurred: {msg}\nTraceback:\n{traceback_str}")
+        traceback_str = ''.join(traceback.format_stack())
+        logger.critical(f'Fatal error occurred: {msg}\nTraceback:\n{traceback_str}')

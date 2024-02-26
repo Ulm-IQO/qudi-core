@@ -19,7 +19,7 @@ You should have received a copy of the GNU Lesser General Public License along w
 If not, see <https://www.gnu.org/licenses/>.
 """
 
-__all__ = ("RemoteModulesService", "QudiNamespaceService")
+__all__ = ('RemoteModulesService', 'QudiNamespaceService')
 
 import logging
 
@@ -40,7 +40,7 @@ class _SharedModulesModel(DictTableModel):
     """Derived dict model for GUI display elements"""
 
     def __init__(self):
-        super().__init__(headers="Shared Module")
+        super().__init__(headers='Shared Module')
 
     def data(self, index, role):
         """Get data from model for a given cell. Data can have a role that affects display.
@@ -62,7 +62,7 @@ class _SharedModulesModel(DictTableModel):
 class RemoteModulesService(rpyc.Service):
     """An RPyC service that has a module list."""
 
-    ALIASES = ["RemoteModules"]
+    ALIASES = ['RemoteModules']
 
     def __init__(self, *args, force_remote_calls_by_value=False, **kwargs):
         super().__init__(*args, **kwargs)
@@ -85,16 +85,16 @@ class RemoteModulesService(rpyc.Service):
 
     def on_connect(self, conn):
         """code that runs when a connection is created"""
-        host, port = conn._config["endpoints"][1]
+        host, port = conn._config['endpoints'][1]
         logger.info(
-            f"Client connected to remote modules service from [{host}]:{port:d}"
+            f'Client connected to remote modules service from [{host}]:{port:d}'
         )
 
     def on_disconnect(self, conn):
         """code that runs when the connection is closing"""
-        host, port = conn._config["endpoints"][1]
+        host, port = conn._config['endpoints'][1]
         logger.info(
-            f"Client [{host}]:{port:d} disconnected from remote modules service"
+            f'Client [{host}]:{port:d} disconnected from remote modules service'
         )
 
     def exposed_get_module_instance(self, name, activate=False):
@@ -116,7 +116,7 @@ class RemoteModulesService(rpyc.Service):
                 if not module.activate():
                     logger.error(
                         f'Unable to share requested module "{name}" with client. Module '
-                        f"can not be activated."
+                        f'can not be activated.'
                     )
                     return None
             if self._force_remote_calls_by_value:
@@ -164,7 +164,7 @@ class QudiNamespaceService(rpyc.Service):
     instances as well as a reference to the qudi application itself.
     """
 
-    ALIASES = ["QudiNamespace"]
+    ALIASES = ['QudiNamespace']
 
     def __init__(self, *args, qudi, force_remote_calls_by_value=False, **kwargs):
         super().__init__(*args, **kwargs)
@@ -176,14 +176,14 @@ class QudiNamespaceService(rpyc.Service):
     def _qudi(self):
         qudi = self.__qudi_ref()
         if qudi is None:
-            raise RuntimeError("Dead qudi application reference encountered")
+            raise RuntimeError('Dead qudi application reference encountered')
         return qudi
 
     @property
     def _module_manager(self):
         manager = self._qudi.module_manager
         if manager is None:
-            raise RuntimeError("No module manager initialized in qudi application")
+            raise RuntimeError('No module manager initialized in qudi application')
         return manager
 
     def on_connect(self, conn):
@@ -192,19 +192,19 @@ class QudiNamespaceService(rpyc.Service):
             self._notifier_callbacks[conn] = rpyc.async_(conn.root.modules_changed)
         except AttributeError:
             pass
-        host, port = conn._config["endpoints"][1]
-        logger.info(f"Client connected to local module service from [{host}]:{port:d}")
+        host, port = conn._config['endpoints'][1]
+        logger.info(f'Client connected to local module service from [{host}]:{port:d}')
 
     def on_disconnect(self, conn):
         """code that runs when the connection is closing"""
         self._notifier_callbacks.pop(conn, None)
-        host, port = conn._config["endpoints"][1]
-        logger.info(f"Client [{host}]:{port:d} disconnected from local module service")
+        host, port = conn._config['endpoints'][1]
+        logger.info(f'Client [{host}]:{port:d} disconnected from local module service')
 
     def notify_module_change(self):
         logger.debug(
-            "Local module server has detected a module state change and sends async "
-            "notifier signals to all clients"
+            'Local module server has detected a module state change and sends async '
+            'notifier signals to all clients'
         )
         for callback in self._notifier_callbacks.values():
             callback()
@@ -227,7 +227,7 @@ class QudiNamespaceService(rpyc.Service):
                 for name, mod in self._module_manager.items()
                 if mod.is_active
             }
-        mods["qudi"] = self._qudi
+        mods['qudi'] = self._qudi
         return mods
 
     def exposed_get_logger(self, name: str) -> logging.Logger:
@@ -246,16 +246,16 @@ class ModuleRpycProxy:
     https://code.activestate.com/recipes/496741-object-proxying/
     """
 
-    __slots__ = ["_obj_ref", "__weakref__"]
+    __slots__ = ['_obj_ref', '__weakref__']
 
     def __init__(self, obj):
-        object.__setattr__(self, "_obj_ref", weakref.ref(obj))
+        object.__setattr__(self, '_obj_ref', weakref.ref(obj))
 
     # proxying (special cases)
     def __getattribute__(self, name):
-        obj = object.__getattribute__(self, "_obj_ref")()
+        obj = object.__getattribute__(self, '_obj_ref')()
         attr = getattr(obj, name)
-        if not name.startswith("__") and ismethod(attr) or isfunction(attr):
+        if not name.startswith('__') and ismethod(attr) or isfunction(attr):
             sig = signature(attr)
             if len(sig.parameters) > 0:
 
@@ -271,92 +271,92 @@ class ModuleRpycProxy:
         return attr
 
     def __delattr__(self, name):
-        obj = object.__getattribute__(self, "_obj_ref")()
+        obj = object.__getattribute__(self, '_obj_ref')()
         return delattr(obj, name)
 
     def __setattr__(self, name, value):
-        obj = object.__getattribute__(self, "_obj_ref")()
+        obj = object.__getattribute__(self, '_obj_ref')()
         return setattr(obj, name, netobtain(value))
 
     # factories
     _special_names = (
-        "__abs__",
-        "__add__",
-        "__and__",
-        "__call__",
-        "__cmp__",
-        "__coerce__",
-        "__contains__",
-        "__delitem__",
-        "__delslice__",
-        "__div__",
-        "__divmod__",
-        "__eq__",
-        "__float__",
-        "__floordiv__",
-        "__ge__",
-        "__getitem__",
-        "__getslice__",
-        "__gt__",
-        "__hash__",
-        "__hex__",
-        "__iadd__",
-        "__iand__",
-        "__idiv__",
-        "__idivmod__",
-        "__ifloordiv__",
-        "__ilshift__",
-        "__imod__",
-        "__imul__",
-        "__int__",
-        "__invert__",
-        "__ior__",
-        "__ipow__",
-        "__irshift__",
-        "__isub__",
-        "__iter__",
-        "__itruediv__",
-        "__ixor__",
-        "__le__",
-        "__len__",
-        "__long__",
-        "__lshift__",
-        "__lt__",
-        "__mod__",
-        "__mul__",
-        "__ne__",
-        "__neg__",
-        "__oct__",
-        "__or__",
-        "__pos__",
-        "__pow__",
-        "__radd__",
-        "__rand__",
-        "__rdiv__",
-        "__rdivmod__",
-        "__reduce__",
-        "__reduce_ex__",
-        "__repr__",
-        "__reversed__",
-        "__rfloorfiv__",
-        "__rlshift__",
-        "__rmod__",
-        "__rmul__",
-        "__ror__",
-        "__rpow__",
-        "__rrshift__",
-        "__rshift__",
-        "__rsub__",
-        "__rtruediv__",
-        "__rxor__",
-        "__setitem__",
-        "__setslice__",
-        "__sub__",
-        "__truediv__",
-        "__xor__",
-        "next",
-        "__str__",
-        "__nonzero__",
+        '__abs__',
+        '__add__',
+        '__and__',
+        '__call__',
+        '__cmp__',
+        '__coerce__',
+        '__contains__',
+        '__delitem__',
+        '__delslice__',
+        '__div__',
+        '__divmod__',
+        '__eq__',
+        '__float__',
+        '__floordiv__',
+        '__ge__',
+        '__getitem__',
+        '__getslice__',
+        '__gt__',
+        '__hash__',
+        '__hex__',
+        '__iadd__',
+        '__iand__',
+        '__idiv__',
+        '__idivmod__',
+        '__ifloordiv__',
+        '__ilshift__',
+        '__imod__',
+        '__imul__',
+        '__int__',
+        '__invert__',
+        '__ior__',
+        '__ipow__',
+        '__irshift__',
+        '__isub__',
+        '__iter__',
+        '__itruediv__',
+        '__ixor__',
+        '__le__',
+        '__len__',
+        '__long__',
+        '__lshift__',
+        '__lt__',
+        '__mod__',
+        '__mul__',
+        '__ne__',
+        '__neg__',
+        '__oct__',
+        '__or__',
+        '__pos__',
+        '__pow__',
+        '__radd__',
+        '__rand__',
+        '__rdiv__',
+        '__rdivmod__',
+        '__reduce__',
+        '__reduce_ex__',
+        '__repr__',
+        '__reversed__',
+        '__rfloorfiv__',
+        '__rlshift__',
+        '__rmod__',
+        '__rmul__',
+        '__ror__',
+        '__rpow__',
+        '__rrshift__',
+        '__rshift__',
+        '__rsub__',
+        '__rtruediv__',
+        '__rxor__',
+        '__setitem__',
+        '__setslice__',
+        '__sub__',
+        '__truediv__',
+        '__xor__',
+        'next',
+        '__str__',
+        '__nonzero__',
     )
 
     @classmethod
@@ -365,7 +365,7 @@ class ModuleRpycProxy:
 
         def make_method(method_name):
             def method(self, *args, **kw):
-                obj = object.__getattribute__(self, "_obj_ref")()
+                obj = object.__getattribute__(self, '_obj_ref')()
                 args = [netobtain(arg) for arg in args]
                 kw = {key: netobtain(val) for key, val in kw.items()}
                 return getattr(obj, method_name)(*args, **kw)
@@ -378,7 +378,7 @@ class ModuleRpycProxy:
             if hasattr(theclass, name):
                 namespace[name] = make_method(name)
 
-        return type(f"{cls.__name__}({theclass.__name__})", (cls,), namespace)
+        return type(f'{cls.__name__}({theclass.__name__})', (cls,), namespace)
 
     def __new__(cls, obj, *args, **kwargs):
         """creates an proxy instance referencing `obj`. (obj, *args, **kwargs) are passed to this

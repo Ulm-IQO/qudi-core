@@ -20,7 +20,7 @@ You should have received a copy of the GNU Lesser General Public License along w
 If not, see <https://www.gnu.org/licenses/>.
 """
 
-__all__ = ["AdvancedDockWidget"]
+__all__ = ['AdvancedDockWidget']
 
 from PySide2 import QtCore, QtWidgets
 

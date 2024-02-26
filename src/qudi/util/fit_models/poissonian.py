@@ -20,7 +20,7 @@ You should have received a copy of the GNU Lesser General Public License along w
 If not, see <https://www.gnu.org/licenses/>.
 """
 
-__all__ = ("DoublePoissonian", "Poissonian", "multiple_poissonian")
+__all__ = ('DoublePoissonian', 'Poissonian', 'multiple_poissonian')
 
 import numpy as np
 from scipy.special import gammaln, xlogy
@@ -66,15 +66,15 @@ class Poissonian(FitModelBase):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.set_param_hint("offset", value=0, min=-np.inf, max=np.inf)
-        self.set_param_hint("amplitude", value=1.0, min=0, max=np.inf)
-        self.set_param_hint("mu", value=1.0, min=0, max=np.inf)
+        self.set_param_hint('offset', value=0, min=-np.inf, max=np.inf)
+        self.set_param_hint('amplitude', value=1.0, min=0, max=np.inf)
+        self.set_param_hint('mu', value=1.0, min=0, max=np.inf)
 
     @staticmethod
     def _model_function(x, offset, mu, amplitude):
         return offset + multiple_poissonian(x, (mu,), (amplitude,))
 
-    @estimator("default")
+    @estimator('default')
     def estimate(self, data, x):
         data, x = sort_check_data(data, x)
         filter_width = max(1, int(round(len(x) / 20)))
@@ -93,21 +93,21 @@ class Poissonian(FitModelBase):
         data_span = abs(max(data) - min(data))
 
         estimate = self.make_params()
-        estimate["mu"].set(
+        estimate['mu'].set(
             value=mu,
             min=max(x_spacing, min(x) - x_span / 2),
             max=min(x_span, max(x) + x_span / 2),
         )
-        estimate["amplitude"].set(value=amplitude, min=0, max=2 * amplitude)
-        estimate["offset"].set(
+        estimate['amplitude'].set(value=amplitude, min=0, max=2 * amplitude)
+        estimate['offset'].set(
             value=offset, min=min(data) - data_span / 2, max=max(data) + data_span / 2
         )
         return estimate
 
-    @estimator("No Offset")
+    @estimator('No Offset')
     def estimate_no_offset(self, data, x):
         estimate = self.estimate(data, x)
-        estimate["offset"].set(value=0, min=-np.inf, max=np.inf, vary=False)
+        estimate['offset'].set(value=0, min=-np.inf, max=np.inf, vary=False)
         return estimate
 
 
@@ -116,17 +116,17 @@ class DoublePoissonian(FitModelBase):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.set_param_hint("offset", value=0, min=-np.inf, max=np.inf)
-        self.set_param_hint("amplitude_1", value=1.0, min=0, max=np.inf)
-        self.set_param_hint("amplitude_2", value=1.0, min=0, max=np.inf)
-        self.set_param_hint("mu_1", value=1.0, min=0, max=np.inf)
-        self.set_param_hint("mu_2", value=2.0, min=0, max=np.inf)
+        self.set_param_hint('offset', value=0, min=-np.inf, max=np.inf)
+        self.set_param_hint('amplitude_1', value=1.0, min=0, max=np.inf)
+        self.set_param_hint('amplitude_2', value=1.0, min=0, max=np.inf)
+        self.set_param_hint('mu_1', value=1.0, min=0, max=np.inf)
+        self.set_param_hint('mu_2', value=2.0, min=0, max=np.inf)
 
     @staticmethod
     def _model_function(x, offset, mu_1, mu_2, amplitude_1, amplitude_2):
         return offset + multiple_poissonian(x, (mu_1, mu_2), (amplitude_1, amplitude_2))
 
-    @estimator("default")
+    @estimator('default')
     def estimate(self, data, x):
         data, x = sort_check_data(data, x)
         data_smoothed, filter_width = smooth_data(data)
@@ -137,40 +137,40 @@ class DoublePoissonian(FitModelBase):
         estimate, limits = estimate_double_peaks(data_smoothed, x, filter_width)
 
         params = self.make_params()
-        params["amplitude_1"].set(
-            value=estimate["height"][0],
-            min=limits["height"][0][0],
-            max=limits["height"][0][1],
+        params['amplitude_1'].set(
+            value=estimate['height'][0],
+            min=limits['height'][0][0],
+            max=limits['height'][0][1],
         )
-        params["amplitude_2"].set(
-            value=estimate["height"][1],
-            min=limits["height"][1][0],
-            max=limits["height"][1][1],
+        params['amplitude_2'].set(
+            value=estimate['height'][1],
+            min=limits['height'][1][0],
+            max=limits['height'][1][1],
         )
-        params["center_1"].set(
-            value=estimate["center"][0],
-            min=limits["center"][0][0],
-            max=limits["center"][0][1],
+        params['center_1'].set(
+            value=estimate['center'][0],
+            min=limits['center'][0][0],
+            max=limits['center'][0][1],
         )
-        params["center_2"].set(
-            value=estimate["center"][1],
-            min=limits["center"][1][0],
-            max=limits["center"][1][1],
+        params['center_2'].set(
+            value=estimate['center'][1],
+            min=limits['center'][1][0],
+            max=limits['center'][1][1],
         )
-        params["sigma_1"].set(
-            value=estimate["fwhm"][0] / 2.3548,
-            min=limits["fwhm"][0][0] / 2.3548,
-            max=limits["fwhm"][0][1] / 2.3548,
+        params['sigma_1'].set(
+            value=estimate['fwhm'][0] / 2.3548,
+            min=limits['fwhm'][0][0] / 2.3548,
+            max=limits['fwhm'][0][1] / 2.3548,
         )
-        params["sigma_2"].set(
-            value=estimate["fwhm"][1] / 2.3548,
-            min=limits["fwhm"][1][0] / 2.3548,
-            max=limits["fwhm"][1][1] / 2.3548,
+        params['sigma_2'].set(
+            value=estimate['fwhm'][1] / 2.3548,
+            min=limits['fwhm'][1][0] / 2.3548,
+            max=limits['fwhm'][1][1] / 2.3548,
         )
         return params
 
-    @estimator("No Offset")
+    @estimator('No Offset')
     def estimate_no_offset(self, data, x):
         estimate = self.estimate(data, x)
-        estimate["offset"].set(value=0, min=-np.inf, max=np.inf, vary=False)
+        estimate['offset'].set(value=0, min=-np.inf, max=np.inf, vary=False)
         return estimate

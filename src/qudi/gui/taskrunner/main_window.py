@@ -41,21 +41,21 @@ class TaskMainWindow(QtWidgets.QMainWindow):
     def __init__(self, *args, tasks: Mapping[str, Type[ModuleTask]], **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.setWindowTitle("qudi: Taskrunner")
+        self.setWindowTitle('qudi: Taskrunner')
 
         # Create actions
-        icon_path = os.path.join(get_artwork_dir(), "icons")
+        icon_path = os.path.join(get_artwork_dir(), 'icons')
         self.action_quit = QtWidgets.QAction()
         self.action_quit.setIcon(
-            QtGui.QIcon(os.path.join(icon_path, "application-exit"))
+            QtGui.QIcon(os.path.join(icon_path, 'application-exit'))
         )
-        self.action_quit.setText("Close")
-        self.action_quit.setToolTip("Close")
+        self.action_quit.setText('Close')
+        self.action_quit.setToolTip('Close')
         self.action_quit.triggered.connect(self.close)
 
         # Create menu bar
         self.menubar = QtWidgets.QMenuBar()
-        menu = QtWidgets.QMenu("File")
+        menu = QtWidgets.QMenu('File')
         menu.addAction(self.action_quit)
         self.menubar.addMenu(menu)
         self.setMenuBar(self.menubar)

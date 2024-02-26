@@ -3,7 +3,7 @@
 
 """
 
-__all__ = ["ModuleFinder", "QudiModules"]
+__all__ = ['ModuleFinder', 'QudiModules']
 
 import importlib
 import inspect
@@ -35,7 +35,7 @@ class ModuleFinder:
         module_names = [
             mod_finder.name
             for mod_finder in iter_modules_recursive(
-                namespace.__path__, f"{namespace.__name__}."
+                namespace.__path__, f'{namespace.__name__}.'
             )
         ]
         # Remove duplicates
@@ -45,7 +45,7 @@ class ModuleFinder:
     def get_qudi_classes_in_module(cls, module: object) -> Dict[str, Type[Base]]:
         members = inspect.getmembers(module, cls.is_qudi_module)
         return {
-            f"{module.__name__}.{name}": obj
+            f'{module.__name__}.{name}': obj
             for name, obj in members
             if obj.__module__ == module.__name__
         }
@@ -92,12 +92,12 @@ class QudiModules:
     def __init__(self):
         # import all qudi module classes if possible (log all errors upon import)
         self._qudi_modules = {
-            mod[5:] if mod.startswith("qudi.") else mod: cls
+            mod[5:] if mod.startswith('qudi.') else mod: cls
             for mod, cls in ModuleFinder.get_qudi_modules().items()
         }
         # Collect all connectors for all modules
         self._module_connectors = {
-            mod: list(cls._meta["connectors"].values())
+            mod: list(cls._meta['connectors'].values())
             for mod, cls in self._qudi_modules.items()
         }
         # Get for each connector in each module compatible modules to connect to
@@ -107,7 +107,7 @@ class QudiModules:
         }
         # Get all ConfigOptions for all modules
         self._module_config_options = {
-            mod: list(cls._meta["config_options"].values())
+            mod: list(cls._meta['config_options'].values())
             for mod, cls in self._qudi_modules.items()
         }
 

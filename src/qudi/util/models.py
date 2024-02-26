@@ -19,7 +19,7 @@ You should have received a copy of the GNU Lesser General Public License along w
 If not, see <https://www.gnu.org/licenses/>.
 """
 
-__all__ = ["DictTableModel", "ListTableModel"]
+__all__ = ['DictTableModel', 'ListTableModel']
 
 from PySide2 import QtCore
 from typing import Any, Optional, Union, Sequence
@@ -35,7 +35,7 @@ class DictTableModel(QtCore.QAbstractTableModel):
         if isinstance(headers, str):
             self._headers = [headers]
         elif not all(isinstance(h, str) for h in headers):
-            raise TypeError("DictTableModel header entries must be str type.")
+            raise TypeError('DictTableModel header entries must be str type.')
         else:
             self._headers = list(headers)
         self._storage = dict()
@@ -89,8 +89,8 @@ class DictTableModel(QtCore.QAbstractTableModel):
                     key = next(it)
             except StopIteration:
                 raise IndexError(
-                    f"Index {n:d} out of bounds for table model with "
-                    f"{len(self._storage):d} rows"
+                    f'Index {n:d} out of bounds for table model with '
+                    f'{len(self._storage):d} rows'
                 ) from None
             return key
 
@@ -210,7 +210,7 @@ class ListTableModel(QtCore.QAbstractTableModel):
         if isinstance(headers, str):
             self._headers = headers
         elif not all(isinstance(h, str) for h in headers):
-            raise TypeError("DictTableModel header entries must be str type.")
+            raise TypeError('DictTableModel header entries must be str type.')
         else:
             self._headers = list(headers)
         self._storage = list()

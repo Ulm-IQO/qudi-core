@@ -18,7 +18,7 @@ You should have received a copy of the GNU Lesser General Public License along w
 If not, see <https://www.gnu.org/licenses/>.
 """
 
-__all__ = ["RectangleROI"]
+__all__ = ['RectangleROI']
 
 from math import isinf
 from typing import Union, Tuple, Optional, Sequence, List
@@ -235,7 +235,7 @@ class RectangleROI(ROI):
                         self.__start_pos[0] + total_move.x(),
                         self.__start_pos[1] + total_move.y(),
                     )
-                    new_pos = self.preMoveState["pos"] + total_move
+                    new_pos = self.preMoveState['pos'] + total_move
                     self.setPos(new_pos, update=False, finish=False)
                     self._clip_area(update=True, finish=False)
                 if is_finish:

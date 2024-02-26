@@ -18,21 +18,21 @@ If not, see <https://www.gnu.org/licenses/>.
 """
 
 __all__ = [
-    "csv_2_list",
-    "in_range",
-    "is_complex",
-    "is_complex_type",
-    "is_float",
-    "is_float_type",
-    "is_integer",
-    "is_integer_type",
-    "is_number",
-    "is_number_type",
-    "is_string",
-    "is_string_type",
-    "iter_modules_recursive",
-    "natural_sort",
-    "str_to_number",
+    'csv_2_list',
+    'in_range',
+    'is_complex',
+    'is_complex_type',
+    'is_float',
+    'is_float_type',
+    'is_integer',
+    'is_integer_type',
+    'is_number',
+    'is_number_type',
+    'is_string',
+    'is_string_type',
+    'iter_modules_recursive',
+    'natural_sort',
+    'str_to_number',
 ]
 
 import re
@@ -45,7 +45,7 @@ _RealNumber = Union[int, float]
 
 
 def iter_modules_recursive(
-    paths: Union[str, Iterable[str]], prefix: Optional[str] = ""
+    paths: Union[str, Iterable[str]], prefix: Optional[str] = ''
 ) -> List[pkgutil.ModuleInfo]:
     """Has the same signature as pkgutil.iter_modules() but extends the functionality by walking
     through the entire directory tree and concatenating the return values of pkgutil.iter_modules()
@@ -64,23 +64,23 @@ def iter_modules_recursive(
     for search_top in paths:
         for root, dirs, files in os.walk(search_top):
             rel_path = os.path.relpath(root, search_top)
-            if rel_path and rel_path != "." and rel_path[0] in "._":
+            if rel_path and rel_path != '.' and rel_path[0] in '._':
                 # Prevent os.walk to descent further down this tree branch
                 dirs.clear()
                 # Ignore this directory
                 continue
             # Resolve current module prefix
-            if not rel_path or rel_path == ".":
+            if not rel_path or rel_path == '.':
                 curr_prefix = prefix
             else:
-                curr_prefix = prefix + ".".join(rel_path.split(os.sep)) + "."
+                curr_prefix = prefix + '.'.join(rel_path.split(os.sep)) + '.'
             # find modules and packages in current dir
             tmp = pkgutil.iter_modules([root], prefix=curr_prefix)
             module_infos.extend(
                 [
                     mod_inf
                     for mod_inf in tmp
-                    if not mod_inf.name.rsplit(".", 1)[-1].startswith("__")
+                    if not mod_inf.name.rsplit('.', 1)[-1].startswith('__')
                 ]
             )
     return module_infos
@@ -100,7 +100,7 @@ def natural_sort(iterable: Iterable[Any]) -> List[Any]:
 
     try:
         return sorted(
-            iterable, key=lambda key: [conv(i) for i in re.split(r"(\d+)", key)]
+            iterable, key=lambda key: [conv(i) for i in re.split(r'(\d+)', key)]
         )
     except:
         return sorted(iterable)
@@ -193,23 +193,23 @@ def csv_2_list(
                   function.
     """
     if not isinstance(csv_string, str):
-        raise TypeError("string_2_list accepts only str type input.")
+        raise TypeError('string_2_list accepts only str type input.')
 
-    if csv_string == "":
+    if csv_string == '':
         return []
 
-    csv_string = csv_string.replace("[", "").replace("]", "")  # Remove square brackets
-    csv_string = csv_string.replace("(", "").replace(")", "")  # Remove round brackets
-    csv_string = csv_string.replace("{", "").replace("}", "")  # Remove curly brackets
+    csv_string = csv_string.replace('[', '').replace(']', '')  # Remove square brackets
+    csv_string = csv_string.replace('(', '').replace(')', '')  # Remove round brackets
+    csv_string = csv_string.replace('{', '').replace('}', '')  # Remove curly brackets
     csv_string = csv_string.strip().strip(
-        ","
+        ','
     )  # Remove trailing/leading blanks and commas
 
     # Cast each str value to float if no explicit cast function is given by parameter str_2_val.
     if str_2_val is None:
-        csv_list = [str_to_number(val_str) for val_str in csv_string.split(",")]
+        csv_list = [str_to_number(val_str) for val_str in csv_string.split(',')]
     else:
-        csv_list = [str_2_val(val_str.strip()) for val_str in csv_string.split(",")]
+        csv_list = [str_2_val(val_str.strip()) for val_str in csv_string.split(',')]
     return csv_list
 
 

@@ -21,14 +21,14 @@ If not, see <https://www.gnu.org/licenses/>.
 """
 
 __all__ = [
-    "PlotWidget",
-    "MouseTrackingPlotWidget",
-    "RubberbandZoomPlotWidget",
-    "DataSelectionPlotWidget",
-    "RubberbandZoomSelectionPlotWidget",
-    "MouseTrackingMixin",
-    "RubberbandZoomMixin",
-    "DataSelectionMixin",
+    'PlotWidget',
+    'MouseTrackingPlotWidget',
+    'RubberbandZoomPlotWidget',
+    'DataSelectionPlotWidget',
+    'RubberbandZoomSelectionPlotWidget',
+    'MouseTrackingMixin',
+    'RubberbandZoomMixin',
+    'DataSelectionMixin',
 ]
 
 from typing import Union, Tuple, List, Dict, Optional, Any, Sequence
@@ -50,9 +50,9 @@ class MouseTrackingMixin:
         max_mouse_pos_update_rate: Optional[float] = None,
         **kwargs,
     ) -> None:
-        if not isinstance(kwargs.get("viewBox", None), _vb.MouseTrackingMixin):
+        if not isinstance(kwargs.get('viewBox', None), _vb.MouseTrackingMixin):
             # Use custom pg.ViewBox subclass
-            kwargs["viewBox"] = _vb.MouseTrackingViewBox(
+            kwargs['viewBox'] = _vb.MouseTrackingViewBox(
                 allow_tracking_outside_data=allow_tracking_outside_data
             )
 
@@ -83,9 +83,9 @@ class RubberbandZoomMixin:
     SelectionMode = _vb.SelectionMode
 
     def __init__(self, **kwargs):
-        if not isinstance(kwargs.get("viewBox", None), _vb.RubberbandZoomMixin):
+        if not isinstance(kwargs.get('viewBox', None), _vb.RubberbandZoomMixin):
             # Use custom pg.ViewBox subclass
-            kwargs["viewBox"] = _vb.RubberbandZoomViewBox()
+            kwargs['viewBox'] = _vb.RubberbandZoomViewBox()
         super().__init__(**kwargs)
         self.set_rubberband_zoom_selection_mode = (
             self.getViewBox().set_rubberband_zoom_selection_mode
@@ -121,9 +121,9 @@ class DataSelectionMixin:
         xy_region_min_size_percentile: Optional[float] = None,
         **kwargs,
     ) -> None:
-        if not isinstance(kwargs.get("viewBox", None), _vb.DataSelectionMixin):
+        if not isinstance(kwargs.get('viewBox', None), _vb.DataSelectionMixin):
             # Use custom pg.ViewBox subclass
-            kwargs["viewBox"] = _vb.DataSelectionViewBox(
+            kwargs['viewBox'] = _vb.DataSelectionViewBox(
                 selection_bounds=selection_bounds,
                 selection_pen=selection_pen,
                 selection_hover_pen=selection_hover_pen,
@@ -245,12 +245,12 @@ class RubberbandZoomSelectionPlotWidget(
         xy_region_min_size_percentile: Optional[float] = None,
         **kwargs,
     ) -> None:
-        has_selection = isinstance(kwargs.get("viewBox", None), _vb.DataSelectionMixin)
+        has_selection = isinstance(kwargs.get('viewBox', None), _vb.DataSelectionMixin)
         has_rubberband = isinstance(
-            kwargs.get("viewBox", None), _vb.RubberbandZoomMixin
+            kwargs.get('viewBox', None), _vb.RubberbandZoomMixin
         )
         if not has_selection or not has_rubberband:
-            kwargs["viewBox"] = _vb.RubberbandZoomSelectionViewBox(
+            kwargs['viewBox'] = _vb.RubberbandZoomSelectionViewBox(
                 allow_tracking_outside_data=allow_tracking_outside_data,
                 selection_bounds=selection_bounds,
                 selection_pen=selection_pen,

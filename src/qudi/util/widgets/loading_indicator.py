@@ -48,11 +48,11 @@ class CircleLoadingIndicator(QtWidgets.QWidget):
         @param int indicator_length: Length of the indicator arc in 1/16th of a degree
         @param float indicator_width_ratio: Ratio of the indicator arc width WRT widget size
         """
-        assert cycle_time > 0, "cycle_time must be larger than 0"
-        assert 0 < indicator_length < 5760, "indicator_length must be >0 and <5760"
+        assert cycle_time > 0, 'cycle_time must be larger than 0'
+        assert 0 < indicator_length < 5760, 'indicator_length must be >0 and <5760'
         assert (
             0 < indicator_width_ratio <= 0.5
-        ), "indicator_width_ratio must be >0 and <=0.5"
+        ), 'indicator_width_ratio must be >0 and <=0.5'
         super().__init__(*args, **kwargs)
         self.setMinimumSize(6, 6)
         self.setMouseTracking(False)
@@ -113,7 +113,7 @@ class CircleLoadingIndicator(QtWidgets.QWidget):
         super().showEvent(ev)
         if self.__animation is None:
             self.__animation = QtCore.QPropertyAnimation(
-                self, b"indicator_position", self
+                self, b'indicator_position', self
             )
             self.__animation.setDuration(self._cycle_time_ms)
             self.__animation.setStartValue(0)

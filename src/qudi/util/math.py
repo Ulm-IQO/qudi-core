@@ -19,7 +19,7 @@ You should have received a copy of the GNU Lesser General Public License along w
 If not, see <https://www.gnu.org/licenses/>.
 """
 
-__all__ = ("compute_ft", "ft_windows")
+__all__ = ('compute_ft', 'ft_windows')
 
 import numpy as np
 from scipy import signal
@@ -32,22 +32,22 @@ from scipy import signal
 #     MM=1000000  # choose a big number
 #     print(sum(signal.hanning(MM))/MM)
 ft_windows = {
-    "none": {"func": np.ones, "ampl_norm": 1.0},
-    "hamming": {"func": signal.hamming, "ampl_norm": 1.0 / 0.54},
-    "hann": {"func": signal.hann, "ampl_norm": 1.0 / 0.5},
-    "blackman": {"func": signal.blackman, "ampl_norm": 1.0 / 0.42},
-    "triang": {"func": signal.triang, "ampl_norm": 1.0 / 0.5},
-    "flattop": {"func": signal.flattop, "ampl_norm": 1.0 / 0.2156},
-    "bartlett": {"func": signal.bartlett, "ampl_norm": 1.0 / 0.5},
-    "parzen": {"func": signal.parzen, "ampl_norm": 1.0 / 0.375},
-    "bohman": {"func": signal.bohman, "ampl_norm": 1.0 / 0.4052847},
-    "blackmanharris": {"func": signal.blackmanharris, "ampl_norm": 1.0 / 0.35875},
-    "nuttall": {"func": signal.nuttall, "ampl_norm": 1.0 / 0.3635819},
-    "barthann": {"func": signal.barthann, "ampl_norm": 1.0 / 0.5},
+    'none': {'func': np.ones, 'ampl_norm': 1.0},
+    'hamming': {'func': signal.hamming, 'ampl_norm': 1.0 / 0.54},
+    'hann': {'func': signal.hann, 'ampl_norm': 1.0 / 0.5},
+    'blackman': {'func': signal.blackman, 'ampl_norm': 1.0 / 0.42},
+    'triang': {'func': signal.triang, 'ampl_norm': 1.0 / 0.5},
+    'flattop': {'func': signal.flattop, 'ampl_norm': 1.0 / 0.2156},
+    'bartlett': {'func': signal.bartlett, 'ampl_norm': 1.0 / 0.5},
+    'parzen': {'func': signal.parzen, 'ampl_norm': 1.0 / 0.375},
+    'bohman': {'func': signal.bohman, 'ampl_norm': 1.0 / 0.4052847},
+    'blackmanharris': {'func': signal.blackmanharris, 'ampl_norm': 1.0 / 0.35875},
+    'nuttall': {'func': signal.nuttall, 'ampl_norm': 1.0 / 0.3635819},
+    'barthann': {'func': signal.barthann, 'ampl_norm': 1.0 / 0.5},
 }
 
 
-def compute_ft(x_val, y_val, zeropad_num=0, window="none", base_corr=True, psd=False):
+def compute_ft(x_val, y_val, zeropad_num=0, window='none', base_corr=True, psd=False):
     """Compute the Discrete fourier Transform of the power spectral density
 
     @param numpy.array x_val: 1D array
@@ -106,10 +106,10 @@ def compute_ft(x_val, y_val, zeropad_num=0, window="none", base_corr=True, psd=F
     ampl_norm_fact = 1.0
     # apply window to data to account for spectral leakage:
     if window in ft_windows:
-        window_val = ft_windows[window]["func"](len(y_val))
+        window_val = ft_windows[window]['func'](len(y_val))
         corrected_y = corrected_y * window_val
         # to get the correct amplitude in the amplitude spectrum
-        ampl_norm_fact = ft_windows[window]["ampl_norm"]
+        ampl_norm_fact = ft_windows[window]['ampl_norm']
 
     # zeropad for sinc interpolation:
     zeropad_arr = np.zeros(len(corrected_y) * (zeropad_num + 1))

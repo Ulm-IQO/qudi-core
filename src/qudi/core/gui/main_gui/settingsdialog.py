@@ -29,7 +29,7 @@ class SettingsDialog(QtWidgets.QDialog):
 
     def __init__(self, parent=None, **kwargs):
         super().__init__(parent, **kwargs)
-        self.setWindowTitle("Qudi: Main GUI settings")
+        self.setWindowTitle('Qudi: Main GUI settings')
 
         # Create main layout
         # Add widgets to layout and set as main layout
@@ -39,20 +39,20 @@ class SettingsDialog(QtWidgets.QDialog):
 
         # Create widgets and add them to the layout
         self.font_size_spinbox = QtWidgets.QSpinBox()
-        self.font_size_spinbox.setObjectName("fontSizeSpinBox")
+        self.font_size_spinbox.setObjectName('fontSizeSpinBox')
         self.font_size_spinbox.setMinimum(5)
         self.font_size_spinbox.setValue(10)
-        label = QtWidgets.QLabel("Console font size:")
-        label.setObjectName("fontSizeLabel")
+        label = QtWidgets.QLabel('Console font size:')
+        label.setObjectName('fontSizeLabel')
         label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
         layout.addWidget(label, 0, 0)
         layout.addWidget(self.font_size_spinbox, 0, 1)
 
         self.show_error_popups_checkbox = QtWidgets.QCheckBox()
-        self.show_error_popups_checkbox.setObjectName("showErrorPopupsCheckbox")
+        self.show_error_popups_checkbox.setObjectName('showErrorPopupsCheckbox')
         self.show_error_popups_checkbox.setChecked(True)
-        label = QtWidgets.QLabel("Show error popups:")
-        label.setObjectName("showErrorPopupsLabel")
+        label = QtWidgets.QLabel('Show error popups:')
+        label.setObjectName('showErrorPopupsLabel')
         label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
         layout.addWidget(label, 1, 0)
         layout.addWidget(self.show_error_popups_checkbox, 1, 1)

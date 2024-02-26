@@ -23,11 +23,11 @@ If not, see <https://www.gnu.org/licenses/>.
 """
 
 __all__ = [
-    "InfiniteCrosshair",
-    "InfiniteLine",
-    "LinearRegion",
-    "Rectangle",
-    "InfiniteCrosshairRectangle",
+    'InfiniteCrosshair',
+    'InfiniteLine',
+    'LinearRegion',
+    'Rectangle',
+    'InfiniteCrosshairRectangle',
 ]
 
 from math import isinf
@@ -44,8 +44,8 @@ from qudi.util.widgets.plotting.roi import RectangleROI as _RectangleROI
 class InfiniteCrosshair(QtCore.QObject):
     """Represents a crosshair (two perpendicular infinite lines)"""
 
-    _default_pen = {"color": "#00ff00", "width": 1}
-    _default_hover_pen = {"color": "#ffff00", "width": 1}
+    _default_pen = {'color': '#00ff00', 'width': 1}
+    _default_hover_pen = {'color': '#ffff00', 'width': 1}
 
     sigPositionChanged = QtCore.Signal(tuple)  # current_pos
     # start_pos, current_pos, is_start, is_finished
@@ -243,8 +243,8 @@ class InfiniteCrosshair(QtCore.QObject):
 class InfiniteLine(QtCore.QObject):
     """Represents a horizontal or vertical infinite line data marker"""
 
-    _default_pen = {"color": "#00ff00", "width": 1}
-    _default_hover_pen = {"color": "#ffff00", "width": 1}
+    _default_pen = {'color': '#00ff00', 'width': 1}
+    _default_hover_pen = {'color': '#ffff00', 'width': 1}
 
     sigPositionChanged = QtCore.Signal(object)  # current_pos
     # start_pos, current_pos, is_start, is_finished
@@ -400,8 +400,8 @@ class InfiniteLine(QtCore.QObject):
 class LinearRegion(QtCore.QObject):
     """ """
 
-    _default_pen = {"color": "#00ff00", "width": 1}
-    _default_hover_pen = {"color": "#ffff00", "width": 1}
+    _default_pen = {'color': '#00ff00', 'width': 1}
+    _default_hover_pen = {'color': '#ffff00', 'width': 1}
     _default_brush = None
     _default_hover_brush = None
 
@@ -434,7 +434,7 @@ class LinearRegion(QtCore.QObject):
             brush = self._default_brush
         if hover_brush is None:
             hover_brush = self._default_hover_brush
-        orientation = "vertical" if orientation == QtCore.Qt.Vertical else "horizontal"
+        orientation = 'vertical' if orientation == QtCore.Qt.Vertical else 'horizontal'
 
         self._bounds = self._normalize_bounds(bounds)
         self.region = _LinearRegionItem(
@@ -446,7 +446,7 @@ class LinearRegion(QtCore.QObject):
             hoverPen=hover_pen,
             movable=movable,
             bounds=self._bounds,
-            swapMode="sort",
+            swapMode='sort',
         )
 
         self._z_value = None
@@ -462,7 +462,7 @@ class LinearRegion(QtCore.QObject):
     def orientation(self) -> QtCore.Qt.Orientation:
         return (
             QtCore.Qt.Vertical
-            if self.region.orientation == "vertical"
+            if self.region.orientation == 'vertical'
             else QtCore.Qt.Horizontal
         )
 
@@ -573,7 +573,7 @@ class LinearRegion(QtCore.QObject):
         else:
             self._is_dragged = True
             is_start = True
-            if self.region.orientation == "vertical":
+            if self.region.orientation == 'vertical':
                 self._start_area = tuple(pos[0] for pos in self.region.startPositions)
             else:
                 self._start_area = tuple(pos[1] for pos in self.region.startPositions)
@@ -597,8 +597,8 @@ class LinearRegion(QtCore.QObject):
 class Rectangle(QtCore.QObject):
     """ """
 
-    _default_pen = {"color": "#00ff00", "width": 1}
-    _default_hover_pen = {"color": "#ffff00", "width": 1}
+    _default_pen = {'color': '#00ff00', 'width': 1}
+    _default_hover_pen = {'color': '#ffff00', 'width': 1}
 
     sigAreaChanged = QtCore.Signal(tuple)  # current_area
     # start_area, current_area, is_start, is_finished

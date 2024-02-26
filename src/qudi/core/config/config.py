@@ -22,11 +22,11 @@ If not, see <https://www.gnu.org/licenses/>.
 """
 
 __all__ = [
-    "Configuration",
-    "ValidationError",
-    "ParserError",
-    "YAMLError",
-    "DuplicateKeyError",
+    'Configuration',
+    'ValidationError',
+    'ParserError',
+    'YAMLError',
+    'DuplicateKeyError',
 ]
 
 import copy
@@ -73,14 +73,14 @@ class Configuration(
         self.set_config(config)
 
     def __repr__(self) -> str:
-        return f"Configuration({repr(self._config)})"
+        return f'Configuration({repr(self._config)})'
 
     def __str__(self) -> str:
-        return f"Configuration({str(self._config)})"
+        return f'Configuration({str(self._config)})'
 
     def __getitem__(self, key: str) -> Any:
         try:
-            return copy.deepcopy(self._config["global"][key])
+            return copy.deepcopy(self._config['global'][key])
         except KeyError:
             return copy.deepcopy(self._config[key])
 
@@ -89,7 +89,7 @@ class Configuration(
         if key in new_config:
             new_config[key] = value
         else:
-            new_config["global"][key] = value
+            new_config['global'][key] = value
         self.set_config(new_config)
 
     def __delitem__(self, key: str) -> None:
@@ -97,18 +97,18 @@ class Configuration(
         try:
             del new_config[key]
         except KeyError:
-            del new_config["global"][key]
+            del new_config['global'][key]
         self.set_config(new_config)
 
     def __iter__(self):
         for key, sub_cfg in self.config_map.items():
-            if key == "global":
+            if key == 'global':
                 yield from sub_cfg
             else:
                 yield key
 
     def __len__(self) -> int:
-        return max(0, len(self._config) + len(self._config["global"]) - 1)
+        return max(0, len(self._config) + len(self._config['global']) - 1)
 
     @property
     def config_map(self) -> MutableMapping[str, Any]:
@@ -159,7 +159,7 @@ class Configuration(
                 except FileNotFoundError:
                     pass
         if file_path is None:
-            raise ValueError("No file path defined for configuration to load")
+            raise ValueError('No file path defined for configuration to load')
 
         # Load YAML file from disk.
         config = self._load(file_path)
@@ -186,7 +186,7 @@ class Configuration(
         """
         file_path = self._file_path if file_path is None else file_path
         if file_path is None:
-            raise ValueError("No file path defined for qudi configuration to dump into")
+            raise ValueError('No file path defined for qudi configuration to dump into')
         config = self.config_map
         _validate_config(config)
         self._dump(file_path, config)
@@ -220,13 +220,13 @@ class Configuration(
         if self.module_configured(name):
             raise KeyError(f'Module with name "{name}" already configured')
         self.validate_module_base(base)
-        module_config = {"module.Class": module_class}
+        module_config = {'module.Class': module_class}
         if allow_remote is not None:
-            module_config["allow_remote"] = allow_remote
+            module_config['allow_remote'] = allow_remote
         if connect is not None:
-            module_config["connect"] = copy.copy(connect)
+            module_config['connect'] = copy.copy(connect)
         if options is not None:
-            module_config["options"] = copy.deepcopy(options)
+            module_config['options'] = copy.deepcopy(options)
         _validate_local_module_config(module_config)
         new_config = self.config_map
         new_config[base][name] = module_config
@@ -257,14 +257,14 @@ class Configuration(
             raise KeyError(f'Module with name "{name}" already configured')
         self.validate_module_base(base)
         module_config = {
-            "native_module_name": native_module_name,
-            "address": address,
-            "port": port,
+            'native_module_name': native_module_name,
+            'address': address,
+            'port': port,
         }
         if certfile is not None:
-            module_config["certfile"] = certfile
+            module_config['certfile'] = certfile
         if keyfile is not None:
-            module_config["keyfile"] = keyfile
+            module_config['keyfile'] = keyfile
         _validate_remote_module_config(module_config)
         new_config = self.config_map
         new_config[base][name] = module_config
@@ -285,7 +285,7 @@ class Configuration(
             raise KeyError(f'Module with name "{new_name}" already configured')
 
         new_config = self.config_map
-        for base in ["gui", "logic", "hardware"]:
+        for base in ['gui', 'logic', 'hardware']:
             try:
                 module_config = new_config[base].pop(old_name)
             except KeyError:
@@ -301,7 +301,7 @@ class Configuration(
         Raises KeyError if no module is configured by given <name>.
         """
         new_config = self.config_map
-        for base in ["gui", "logic", "hardware"]:
+        for base in ['gui', 'logic', 'hardware']:
             try:
                 del new_config[base][name]
             except KeyError:
@@ -314,9 +314,9 @@ class Configuration(
     def module_configured(self, name: str) -> bool:
         """Checks if a module with given name is present in current configuration"""
         return (
-            name in self._config["gui"]
-            or name in self._config["logic"]
-            or name in self._config["hardware"]
+            name in self._config['gui']
+            or name in self._config['logic']
+            or name in self._config['hardware']
         )
 
     def module_config(self, name: str) -> MutableMapping[str, Any]:
@@ -324,7 +324,7 @@ class Configuration(
 
         Raises KeyError if no module is configured by given <name>.
         """
-        for base in ["gui", "logic", "hardware"]:
+        for base in ['gui', 'logic', 'hardware']:
             try:
                 return copy.deepcopy(self._config[base][name])
             except KeyError:
@@ -336,24 +336,24 @@ class Configuration(
 
         Raises KeyError if no module is configured by given <name>.
         """
-        return "native_module_name" in self.get_module_config(name)
+        return 'native_module_name' in self.get_module_config(name)
 
     def is_local_module(self, name):
         """Checks whether a configured module is a local module and returns answer flag.
 
         Raises KeyError if no module is configured by given <name>.
         """
-        return "module.Class" in self.get_module_config(name)
+        return 'module.Class' in self.get_module_config(name)
 
     @property
     def module_names(self) -> List[str]:
         """List of the currently configured module names"""
-        return [*self._config["gui"], *self._config["logic"], *self._config["hardware"]]
+        return [*self._config['gui'], *self._config['logic'], *self._config['hardware']]
 
     @staticmethod
     def validate_module_base(base: str) -> None:
         """Raises ValueError if the given string is no valid qudi module base."""
-        if base not in ["gui", "logic", "hardware"]:
+        if base not in ['gui', 'logic', 'hardware']:
             raise ValueError(
                 'qudi module base must be one of ["gui", "logic", "hardware"]'
             )

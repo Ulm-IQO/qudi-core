@@ -20,7 +20,7 @@ You should have received a copy of the GNU Lesser General Public License along w
 If not, see <https://www.gnu.org/licenses/>.
 """
 
-__all__ = ("Linear",)
+__all__ = ('Linear',)
 
 import numpy as np
 from qudi.util.fit_models.model import FitModelBase, estimator
@@ -29,14 +29,14 @@ from qudi.util.fit_models.model import FitModelBase, estimator
 class Linear(FitModelBase):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.set_param_hint("offset", value=0, min=-np.inf, max=np.inf)
-        self.set_param_hint("slope", value=0, min=-np.inf, max=np.inf)
+        self.set_param_hint('offset', value=0, min=-np.inf, max=np.inf)
+        self.set_param_hint('slope', value=0, min=-np.inf, max=np.inf)
 
     @staticmethod
     def _model_function(x, offset, slope):
         return offset + slope * x
 
-    @estimator("default")
+    @estimator('default')
     def estimate(self, data, x):
         data = np.asarray(data)
         x = np.asarray(x)
@@ -54,19 +54,19 @@ class Linear(FitModelBase):
         )  # maximum slope possible
 
         estimate = self.make_params()
-        estimate["offset"].set(value=intercept, min=-np.inf, max=np.inf)
-        estimate["slope"].set(value=slope, min=-max_slope, max=max_slope)
+        estimate['offset'].set(value=intercept, min=-np.inf, max=np.inf)
+        estimate['slope'].set(value=slope, min=-max_slope, max=max_slope)
         return estimate
 
-    @estimator("No Offset")
+    @estimator('No Offset')
     def estimate_no_offset(self, data, x):
         estimate = self.estimate(data, x)
-        estimate["offset"].set(value=0, min=-np.inf, max=np.inf, vary=False)
+        estimate['offset'].set(value=0, min=-np.inf, max=np.inf, vary=False)
         return estimate
 
-    @estimator("Constant")
+    @estimator('Constant')
     def estimate_no_offset(self, data, x):
         estimate = self.make_params()
-        estimate["slope"].set(value=0, min=-np.inf, max=np.inf, vary=False)
-        estimate["offset"].set(value=np.mean(data), min=min(data), max=max(data))
+        estimate['slope'].set(value=0, min=-np.inf, max=np.inf, vary=False)
+        estimate['offset'].set(value=np.mean(data), min=min(data), max=max(data))
         return estimate

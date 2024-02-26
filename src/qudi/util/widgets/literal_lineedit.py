@@ -22,18 +22,18 @@ If not, see <https://www.gnu.org/licenses/>.
 """
 
 __all__ = [
-    "ComplexLineEdit",
-    "ComplexValidator",
-    "DictLineEdit",
-    "DictValidator",
-    "ListLineEdit",
-    "ListValidator",
-    "LiteralLineEdit",
-    "LiteralValidator",
-    "SetLineEdit",
-    "SetValidator",
-    "TupleLineEdit",
-    "TupleValidator",
+    'ComplexLineEdit',
+    'ComplexValidator',
+    'DictLineEdit',
+    'DictValidator',
+    'ListLineEdit',
+    'ListValidator',
+    'LiteralLineEdit',
+    'LiteralValidator',
+    'SetLineEdit',
+    'SetValidator',
+    'TupleLineEdit',
+    'TupleValidator',
 ]
 
 from PySide2 import QtCore, QtGui, QtWidgets
@@ -233,7 +233,7 @@ class LiteralLineEdit(QtWidgets.QLineEdit):
         super().__init__(parent=parent)
         if validator is None:
             validator = LiteralValidator()
-        self._last_valid_text = ""
+        self._last_valid_text = ''
         self.setValidator(validator)
         self.setValue(value)
 

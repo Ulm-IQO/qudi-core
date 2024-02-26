@@ -21,12 +21,12 @@ If not, see <https://www.gnu.org/licenses/>.
 """
 
 __all__ = [
-    "FileHandler",
-    "FileHandlerBase",
-    "ParserError",
-    "ValidationError",
-    "YAMLError",
-    "DuplicateKeyError",
+    'FileHandler',
+    'FileHandlerBase',
+    'ParserError',
+    'ValidationError',
+    'YAMLError',
+    'DuplicateKeyError',
 ]
 
 
@@ -54,7 +54,7 @@ class FileHandlerBase:
 
     @classmethod
     def _dump(cls, path: str, config: Mapping[str, Any]) -> None:
-        if not path.endswith(".cfg"):
+        if not path.endswith('.cfg'):
             raise ValueError('Configuration file must have ".cfg" file extension.')
         path = cls._relative_to_absolute_path(path)
         os.makedirs(os.path.dirname(path), exist_ok=True)
@@ -66,8 +66,8 @@ class FileHandlerBase:
         config at the next start of qudi."""
         # Write current config file path to load.cfg
         yaml_dump(
-            os.path.join(get_appdata_dir(create_missing=True), "load.cfg"),
-            {"load_config_path": cls._relative_to_absolute_path(path)},
+            os.path.join(get_appdata_dir(create_missing=True), 'load.cfg'),
+            {'load_config_path': cls._relative_to_absolute_path(path)},
         )
 
     @staticmethod
@@ -77,14 +77,14 @@ class FileHandlerBase:
         """
         # Try loading config file path from last session
         load_cfg = yaml_load(
-            os.path.join(get_appdata_dir(), "load.cfg"), ignore_missing=True
+            os.path.join(get_appdata_dir(), 'load.cfg'), ignore_missing=True
         )
-        file_path = load_cfg.get("load_config_path", "")
-        if os.path.exists(file_path) and file_path.endswith(".cfg"):
+        file_path = load_cfg.get('load_config_path', '')
+        if os.path.exists(file_path) and file_path.endswith('.cfg'):
             return file_path
 
         # Raise error if no last run config file could be found
-        raise FileNotFoundError("No config file path saved from previous qudi sessions")
+        raise FileNotFoundError('No config file path saved from previous qudi sessions')
 
     @staticmethod
     def get_default_path() -> str:
@@ -97,18 +97,18 @@ class FileHandlerBase:
         """
         # Try default.cfg in user home directory
         file_path = os.path.join(
-            get_default_config_dir(create_missing=False), "default.cfg"
+            get_default_config_dir(create_missing=False), 'default.cfg'
         )
         if os.path.exists(file_path):
             return file_path
 
         # Fall back to default.cfg in qudi AppData directory if possible
-        file_path = os.path.join(get_appdata_dir(create_missing=False), "default.cfg")
+        file_path = os.path.join(get_appdata_dir(create_missing=False), 'default.cfg')
         if os.path.exists(file_path):
             return file_path
 
         # Raise error if no config file could be found
-        raise FileNotFoundError("No config file could be found in default directories")
+        raise FileNotFoundError('No config file could be found in default directories')
 
     @staticmethod
     def _relative_to_absolute_path(path):

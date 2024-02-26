@@ -37,7 +37,7 @@ class TaskRunnerLogic(LogicBase):
     """
 
     _module_task_configs = ConfigOption(
-        name="module_tasks", default=dict(), missing="warn"
+        name='module_tasks', default=dict(), missing='warn'
     )
 
     sigTaskStarted = QtCore.Signal(str)  # task name
@@ -61,12 +61,12 @@ class TaskRunnerLogic(LogicBase):
         for name, task_cfg in self._module_task_configs.items():
             if name in self._configured_task_types:
                 raise KeyError(f'Duplicate task name "{name}" encountered in config')
-            module, cls = task_cfg["module.Class"].rsplit(".", 1)
+            module, cls = task_cfg['module.Class'].rsplit('.', 1)
             task = import_module_script(
                 module, cls, reload=self._consecutive_activation
             )
             if not issubclass(task, ModuleTask):
-                raise TypeError("Configured task is not a ModuleTask (sub)class")
+                raise TypeError('Configured task is not a ModuleTask (sub)class')
             self._configured_task_types[name] = task
         self._sigStartTask.connect(self._run_task, QtCore.Qt.QueuedConnection)
         self._consecutive_activation = True
@@ -91,7 +91,7 @@ class TaskRunnerLogic(LogicBase):
                 try:
                     states[task_name] = self._running_tasks[task_name].state
                 except KeyError:
-                    states[task_name] = "stopped"
+                    states[task_name] = 'stopped'
             return states
 
     @property
@@ -162,10 +162,10 @@ class TaskRunnerLogic(LogicBase):
                 isinstance(arguments, Mapping)
                 and all(isinstance(a, str) for a in arguments)
             ):
-                raise TypeError("ModuleTask kwargs must be mapping with str type keys")
+                raise TypeError('ModuleTask kwargs must be mapping with str type keys')
             task.kwargs = arguments
         except:
-            self.log.exception("Exception during setting of arguments for ModuleTask:")
+            self.log.exception('Exception during setting of arguments for ModuleTask:')
             raise
 
     def __activate_connect_task_modules(self, name: str, task: ModuleTask) -> None:
@@ -174,7 +174,7 @@ class TaskRunnerLogic(LogicBase):
             module_manager = self._qudi_main.module_manager
             connect_targets = dict()
             for conn_name, module_name in self._module_task_configs[name][
-                "connect"
+                'connect'
             ].items():
                 module = module_manager[module_name]
                 module.activate()
@@ -191,14 +191,14 @@ class TaskRunnerLogic(LogicBase):
         """Create a new QThread via qudi thread manager and move ModuleTask instance into it"""
         try:
             thread = self._qudi_main.thread_manager.get_new_thread(
-                name=f"ModuleTask-{name}"
+                name=f'ModuleTask-{name}'
             )
             if thread is None:
                 raise RuntimeError(
                     f'Unable to create QThread with name "ModuleTask-{name}"'
                 )
         except RuntimeError:
-            self.log.exception("Exception during thread creation:")
+            self.log.exception('Exception during thread creation:')
             raise
         task.moveToThread(thread)
         thread.started.connect(task.run, QtCore.Qt.QueuedConnection)

@@ -33,8 +33,8 @@ class ErrorDialog(QtWidgets.QDialog):
     """
 
     _stylesheet_map = {
-        "error": "font-weight: bold; color: #F11000;",
-        "critical": "font-weight: bold; color: #FF00FF;",
+        'error': 'font-weight: bold; color: #F11000;',
+        'critical': 'font-weight: bold; color: #FF00FF;',
     }
 
     def __init__(self, *args, **kwargs):
@@ -45,7 +45,7 @@ class ErrorDialog(QtWidgets.QDialog):
         self._error_queue = deque()  # queued individual error messages to display
 
         # Set up dialog window
-        self.setWindowTitle("Qudi Error")
+        self.setWindowTitle('Qudi Error')
         self.setWindowFlags(
             (
                 QtCore.Qt.Dialog
@@ -95,11 +95,11 @@ class ErrorDialog(QtWidgets.QDialog):
         scroll_area.setWidget(self.msg_label)
 
         # Set up disable checkbox
-        self.disable_checkbox = QtWidgets.QCheckBox("Disable error message popups")
+        self.disable_checkbox = QtWidgets.QCheckBox('Disable error message popups')
 
         # Set up buttons and group them in a layout
-        self.dismiss_button = QtWidgets.QPushButton("Dismiss")
-        self.next_button = QtWidgets.QPushButton("Show next error")
+        self.dismiss_button = QtWidgets.QPushButton('Dismiss')
+        self.next_button = QtWidgets.QPushButton('Show next error')
         btn_layout = QtWidgets.QHBoxLayout()
         btn_layout.addStretch()
         btn_layout.addWidget(self.next_button)
@@ -140,20 +140,20 @@ class ErrorDialog(QtWidgets.QDialog):
                 err = self._error_queue.popleft()
                 self._update_next_button()
                 time_str = datetime.fromtimestamp(err.created).strftime(
-                    "%Y-%m-%d %H:%M:%S"
+                    '%Y-%m-%d %H:%M:%S'
                 )
-                message = err.message if hasattr(err, "message") else err.msg
+                message = err.message if hasattr(err, 'message') else err.msg
                 if err.exc_info is not None:
-                    message += "\n\n{0}".format(
+                    message += '\n\n{0}'.format(
                         traceback.format_exception(*err.exc_info)[-1][:-1]
                     )
-                    tb = "\n".join(traceback.format_exception(*err.exc_info)[:-1])
+                    tb = '\n'.join(traceback.format_exception(*err.exc_info)[:-1])
                     if tb:
-                        message += "\n{0}".format(tb)
+                        message += '\n{0}'.format(tb)
 
                 self.header_label.setStyleSheet(self._stylesheet_map[err.levelname])
                 self.header_label.setText(
-                    "Error in {0} ({1}):".format(err.name, time_str)
+                    'Error in {0} ({1}):'.format(err.name, time_str)
                 )
                 self.msg_label.setText(message)
                 if self.enabled:
@@ -183,7 +183,7 @@ class ErrorDialog(QtWidgets.QDialog):
         with self._thread_lock:
             msg_number = len(self._error_queue)
             btn_enabled = self.next_button.isEnabled()
-            self.next_button.setText("Show next error ({0:d} more)".format(msg_number))
+            self.next_button.setText('Show next error ({0:d} more)'.format(msg_number))
             if msg_number == 0 and btn_enabled:
                 self.next_button.setEnabled(False)
                 self.dismiss_button.setFocus()
