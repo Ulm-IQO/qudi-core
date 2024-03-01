@@ -21,8 +21,11 @@ If not, see <https://www.gnu.org/licenses/>.
 
 import os
 from PySide2 import QtCore, QtGui, QtWidgets
+from typing import Optional, Union, Tuple
+
 from qudi.util.paths import get_artwork_dir
-from qudi.util.mutex import Mutex
+from qudi.core.module import ModuleState, ModuleBase
+from qudi.core.modulemanager import ManagedModule
 
 
 class ModuleFrameWidget(QtWidgets.QWidget):
@@ -34,40 +37,37 @@ class ModuleFrameWidget(QtWidgets.QWidget):
     sigReloadClicked = QtCore.Signal(str)
     sigCleanupClicked = QtCore.Signal(str)
 
-    def __init__(self, *args, module_name=None, **kwargs):
+    def __init__(self, *args, module_name: Optional[str] = '', **kwargs):
         super().__init__(*args, **kwargs)
+        self._module_name = module_name
 
         # Create QToolButtons
         self.cleanup_button = QtWidgets.QToolButton()
-        self.cleanup_button.setObjectName('cleanupButton')
         self.deactivate_button = QtWidgets.QToolButton()
-        self.deactivate_button.setObjectName('deactivateButton')
         self.reload_button = QtWidgets.QToolButton()
-        self.reload_button.setObjectName('reloadButton')
-
         # Set icons for QToolButtons
         icon_path = os.path.join(get_artwork_dir(), 'icons')
         self.cleanup_button.setIcon(QtGui.QIcon(os.path.join(icon_path, 'edit-clear')))
         self.deactivate_button.setIcon(QtGui.QIcon(os.path.join(icon_path, 'edit-delete')))
         self.reload_button.setIcon(QtGui.QIcon(os.path.join(icon_path, 'view-refresh')))
-
         # Create activation pushbutton
-        self.activate_button = QtWidgets.QPushButton('load/activate <module_name>')
-        self.activate_button.setObjectName('loadButton')
+        self.activate_button = QtWidgets.QPushButton(f'Activate {self._module_name}')
         self.activate_button.setCheckable(True)
         self.activate_button.setMinimumWidth(200)
         self.activate_button.setSizePolicy(QtWidgets.QSizePolicy.MinimumExpanding,
                                            QtWidgets.QSizePolicy.Fixed)
-
         # Create status label
-        self.status_label = QtWidgets.QLabel('Module status goes here...')
-        self.status_label.setObjectName('statusLabel')
+        self.status_label = QtWidgets.QLabel(ModuleState.DEACTIVATED.value)
 
         # Set tooltips
-        self.cleanup_button.setToolTip('Clean up module status file')
-        self.deactivate_button.setToolTip('Deactivate module')
-        self.reload_button.setToolTip('Reload module')
-        self.activate_button.setToolTip('Load this module and all its dependencies')
+        self.cleanup_button.setToolTip(
+            'Clean up module appdata file. Only available for deactivated modules.'
+        )
+        self.deactivate_button.setToolTip('Deactivate module and all modules depending on it')
+        self.reload_button.setToolTip(
+            'Reload module, i.e. re-import the containing python module from file'
+        )
+        self.activate_button.setToolTip('Activate this module and all its dependencies')
         self.status_label.setToolTip('Displays module status information')
 
         # Combine all widgets in a layout and set as main layout
@@ -79,47 +79,27 @@ class ModuleFrameWidget(QtWidgets.QWidget):
         layout.addWidget(self.status_label, 1, 0, 1, 4)
         self.setLayout(layout)
 
-        self._module_name = ''
-        if module_name:
-            self.set_module_name(module_name)
-
+        # Connect widget signals
         self.activate_button.clicked.connect(self.activate_clicked)
         self.deactivate_button.clicked.connect(self.deactivate_clicked)
         self.reload_button.clicked.connect(self.reload_clicked)
         self.cleanup_button.clicked.connect(self.cleanup_clicked)
-        return
 
-    def set_module_name(self, name):
-        if name:
-            self.activate_button.setText('Load {0}'.format(name))
-            self._module_name = name
-
-    def set_module_state(self, state):
-        if state == 'not loaded':
-            self.activate_button.setText('Load {0}'.format(self._module_name))
-            self.cleanup_button.setEnabled(True)
-            self.deactivate_button.setEnabled(False)
-            self.reload_button.setEnabled(False)
-            if self.activate_button.isChecked():
-                self.activate_button.setChecked(False)
-        elif state == 'deactivated':
-            self.activate_button.setText('Activate {0}'.format(self._module_name))
-            self.cleanup_button.setEnabled(True)
+    def set_module_data(self, name: str, state: ModuleState, has_appdata: bool) -> None:
+        self._module_name = name
+        if state.deactivated:
+            self.activate_button.setText(f'Activate {self._module_name}')
+            self.cleanup_button.setEnabled(has_appdata)
             self.deactivate_button.setEnabled(False)
             self.reload_button.setEnabled(True)
-            if self.activate_button.isChecked():
-                self.activate_button.setChecked(False)
+            self.activate_button.setChecked(False)
         else:
             self.activate_button.setText(self._module_name)
             self.cleanup_button.setEnabled(False)
             self.deactivate_button.setEnabled(True)
             self.reload_button.setEnabled(True)
-            if not self.activate_button.isChecked():
-                self.activate_button.setChecked(True)
-        self.status_label.setText('Module is {0}'.format(state))
-
-    def set_module_app_data(self, exists):
-        self.cleanup_button.setEnabled(exists)
+            self.activate_button.setChecked(True)
+        self.status_label.setText(f'Module is {state.value}')
 
     @QtCore.Slot()
     def activate_clicked(self):
@@ -138,93 +118,37 @@ class ModuleFrameWidget(QtWidgets.QWidget):
         self.sigReloadClicked.emit(self._module_name)
 
 
-class ModuleListModel(QtCore.QAbstractListModel):
+class ModuleListProxyModel(QtCore.QSortFilterProxyModel):
+    """ Model proxy that filters out all modules of a certain ModuleBase type and collapses the
+    table model to a list of modules
     """
-    """
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self._lock = Mutex()
-        self._module_states = dict()
-        self._module_app_data = dict()
-        self._module_names = list()
+    def __init__(self, filter_base: ModuleBase, parent: Optional[QtCore.QObject] = None):
+        super().__init__(parent=parent)
+        self._filter_base = ModuleBase(filter_base)
 
-    def rowCount(self, parent):
-        return len(self._module_names)
+    def columnCount(self, parent: Optional[QtCore.QModelIndex] = None) -> int:
+        return 1
 
-    def data(self, index, role):
-        if not index.isValid():
-            return
-        row = index.row()
-        if row >= len(self._module_names):
-            return
-        name = self._module_names[row]
-        state = self._module_states[name]
-        app_data = self._module_app_data[name]
-        if role == QtCore.Qt.DisplayRole:
-            return name, state, app_data
+    def filterAcceptsRow(self, source_row: int, source_parent: QtCore.QModelIndex) -> bool:
+        return self.sourceModel().index(source_row, 0, source_parent).data() == self._filter_base
 
-    def flags(self, index):
-        return QtCore.Qt.ItemNeverHasChildren | QtCore.Qt.ItemIsEnabled
+    # def filterAcceptsColumn(self, source_column: int, source_parent: QtCore.QModelIndex) -> bool:
+    #     return source_column == 2
 
-    def append_module(self, name, state, app_data):
-        with self._lock:
-            if name in self._module_states:
-                raise RuntimeError(f'Module with name "{name}" already present in ModuleListModel.')
-            self.beginInsertRows(len(self._module_names))
-            self._module_names.append(name)
-            self._module_states[name] = state
-            self._module_app_data[name] = app_data
-            self.endInsertRows()
-
-    def remove_module(self, name):
-        with self._lock:
-            if name not in self._module_states:
-                return
-            row = self._module_names.index(name)
-            self.beginRemoveRows(row, row + 1)
-            del self._module_names[row]
-            del self._module_states[name]
-            del self._module_app_data[name]
-            self.endRemoveRows()
-
-    def reset_modules(self, state_dict, app_data_dict):
-        if set(state_dict) != set(app_data_dict):
-            raise RuntimeError('state_dict and app_data_dict must contain exactly the same keys.')
-        with self._lock:
-            self.beginResetModel()
-            self._module_states = state_dict.copy()
-            self._module_app_data = app_data_dict.copy()
-            self._module_names = list(state_dict)
-            self.endResetModel()
-
-    def change_module_state(self, name, state):
-        with self._lock:
-            if name not in self._module_states:
-                raise RuntimeError(
-                    f'Can not change module state in ModuleListModel. No module by the name '
-                    f'"{name}" found.'
-                )
-            self._module_states[name] = state
-            row = self._module_names.index(name)
-            self.dataChanged.emit(self.createIndex(row, 0),
-                                  self.createIndex(row + 1, 0),
-                                  (QtCore.Qt.DisplayRole,))
-
-    def change_app_data(self, name, exists):
-        with self._lock:
-            if name not in self._module_app_data:
-                raise RuntimeError(
-                    f'Can not change module app status in ModuleListModel. No module by the name '
-                    f'"{name}" found.'
-                )
-            self._module_app_data[name] = exists
-            row = self._module_names.index(name)
-            self.dataChanged.emit(self.createIndex(row, 0), self.createIndex(row, 0))
+    def data(self,
+             index: QtCore.QModelIndex,
+             role: Optional[QtCore.Qt.ItemDataRole] = QtCore.Qt.DisplayRole
+             ) -> Union[None, Tuple[str, ModuleState, bool], ManagedModule]:
+        if index.isValid():
+            source_index = self.mapToSource(index)
+            module = source_index.data(QtCore.Qt.UserRole)
+            if role == QtCore.Qt.DisplayRole:
+                return module.name, module.state, module.has_appdata
+            elif role == QtCore.Qt.UserRole:
+                return module
 
 
 class ModuleListItemDelegate(QtWidgets.QStyledItemDelegate):
-    """
-    """
     sigActivateClicked = QtCore.Signal(str)
     sigDeactivateClicked = QtCore.Signal(str)
     sigReloadClicked = QtCore.Signal(str)
@@ -232,10 +156,10 @@ class ModuleListItemDelegate(QtWidgets.QStyledItemDelegate):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.render_widget = ModuleFrameWidget()
+        self.__render_widget = ModuleFrameWidget()
         self.__origin = QtCore.QPoint()
 
-    def createEditor(self, parent, option, index):
+    def createEditor(self, parent, option, index) -> QtWidgets.QWidget:
         widget = ModuleFrameWidget(parent=parent)
         # Found no other way to pefectly match editor and rendered item view (using paint())
         widget.setContentsMargins(2, 2, 2, 2)
@@ -245,30 +169,24 @@ class ModuleListItemDelegate(QtWidgets.QStyledItemDelegate):
         widget.sigCleanupClicked.connect(self.sigCleanupClicked)
         return widget
 
-    def setEditorData(self, editor, index):
+    def setEditorData(self, editor, index) -> None:
         data = index.data()
-        if data:
-            editor.set_module_name(data[0])
-            editor.set_module_state(data[1])
-            editor.set_module_app_data(data[2])
+        if data is not None:
+            editor.set_module_data(*data)
 
-    def setModelData(self, editor, model, index):
-        pass
+    # def destroyEditor(self, editor, index) -> None:
+    #     return super().destroyEditor(editor, index)
 
     def sizeHint(self, option=None, index=None):
-        return self.render_widget.sizeHint()
+        return self.__render_widget.sizeHint()
 
     def paint(self, painter, option, index):
-        """
-        """
-        name, state, app_data = index.data()
-        self.render_widget.set_module_name(name)
-        self.render_widget.set_module_state(state)
-        self.render_widget.set_module_app_data(app_data)
-        self.render_widget.setGeometry(option.rect)
+        data = index.data()
+        self.__render_widget.set_module_data(*data)
+        self.__render_widget.setGeometry(option.rect)
         painter.save()
         painter.translate(option.rect.topLeft())
-        self.render_widget.render(painter, self.__origin)
+        self.__render_widget.render(painter, self.__origin)
         painter.restore()
 
 
@@ -309,40 +227,24 @@ class ModuleWidget(QtWidgets.QTabWidget):
     sigCleanupModule = QtCore.Signal(str)
     sigReloadModule = QtCore.Signal(str)
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, module_manager: 'ModuleManager', **kwargs):
         super().__init__(*args, **kwargs)
         self.setSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
-        self.list_models = {'gui'     : ModuleListModel(),
-                            'logic'   : ModuleListModel(),
-                            'hardware': ModuleListModel()}
         self.list_views = {'gui'     : ModuleListView(),
                            'logic'   : ModuleListView(),
                            'hardware': ModuleListView()}
+        self.proxy_models = {'gui'     : ModuleListProxyModel(filter_base=ModuleBase.GUI),
+                             'logic'   : ModuleListProxyModel(filter_base=ModuleBase.LOGIC),
+                             'hardware': ModuleListProxyModel(filter_base=ModuleBase.HARDWARE)}
         self.addTab(self.list_views['gui'], 'GUI')
         self.addTab(self.list_views['logic'], 'Logic')
         self.addTab(self.list_views['hardware'], 'Hardware')
         for base, view in self.list_views.items():
-            view.setModel(self.list_models[base])
+            proxy_model = self.proxy_models[base]
+            proxy_model.setSourceModel(module_manager)
+            view.setModel(proxy_model)
             delegate = view.itemDelegate()
             delegate.sigActivateClicked.connect(self.sigActivateModule)
             delegate.sigDeactivateClicked.connect(self.sigDeactivateModule)
             delegate.sigReloadClicked.connect(self.sigReloadModule)
             delegate.sigCleanupClicked.connect(self.sigCleanupModule)
-
-    @QtCore.Slot(dict)
-    def update_modules(self, modules_dict):
-        for base, model in self.list_models.items():
-            model.reset_modules(
-                {name: mod.state for name, mod in modules_dict.items() if mod.module_base == base},
-                {name: mod.has_app_data for name, mod in modules_dict.items() if
-                 mod.module_base == base}
-            )
-        return
-
-    @QtCore.Slot(str, str, str)
-    def update_module_state(self, base, name, state):
-        self.list_models[base].change_module_state(name, state)
-
-    @QtCore.Slot(str, str, bool)
-    def update_module_app_data(self, base, name, exists):
-        self.list_models[base].change_app_data(name, exists)

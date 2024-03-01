@@ -21,6 +21,9 @@ object proxy found in the new module `qudi.util.proxy`.
 - Adjusted `ModuleManager` according to the meta object changes in `qudi.core.module`. Now there is 
 no more distinction between `loaded` and `activated` module state. Module `__init__` is called upon 
 activation and it is destroyed upon deactivation.
+- `qudi.core.modulemanager.ModuleManager` is now a subclass of `QtCore.QAbstractTableModel` and 
+serves as singular central data source for all managed qudi modules and their status. The main GUI 
+and module servers (remote and local) have been adjusted accordingly.
 
 ### Bugfixes
 - Python module reload during runtime is now only performed if explicitly requested by the user
@@ -39,6 +42,8 @@ expanded into the current users home directory
 - Deprecated calling `qudi.core.module.Base.module_state` and `Connector` meta attributes.
 - Deprecated `qudi.util.paths.get_module_app_data_path` in favor of 
 `qudi.util.paths.get_module_appdata_path`
+- Improved performance reading and mutating `qudi.util.models.DictTableModel` and 
+`qudi.util.models.ListTableModel` from
 
 
 ## Version 1.5.0

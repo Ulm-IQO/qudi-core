@@ -36,7 +36,7 @@ class QudiMainWindow(QtWidgets.QMainWindow):
     """
     Main Window definition for the manager GUI.
     """
-    def __init__(self, parent=None, debug_mode=False, **kwargs):
+    def __init__(self, module_manager: 'ModuleManager', parent=None, debug_mode=False, **kwargs):
         super().__init__(parent, **kwargs)
         self.setWindowTitle('qudi: Manager')
         screen_size = QtWidgets.QApplication.instance().primaryScreen().availableSize()
@@ -44,7 +44,7 @@ class QudiMainWindow(QtWidgets.QMainWindow):
         height = (screen_size.height() * 3) // 4
         self.resize(width, height)
 
-        self.module_widget = ModuleWidget()
+        self.module_widget = ModuleWidget(module_manager=module_manager)
         self.module_widget.setObjectName('moduleTabWidget')
         self.setCentralWidget(self.module_widget)
 
@@ -230,4 +230,3 @@ class QudiMainWindow(QtWidgets.QMainWindow):
         self.action_about_qudi.triggered.connect(self.about_qudi_dialog.open)
         self.action_about_qt.triggered.connect(QtWidgets.QApplication.aboutQt)
         self.action_settings.triggered.connect(self.settings_dialog.exec_)  # modal
-        return

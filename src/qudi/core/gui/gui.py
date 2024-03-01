@@ -106,9 +106,7 @@ class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
 
 
 class Gui(QtCore.QObject):
-    """ Set up all necessary GUI elements, like application icons, themes, etc.
-    """
-
+    """ Set up all necessary GUI elements, like application icons, themes, etc. """
     _instance = None
 
     _sigPopUpMessage = QtCore.Signal(str, str)
@@ -125,10 +123,10 @@ class Gui(QtCore.QObject):
         )
 
     def __init__(self, qudi_instance, stylesheet_path=None, theme=None, use_opengl=False):
+        super().__init__()
+
         if theme is None:
             theme = 'qudiTheme'
-
-        super().__init__()
 
         app = QtWidgets.QApplication.instance()
         if app is None:
@@ -153,7 +151,7 @@ class Gui(QtCore.QObject):
                                                            QtCore.Qt.QueuedConnection)
         self.system_tray_icon.restartAction.triggered.connect(qudi_instance.restart,
                                                               QtCore.Qt.QueuedConnection)
-        qudi_instance.module_manager.sigModuleStateChanged.connect(self._tray_module_action_changed)
+        # qudi_instance.module_manager.sigModuleStateChanged.connect(self._tray_module_action_changed)
         self.show_system_tray_icon()
 
     @classmethod

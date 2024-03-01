@@ -19,9 +19,13 @@ You should have received a copy of the GNU Lesser General Public License along w
 If not, see <https://www.gnu.org/licenses/>.
 """
 
-__all__ = ['ObjectProxy', 'CachedObjectProxy']
+__all__ = ['ObjectProxy', 'CachedObjectProxy', 'CachedObjectRpycByValueProxy']
 
 from typing import Any
+from functools import wraps
+from inspect import signature, isfunction, ismethod
+
+from qudi.util.network import netobtain
 
 
 class ObjectProxy:
@@ -120,3 +124,52 @@ class CachedObjectProxy(ObjectProxy):
             proxy_inst = super().__new__(cls, obj, *args, **kwargs)
             cls._class_proxy_cache[obj_cls] = type(proxy_inst)
         return proxy_inst
+
+
+class CachedObjectRpycByValueProxy(CachedObjectProxy):
+    """ Same as CachedObjectProxy but it wraps all API methods (none- and single-underscore methods)
+    to only receive parameters "by value" by using qudi.util.network.netobtain.
+    This will only work if all method arguments are "pickle-able" and can take a very long time for
+    large arrays.
+    In addition, all values passed to __setattr__ are received "by value" as well.
+    """
+    def __getattribute__(self, name):
+        attr = super().__getattribute__(name)
+        if not name.startswith('__') and ismethod(attr) or isfunction(attr):
+            sig = signature(attr)
+            if len(sig.parameters) > 0:
+
+                @wraps(attr)
+                def wrapped(*args, **kwargs):
+                    sig.bind(*args, **kwargs)
+                    args = [netobtain(arg) for arg in args]
+                    kwargs = {name: netobtain(arg) for name, arg in kwargs.items()}
+                    return attr(*args, **kwargs)
+
+                wrapped.__signature__ = sig
+                return wrapped
+        return attr
+
+    def __setattr__(self, name, value):
+        return super().__setattr__(name, netobtain(value))
+
+    @classmethod
+    def _create_class_proxy(cls, obj_class: type):
+        """ creates a proxy for the given class """
+
+        def make_method(method_name):
+            def method(self, *args, **kwargs):
+                obj = object.__getattribute__(self, '_obj')
+                args = [netobtain(arg) for arg in args]
+                kwargs = {key: netobtain(val) for key, val in kwargs.items()}
+                return getattr(obj, method_name)(*args, **kwargs)
+
+            return method
+
+        # Add all special names to this wrapper class if they are present in the original class
+        namespace = dict()
+        for name in cls._special_names:
+            if hasattr(obj_class, name) and not hasattr(cls, name):
+                namespace[name] = make_method(name)
+
+        return type(f'{cls.__name__}({obj_class.__name__})', (cls,), namespace)

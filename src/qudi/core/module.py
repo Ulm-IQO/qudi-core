@@ -19,6 +19,9 @@ You should have received a copy of the GNU Lesser General Public License along w
 If not, see <https://www.gnu.org/licenses/>.
 """
 
+__all__ = ['module_url', 'ModuleStateError', 'ModuleBase', 'ModuleState', 'ModuleStateMachine',
+           'Base', 'LogicBase', 'GuiBase']
+
 import os
 import warnings
 from abc import abstractmethod
@@ -32,6 +35,17 @@ from qudi.util.paths import get_module_appdata_path, get_daily_directory, get_de
 from qudi.core.object import QudiObject
 from qudi.core.logger import get_logger
 from qudi.util.helpers import current_is_native_thread
+
+
+def module_url(module: str, class_name: str, name: str) -> str:
+    """ The unique URL of a qudi module. It is composed of 3 parts:
+    - Containing Python module URL, e.g. "qudi.logic.my_logic_module"
+    - Class name within the Python module, e.g. "MyLogicModule"
+    - Unique module name as defined in the user configuration, e.g. "userlogic"
+    So the complete URL spells "<module>.<class name>::<config name>", e.g.
+    "qudi.logic.my_logic_module.MyLogicModule::userlogic"
+    """
+    return f'{module}.{class_name}::{name}'
 
 
 class ModuleStateError(RuntimeError):
@@ -63,10 +77,9 @@ class ModuleBase(Enum):
     HARDWARE = 'hardware'
     LOGIC = 'logic'
     GUI = 'gui'
-    INVALID = '<UNKNOWN>'
 
 
-class ThreadedDescriptor:
+class _ThreadedDescriptor:
     """ Read-only class descriptor representing the owners private class attribute <_threaded> value
     """
     def __get__(self, instance, owner=None) -> bool:
@@ -82,20 +95,17 @@ class ThreadedDescriptor:
         raise AttributeError('Read-Only')
 
 
-class ModuleBaseDescriptor:
+class _ModuleBaseDescriptor:
     """ Read-only class descriptor representing the owners qudi module base type enum """
     def __get__(self, instance, owner=None) -> ModuleBase:
         if owner is None:
             owner = type(instance)
-        try:
-            if issubclass(owner, GuiBase):
-                return ModuleBase.GUI
-            if issubclass(owner, LogicBase):
-                return ModuleBase.LOGIC
-            if issubclass(owner, Base):
-                return ModuleBase.HARDWARE
-        except NameError:
-            return ModuleBase.INVALID
+        if issubclass(owner, GuiBase):
+            return ModuleBase.GUI
+        if issubclass(owner, LogicBase):
+            return ModuleBase.LOGIC
+        if issubclass(owner, Base):
+            return ModuleBase.HARDWARE
         raise TypeError(
             f'{owner.__module__}.{owner.__name__} is not a subclass of {Base.__module__}.Base'
         )
@@ -187,7 +197,7 @@ class ModuleStateMachine(QtCore.QObject):
                     f'Current state is "{self._current_state.value}".'
                 )
         except ModuleStateError:
-            if module.is_module_threaded:
+            if module.module_threaded:
                 logger = get_logger(f'{self.__module__}.{self.__class__.__name__}')
                 logger.exception('Exception during threaded activation:')
             raise
@@ -267,10 +277,8 @@ class Base(QudiObject):
     """
     _threaded: bool = False
 
-    is_module_threaded = ThreadedDescriptor()
-    module_base = ModuleBaseDescriptor()
-
-    sigStateChanged = QtCore.Signal(ModuleState)
+    module_threaded = _ThreadedDescriptor()
+    module_base = _ModuleBaseDescriptor()
 
     __url_uuid_map: Final[Dict[str, UUID]] = dict()  # Same module url will result in same UUID
 
@@ -282,7 +290,7 @@ class Base(QudiObject):
         """ Initialize Base instance. Set up its state machine, initializes ConfigOption meta
         attributes from given config and connects activated module dependencies.
         """
-        mod_url = f'{self.__class__.__module__}.{self.__class__.__name__}::{name}'
+        mod_url = module_url(self.__class__.__module__, self.__class__.__name__, name)
         try:
             uuid = self.__url_uuid_map[mod_url]
         except KeyError:
@@ -309,8 +317,25 @@ class Base(QudiObject):
 
     @property
     @final
+    def sigStateChanged(self) -> QtCore.Signal:
+        return self.module_state.sigStateChanged
+
+    @property
+    @final
     def _qudi_main(self) -> Any:
         return self.__qudi_main
+
+    @property
+    @final
+    def module_url(self) -> str:
+        """ The unique URL of this qudi module. It is composed of 3 parts:
+        - Containing Python module URL, e.g. "qudi.logic.my_logic_module"
+        - Class name within the Python module, e.g. "MyLogicModule"
+        - Unique module name as defined in the user configuration, e.g. "userlogic"
+        So the complete URL spells "<module>.<class name>::<config name>", e.g.
+        "qudi.logic.my_logic_module.MyLogicModule::userlogic"
+        """
+        return self.__module_url
 
     @property
     def module_thread(self) -> Union[QtCore.QThread, None]:

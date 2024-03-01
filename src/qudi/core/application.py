@@ -151,7 +151,8 @@ class Qudi(QtCore.QObject):
         if remote_server_config:
             self.remote_modules_server = RemoteModulesServer(
                 parent=self,
-                qudi=self,
+                module_manager=self.module_manager,
+                thread_manager=self.thread_manager,
                 name='remote-modules-server',
                 host=remote_server_config.get('address', None),
                 port=remote_server_config.get('port', None),
@@ -356,13 +357,9 @@ class Qudi(QtCore.QObject):
             self._shutting_down = True
             if prompt:
                 locked_modules = False
-                broken_modules = False
-                for module in self.module_manager.values():
-                    if module.is_busy:
+                for row in range(self.module_manager.rowCount()):
+                    if self.module_manager.index(row, 2).data().locked:
                         locked_modules = True
-                    elif module.state == 'BROKEN':
-                        broken_modules = True
-                    if broken_modules and locked_modules:
                         break
 
                 if self.no_gui:
@@ -409,8 +406,8 @@ class Qudi(QtCore.QObject):
             QtCore.QCoreApplication.instance().processEvents()
             self.log.info('Deactivating modules...')
             print('> Deactivating modules...')
-            self.module_manager.stop_all_modules()
             self.module_manager.clear()
+            print('cleared')
             QtCore.QCoreApplication.instance().processEvents()
             if not self.no_gui:
                 self.log.info('Closing main GUI...')

@@ -67,7 +67,8 @@ class QudiMainGui(GuiBase):
         This method creates the Manager main window.
         """
         # Create main window and restore position
-        self.mw = QudiMainWindow(debug_mode=self._qudi_main.debug_mode)
+        self.mw = QudiMainWindow(module_manager=self._qudi_main.module_manager,
+                                 debug_mode=self._qudi_main.debug_mode)
         self._restore_window_geometry(self.mw)
         # Create error dialog for error message popups
         self.error_dialog = ErrorDialog()
@@ -92,7 +93,7 @@ class QudiMainGui(GuiBase):
         self._connect_signals()
 
         self.keep_settings()
-        self.update_configured_modules()
+        # self.update_configured_modules()
         self.update_config_widget()
 
         # IPython console widget
@@ -125,13 +126,14 @@ class QudiMainGui(GuiBase):
             qudi_main.prompt_restart, QtCore.Qt.QueuedConnection)
         self.mw.action_open_configuration_editor.triggered.connect(self.new_configuration)
         self.mw.action_load_all_modules.triggered.connect(
-            qudi_main.module_manager.start_all_modules)
+            qudi_main.module_manager.activate_all_modules
+        )
         self.mw.action_view_default.triggered.connect(self.reset_default_layout)
         # Connect signals from manager
         qudi_main.configuration.sigConfigChanged.connect(self.update_config_widget)
-        qudi_main.module_manager.sigManagedModulesChanged.connect(self.update_configured_modules)
-        qudi_main.module_manager.sigModuleStateChanged.connect(self.update_module_state)
-        qudi_main.module_manager.sigModuleAppDataChanged.connect(self.update_module_app_data)
+        # qudi_main.module_manager.sigManagedModulesChanged.connect(self.update_configured_modules)
+        # qudi_main.module_manager.sigModuleStateChanged.connect(self.update_module_state)
+        # qudi_main.module_manager.sigModuleAppDataChanged.connect(self.update_module_app_data)
         # Settings dialog
         self.mw.settings_dialog.accepted.connect(self.apply_settings)
         self.mw.settings_dialog.rejected.connect(self.keep_settings)
@@ -140,9 +142,11 @@ class QudiMainGui(GuiBase):
         self.mw.module_widget.sigActivateModule.connect(qudi_main.module_manager.activate_module)
         self.mw.module_widget.sigReloadModule.connect(qudi_main.module_manager.reload_module)
         self.mw.module_widget.sigDeactivateModule.connect(
-            qudi_main.module_manager.deactivate_module)
+            qudi_main.module_manager.deactivate_module
+        )
         self.mw.module_widget.sigCleanupModule.connect(
-            qudi_main.module_manager.clear_module_app_data)
+            qudi_main.module_manager.clear_module_appdata
+        )
 
     def _disconnect_signals(self):
         qudi_main = self._qudi_main
@@ -155,9 +159,9 @@ class QudiMainGui(GuiBase):
         self.mw.action_view_default.triggered.disconnect()
         # Disconnect signals from manager
         qudi_main.configuration.sigConfigChanged.disconnect(self.update_config_widget)
-        qudi_main.module_manager.sigManagedModulesChanged.disconnect(self.update_configured_modules)
-        qudi_main.module_manager.sigModuleStateChanged.disconnect(self.update_module_state)
-        qudi_main.module_manager.sigModuleAppDataChanged.disconnect(self.update_module_app_data)
+        # qudi_main.module_manager.sigManagedModulesChanged.disconnect(self.update_configured_modules)
+        # qudi_main.module_manager.sigModuleStateChanged.disconnect(self.update_module_state)
+        # qudi_main.module_manager.sigModuleAppDataChanged.disconnect(self.update_module_app_data)
         # Settings dialog
         self.mw.settings_dialog.accepted.disconnect()
         self.mw.settings_dialog.rejected.disconnect()

@@ -23,15 +23,15 @@ __all__ = ['DictTableModel', 'ListTableModel']
 
 from PySide2 import QtCore
 from typing import Any, Optional, Union, Sequence
-from qudi.util.mutex import RecursiveMutex
+from qudi.util.mutex import Mutex
 
 
 class DictTableModel(QtCore.QAbstractTableModel):
     """ Qt model storing a table in dictionaries
     """
-    def __init__(self, headers: Union[str, Sequence[str]]):
-        super().__init__()
-        self._lock = RecursiveMutex()
+    def __init__(self, headers: Union[str, Sequence[str]], parent: Optional[QtCore.QObject] = None):
+        super().__init__(parent=parent)
+        self._lock = Mutex()
         if isinstance(headers, str):
             self._headers = [headers]
         elif not all(isinstance(h, str) for h in headers):
@@ -63,7 +63,7 @@ class DictTableModel(QtCore.QAbstractTableModel):
         """
         with self._lock:
             if index.isValid() and role == QtCore.Qt.DisplayRole:
-                key = self.get_key_by_index(index.row())
+                key = self._get_key_by_index(index.row())
                 if index.column() == 0:
                     return key
                 elif index.column() == 1:
@@ -82,14 +82,19 @@ class DictTableModel(QtCore.QAbstractTableModel):
     def get_key_by_index(self, n: int) -> Any:
         """ Get a dict key by index number """
         with self._lock:
-            it = iter(self._storage)
-            try:
-                for _ in range(n+1):
-                    key = next(it)
-            except StopIteration:
-                raise IndexError(f'Index {n:d} out of bounds for table model with '
-                                 f'{len(self._storage):d} rows') from None
-            return key
+            return self._get_key_by_index(n)
+
+    def _get_key_by_index(self, n: int) -> Any:
+        """ Get a dict key by index number """
+        it = iter(self._storage)
+        key = None
+        try:
+            for _ in range(n+1):
+                key = next(it)
+        except StopIteration:
+            raise IndexError(f'Index {n:d} out of bounds for table model with '
+                             f'{len(self._storage):d} rows') from None
+        return key
 
     def get_index_by_key(self, key: Any) -> int:
         """ Get row index for dict key.
@@ -97,15 +102,18 @@ class DictTableModel(QtCore.QAbstractTableModel):
         Warning: Row index for a key changes when keys with lower index are removed.
         """
         with self._lock:
-            for i, storage_key in enumerate(self._storage.keys()):
-                if key == storage_key:
-                    return i
-            raise KeyError
+            return self._get_index_by_key(key)
+
+    def _get_index_by_key(self, key: Any) -> int:
+        for i, storage_key in enumerate(self._storage.keys()):
+            if key == storage_key:
+                return i
+        raise KeyError
 
     def __setitem__(self, key, value):
         with self._lock:
             if key in self._storage:
-                row = self.get_index_by_key(key)
+                row = self._get_index_by_key(key)
                 self._storage[key] = value
                 index = self.index(row, 1)
                 self.dataChanged.emit(index, index)
@@ -131,7 +139,7 @@ class DictTableModel(QtCore.QAbstractTableModel):
         with self._lock:
             if key not in self._storage:
                 raise KeyError
-            self.pop(key)
+            self._pop(key)
 
     def __iter__(self):
         with self._lock:
@@ -166,14 +174,17 @@ class DictTableModel(QtCore.QAbstractTableModel):
         @return value: value removed from dict
         """
         with self._lock:
-            if args[0] in self._storage:
-                row = self.get_index_by_key(args[0])
-                self.beginRemoveRows(QtCore.QModelIndex(), row, row)
-                ret = self._storage.pop(args[0])
-                self.endRemoveRows()
-                return ret
-            elif len(args) > 1:
-                return args[1]
+            return self._pop(*args)
+
+    def _pop(self, *args):
+        if args[0] in self._storage:
+            row = self._get_index_by_key(args[0])
+            self.beginRemoveRows(QtCore.QModelIndex(), row, row)
+            ret = self._storage.pop(args[0])
+            self.endRemoveRows()
+            return ret
+        elif len(args) > 1:
+            return args[1]
 
     def get(self, *args):
         """ Get value for key from dictionary.
@@ -202,9 +213,9 @@ class ListTableModel(QtCore.QAbstractTableModel):
     """ Qt model storing a table in lists.
     """
 
-    def __init__(self, headers: Union[str, Sequence[str]]):
-        super().__init__()
-        self._lock = RecursiveMutex()
+    def __init__(self, headers: Union[str, Sequence[str]], parent: Optional[QtCore.QObject] = None):
+        super().__init__(parent=parent)
+        self._lock = Mutex()
         if isinstance(headers, str):
             self._headers = headers
         elif not all(isinstance(h, str) for h in headers):
@@ -269,7 +280,7 @@ class ListTableModel(QtCore.QAbstractTableModel):
         with self._lock:
             if key < 0:
                 key = key + len(self._storage)
-            self.pop(key)
+            self._pop(key)
 
     def __iter__(self):
         with self._lock:
@@ -312,13 +323,16 @@ class ListTableModel(QtCore.QAbstractTableModel):
         @return data: removed row
         """
         with self._lock:
-            if 0 <= n < len(self._storage):
-                self.beginRemoveRows(QtCore.QModelIndex(), n, n)
-                ret = self._storage.pop(n)
-                self.endRemoveRows()
-                return ret
-            else:
-                raise IndexError
+            return self._pop(n)
+
+    def _pop(self, n):
+        if 0 <= n < len(self._storage):
+            self.beginRemoveRows(QtCore.QModelIndex(), n, n)
+            ret = self._storage.pop(n)
+            self.endRemoveRows()
+            return ret
+        else:
+            raise IndexError
 
     def extend(self, seq):
         with self._lock:
@@ -332,7 +346,7 @@ class ListTableModel(QtCore.QAbstractTableModel):
     def remove(self, value):
         with self._lock:
             row = self._storage.index(value)
-            self.pop(row)
+            self._pop(row)
 
     def count(self, value):
         with self._lock:

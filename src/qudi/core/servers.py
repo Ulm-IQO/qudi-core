@@ -19,51 +19,22 @@ You should have received a copy of the GNU Lesser General Public License along w
 If not, see <https://www.gnu.org/licenses/>.
 """
 
-__all__ = ('get_remote_module_instance', 'BaseServer', 'RemoteModulesServer', 'QudiNamespaceServer')
+__all__ = ['BaseServer', 'RemoteModulesServer', 'QudiNamespaceServer']
 
 import ssl
 import rpyc
-import weakref
 from PySide2 import QtCore
-from urllib.parse import urlparse
 from rpyc.utils.authenticators import SSLAuthenticator
+from typing import Optional, Mapping, Any
 
 from qudi.util.mutex import Mutex
 from qudi.core.logger import get_logger
 from qudi.core.services import RemoteModulesService, QudiNamespaceService
+from qudi.core.modulemanager import ModuleManager
+from qudi.core.threadmanager import ThreadManager
 
-logger = get_logger(__name__)
 
-
-def get_remote_module_instance(remote_url, certfile=None, keyfile=None, protocol_config=None):
-    """ Helper method to retrieve a remote module instance via rpyc from a qudi RemoteModuleServer.
-
-    @param str remote_url: The URL of the remote qudi module
-    @param str certfile: Certificate file path for the request
-    @param str keyfile: Key file path for the request
-    @param dict protocol_config: optional, configuration options for rpyc.ssl_connect
-
-    @return object: The requested qudi module instance (None if request failed)
-    """
-    parsed = urlparse(remote_url)
-    if protocol_config is None:
-        protocol_config = {'allow_all_attrs': True,
-                           'allow_setattr': True,
-                           'allow_delattr': True,
-                           'allow_pickle': True,
-                           'sync_request_timeout': 3600}
-    if certfile is not None and keyfile is not None:
-        connection = rpyc.ssl_connect(host=parsed.hostname,
-                                      port=parsed.port,
-                                      config=protocol_config,
-                                      certfile=certfile,
-                                      keyfile=keyfile)
-    else:
-        connection = rpyc.connect(host=parsed.hostname,
-                                  port=parsed.port,
-                                  config=protocol_config,)
-    logger.debug(f'get_remote_module_instance has protocol_config {protocol_config}')
-    return connection.root.get_module_instance(parsed.path.replace('/', ''))
+_logger = get_logger(__name__)
 
 
 class _ServerRunnable(QtCore.QObject):
@@ -113,14 +84,14 @@ class _ServerRunnable(QtCore.QObject):
                                               port=self.port,
                                               protocol_config=self.protocol_config,
                                               authenticator=authenticator)
-            logger.info(f'Starting RPyC server "{self.thread().objectName()}" on '
-                        f'[{self.host}]:{self.port:d}')
-            logger.debug(f'{self.thread().objectName()}: '
-                         f'protocol_config is {self.protocol_config}, '
-                         f'authenticator is {authenticator}')
+            _logger.info(f'Starting RPyC server "{self.thread().objectName()}" on '
+                         f'[{self.host}]:{self.port:d}')
+            _logger.debug(f'{self.thread().objectName()}: '
+                          f'protocol_config is {self.protocol_config}, '
+                          f'authenticator is {authenticator}')
             self.server.start()
         except:
-            logger.exception(f'Error during start of RPyC Server "{self.thread().objectName()}":')
+            _logger.exception(f'Error during start of RPyC Server "{self.thread().objectName()}":')
             self.server = None
 
     @QtCore.Slot()
@@ -130,9 +101,9 @@ class _ServerRunnable(QtCore.QObject):
         if self.server is not None:
             try:
                 self.server.close()
-                logger.info(f'Stopped RPyC server on [{self.host}]:{self.port:d}')
+                _logger.info(f'Stopped RPyC server on [{self.host}]:{self.port:d}')
             except:
-                logger.exception(
+                _logger.exception(
                     f'Exception while trying to stop RPyC server on [{self.host}]:{self.port:d}'
                 )
             finally:
@@ -145,17 +116,25 @@ class BaseServer(QtCore.QObject):
     Actual RPyC server runs in a QThread.
     """
 
-    def __init__(self, qudi, service_instance, name, host, port, certfile=None,
-                 keyfile=None, protocol_config=None, ssl_version=None, cert_reqs=None,
-                 ciphers=None, parent=None):
+    def __init__(self,
+                 thread_manager: ThreadManager,
+                 service_instance: rpyc.Service,
+                 name: str,
+                 host: str,
+                 port: int,
+                 certfile: Optional[str] = None,
+                 keyfile: Optional[str] = None,
+                 protocol_config: Optional[Mapping[str, Any]] = None,
+                 ssl_version: Optional[ssl.TLSVersion] = None,
+                 cert_reqs: Optional[ssl.VerifyMode] = None,
+                 ciphers: Optional[str] = None,
+                 parent: Optional[QtCore.QObject] = None):
         """
         @param int port: port the RPyC server should listen to
         """
         super().__init__(parent=parent)
-
-        self.__qudi_ref = weakref.ref(qudi)
         self._thread_lock = Mutex()
-
+        self._thread_manager = thread_manager
         self.service = service_instance
         self._name = name
         self._server = _ServerRunnable(service=service_instance,
@@ -177,31 +156,9 @@ class BaseServer(QtCore.QObject):
         with self._thread_lock:
             return self._server.server is not None
 
-    @property
-    def _qudi(self):
-        qudi = self.__qudi_ref()
-        if qudi is None:
-            raise RuntimeError('Dead qudi application reference encountered')
-        return qudi
-
-    @property
-    def _thread_manager(self):
-        manager = self._qudi.thread_manager
-        if manager is None:
-            raise RuntimeError('No thread manager initialized in qudi application')
-        return manager
-
-    @property
-    def _module_manager(self):
-        manager = self._qudi.module_manager
-        if manager is None:
-            raise RuntimeError('No module manager initialized in qudi application')
-        return manager
-
     @QtCore.Slot()
     def start(self):
-        """ Start the RPyC server
-        """
+        """ Start the RPyC server """
         with self._thread_lock:
             if self.server is None:
                 thread = self._thread_manager.get_new_thread(self._name)
@@ -209,12 +166,11 @@ class BaseServer(QtCore.QObject):
                 thread.started.connect(self._server.run)
                 thread.start()
             else:
-                logger.warning(f'RPyC server "{self._name}" is already running.')
+                _logger.warning(f'RPyC server "{self._name}" is already running.')
 
     @QtCore.Slot()
     def stop(self):
-        """ Stop the RPyC server
-        """
+        """ Stop the RPyC server """
         with self._thread_lock:
             if self.server is not None:
                 try:
@@ -226,44 +182,36 @@ class BaseServer(QtCore.QObject):
 
 
 class RemoteModulesServer(BaseServer):
-    """
-    """
-
-    def __init__(self, force_remote_calls_by_value=False, **kwargs):
+    """ BaseServer specialization that automatically creates the RemoteModulesService instance """
+    def __init__(self,
+                 module_manager: ModuleManager,
+                 force_remote_calls_by_value: Optional[bool] = False,
+                 **kwargs):
         kwargs['service_instance'] = RemoteModulesService(
+            module_manager=module_manager,
             force_remote_calls_by_value=force_remote_calls_by_value
         )
         super().__init__(**kwargs)
-
-    def share_module(self, module):
-        self.service.share_module(module)
-
-    def remove_shared_module(self, module):
-        self.service.remove_shared_module(module)
 
 
 class QudiNamespaceServer(BaseServer):
     """ Contains a RPyC server that serves all activated qudi modules as well as a reference to the
     running qudi instance locally without encryption.
     You can specify the port but the host will always be "localhost"/127.0.0.1
-    See qudi.core.remotemodules.RemoteModuleServer if you want to expose qudi modules to non-local
-    clients.
-    Actual rpyc server runs in a QThread.
+    See RemoteModulesServer if you want to expose qudi modules to non-local clients.
     """
-
-    def __init__(self, qudi, name, port, force_remote_calls_by_value=False, parent=None):
-        """
-        @param qudi.Qudi qudi: The governing qudi main application instance
-        @param str name: Server name (used as name for the associated QThread)
-        @param int port: port the RPyC server should listen to
-        @param PySide2.QtCore.QObject parent: optional, parent Qt QObject
-        """
+    def __init__(self,
+                 name: str,
+                 port: int,
+                 qudi: 'Qudi',
+                 force_remote_calls_by_value: Optional[bool] = False,
+                 parent: Optional[QtCore.QObject] = None):
         service_instance = QudiNamespaceService(
             qudi=qudi,
             force_remote_calls_by_value=force_remote_calls_by_value
         )
         super().__init__(parent=parent,
-                         qudi=qudi,
+                         thread_manager=qudi.thread_manager,
                          service_instance=service_instance,
                          name=name,
                          host='localhost',
