@@ -26,7 +26,7 @@ __all__ = ('correct_offset_histogram', 'find_highest_peaks', 'estimate_double_pe
 import numpy as np
 from scipy.signal import find_peaks as _find_peaks
 from scipy.signal import peak_widths as _peak_widths
-from scipy.ndimage.filters import gaussian_filter1d as _gaussian_filter
+from scipy.ndimage import gaussian_filter1d as _gaussian_filter
 
 
 def sort_check_data(data, x):

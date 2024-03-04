@@ -29,7 +29,7 @@ from typing import Optional, Mapping, Any
 
 from qudi.util.mutex import Mutex
 from qudi.core.logger import get_logger
-from qudi.core.services import RemoteModulesService, QudiNamespaceService
+from qudi.core.services import RemoteModulesService, LocalNamespaceService
 from qudi.core.modulemanager import ModuleManager
 from qudi.core.threadmanager import ThreadManager
 
@@ -206,7 +206,7 @@ class QudiNamespaceServer(BaseServer):
                  qudi: 'Qudi',
                  force_remote_calls_by_value: Optional[bool] = False,
                  parent: Optional[QtCore.QObject] = None):
-        service_instance = QudiNamespaceService(
+        service_instance = LocalNamespaceService(
             qudi=qudi,
             force_remote_calls_by_value=force_remote_calls_by_value
         )

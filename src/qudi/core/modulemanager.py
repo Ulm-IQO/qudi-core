@@ -32,7 +32,7 @@ from abc import abstractmethod
 from qudi.util.paths import get_module_appdata_path
 from qudi.util.helpers import call_slot_from_native_thread, current_is_main_thread
 from qudi.util.yaml import YamlFileHandler
-from qudi.util.mutex import Mutex, RecursiveMutex
+from qudi.util.mutex import Mutex
 from qudi.util.network import connect_to_remote_module_server
 from qudi.core.logger import get_logger
 from qudi.core.object import ABCQObject
@@ -150,6 +150,12 @@ class ManagedModule(ABCQObject):
         return {mod_name: mod for mod_name, mod in self._managed_modules.items() if
                 mod_name in self.required_module_names}
 
+    def check_module_state(self) -> None:
+        """ Override in subclass if you want to periodically poll the module state and perform
+        some actions accordingly
+        """
+        pass
+
     def _activate_required_modules(self) -> Dict[str, Base]:
         target_instances = dict()
         for mod_name, module in self.required_modules.items():
@@ -223,6 +229,9 @@ class LocalManagedModule(ManagedModule):
             else:
                 self._module_url = f'qudi.{self.base.value}.{self._module_url}'
         self._allow_remote = self._configuration['allow_remote']
+        if self._allow_remote and (self.base == ModuleBase.GUI):
+            self._allow_remote = False
+            _logger.warning(f'GUI modules can not be shared as remote modules ({self.url})')
         self._options = self._configuration.get('options', dict())
         self._connections = self._configuration.get('connect', dict())
         # Circular recursion fail-saves
@@ -541,7 +550,6 @@ class RemoteManagedModule(ManagedModule):
                 self._connection = None
             self.__deactivating = False
             self._update_state(ModuleState.DEACTIVATED)
-        # QtCore.QCoreApplication.instance().processEvents()
         _logger.info(f'Remote module "{self.name}" at "{self.url}" successfully disconnected.')
 
     @QtCore.Slot()
@@ -599,7 +607,9 @@ class ModuleManager(QtCore.QAbstractTableModel):
     def __init__(self, *args, qudi_main: 'Qudi', **kwargs):
         super().__init__(*args, **kwargs)
         self._qudi_main = qudi_main
-        self._modules = dict()
+        self._modules = list()
+        self._name_to_module = dict()
+        self._name_to_index = dict()
         self._display_headers = ('Base', 'Name', 'State', 'Has AppData', 'Allow Remote',
                                  'Is Remote')
 
@@ -635,13 +645,13 @@ class ModuleManager(QtCore.QAbstractTableModel):
              ) -> Union[None, ManagedModule, str, ModuleBase, ModuleState, bool]:
         """ Get data from model for a given cell. Data can have a role that affects display. """
         if index.isValid():
-            name, module = self._get_item_by_index(index.row())
+            module = self._modules[index.row()]
             if role == QtCore.Qt.DisplayRole:
                 column = index.column()
                 if column == 0:
                     return module.base
                 elif column == 1:
-                    return name
+                    return module.name
                 elif column == 2:
                     return module.state
                 elif column == 3:
@@ -679,8 +689,8 @@ class ModuleManager(QtCore.QAbstractTableModel):
         with self._lock:
             if allow_overwrite:
                 self._remove_module(name, ignore_missing=True)
-            elif name in self._modules:
-                raise ValueError(f'Module with name "{name}" already registered.')
+            elif name in self._name_to_index:
+                raise ValueError(f'Module by name "{name}" already registered')
             # Initialize ManagedModule instance
             try:
                 module = LocalManagedModule(name, base, configuration, self._qudi_main)
@@ -689,10 +699,12 @@ class ModuleManager(QtCore.QAbstractTableModel):
             # Add module to data model
             row = len(self._modules)
             self.beginInsertRows(QtCore.QModelIndex(), row, row)
-            self._modules[name] = module
-            self.endInsertRows()
+            self._modules.append(module)
+            self._name_to_index[name] = row
+            self._name_to_module[name] = module
             module.sigStateChanged.connect(self.__get_state_updated_slot(name))
             module.sigAppDataChanged.connect(self.__get_appdata_updated_slot(name))
+            self.endInsertRows()
             if len(self._modules) == 1:
                 self.__remote_watchdog_timer.start()
 
@@ -706,106 +718,104 @@ class ModuleManager(QtCore.QAbstractTableModel):
 
     def _remove_module(self, name: str, ignore_missing: Optional[bool] = False) -> None:
         try:
-            row = self._get_row_by_name(name)
+            row = self._get_index_by_name(name)
         except ValueError:
             if ignore_missing:
                 return
             raise
         # Remove module from data model
         self.beginRemoveRows(QtCore.QModelIndex(), row, row)
-        module = self._modules.pop(name)
+        row = self._name_to_index.pop(name)
+        module = self._name_to_module.pop(name)
+        self._modules.pop(row)
+        for mod in list(self._name_to_index)[row:]:
+            self._name_to_index[mod] -= 1
         module.sigStateChanged.disconnect()
         module.sigAppDataChanged.disconnect()
         self.endRemoveRows()
-        # Deactivate module if local
-        if isinstance(module, LocalManagedModule):
-            module.deactivate()
+        module.deactivate()
         if len(self._modules) < 1:
             self.__remote_watchdog_timer.stop()
 
     def activate_module(self, name: str) -> None:
         with self._lock:
-            self._modules[name].activate()
+            self._get_module_by_name(name).activate()
 
     def deactivate_module(self, name: str) -> None:
         with self._lock:
-            self._modules[name].deactivate()
+            self._get_module_by_name(name).deactivate()
 
     def reload_module(self, name: str) -> None:
         with self._lock:
-            self._modules[name].reload()
+            self._get_module_by_name(name).reload()
 
     def clear_module_appdata(self, name: str) -> None:
         with self._lock:
-            self._modules[name].clear_appdata()
+            self._get_module_by_name(name).clear_appdata()
 
     def has_appdata(self, name: str) -> bool:
         with self._lock:
-            return self._modules[name].has_appdata
+            return self._get_module_by_name(name).has_appdata
 
     def get_module_state(self, name: str) -> ModuleState:
         with self._lock:
-            return self._modules[name].state
+            return self._get_module_by_name(name).state
 
     def get_module_instance(self, name: str) -> Union[Base, None]:
         with self._lock:
-            module = self._modules[name]
+            module = self._get_module_by_name(name)
             module.activate()
             return module.instance
 
     def activate_all_modules(self) -> None:
         with self._lock:
-            for module in self._modules.values():
+            for module in self._modules:
                 module.activate()
 
     def deactivate_all_modules(self) -> None:
         with self._lock:
-            for module in self._modules.values():
+            for module in self._modules:
                 module.deactivate()
 
     def clear_all_appdata(self) -> None:
         with self._lock:
-            for module in self._modules.values():
+            for module in self._modules:
                 module.clear_appdata()
 
     def clear(self):
         with self._lock:
+            self.__remote_watchdog_timer.stop()
             self.beginResetModel()
-            try:
-                for name in list(self._modules):
-                    module = self._modules.pop(name)
+            for module in self._modules:
+                try:
                     module.sigStateChanged.disconnect()
                     module.sigAppDataChanged.disconnect()
-                    # Deactivate module if local
-                    if isinstance(module, LocalManagedModule):
-                        module.deactivate()
-            finally:
-                self.__remote_watchdog_timer.stop()
-                self._modules.clear()
-                self.endResetModel()
+                    module.deactivate()
+                except Exception:
+                    _logger.exception('Exception while clearing ModuleManager:')
+            self._modules.clear()
+            self._name_to_index.clear()
+            self._name_to_module.clear()
+            self.endResetModel()
 
-    def _get_item_by_index(self, index: int) -> Any:
-        """ Get the module name and ManagedModule instance by index """
-        it = iter(self._modules.items())
-        try:
-            for _ in range(index):
-                next(it)
-            return next(it)
-        except StopIteration:
-            raise IndexError(f'Index {index:d} out of bounds for table model with '
-                             f'{len(self._modules):d} rows') from None
-
-    def _get_row_by_name(self, name: Any) -> int:
+    def _get_index_by_name(self, name: str) -> int:
         """ Get the row index by module name """
-        for index, module_name in enumerate(self._modules.keys()):
-            if name == module_name:
-                return index
-        raise ValueError(f'No module with name "{name}" found in data model')
+        try:
+            return self._name_to_index[name]
+        except KeyError:
+            raise ValueError(f'No module found by name "{name}"') from None
+
+    def _get_module_by_name(self, name: str) -> ManagedModule:
+        """ Get the ManagedModule instance by module name """
+        try:
+            return self._name_to_module[name]
+        except KeyError:
+            raise ValueError(f'No module found by name "{name}"') from None
 
     def __get_state_updated_slot(self, name: str) -> Callable[[], None]:
 
         def state_updated() -> None:
-            index = self.index(self._get_row_by_name(name), 2)
+            index = self.index(self._name_to_index[name], 2)
             self.dataChanged.emit(index, index)
 
         return state_updated
@@ -813,7 +823,7 @@ class ModuleManager(QtCore.QAbstractTableModel):
     def __get_appdata_updated_slot(self, name: str) -> Callable[[], None]:
 
         def appdata_updated() -> None:
-            index = self.index(self._get_row_by_name(name), 3)
+            index = self.index(self._name_to_index[name], 3)
             self.dataChanged.emit(index, index)
 
         return appdata_updated
@@ -822,9 +832,6 @@ class ModuleManager(QtCore.QAbstractTableModel):
     def __remote_watchdog(self) -> None:
         with self._lock:
             if len(self._modules) > 0:
-                for module in self._modules.values():
-                    try:
-                        module.check_module_state()
-                    except AttributeError:
-                        pass
+                for module in self._modules:
+                    module.check_module_state()
                 self.__remote_watchdog_timer.start()

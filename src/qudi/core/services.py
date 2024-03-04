@@ -19,18 +19,18 @@ You should have received a copy of the GNU Lesser General Public License along w
 If not, see <https://www.gnu.org/licenses/>.
 """
 
-__all__ = ['RemoteModulesService', 'QudiNamespaceService']
+__all__ = ['RemoteModulesService', 'LocalNamespaceService']
 
 import rpyc
 from logging import Logger
 from PySide2 import QtCore
-from typing import Optional, Union, List, Dict, Any, Iterable, Set, Callable
+from typing import Optional, Union, List, Dict, Any, Iterable, Set
 
 from qudi.util.mutex import Mutex
 from qudi.util.proxy import CachedObjectRpycByValueProxy
 from qudi.core.logger import get_logger
-from qudi.core.module import Base, ModuleState
-from qudi.core.modulemanager import ModuleManager, ManagedModule
+from qudi.core.module import Base, ModuleState, ModuleBase
+from qudi.core.modulemanager import ModuleManager
 
 
 _logger = get_logger(__name__)
@@ -40,6 +40,12 @@ class _SharedModuleTableProxyModel(QtCore.QSortFilterProxyModel):
     """ Model proxy to filter ManagedModules according to their "allow_remote" flag. """
     def filterAcceptsRow(self, source_row: int, source_parent: QtCore.QModelIndex) -> bool:
         return self.sourceModel().index(source_row, 4, source_parent).data()
+
+
+class _LocalModuleTableProxyModel(QtCore.QSortFilterProxyModel):
+    """ Model proxy to filter ManagedModules according to their "allow_remote" flag. """
+    def filterAcceptsRow(self, source_row: int, source_parent: QtCore.QModelIndex) -> bool:
+        return self.sourceModel().index(source_row, 0, source_parent).data() != ModuleBase.GUI
 
 
 class RemoteModulesService(rpyc.Service):
@@ -108,7 +114,7 @@ class RemoteModulesService(rpyc.Service):
             return list(self._module_cache)
 
 
-class QudiNamespaceService(rpyc.Service):
+class LocalNamespaceService(rpyc.Service):
     """ An RPyC service providing a namespace dict containing references to all active qudi module
     instances as well as a reference to the qudi application itself.
     """
@@ -125,20 +131,20 @@ class QudiNamespaceService(rpyc.Service):
         self._force_remote_calls_by_value = force_remote_calls_by_value
         self._module_cache: Dict[str, Union[Base, CachedObjectRpycByValueProxy]] = dict()
 
-        self._qudi.module_manager.modelReset.connect(self._refresh_module_cache)
-        self._qudi.module_manager.rowsInserted.connect(self._refresh_module_cache)
-        self._qudi.module_manager.rowsRemoved.connect(self._refresh_module_cache)
-        self._qudi.module_manager.dataChanged.connect(self._module_state_changed)
+        self.namespace_modules = _LocalModuleTableProxyModel()
+        self.namespace_modules.setSourceModel(self._qudi.module_manager)
+        self.namespace_modules.modelReset.connect(self._refresh_module_cache)
+        self.namespace_modules.rowsInserted.connect(self._refresh_module_cache)
+        self.namespace_modules.rowsRemoved.connect(self._refresh_module_cache)
+        self.namespace_modules.dataChanged.connect(self._module_state_changed)
         self._refresh_module_cache()
-
-        self._notifier_callbacks = dict()
 
     @QtCore.Slot()
     def _refresh_module_cache(self) -> None:
         with self._thread_lock:
             modules = [
-                self._qudi.module_manager.index(row, 0).data(QtCore.Qt.UserRole) for row in
-                range(self._qudi.module_manager.rowCount())
+                self.namespace_modules.index(row, 0).data(QtCore.Qt.UserRole) for row in
+                range(self.namespace_modules.rowCount())
             ]
             if self._force_remote_calls_by_value:
                 self._module_cache = {mod.name: CachedObjectRpycByValueProxy(mod.instance) for mod
@@ -167,24 +173,13 @@ class QudiNamespaceService(rpyc.Service):
 
     def on_connect(self, conn):
         """ runs when a connection is created """
-        try:
-            self._notifier_callbacks[conn] = rpyc.async_(conn.root.modules_changed)
-        except AttributeError:
-            pass
         host, port = conn._config['endpoints'][1]
         _logger.info(f'Client connected to local module service from [{host}]:{port:d}')
 
     def on_disconnect(self, conn):
         """ runs when the connection is closing """
-        self._notifier_callbacks.pop(conn, None)
         host, port = conn._config['endpoints'][1]
         _logger.info(f'Client [{host}]:{port:d} disconnected from local module service')
-
-    def notify_module_change(self):
-        _logger.debug('Local module server has detected a module state change and sends async '
-                      'notifier signals to all clients')
-        for callback in self._notifier_callbacks.values():
-            callback()
 
     def exposed_get_namespace_dict(self) -> Dict[str, Any]:
         """ Returns the instances of the currently active modules as well as a reference to the

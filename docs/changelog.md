@@ -24,9 +24,11 @@ activation and it is destroyed upon deactivation.
 - `qudi.core.modulemanager.ModuleManager` is now a subclass of `QtCore.QAbstractTableModel` and 
 serves as singular central data source for all managed qudi modules and their status. The main GUI 
 and module servers (remote and local) have been adjusted accordingly.
+- GUI modules can no longer be shared by the remote module and local namespace servers.
 
 ### Bugfixes
 - Python module reload during runtime is now only performed if explicitly requested by the user
+- Fixed a `scipy` warning about the deprecated `scipy.ndimage.filters` namespace
 
 ### New Features
 - New context manager `qudi.util.mutex.acquire_timeout` to facilitate (Recursive)Mutex/(R)Lock 
