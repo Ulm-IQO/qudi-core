@@ -132,9 +132,6 @@ class ModuleListProxyModel(QtCore.QSortFilterProxyModel):
     def filterAcceptsRow(self, source_row: int, source_parent: QtCore.QModelIndex) -> bool:
         return self.sourceModel().index(source_row, 0, source_parent).data() == self._filter_base
 
-    # def filterAcceptsColumn(self, source_column: int, source_parent: QtCore.QModelIndex) -> bool:
-    #     return source_column == 2
-
     def data(self,
              index: QtCore.QModelIndex,
              role: Optional[QtCore.Qt.ItemDataRole] = QtCore.Qt.DisplayRole

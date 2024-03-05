@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """ This module contains the
 
-Copyright (c) 2021, the qudi developers. See the AUTHORS.md file at the top-level directory of this
-distribution and on <https://github.com/Ulm-IQO/qudi-core/>
+Copyright (c) 2021-2024, the qudi developers. See the AUTHORS.md file at the top-level directory of
+this distribution and on <https://github.com/Ulm-IQO/qudi-core/>
 
 This file is part of qudi.
 
@@ -25,7 +25,12 @@ import subprocess
 import jupyter_client.kernelspec
 from PySide2 import QtCore, QtWidgets
 from qtconsole.manager import QtKernelManager
-from collections.abc import Mapping, Sequence, Set
+from typing import Optional
+try:
+    from git import Repo, InvalidGitRepositoryError
+except ImportError:
+    Repo = None
+    InvalidGitRepositoryError = RuntimeError
 
 from qudi.core.statusvariable import StatusVar
 from qudi.core.threadmanager import ThreadManager
@@ -34,36 +39,22 @@ from qudi.core.gui.main_gui.errordialog import ErrorDialog
 from qudi.core.gui.main_gui.mainwindow import QudiMainWindow
 from qudi.core.module import GuiBase
 from qudi.core.logger import get_signal_handler
-
-try:
-    from git import Repo, InvalidGitRepositoryError
-except ImportError:
-    Repo = None
+from qudi.core.config import Configuration
 
 
 class QudiMainGui(GuiBase):
-    """
-    This class provides a GUI to the qudi main application object.
-    """
-    # status vars
+    """ This class provides a GUI to the qudi main application object """
     _console_font_size = StatusVar(name='console_font_size', default=10)
     _show_error_popups = StatusVar(name='show_error_popups', default=True)
 
     def __init__(self, *args, **kwargs):
-        """Create an instance of the module.
-
-          @param object manager:
-          @param str name:
-          @param dict config:
-        """
         super().__init__(*args, **kwargs)
         self.error_dialog = None
         self.mw = None
         self._has_console = False  # Flag indicating if an IPython console is available
 
-    def on_activate(self):
+    def on_activate(self) -> None:
         """ Activation method called on change to active state.
-
         This method creates the Manager main window.
         """
         # Create main window and restore position
@@ -91,32 +82,25 @@ class QudiMainGui(GuiBase):
                 ''.format(version[0], version[1], self._qudi_main.configuration.file_path))
 
         self._connect_signals()
-
         self.keep_settings()
-        # self.update_configured_modules()
         self.update_config_widget()
-
         # IPython console widget
         self.start_jupyter_widget()
-
         # Configure thread widget
         self.mw.threads_widget.setModel(ThreadManager.instance())
-
         # Configure remotemodules widget
         self._init_remote_modules_widget()
-
         self.reset_default_layout()
         self.show()
 
-    def on_deactivate(self):
-        """Close window and remove connections.
-        """
+    def on_deactivate(self) -> None:
+        """Close window and remove connections """
         self._disconnect_signals()
         self.stop_jupyter_widget()
         self._save_window_geometry(self.mw)
         self.mw.close()
 
-    def _connect_signals(self):
+    def _connect_signals(self) -> None:
         get_signal_handler().sigRecordLogged.connect(self.handle_log_record, QtCore.Qt.QueuedConnection)
         qudi_main = self._qudi_main
         # Connect up the main windows actions
@@ -131,9 +115,6 @@ class QudiMainGui(GuiBase):
         self.mw.action_view_default.triggered.connect(self.reset_default_layout)
         # Connect signals from manager
         qudi_main.configuration.sigConfigChanged.connect(self.update_config_widget)
-        # qudi_main.module_manager.sigManagedModulesChanged.connect(self.update_configured_modules)
-        # qudi_main.module_manager.sigModuleStateChanged.connect(self.update_module_state)
-        # qudi_main.module_manager.sigModuleAppDataChanged.connect(self.update_module_app_data)
         # Settings dialog
         self.mw.settings_dialog.accepted.connect(self.apply_settings)
         self.mw.settings_dialog.rejected.connect(self.keep_settings)
@@ -148,7 +129,7 @@ class QudiMainGui(GuiBase):
             qudi_main.module_manager.clear_module_appdata
         )
 
-    def _disconnect_signals(self):
+    def _disconnect_signals(self) -> None:
         qudi_main = self._qudi_main
         # Disconnect the main windows actions
         self.mw.action_quit.triggered.disconnect()
@@ -159,9 +140,6 @@ class QudiMainGui(GuiBase):
         self.mw.action_view_default.triggered.disconnect()
         # Disconnect signals from manager
         qudi_main.configuration.sigConfigChanged.disconnect(self.update_config_widget)
-        # qudi_main.module_manager.sigManagedModulesChanged.disconnect(self.update_configured_modules)
-        # qudi_main.module_manager.sigModuleStateChanged.disconnect(self.update_module_state)
-        # qudi_main.module_manager.sigModuleAppDataChanged.disconnect(self.update_module_app_data)
         # Settings dialog
         self.mw.settings_dialog.accepted.disconnect()
         self.mw.settings_dialog.rejected.disconnect()
@@ -174,7 +152,7 @@ class QudiMainGui(GuiBase):
 
         get_signal_handler().sigRecordLogged.disconnect(self.handle_log_record)
 
-    def _init_remote_modules_widget(self):
+    def _init_remote_modules_widget(self) -> None:
         remote_server = self._qudi_main.remote_modules_server
         # hide remote modules menu action if RemoteModuleServer is not available
         if remote_server is None:
@@ -182,26 +160,22 @@ class QudiMainGui(GuiBase):
             self.mw.remote_dockwidget.setVisible(False)
             self.mw.action_view_remote.setVisible(False)
         else:
-            server_config = self._qudi_main.configuration['remote_modules_server']
-            host = server_config['address']
-            port = server_config['port']
+            host = remote_server.server.host
+            port = remote_server.server.port
             self.mw.remote_widget.setVisible(True)
             self.mw.remote_widget.server_label.setText(f'Server URL: rpyc://{host}:{port}/')
             self.mw.remote_widget.shared_module_listview.setModel(
                 remote_server.service.shared_modules
             )
 
-    def show(self):
-        """Show the window and bring it to the top.
-        """
+    def show(self) -> None:
+        """ Show the window and bring it to the top """
         self.mw.show()
         self.mw.activateWindow()
         self.mw.raise_()
 
-    def reset_default_layout(self):
-        """
-        Return the dockwidget layout and visibility to its default state
-        """
+    def reset_default_layout(self) -> None:
+        """ Return the dockwidget layout and visibility to its default state """
         self.mw.config_dockwidget.setVisible(False)
         self.mw.console_dockwidget.setVisible(self._has_console)
         self.mw.remote_dockwidget.setVisible(False)
@@ -222,19 +196,13 @@ class QudiMainGui(GuiBase):
 
         self.mw.action_view_console.setChecked(self._has_console)
         self.mw.action_view_console.setVisible(self._has_console)
-        return
 
-    def handle_log_record(self, entry):
-        """
-        Show an error popup if the log entry is error level and above.
-
-        @param logging.LogRecord entry: log record as returned from logging module
-        """
+    def handle_log_record(self, entry: logging.LogRecord) -> None:
+        """ Show an error popup if the log entry is error level and above """
         if entry.levelname in ('error', 'critical'):
             self.error_dialog.new_error(entry)
-        return
 
-    def start_jupyter_widget(self):
+    def start_jupyter_widget(self) -> None:
         """ Starts a qudi IPython kernel in a separate process and connects it to the console widget
         """
         self._has_console = False
@@ -261,7 +229,7 @@ class QudiMainGui(GuiBase):
             self._has_console = True
             self.log.info('IPython kernel for qudi main GUI successfully started.')
         except jupyter_client.kernelspec.NoSuchKernel:
-            self.log.warn(
+            self.log.warning(
                 'Qudi IPython kernelspec not installed.\n'
                 'IPython console and jupyter notebook integration not available.\n'
                 'Run "qudi-install-kernel" from within the qudi Python environment to fix this. '
@@ -273,9 +241,7 @@ class QudiMainGui(GuiBase):
             )
 
     @QtCore.Slot()
-    def kernel_died_callback(self):
-        """
-        """
+    def kernel_died_callback(self) -> None:
         try:
             self.mw.console_widget.kernel_client.stop_channels()
         except:
@@ -288,9 +254,8 @@ class QudiMainGui(GuiBase):
                 'Python environment and restart qudi.'
             )
 
-    def stop_jupyter_widget(self):
-        """ Stops the qudi IPython kernel process and detaches it from the console widget
-        """
+    def stop_jupyter_widget(self) -> None:
+        """ Stops the qudi IPython kernel process and detaches it from the console widget """
         try:
             self.mw.console_widget.kernel_client.stop_channels()
         except:
@@ -302,15 +267,13 @@ class QudiMainGui(GuiBase):
         self._has_console = False
         self.log.info('IPython kernel process for qudi main GUI has shut down.')
 
-    def keep_settings(self):
-        """ Write old values into settings dialog.
-        """
+    def keep_settings(self) -> None:
+        """ Write old values into settings dialog """
         self.mw.settings_dialog.font_size_spinbox.setValue(self._console_font_size)
         self.mw.settings_dialog.show_error_popups_checkbox.setChecked(self._show_error_popups)
 
-    def apply_settings(self):
-        """ Apply values from settings dialog.
-        """
+    def apply_settings(self) -> None:
+        """ Apply values from settings dialog """
         # Console font size
         font_size = self.mw.settings_dialog.font_size_spinbox.value()
         self.mw.console_widget.font_size = font_size
@@ -323,40 +286,20 @@ class QudiMainGui(GuiBase):
         self._show_error_popups = error_popups
 
     @QtCore.Slot()
-    def _error_dialog_enabled_changed(self):
-        """ Callback for the error dialog disable checkbox
-        """
+    def _error_dialog_enabled_changed(self) -> None:
+        """ Callback for the error dialog disable checkbox """
         self._show_error_popups = self.error_dialog.enabled
         self.mw.settings_dialog.show_error_popups_checkbox.setChecked(self._show_error_popups)
 
     @QtCore.Slot(object)
-    def update_config_widget(self, config=None):
-        """ Clear and refill the tree widget showing the configuration.
-        """
+    def update_config_widget(self, config: Optional[Configuration] = None) -> None:
+        """ Clear and refill the tree widget showing the configuration """
         if config is None:
             config = self._qudi_main.configuration
         self.mw.config_widget.set_config(config.config_map)
 
-    @QtCore.Slot(dict)
-    def update_configured_modules(self, modules=None):
-        """ Clear and refill the module list widget
-        """
-        if modules is None:
-            modules = self._qudi_main.module_manager
-        self.mw.module_widget.update_modules(modules)
-
-    @QtCore.Slot(str, str, str)
-    def update_module_state(self, base, name, state):
-        self.mw.module_widget.update_module_state(base, name, state)
-        return
-
-    @QtCore.Slot(str, str, bool)
-    def update_module_app_data(self, base, name, exists):
-        self.mw.module_widget.update_module_app_data(base, name, exists)
-
-    def get_qudi_version(self):
-        """ Try to determine the software version in case the program is in a git repository.
-        """
+    def get_qudi_version(self) -> str:
+        """ Try to determine the software version in case the program is in a git repository """
         # Try to get repository information if qudi has been checked out as git repo
         if Repo is not None:
             try:
@@ -377,9 +320,8 @@ class QudiMainGui(GuiBase):
             self.log.exception('Unexpected error while trying to get qudi version:')
         return 'unknown'
 
-    def load_configuration(self):
-        """ Ask the user for a file where the configuration should be loaded from
-        """
+    def load_configuration(self) -> None:
+        """ Ask the user for a file where the configuration should be loaded from """
         filename = QtWidgets.QFileDialog.getOpenFileName(self.mw,
                                                          'Load Configuration',
                                                          get_default_config_dir(True),
@@ -399,7 +341,7 @@ class QudiMainGui(GuiBase):
             if reply == QtWidgets.QMessageBox.Yes:
                 self._qudi_main.restart()
 
-    def new_configuration(self):
+    def new_configuration(self) -> None:
         """ Prompt the user to open the graphical config editor in a subprocess in order to
         edit/create config files for qudi.
         """
