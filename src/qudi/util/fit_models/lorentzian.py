@@ -27,7 +27,7 @@ import numpy as np
 from typing import Sequence
 from qudi.util.fit_models.model import FitModelBase, estimator
 from qudi.util.fit_models.helpers import correct_offset_histogram, smooth_data, sort_check_data
-from qudi.util.fit_models.helpers import estimate_double_peaks, estimate_triple_peaks
+from qudi.util.fit_models.helpers import estimate_double_peaks, estimate_triple_peaks, estimate_quad_peaks
 from qudi.util.fit_models.linear import Linear
 
 
@@ -275,6 +275,101 @@ class TripleLorentzian(FitModelBase):
         estimate['amplitude_3'].set(value=-estimate['amplitude_3'].value,
                                     min=-estimate['amplitude_3'].max,
                                     max=-estimate['amplitude_3'].min)
+        return estimate
+
+
+class QuadLorentzian(FitModelBase):
+    """ ToDo: Document
+    """
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.set_param_hint('offset', value=0, min=-np.inf, max=np.inf)
+        self.set_param_hint('amplitude_1', value=0, min=-np.inf, max=np.inf)
+        self.set_param_hint('amplitude_2', value=0, min=-np.inf, max=np.inf)
+        self.set_param_hint('amplitude_3', value=0, min=-np.inf, max=np.inf)
+        self.set_param_hint('amplitude_4', value=0, min=-np.inf, max=np.inf)
+        self.set_param_hint('center_1', value=0., min=-np.inf, max=np.inf)
+        self.set_param_hint('center_2', value=0., min=-np.inf, max=np.inf)
+        self.set_param_hint('center_3', value=0., min=-np.inf, max=np.inf)
+        self.set_param_hint('center_4', value=0., min=-np.inf, max=np.inf)
+        self.set_param_hint('sigma_1', value=0., min=0., max=np.inf)
+        self.set_param_hint('sigma_2', value=0., min=0., max=np.inf)
+        self.set_param_hint('sigma_3', value=0., min=0., max=np.inf)
+        self.set_param_hint('sigma_4', value=0., min=0., max=np.inf)
+
+    @staticmethod
+    def _model_function(x, offset, center_1, center_2, center_3,center_4, sigma_1, sigma_2, sigma_3, sigma_4,
+                        amplitude_1, amplitude_2, amplitude_3, amplitude_4):
+        return offset + multiple_lorentzian(x,
+                                            (center_1, center_2, center_3, center_4),
+                                            (sigma_1, sigma_2, sigma_3, sigma_4),
+                                            (amplitude_1, amplitude_2, amplitude_3, amplitude_4))
+
+    @estimator('Peaks')
+    def estimate_peaks(self, data, x):
+        data, x = sort_check_data(data, x)
+        data_smoothed, filter_width = smooth_data(data)
+        leveled_data_smooth, offset = correct_offset_histogram(data_smoothed,
+                                                               bin_width=2 * filter_width)
+        estimate, limits = estimate_quad_peaks(leveled_data_smooth, x, filter_width)
+
+        params = self.make_params()
+        params['amplitude_1'].set(value=estimate['height'][0],
+                                  min=limits['height'][0][0],
+                                  max=limits['height'][0][1])
+        params['amplitude_2'].set(value=estimate['height'][1],
+                                  min=limits['height'][1][0],
+                                  max=limits['height'][1][1])
+        params['amplitude_3'].set(value=estimate['height'][2],
+                                  min=limits['height'][2][0],
+                                  max=limits['height'][2][1])
+        params['amplitude_4'].set(value=estimate['height'][3],
+                                  min=limits['height'][3][0],
+                                  max=limits['height'][3][1])
+        params['center_1'].set(value=estimate['center'][0],
+                               min=limits['center'][0][0],
+                               max=limits['center'][0][1])
+        params['center_2'].set(value=estimate['center'][1],
+                               min=limits['center'][1][0],
+                               max=limits['center'][1][1])
+        params['center_3'].set(value=estimate['center'][2],
+                               min=limits['center'][2][0],
+                               max=limits['center'][2][1])
+        params['center_4'].set(value=estimate['center'][3],
+                               min=limits['center'][3][0],
+                               max=limits['center'][3][1])
+        params['sigma_1'].set(value=estimate['fwhm'][0] / 2.3548,
+                              min=limits['fwhm'][0][0] / 2.3548,
+                              max=limits['fwhm'][0][1] / 2.3548)
+        params['sigma_2'].set(value=estimate['fwhm'][1] / 2.3548,
+                              min=limits['fwhm'][1][0] / 2.3548,
+                              max=limits['fwhm'][1][1] / 2.3548)
+        params['sigma_3'].set(value=estimate['fwhm'][2] / 2.3548,
+                              min=limits['fwhm'][2][0] / 2.3548,
+                              max=limits['fwhm'][2][1] / 2.3548)
+        params['sigma_4'].set(value=estimate['fwhm'][3] / 2.3548,
+                              min=limits['fwhm'][3][0] / 2.3548,
+                              max=limits['fwhm'][3][1] / 2.3548)
+        return params
+
+    @estimator('Dips')
+    def estimate_dips(self, data, x):
+        estimate = self.estimate_peaks(-data, x)
+        estimate['offset'].set(value=-estimate['offset'].value,
+                               min=-estimate['offset'].max,
+                               max=-estimate['offset'].min)
+        estimate['amplitude_1'].set(value=-estimate['amplitude_1'].value,
+                                    min=-estimate['amplitude_1'].max,
+                                    max=-estimate['amplitude_1'].min)
+        estimate['amplitude_2'].set(value=-estimate['amplitude_2'].value,
+                                    min=-estimate['amplitude_2'].max,
+                                    max=-estimate['amplitude_2'].min)
+        estimate['amplitude_3'].set(value=-estimate['amplitude_3'].value,
+                                    min=-estimate['amplitude_3'].max,
+                                    max=-estimate['amplitude_3'].min)
+        estimate['amplitude_4'].set(value=-estimate['amplitude_4'].value,
+                                    min=-estimate['amplitude_4'].max,
+                                    max=-estimate['amplitude_4'].min)
         return estimate
 
 

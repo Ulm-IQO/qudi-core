@@ -199,3 +199,46 @@ def estimate_triple_peaks(data, x, minimum_distance=None):
               'fwhm'  : ((x_spacing, x_span),) * 3,
               'center': ((min(x) - x_span / 2, max(x) + x_span / 2),) * 3}
     return estimate, limits
+
+def estimate_quad_peaks(data, x, minimum_distance=None):
+    # Find peaks along with width and amplitude estimation
+    peak_indices, peak_heights, peak_widths = find_highest_peaks(data,
+                                                                 peak_count=4,
+                                                                 width=minimum_distance,
+                                                                 height=0.05 * max(data))
+
+    x_spacing = min(abs(np.ediff1d(x)))
+    x_span = abs(x[-1] - x[0])
+    data_span = abs(max(data) - min(data))
+
+    # Replace missing peaks with sensible default value
+    if len(peak_indices) == 3 or len(peak_indices) == 2:
+        # If just three peaks were found, assume it is three peaks overlapping and put two in the
+        # middle
+        middle_peak_left_index = abs(min(peak_indices) - max(peak_indices)) // 3
+        middle_peak_right_index = 2*abs(min(peak_indices) - max(peak_indices)) // 3
+        middle_peak_width = np.mean(peak_widths)
+        middle_peak_height = np.mean(peak_heights)
+        peak_indices = (peak_indices[0], middle_peak_left_index, middle_peak_right_index, peak_indices[1])
+        peak_heights = (peak_heights[0], middle_peak_height, middle_peak_height, peak_heights[1])
+        peak_widths = (peak_widths[0], middle_peak_width, middle_peak_width, peak_widths[1])
+    elif len(peak_indices) == 1:
+        # If just one peak was found, assume it is three peaks overlapping and split it
+        left_peak_index = max(0, int(round(peak_indices[0] - peak_widths[0] / 2)))
+        right_peak_index = min(len(x) - 1, int(round(peak_indices[0] + peak_widths[0] / 2)))
+        peak_indices = (left_peak_index, peak_indices[0], peak_indices[0], right_peak_index)
+        peak_heights = (peak_heights[0]/ 2, peak_heights[0] / 2, peak_heights[0] / 2, peak_heights[0] / 2)
+        peak_widths =  (peak_widths[0] / 2, peak_widths[0] / 2, peak_widths[0] / 2, peak_widths[0] / 2)
+    elif len(peak_indices) == 0:
+        # If no peaks have been found, just make a wild guess
+        peak_indices = (len(x) // 5, 2*len(x) // 5, 3*len(x) // 5, 4*len(x)//5)
+        peak_heights = (data_span, data_span, data_span, data_span)
+        peak_widths = (x_spacing * 10, x_spacing * 10, x_spacing * 10, x_spacing * 10)
+
+    estimate = {'height': np.asarray(peak_heights),
+                'fwhm'  : np.asarray(peak_widths) * x_spacing,
+                'center': np.asarray(x[np.asarray(peak_indices)])}
+    limits = {'height': ((0, 2 * data_span),) * 4,
+              'fwhm'  : ((x_spacing, x_span),) * 4,
+              'center': ((min(x) - x_span / 2, max(x) + x_span / 2),) * 4}
+    return estimate, limits
