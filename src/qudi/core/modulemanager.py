@@ -314,7 +314,6 @@ class LocalManagedModule(ManagedModule):
             else:
                 self._connect_module_signals()
                 self._instance.module_state.activate()
-            QtCore.QCoreApplication.instance().processEvents()
         except Exception:
             try:
                 self._disconnect_module_signals()
@@ -351,7 +350,6 @@ class LocalManagedModule(ManagedModule):
                             self._join_instance_thread()
                     else:
                         self._instance.module_state.deactivate()
-                    # QtCore.QCoreApplication.instance().processEvents()
                 finally:
                     self._disconnect_module_signals()
         finally:
@@ -410,8 +408,8 @@ class LocalManagedModule(ManagedModule):
             raise RuntimeError(f'Error during __init__ of qudi module "{self.url}".') from err
 
     def _connect_module_signals(self) -> None:
-        self._instance.sigStateChanged.connect(self._update_state, QtCore.Qt.QueuedConnection)
-        self._instance.sigAppDataChanged.connect(self._update_appdata, QtCore.Qt.QueuedConnection)
+        self._instance.sigStateChanged.connect(self._update_state)
+        self._instance.sigAppDataChanged.connect(self._update_appdata)
 
     def _disconnect_module_signals(self) -> None:
         self._instance.sigAppDataChanged.disconnect()
@@ -525,7 +523,6 @@ class RemoteManagedModule(ManagedModule):
             raise
         finally:
             self.__activating = False
-        QtCore.QCoreApplication.instance().processEvents()
         _logger.info(f'Remote module "{self.name}" at "{self.url}" successfully activated.')
 
     @QtCore.Slot()
