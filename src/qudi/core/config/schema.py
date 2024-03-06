@@ -82,10 +82,6 @@ def config_schema() -> Dict[str, Any]:
                         'type': 'boolean',
                         'default': True
                     },
-                    'hide_manager_window': {
-                        'type': 'boolean',
-                        'default': False
-                    },
                     'stylesheet': {
                         'type': 'string',
                         'pattern': r'^[^.]+\.qss$',
@@ -106,7 +102,32 @@ def config_schema() -> Dict[str, Any]:
                             'type': 'string'
                         },
                         'default': list()
-                    }
+                    },
+                    'main_gui': {
+                        'type': ['null', 'object'],
+                        'required': ['module.Class'],
+                        'additionalProperties': False,
+                        'properties': {
+                            'module.Class': {
+                                'type': 'string',
+                                'pattern': f'^gui(\\.{__module_name_pattern})+$',
+                            },
+                            'options': {
+                                'type': 'object',
+                                'additionalProperties': True,
+                                'default': dict()
+                            },
+                            'connect': {
+                                'type': 'object',
+                                'additionalProperties': {
+                                    'type': 'string',
+                                    'pattern': f'^{__module_name_pattern}$'
+                                },
+                                'default': dict()
+                            }
+                        },
+                        'default': {'module.Class': 'gui.main_gui.QudiMainGui'}
+                    },
                 }
             },
             'gui': {

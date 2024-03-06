@@ -35,8 +35,8 @@ except ImportError:
 from qudi.core.statusvariable import StatusVar
 from qudi.core.threadmanager import ThreadManager
 from qudi.util.paths import get_main_dir, get_default_config_dir
-from qudi.core.gui.main_gui.errordialog import ErrorDialog
-from qudi.core.gui.main_gui.mainwindow import QudiMainWindow
+from qudi.gui.main_gui.errordialog import ErrorDialog
+from qudi.gui.main_gui.mainwindow import QudiMainWindow
 from qudi.core.module import GuiBase
 from qudi.core.logger import get_signal_handler
 from qudi.core.config import Configuration
@@ -50,7 +50,7 @@ class QudiMainGui(GuiBase):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.error_dialog = None
-        self.mw = None
+        self._mw = None
         self._has_console = False  # Flag indicating if an IPython console is available
 
     def on_activate(self) -> None:

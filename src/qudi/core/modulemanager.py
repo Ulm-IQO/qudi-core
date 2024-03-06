@@ -291,7 +291,7 @@ class LocalManagedModule(ManagedModule):
             return
 
         # Do nothing if already active (except showing the GUI again)
-        if not self.state.deactivated:
+        if self._instance is not None:
             if self.base == ModuleBase.GUI:
                 self._instance.show()
             return
@@ -314,7 +314,7 @@ class LocalManagedModule(ManagedModule):
             else:
                 self._connect_module_signals()
                 self._instance.module_state.activate()
-                QtCore.QCoreApplication.instance().processEvents()
+            QtCore.QCoreApplication.instance().processEvents()
         except Exception:
             try:
                 self._disconnect_module_signals()
@@ -334,7 +334,7 @@ class LocalManagedModule(ManagedModule):
             return
 
         # Avoid circular recursion
-        if self.__deactivating or self.state.deactivated:
+        if self.__deactivating or self._instance is None:
             return
 
         self.__deactivating = True
@@ -354,7 +354,6 @@ class LocalManagedModule(ManagedModule):
                     # QtCore.QCoreApplication.instance().processEvents()
                 finally:
                     self._disconnect_module_signals()
-                    self._update_state(ModuleState.DEACTIVATED)
         finally:
             self._instance = None
             self.__deactivating = False
@@ -607,6 +606,7 @@ class ModuleManager(QtCore.QAbstractTableModel):
     def __init__(self, *args, qudi_main: 'Qudi', **kwargs):
         super().__init__(*args, **kwargs)
         self._qudi_main = qudi_main
+        self._main_gui: Union[None, LocalManagedModule] = None
         self._modules = list()
         self._name_to_module = dict()
         self._name_to_index = dict()
@@ -676,6 +676,70 @@ class ModuleManager(QtCore.QAbstractTableModel):
             elif role == QtCore.Qt.UserRole:
                 return 'ManagedModule'
         return None
+
+    @property
+    def has_main_gui(self) -> bool:
+        return self._main_gui is not None
+
+    def set_main_gui(self, configuration: Mapping[str, Any]) -> None:
+        """ Set a LocalManagedModule instance as main GUI module. This module is started
+        automatically, independent on the autostart configuration and does not show up in any
+        module list.
+        """
+        if not current_is_main_thread():
+            raise RuntimeError(
+                'Modules can only be added/removed from ModuleManager by the qudi main thread'
+            )
+        if self._main_gui is None:
+            self._main_gui = LocalManagedModule('__maingui__',
+                                                ModuleBase.GUI,
+                                                configuration,
+                                                self._qudi_main)
+        else:
+            raise RuntimeError('Main GUI already set')
+
+    def activate_main_gui(self) -> None:
+        """ Activates the main GUI module. Module must be set beforehand via "set_main_gui". """
+        if not current_is_main_thread():
+            raise RuntimeError('Main GUI module can be (de-)activated by the qudi main thread only')
+        if self._main_gui is None:
+            raise RuntimeError('No main GUI set to activate')
+        self._main_gui.activate()
+
+    def deactivate_main_gui(self) -> None:
+        """ Deactivates the main GUI module. Module must be set beforehand via "set_main_gui". """
+        if not current_is_main_thread():
+            raise RuntimeError('Main GUI module can be (de-)activated by the qudi main thread only')
+        if self._main_gui is None:
+            raise RuntimeError('No main GUI set to deactivate')
+        self._main_gui.deactivate()
+
+    def clear_main_gui_appdata(self) -> None:
+        """ Clear AppData of main GUI module. Module must be set beforehand via "set_main_gui". """
+        if self._main_gui is None:
+            raise RuntimeError('No main GUI set to clear AppData for')
+        self._main_gui.clear_appdata()
+
+    def main_gui_has_appdata(self) -> bool:
+        """ Check "has_appdata" flag of main GUI module """
+        try:
+            return self._main_gui.has_appdata
+        except AttributeError:
+            return False
+
+    def get_main_gui_state(self) -> ModuleState:
+        """ Get ModuleState enum of main GUI module """
+        try:
+            return self._main_gui.state
+        except AttributeError:
+            return ModuleState.DEACTIVATED
+
+    def get_main_gui_instance(self) -> GuiBase:
+        """ Get the main GUI module GuiBase instance """
+        try:
+            return self._main_gui.instance
+        except AttributeError:
+            raise RuntimeError('No main GUI set to get module instance for') from None
 
     def add_module(self,
                    name: str,
@@ -797,6 +861,11 @@ class ModuleManager(QtCore.QAbstractTableModel):
             self._name_to_index.clear()
             self._name_to_module.clear()
             self.endResetModel()
+            if self._main_gui is not None:
+                try:
+                    self._main_gui.deactivate()
+                finally:
+                    self._main_gui = None
 
     def _get_index_by_name(self, name: str) -> int:
         """ Get the row index by module name """

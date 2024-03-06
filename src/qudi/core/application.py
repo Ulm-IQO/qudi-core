@@ -2,7 +2,7 @@
 """
 This file contains the qudi Manager class.
 
-Copyright (c) 2021, the qudi developers. See the AUTHORS.md file at the top-level directory of this
+Copyright (c) 2021-2024, the qudi developers. See the AUTHORS.md file at the top-level directory of this
 distribution and on <https://github.com/Ulm-IQO/qudi-core/>
 
 This file is part of qudi.
@@ -27,67 +27,211 @@ import inspect
 import warnings
 import traceback
 import faulthandler
-from logging import DEBUG, INFO
-from PySide2 import QtCore, QtWidgets
+from logging import DEBUG, INFO, Logger
+from PySide2 import QtCore, QtWidgets, QtGui
+from typing import Optional, Union, Dict, Callable, Tuple, Iterable, List
 
 from qudi.core.logger import init_rotating_file_handler, init_record_model_handler, clear_handlers
 from qudi.core.logger import get_logger, set_log_level
-from qudi.util.paths import get_main_dir, get_default_log_dir
+from qudi.util.paths import get_default_log_dir, get_artwork_dir
 from qudi.util.mutex import Mutex
 from qudi.util.colordefs import QudiMatplotlibStyle
 from qudi.core.config import Configuration, ValidationError, YAMLError
 from qudi.core.watchdog import AppWatchdog
+from qudi.core.module import ModuleState, ModuleBase
 from qudi.core.modulemanager import ModuleManager
 from qudi.core.threadmanager import ThreadManager
-from qudi.core.gui.gui import Gui
+from qudi.core.gui import configure_pyqtgraph, initialize_app_icon, set_theme, set_stylesheet
+from qudi.core.gui import close_windows, prompt_restart, prompt_shutdown
 from qudi.core.servers import RemoteModulesServer, QudiNamespaceServer
 
-# Use non-GUI "Agg" backend for matplotlib by default since it is reasonably thread-safe. Otherwise
-# you can only plot from main thread and not e.g. in a logic module.
-# This causes qudi to not be able to spawn matplotlib GUIs (by calling matplotlib.pyplot.show())
-try:
-    import matplotlib as _mpl
-    _mpl.use('Agg')
-except ImportError:
-    pass
 
-# Enable the High DPI scaling support of Qt5
-os.environ['QT_ENABLE_HIGHDPI_SCALING'] = '1'
+def setup_environment() -> None:
+    # Set QT_API environment variable to PySide2
+    os.environ['QT_API'] = 'pyside2'
 
-if sys.platform == 'win32':
-    # Set QT_LOGGING_RULES environment variable to suppress qt.svg related warnings that otherwise
-    # spam the log due to some known Qt5 bugs, e.g. https://bugreports.qt.io/browse/QTBUG-52079
-    os.environ['QT_LOGGING_RULES'] = 'qt.svg.warning=false'
-else:
-    # The following will prevent Qt to spam the logs on X11 systems with enough messages
-    # to significantly slow the program down. Most of those warnings should have been
-    # notice level or lower. This is a known problem since Qt does not fully comply to X11.
-    os.environ['QT_LOGGING_RULES'] = '*.debug=false;*.info=false;*.notice=false;*.warning=false'
+    # Enable the High DPI scaling support of Qt5
+    os.environ['QT_ENABLE_HIGHDPI_SCALING'] = '1'
 
-# Make icons work on non-X11 platforms, import a custom theme
-if sys.platform == 'win32':
-    try:
-        import ctypes
-        myappid = 'qudicore-app'  # arbitrary string
-        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
-    except ImportError:
-        raise
-    except:
-        print('SetCurrentProcessExplicitAppUserModelID failed! This is probably not Microsoft '
-              'Windows!')
+    if sys.platform == 'win32':
+        # Set QT_LOGGING_RULES environment variable to suppress qt.svg related warnings that
+        # otherwise spam the log due to some known Qt5 bugs,
+        # e.g. https://bugreports.qt.io/browse/QTBUG-52079
+        os.environ['QT_LOGGING_RULES'] = 'qt.svg.warning=false'
+    else:
+        # The following will prevent Qt to spam the logs on X11 systems with enough messages
+        # to significantly slow the program down. Most of those warnings should have been
+        # notice level or lower. This is a known problem since Qt does not fully comply to X11.
+        os.environ['QT_LOGGING_RULES'] = '*.debug=false;*.info=false;*.notice=false;*.warning=false'
 
-# Set default Qt locale to "C" in order to avoid surprises with number formats and other things
-# QtCore.QLocale.setDefault(QtCore.QLocale('en_US'))
-QtCore.QLocale.setDefault(QtCore.QLocale.c())
+
+class _ModuleListProxyModel(QtCore.QSortFilterProxyModel):
+    """ Model proxy that filters all modules for ModuleBase.GUI type and collapses the table model
+    to a list of data tuples
+    """
+    def columnCount(self, parent: Optional[QtCore.QModelIndex] = None) -> int:
+        return 1
+
+    def filterAcceptsRow(self, source_row: int, source_parent: QtCore.QModelIndex) -> bool:
+        return self.sourceModel().index(source_row, 0, source_parent).data() == ModuleBase.GUI
+
+    def data(self,
+             index: QtCore.QModelIndex,
+             role: Optional[QtCore.Qt.ItemDataRole] = QtCore.Qt.DisplayRole
+             ) -> Union[None, Tuple[str, ModuleState]]:
+        if index.isValid() and (role == QtCore.Qt.DisplayRole):
+            source_index = self.mapToSource(index)
+            module = source_index.data(QtCore.Qt.UserRole)
+            return module.name, module.state
+        return None
+
+
+class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
+    """ QSystemTrayIcon for graphical qudi application """
+    def __init__(self,
+                 module_manager: ModuleManager,
+                 quit_callback: Callable[[], None],
+                 restart_callback: Callable[[], None],
+                 parent: Optional[QtCore.QObject] = None):
+        """ Tray icon constructor. Adds all the appropriate menus and actions. """
+        super().__init__(icon=QtWidgets.QApplication.instance().windowIcon(), parent=parent)
+
+        self._module_manager = module_manager
+        self._module_actions: Dict[str, QtWidgets.QAction] = dict()
+        self._right_menu = QtWidgets.QMenu('Menu')
+        self._left_menu = QtWidgets.QMenu('Modules')
+
+        iconpath = os.path.join(get_artwork_dir(), 'icons')
+
+        icon = QtGui.QIcon()
+        icon.addFile(os.path.join(iconpath, 'application-exit'), QtCore.QSize(16, 16))
+        self._quit_action = QtWidgets.QAction(icon, 'Quit', self._right_menu)
+        self._quit_action.triggered.connect(quit_callback, QtCore.Qt.QueuedConnection)
+        self._right_menu.addAction(self._quit_action)
+        icon = QtGui.QIcon()
+        icon.addFile(os.path.join(iconpath, 'view-refresh'), QtCore.QSize(16, 16))
+        self._restart_action = QtWidgets.QAction(icon, 'Restart', self._right_menu)
+        self._restart_action.triggered.connect(restart_callback, QtCore.Qt.QueuedConnection)
+        self._right_menu.addAction(self._restart_action)
+        if self._module_manager.has_main_gui:
+            icon = QtGui.QIcon()
+            icon.addFile(os.path.join(iconpath, 'go-home'), QtCore.QSize(16, 16))
+            self._main_gui_action = QtWidgets.QAction(icon, 'Main GUI', self._left_menu)
+            self._main_gui_action.triggered.connect(
+                self._module_manager.activate_main_gui,
+                QtCore.Qt.QueuedConnection
+            )
+            self._left_menu.addAction(self._main_gui_action)
+            self._left_menu.addSeparator()
+
+        self.setContextMenu(self._right_menu)
+        self.activated.connect(self._handle_activation)
+
+        self._model_proxy = _ModuleListProxyModel(parent=self)
+        self._model_proxy.setSourceModel(module_manager)
+        self._model_proxy.modelReset.connect(self.__reset_modules)
+        self._model_proxy.rowsInserted.connect(self.__reset_modules)
+        self._model_proxy.rowsRemoved.connect(self.__reset_modules)
+        self._model_proxy.dataChanged.connect(self.__module_states_changed)
+        self.__reset_modules()
+
+    @QtCore.Slot(str, str, object, object)
+    def notification_bubble(self,
+                            title: str,
+                            message: str,
+                            time: Optional[float] = None,
+                            icon: Optional[QtGui.QIcon] = None) -> None:
+        """ Helper method to invoke balloon messages in the system tray by calling
+        QSystemTrayIcon.showMessage.
+
+        @param str title: The notification title of the balloon
+        @param str message: The message to be shown in the balloon
+        @param float time: optional, The lingering time of the balloon in seconds
+        @param QIcon icon: optional, an icon to be used in the balloon. "None" will use OS default.
+        """
+        if self.supportsMessages():
+            if icon is None:
+                icon = QtGui.QIcon()
+            if time is None:
+                time = 10
+            self.showMessage(title, message, icon, int(round(time * 1000)))
+        else:
+            get_logger('pop-up message').warning(f'{title}:\n{message}')
+
+    @QtCore.Slot(QtWidgets.QSystemTrayIcon.ActivationReason)
+    def _handle_activation(self, reason: QtWidgets.QSystemTrayIcon.ActivationReason) -> None:
+        """ This method is called when the tray icon is left-clicked. It opens a menu at the
+        position of the click.
+        """
+        if reason == self.Trigger:
+            self._left_menu.exec_(QtGui.QCursor.pos())
+
+    def _add_module_action(self, name: str) -> None:
+        if name not in self._module_actions:
+            icon = QtGui.QIcon()
+            iconpath = os.path.join(get_artwork_dir(), 'icons')
+            icon.addFile(os.path.join(iconpath, 'go-next'))
+            action = QtWidgets.QAction(icon=icon, text=name)
+            action.triggered.connect(lambda: self._module_manager.activate_module(name))
+            self._left_menu.addAction(action)
+            self._module_actions[name] = action
+
+    def _remove_module_action(self, name: str) -> None:
+        action = self._module_actions.pop(name, None)
+        if action is not None:
+            action.triggered.disconnect()
+            self._left_menu.removeAction(action)
+
+    def _clear_module_actions(self) -> None:
+        for label in list(self._module_actions):
+            self._remove_module_action(label)
+
+    @QtCore.Slot()
+    def __reset_modules(self) -> None:
+        self._clear_module_actions()
+        module_states = [
+            self._model_proxy.index(row, 0).data() for row in range(self._model_proxy.rowCount())
+        ]
+        for name, state in module_states:
+            if not state.deactivated:
+                self._add_module_action(name)
+
+    @QtCore.Slot(QtCore.QModelIndex, QtCore.QModelIndex, object)
+    def __module_states_changed(self,
+                               top_left: QtCore.QModelIndex,
+                               bottom_right: QtCore.QModelIndex,
+                               roles: Iterable[QtCore.Qt.ItemDataRole]) -> None:
+        model = top_left.model()
+        for row in range(top_left.row(), bottom_right.row() + 1):
+            name, state = model.index(row, 0).data()
+            if state.deactivated:
+                self._remove_module_action(name)
+            else:
+                self._add_module_action(name)
 
 
 class Qudi(QtCore.QObject):
-    """
-
+    """ The main runtime singleton for qudi.
+    Sets up everything and calling "run" starts the application.
     """
     _instance = None
     _run_lock = Mutex()
     _quit_lock = Mutex()
+
+    no_gui: bool
+    debug_mode: bool
+    log_dir: str
+    log: Logger
+    configuration: Configuration
+    thread_manager: ThreadManager
+    module_manager: ModuleManager
+    remote_modules_server: Union[RemoteModulesServer, None]
+    local_namespace_server: QudiNamespaceServer
+    watchdog: Union[AppWatchdog, None]
+    tray_icon: Union[SystemTrayIcon, None]
+    _configured_extension_paths: List[str]
+    _is_running: bool
+    _shutting_down: bool
 
     def __new__(cls, *args, **kwargs):
         if cls._instance is None or cls._instance() is None:
@@ -99,21 +243,20 @@ class Qudi(QtCore.QObject):
             'Qudi.instance() to get a reference to the already created instance.'
         )
 
-    def __init__(self, no_gui=False, debug=False, log_dir='', config_file=None):
-        super().__init__()
+    def __init__(self,
+                 no_gui: Optional[bool] = False,
+                 debug: Optional[bool] = False,
+                 log_dir: Optional[str] = '',
+                 config_file: Optional[str] = None,
+                 parent: Optional[QtCore.QObject] = None):
+        super().__init__(parent=parent)
 
         # CLI arguments
         self.no_gui = bool(no_gui)
         self.debug_mode = bool(debug)
         self.log_dir = str(log_dir) if os.path.isdir(log_dir) else get_default_log_dir(
-            create_missing=True)
-
-        # Disable pyqtgraph "application exit workarounds" because they cause errors on exit
-        try:
-            import pyqtgraph
-            pyqtgraph.setConfigOption('exitCleanup', False)
-        except ImportError:
-            pass
+            create_missing=True
+        )
 
         # Enable stack trace output for SIGSEGV, SIGFPE, SIGABRT, SIGBUS and SIGILL signals
         # -> e.g. for segmentation faults
@@ -129,7 +272,7 @@ class Qudi(QtCore.QObject):
             warnings.simplefilter('always')
 
         # Set up logger for qudi main instance
-        self.log = get_logger(__class__.__name__)  # will be "qudi.Qudi" in custom logger
+        self.log = get_logger(__class__.__name__)  # "qudi.Qudi" in custom logger
         sys.excepthook = self._qudi_excepthook
 
         # Load configuration from disc if possible
@@ -174,18 +317,11 @@ class Qudi(QtCore.QObject):
             force_remote_calls_by_value=self.configuration['force_remote_calls_by_value']
         )
         self.watchdog = None
-        self.gui = None
+        self.tray_icon = None
 
         self._configured_extension_paths = list()
         self._is_running = False
         self._shutting_down = False
-
-        # Set qudi style for matplotlib
-        try:
-            import matplotlib.pyplot as plt
-            plt.style.use(QudiMatplotlibStyle.style)
-        except ImportError:
-            pass
 
     def _qudi_excepthook(self, ex_type, ex_value, ex_traceback):
         """ Handler function to be used as sys.excepthook. Should forward all unhandled exceptions
@@ -228,10 +364,10 @@ class Qudi(QtCore.QObject):
         return cls._instance()
 
     @property
-    def is_running(self):
+    def is_running(self) -> bool:
         return self._is_running
 
-    def _remove_extensions_from_path(self):
+    def _remove_extensions_from_path(self) -> None:
         # Clean up previously configured expansion paths
         for ext_path in self._configured_extension_paths:
             try:
@@ -239,7 +375,7 @@ class Qudi(QtCore.QObject):
             except ValueError:
                 pass
 
-    def _add_extensions_to_path(self):
+    def _add_extensions_to_path(self) -> None:
         extensions = self.configuration['extension_paths']
         # Add qudi extension paths to sys.path
         insert_index = 1
@@ -247,8 +383,7 @@ class Qudi(QtCore.QObject):
             sys.path.insert(insert_index, ext_path)
         self._configured_extension_paths = extensions
 
-    @QtCore.Slot()
-    def _configure_qudi(self):
+    def _configure_qudi_modules(self) -> None:
         """
         """
         if self.configuration.file_path is None:
@@ -266,9 +401,12 @@ class Qudi(QtCore.QObject):
         self._add_extensions_to_path()
 
         # Configure qudi modules
-        for base in ['hardware', 'logic', 'gui']:
+        main_gui_cfg = self.configuration['main_gui']
+        if main_gui_cfg is not None:
+            self.module_manager.set_main_gui(main_gui_cfg)
+        for base in ModuleBase:
             # Create ManagedModule instance by adding each module to ModuleManager
-            for module_name, module_cfg in self.configuration[base].items():
+            for module_name, module_cfg in self.configuration[base.value].items():
                 try:
                     self.module_manager.add_module(name=module_name,
                                                    base=base,
@@ -281,25 +419,53 @@ class Qudi(QtCore.QObject):
         print('> Qudi configuration complete!')
         self.log.info('Qudi configuration complete!')
 
-    def _start_gui(self):
-        if self.no_gui:
-            return
-        self.gui = Gui(qudi_instance=self, stylesheet_path=self.configuration['stylesheet'])
-        if not self.configuration['hide_manager_window']:
-            self.gui.activate_main_gui()
+    def _start_gui(self) -> None:
+        app = QtWidgets.QApplication.instance()
+        if app is None:
+            raise RuntimeError('No Qt GUI app running (no QApplication instance).')
+
+        # Configure App for GUI mode
+        app.setQuitOnLastWindowClosed(False)
+        initialize_app_icon()
+        set_theme()
+        set_stylesheet(self.configuration['stylesheet'])
+        configure_pyqtgraph()
+        # Create system tray icon
+        self.tray_icon = SystemTrayIcon(module_manager=self.module_manager,
+                                        quit_callback=self.quit,
+                                        restart_callback=self.restart,
+                                        parent=None)
+        self.tray_icon.show()
+        # Start main GUI
+        if self.module_manager.has_main_gui:
+            self.module_manager.activate_main_gui()
+
+    def _stop_gui(self) -> None:
+        try:
+            if self.module_manager.has_main_gui:
+                self.module_manager.deactivate_main_gui()
+        finally:
+            self.tray_icon.hide()
+            self.tray_icon = None
+            self.log.info('Closing remaining windows...')
+            print('> Closing remaining windows...')
+            close_windows()
 
     def _start_startup_modules(self):
-        for module in self.configuration['startup_modules']:
-            print(f'> Loading startup module: {module}')
-            self.log.info(f'Loading startup module: {module}')
-            # Do not crash if a module can not be started
-            try:
-                self.module_manager.activate_module(module)
-            except:
-                self.log.exception(f'Unable to activate autostart module "{module}":')
+        startup_modules = self.configuration['startup_modules']
+        if startup_modules:
+            print(f'> Loading startup modules')
+            self.log.info(f'Loading startup modules')
+            for module in startup_modules:
+                # Do not crash if a module can not be started
+                try:
+                    self.module_manager.activate_module(module)
+                except:
+                    self.log.exception(f'Unable to activate startup module "{module}":')
 
     def run(self):
-        """
+        """ Configures qudi runtime components and starts the Qt event loop. Runs indefinitely
+        until QtCore.QCoreApplication.exit() is called, e.g. via calling quit().
         """
         with self._run_lock:
             if self._is_running:
@@ -310,6 +476,30 @@ class Qudi(QtCore.QObject):
             self.log.info(startup_info)
             print(f'> {startup_info}')
 
+            setup_environment()
+
+            # Set default Qt locale to "C" in order to avoid surprises with number formats and
+            # other things
+            # QtCore.QLocale.setDefault(QtCore.QLocale('en_US'))
+            QtCore.QLocale.setDefault(QtCore.QLocale.c())
+
+            # Use non-GUI "Agg" backend for matplotlib by default since it is reasonably
+            # thread-safe. Otherwise you can only plot from main thread and not e.g. in a logic
+            # module. This causes qudi to not be able to spawn matplotlib GUIs e.g. by calling
+            # matplotlib.pyplot.show()
+            try:
+                import matplotlib as _mpl
+                _mpl.use('Agg')
+            except ImportError:
+                pass
+
+            # Set qudi style for matplotlib
+            try:
+                import matplotlib.pyplot as plt
+                plt.style.use(QudiMatplotlibStyle.style)
+            except ImportError:
+                pass
+
             # Get QApplication instance
             app_cls = QtCore.QCoreApplication if self.no_gui else QtWidgets.QApplication
             app = app_cls.instance()
@@ -319,18 +509,19 @@ class Qudi(QtCore.QObject):
             # Install app watchdog
             self.watchdog = AppWatchdog(self.interrupt_quit)
 
+            # Apply module configuration
+            self._configure_qudi_modules()
+
             # Start module servers
             if self.remote_modules_server is not None:
                 self.remote_modules_server.start()
             self.local_namespace_server.start()
 
-            # Apply configuration to qudi
-            self._configure_qudi()
+            # Configure GUI framework if needed
+            if not self.no_gui:
+                self._start_gui()
 
-            # Start GUI if needed
-            self._start_gui()
-
-            # Start the startup modules defined in the config file
+            # Start the autostart modules defined in the config file
             self._start_startup_modules()
 
             # Start Qt event loop unless running in interactive mode
@@ -378,12 +569,18 @@ class Qudi(QtCore.QObject):
                             return
                 else:
                     # GUI prompt
+                    if self.module_manager.has_main_gui:
+                        instance = self.module_manager.get_main_gui_instance()
+                        # ToDo: Get QMainWindow instance from GuiBase instance
+                        parent = None
+                    else:
+                        parent = None
                     if restart:
-                        if not self.gui.prompt_restart(locked_modules):
+                        if not prompt_restart(locked_modules, parent):
                             self._shutting_down = False
                             return
                     else:
-                        if not self.gui.prompt_shutdown(locked_modules):
+                        if not prompt_shutdown(locked_modules, parent):
                             self._shutting_down = False
                             return
 
@@ -407,16 +604,9 @@ class Qudi(QtCore.QObject):
             self.log.info('Deactivating modules...')
             print('> Deactivating modules...')
             self.module_manager.clear()
-            print('cleared')
             QtCore.QCoreApplication.instance().processEvents()
             if not self.no_gui:
-                self.log.info('Closing main GUI...')
-                print('> Closing main GUI...')
-                self.gui.deactivate_main_gui()
-                self.log.info('Closing remaining windows...')
-                print('> Closing remaining windows...')
-                self.gui.close_windows()
-                self.gui.close_system_tray_icon()
+                self._stop_gui()
                 QtCore.QCoreApplication.instance().processEvents()
             self.log.info('Stopping remaining threads...')
             print('> Stopping remaining threads...')

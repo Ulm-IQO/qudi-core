@@ -25,6 +25,7 @@ activation and it is destroyed upon deactivation.
 serves as singular central data source for all managed qudi modules and their status. The main GUI 
 and module servers (remote and local) have been adjusted accordingly.
 - GUI modules can no longer be shared by the remote module and local namespace servers.
+- Refactored `qudi.core.gui`
 
 ### Bugfixes
 - Python module reload during runtime is now only performed if explicitly requested by the user
@@ -39,6 +40,10 @@ acquisition with a timeout
 status file
 - Global config option `default_data_dir` accepts strings with a leading `~` character to be 
 expanded into the current users home directory
+- A main GUI that does not show up in the `ModuleManager` model can be configured in the global 
+configuration section (`main_gui` keyword). The default is the known manager GUI. If you set this 
+config option to `None`, no main GUI will be opened on startup. Configured startup modules work the 
+same as before.
 
 ### Other
 - Deprecated calling `qudi.core.module.Base.module_state` and `Connector` meta attributes.
