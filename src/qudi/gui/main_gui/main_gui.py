@@ -112,6 +112,9 @@ class QudiMainGui(GuiBase):
         self.mw.action_load_all_modules.triggered.connect(
             qudi_main.module_manager.activate_all_modules
         )
+        self.mw.action_clear_all_appdata.triggered.connect(
+            qudi_main.module_manager.clear_all_appdata
+        )
         self.mw.action_view_default.triggered.connect(self.reset_default_layout)
         # Connect signals from manager
         qudi_main.configuration.sigConfigChanged.connect(self.update_config_widget)
@@ -137,6 +140,7 @@ class QudiMainGui(GuiBase):
         self.mw.action_reload_qudi.triggered.disconnect()
         self.mw.action_open_configuration_editor.triggered.disconnect()
         self.mw.action_load_all_modules.triggered.disconnect()
+        self.mw.action_clear_all_appdata.triggered.disconnect()
         self.mw.action_view_default.triggered.disconnect()
         # Disconnect signals from manager
         qudi_main.configuration.sigConfigChanged.disconnect(self.update_config_widget)

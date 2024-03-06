@@ -44,6 +44,8 @@ expanded into the current users home directory
 configuration section (`main_gui` keyword). The default is the known manager GUI. If you set this 
 config option to `None`, no main GUI will be opened on startup. Configured startup modules work the 
 same as before.
+- Added a "clear all AppData" action to the main GUI menus that deletes the AppData files of all 
+configured modules at once.
 
 ### Other
 - Deprecated calling `qudi.core.module.Base.module_state` and `Connector` meta attributes.
