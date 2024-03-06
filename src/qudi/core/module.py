@@ -64,6 +64,10 @@ class ModuleState(Enum):
         return self is self.DEACTIVATED
 
     @property
+    def activated(self) -> bool:
+        return self is not self.DEACTIVATED
+
+    @property
     def idle(self) -> bool:
         return self is self.IDLE
 

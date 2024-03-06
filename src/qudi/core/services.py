@@ -148,10 +148,10 @@ class LocalNamespaceService(rpyc.Service):
             ]
             if self._force_remote_calls_by_value:
                 self._module_cache = {mod.name: CachedObjectRpycByValueProxy(mod.instance) for mod
-                                      in modules if not mod.state.deactivated}
+                                      in modules if mod.state.activated}
             else:
                 self._module_cache = {mod.name: mod.instance for mod in modules if
-                                      not mod.state.deactivated}
+                                      mod.state.activated}
 
     def _module_state_changed(self,
                               top_left: QtCore.QModelIndex,

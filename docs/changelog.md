@@ -46,6 +46,8 @@ config option to `None`, no main GUI will be opened on startup. Configured start
 same as before.
 - Added a "clear all AppData" action to the main GUI menus that deletes the AppData files of all 
 configured modules at once.
+- Added a "deactivate all modules" action to the main GUI menus that deactivates all configured 
+modules at once.
 
 ### Other
 - Deprecated calling `qudi.core.module.Base.module_state` and `Connector` meta attributes.

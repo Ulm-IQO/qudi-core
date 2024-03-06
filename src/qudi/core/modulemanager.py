@@ -143,7 +143,7 @@ class ManagedModule(ABCQObject):
     @property
     def active_dependent_modules(self) -> Dict[str, 'ManagedModule']:
         return {mod_name: mod for mod_name, mod in self._managed_modules.items() if
-                (self._name in mod.required_module_names) and not mod.state.deactivated}
+                (self._name in mod.required_module_names) and mod.state.activated}
 
     @property
     def required_modules(self) -> Dict[str, 'ManagedModule']:
@@ -294,6 +294,7 @@ class LocalManagedModule(ManagedModule):
         if self._instance is not None:
             if self.base == ModuleBase.GUI:
                 self._instance.show()
+            self._update_state(self._instance.module_state.current)
             return
 
         _logger.info(f'Activating module "{self.url}" ...')
@@ -303,7 +304,6 @@ class LocalManagedModule(ManagedModule):
             if self.is_threaded:
                 try:
                     self._move_instance_to_thread()
-                    self._connect_module_signals()
                     self._activate_instance_threaded()
                 except Exception:
                     try:
@@ -312,15 +312,16 @@ class LocalManagedModule(ManagedModule):
                         pass
                     raise
             else:
-                self._connect_module_signals()
                 self._instance.module_state.activate()
         except Exception:
-            try:
-                self._disconnect_module_signals()
-            except:
-                pass
             self._instance = None
+            self._update_state(ModuleState.DEACTIVATED)
+            self._update_appdata(self._appdata_handler.exists)
             raise
+        else:
+            self._connect_module_signals()
+            self._update_state(self._instance.module_state.current)
+            self._update_appdata(self._instance.has_appdata)
         finally:
             self.__activating = False
         _logger.info(f'Module "{self.url}" successfully activated.')
@@ -336,6 +337,10 @@ class LocalManagedModule(ManagedModule):
         if self.__deactivating or self._instance is None:
             return
 
+        if self._instance is None:
+            self._update_state(ModuleState.DEACTIVATED)
+            return
+
         self.__deactivating = True
         _logger.info(f'Deactivating module "{self.url}" ...')
         try:
@@ -343,6 +348,8 @@ class LocalManagedModule(ManagedModule):
                 self._deactivate_dependent_modules()
             finally:
                 try:
+                    self._disconnect_module_signals()
+                finally:
                     if self.is_threaded:
                         try:
                             self._deactivate_instance_threaded()
@@ -350,10 +357,10 @@ class LocalManagedModule(ManagedModule):
                             self._join_instance_thread()
                     else:
                         self._instance.module_state.deactivate()
-                finally:
-                    self._disconnect_module_signals()
         finally:
             self._instance = None
+            self._update_state(ModuleState.DEACTIVATED)
+            self._update_appdata(self._appdata_handler.exists)
             self.__deactivating = False
         _logger.info(f'Module "{self.url}" successfully deactivated.')
 
@@ -366,7 +373,7 @@ class LocalManagedModule(ManagedModule):
 
         # Determine current activation state of self and dependent modules.
         # Deactivate all if needed and remember states.
-        was_active = not self.state.deactivated
+        was_active = self.state.activated
         if was_active:
             # Find all modules that are currently active and depend recursively on self
             active_dependent_modules = set(self.active_dependent_modules.values())
@@ -440,7 +447,7 @@ class LocalManagedModule(ManagedModule):
         # Activate instance in native thread
         call_slot_from_native_thread(self._instance.module_state, 'deactivate', blocking=True)
         # Check if deactivation has been successful
-        if not self._instance.module_state.current.deactivated:
+        if self._instance.module_state.current.activated:
             raise ModuleStateError(f'Error during threaded deactivation of module "{self.url}"')
 
 

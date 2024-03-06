@@ -193,7 +193,7 @@ class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
             self._model_proxy.index(row, 0).data() for row in range(self._model_proxy.rowCount())
         ]
         for name, state in module_states:
-            if not state.deactivated:
+            if state.activated:
                 self._add_module_action(name)
 
     @QtCore.Slot(QtCore.QModelIndex, QtCore.QModelIndex, object)
