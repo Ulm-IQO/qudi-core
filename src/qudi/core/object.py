@@ -21,17 +21,82 @@ If not, see <https://www.gnu.org/licenses/>.
 
 __all__ = ['ABCQObject', 'QudiObject']
 
+import os
 import copy
 import logging
 
 from uuid import uuid4, UUID
-from typing import MutableMapping, Mapping, Optional, Any, final
+from typing import MutableMapping, Mapping, Optional, Any, final, Union, Dict
 from PySide2.QtCore import QObject, Signal, Slot, QCoreApplication
 
 from qudi.core.logger import get_logger
 from qudi.core.meta import ABCQObjectMeta, QudiObjectMeta
 from qudi.util.yaml import YamlFileHandler
 from qudi.util.helpers import call_slot_from_native_thread, current_is_native_thread
+from qudi.util.paths import get_appdata_dir
+
+
+class _QudiObjectAppDataHelper:
+    """ File handler helper class for writing/deleting/checking AppData of a QudiObject instance """
+
+    class_name: str
+
+    def __init__(self, class_name: str) -> None:
+        super().__init__()
+        self.class_name = class_name
+
+    def __call__(self, nametag: str) -> YamlFileHandler:
+        if nametag:
+            filename = f'status-{self.class_name}-{nametag}.cfg'
+        else:
+            filename = f'status-{self.class_name}.cfg'
+        return YamlFileHandler(os.path.join(get_appdata_dir(), filename))
+
+    def exists(self, nametag: str) -> bool:
+        return self(nametag).exists
+
+    def clear(self, nametag: str) -> None:
+        self(nametag).clear()
+
+    def dump(self, nametag: str, data: Mapping[str, Any]) -> None:
+        self(nametag).dump(data)
+
+    def load(self, nametag: str, ignore_missing: Optional[bool] = False) -> Dict[str, Any]:
+        return self(nametag).load(ignore_missing)
+
+
+class _QudiObjectAppDataDescriptor:
+    """ Descriptor object for AppData handlers of QudiObject classes """
+
+    appdata_helper: Union[_QudiObjectAppDataHelper, None]
+
+    def __init__(self) -> None:
+        self.appdata_helper = None
+
+    def __set_name__(self, owner, name) -> None:
+        self.appdata_helper = _QudiObjectAppDataHelper(owner.__name__)
+
+    def __get__(self, instance, owner) -> Union[_QudiObjectAppDataHelper, YamlFileHandler]:
+        if instance is None:
+            return self.appdata_helper
+        else:
+            return self.appdata_helper(instance.nametag)
+
+
+class _ThreadedDescriptor:
+    """ Read-only class descriptor representing the owners private class attribute <_threaded> value
+    """
+    def __get__(self, instance, owner) -> bool:
+        try:
+            return owner._threaded
+        except AttributeError:
+            return type(instance)._threaded
+
+    def __delete__(self, instance):
+        raise AttributeError('Can not delete')
+
+    def __set__(self, instance, value):
+        raise AttributeError('Read-Only')
 
 
 class ABCQObject(QObject, metaclass=ABCQObjectMeta):
@@ -51,27 +116,30 @@ class QudiObject(ABCQObject, metaclass=QudiObjectMeta):
     """ Base class for any qudi QObjects that want to employ meta attribute magic, i.e. StatusVar,
     ConfigOption and Connector
     """
-    sigAppDataChanged = Signal(bool)  # has_appdata
+
+    appdata_handler = _QudiObjectAppDataDescriptor()
+
+    __uuid: UUID
+    __nametag: str
+    __logger: logging.Logger
 
     def __init__(self,
                  options: Optional[Mapping[str, Any]] = None,
                  connections: Optional[MutableMapping[str, Any]] = None,
-                 appdata_filepath: Optional[str] = '',
-                 logger_nametag: Optional[str] = '',
+                 nametag: Optional[str] = '',
                  uuid: Optional[UUID] = None,
                  parent: Optional[QObject] = None):
         super().__init__(parent=parent)
 
         # Create unique UUID for this object if needed
         self.__uuid = uuid if isinstance(uuid, UUID) else uuid4()
+        self.__nametag = nametag
         # Create logger instance for this object instance
-        if logger_nametag:
-            logger_name = f'{self.__module__}.{self.__class__.__name__}::{logger_nametag}'
+        if nametag:
+            logger_name = f'{self.__module__}.{self.__class__.__name__}::{nametag}'
         else:
             logger_name = f'{self.__module__}.{self.__class__.__name__}'
         self.__logger = get_logger(logger_name)
-        # Create file handler for AppData of this object instance
-        self.__appdata_filehandler = YamlFileHandler(appdata_filepath)
 
         # Initialize ConfigOption and Connector meta-attributes (descriptors)
         self.__init_config_options(dict() if options is None else options)
@@ -117,11 +185,10 @@ class QudiObject(ABCQObject, metaclass=QudiObjectMeta):
         return self.__uuid
 
     @property
-    def has_appdata(self) -> bool:
-        """ Read-only property indicating if this object with the given appdata_nametag has AppData
-        stored on mass storage (True) or not (False)
-        """
-        return self.__appdata_filehandler.exists
+    @final
+    def nametag(self) -> str:
+        """ Read-only property returning the nametag for this object instance """
+        return self.__nametag
 
     @Slot()
     @final
@@ -138,8 +205,6 @@ class QudiObject(ABCQObject, metaclass=QudiObjectMeta):
         for each combination of this objects type and the given appdata_nametag.
         Ignores variables that fail to dump either due to exceptions in the respective StatusVar
         representer or any other reason.
-
-        Emits sigAppDataChanged in any case.
         """
         data = dict()
         cls = self.__class__
@@ -153,13 +218,11 @@ class QudiObject(ABCQObject, metaclass=QudiObjectMeta):
                     f'This variable will NOT be saved.'
                 )
         try:
-            self.__appdata_filehandler.dump(data)
+            self.appdata_handler.dump(data)
         except Exception as err:
             raise RuntimeError(
                 f'Error dumping status variables to file for "{cls.__module__}.{cls.__name__}"'
             ) from err
-        finally:
-            self.sigAppDataChanged.emit(self.has_appdata)
 
     @final
     def load_status_variables(self) -> None:
@@ -169,7 +232,7 @@ class QudiObject(ABCQObject, metaclass=QudiObjectMeta):
         """
         cls = self.__class__
         try:
-            data = self.__appdata_filehandler.load(raise_missing=False)
+            data = self.appdata_handler.load(ignore_missing=True)
         except Exception as err:
             raise RuntimeError(
                 f'Error loading status variables from file for "{cls.__module__}.{cls.__name__}"'
@@ -192,15 +255,3 @@ class QudiObject(ABCQObject, metaclass=QudiObjectMeta):
             except Exception as err:
                 raise RuntimeError(f'Default initialization of status variable "{var.name}" at '
                                    f'"{cls.__module__}.{cls.__name__}.{attr_name}" failed') from err
-
-    @final
-    def clear_status_variables(self) -> None:
-        """ Clears the AppStatus of this object with given appdata_nametag (if present).
-        Raises no exception if AppData is not found.
-
-        Emits sigAppDataChanged in any case.
-        """
-        try:
-            self.__appdata_filehandler.clear()
-        finally:
-            self.sigAppDataChanged.emit(self.has_appdata)

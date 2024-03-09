@@ -294,10 +294,10 @@ class YamlFileHandler:
         else:
             self.clear()
 
-    def load(self, raise_missing: Optional[bool] = False) -> Dict[str, Any]:
+    def load(self, ignore_missing: Optional[bool] = False) -> Dict[str, Any]:
         try:
             return yaml_load(self.file_path)
         except FileNotFoundError:
-            if raise_missing:
-                raise
-            return dict()
+            if ignore_missing:
+                return dict()
+            raise

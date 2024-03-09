@@ -31,7 +31,7 @@ from PySide2 import QtCore, QtGui, QtWidgets
 from typing import Any, Mapping, Optional, Union, Dict, Final, MutableMapping, final
 
 from qudi.core.statusvariable import StatusVar
-from qudi.util.paths import get_module_appdata_path, get_daily_directory, get_default_data_dir
+from qudi.util.paths import get_daily_directory, get_default_data_dir
 from qudi.core.object import QudiObject
 from qudi.core.logger import get_logger
 from qudi.util.helpers import current_is_native_thread
@@ -303,26 +303,17 @@ class Base(QudiObject):
         super().__init__(
             options=options,
             connections=connections,
-            appdata_filepath=get_module_appdata_path(self.__class__.__name__,
-                                                     self.module_base.value,
-                                                     name),
-            logger_nametag=name,
+            nametag=name,
             uuid=uuid
         )
 
         # Keep reference to qudi main instance
         self.__qudi_main = qudi_main
         # Add additional module info
-        self.__module_name = name
         self.__module_url = mod_url
         # Initialize module state
         self.module_state = ModuleStateMachine(module_instance=self)
         self.__warned = False
-
-    @property
-    @final
-    def sigStateChanged(self) -> QtCore.Signal:
-        return self.module_state.sigStateChanged
 
     @property
     @final
@@ -355,7 +346,7 @@ class Base(QudiObject):
         """ Read-only property returning the module name of this module instance as specified in the
         config.
         """
-        return self.__module_name
+        return self.nametag
 
     @property
     def module_uuid(self) -> UUID:

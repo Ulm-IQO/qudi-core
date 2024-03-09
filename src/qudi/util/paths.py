@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-Copyright (c) 2021, the qudi developers. See the AUTHORS.md file at the top-level directory of this
-distribution and on <https://github.com/Ulm-IQO/qudi-core/>
+Copyright (c) 2021-2024, the qudi developers. See the AUTHORS.md file at the top-level directory of
+this distribution and on <https://github.com/Ulm-IQO/qudi-core/>
 
 This file is part of qudi.
 
@@ -15,18 +15,15 @@ See the GNU Lesser General Public License for more details.
 
 You should have received a copy of the GNU Lesser General Public License along with qudi.
 If not, see <https://www.gnu.org/licenses/>.
-
-ToDo: Throw errors around for non-existent directories
 """
 
 __all__ = ['get_appdata_dir', 'get_default_config_dir', 'get_default_log_dir',
            'get_default_data_dir', 'get_daily_directory', 'get_home_dir', 'get_main_dir',
-           'get_userdata_dir', 'get_artwork_dir', 'get_module_appdata_path']
+           'get_userdata_dir', 'get_artwork_dir']
 
 import datetime
 import os
 import sys
-import warnings
 from typing import Optional
 
 
@@ -75,9 +72,12 @@ def get_appdata_dir(create_missing: Optional[bool] = False) -> str:
     @return str: path to appdata directory
     """
     if sys.platform == 'win32':
-        # resolves to "C:\Documents and Settings\<UserName>\Application Data" on XP and
-        # "C:\Users\<UserName>\AppData\Roaming" on win7 and newer
-        path = os.path.join(os.environ['APPDATA'], 'qudi')
+        # usually resolves to "C:\Documents and Settings\<UserName>\Application Data" on XP and
+        # "C:\Users\<UserName>\AppData\Local" on win7 and newer
+        try:
+            path = os.path.join(os.environ['LOCALAPPDATA'], 'qudi')
+        except KeyError:
+            path = os.path.join(os.environ['APPDATA'], 'qudi')
     elif sys.platform == 'darwin':
         path = os.path.abspath(os.path.expanduser('~/Library/Preferences/qudi'))
     else:
@@ -153,21 +153,3 @@ def get_daily_directory(timestamp: Optional[datetime.datetime] = None, root: Opt
         if create_missing:
             os.makedirs(daily_path, exist_ok=True)
     return daily_path
-
-
-def get_module_appdata_path(cls_name: str, module_base: str, module_name: str) -> str:
-    """ Constructs the appData file path for the given qudi module """
-    assert cls_name and module_name and module_base, 'empty strings encountered'
-    return os.path.join(get_appdata_dir(create_missing=True),
-                        f'status-{module_base.lower()}-{cls_name}-{module_name}.cfg')
-
-
-def get_module_app_data_path(cls_name: str, module_base: str, module_name: str) -> str:
-    """ Deprecated """
-    warnings.warn(
-        'qudi.util.paths.get_module_app_data_path has been deprecated. Use '
-        'qudi.util.paths.get_module_appdata_path instead.',
-        DeprecationWarning,
-        stacklevel=2
-    )
-    return get_module_appdata_path(cls_name, module_base, module_name)
