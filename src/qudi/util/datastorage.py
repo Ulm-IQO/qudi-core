@@ -636,7 +636,7 @@ class TextDataStorage(DataStorageBase):
                                  dtype=dtype,
                                  comments=general['comments'],
                                  delimiter=general['delimiter'],
-                                 skip_header=header_lines + 2)
+                                 skip_header=header_lines + 1)
         except UnicodeError as err:
             raise ValueError(f'Loading data from file "{file_path}" failed. The file you are '
                              f'trying to load is most likely no unicode textfile.') from err
