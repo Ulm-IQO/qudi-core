@@ -6,7 +6,7 @@
 None
 
 ### Bugfixes
-None
+- Fixed a bug where `TextDataStorage` would load one line of data less than it saves.
 
 ### New Features
 None
