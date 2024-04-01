@@ -110,7 +110,7 @@ def config_schema() -> Dict[str, Any]:
                         'properties': {
                             'module.Class': {
                                 'type': 'string',
-                                'pattern': f'^gui(\\.{__module_name_pattern})+$',
+                                'pattern': f'^{__module_name_pattern}(\\.{__module_name_pattern})*$',
                             },
                             'options': {
                                 'type': 'object',
@@ -126,7 +126,7 @@ def config_schema() -> Dict[str, Any]:
                                 'default': dict()
                             }
                         },
-                        'default': {'module.Class': 'gui.main_gui.QudiMainGui'}
+                        'default': {'module.Class': 'main_gui.main_gui.QudiMainGui'}
                     },
                 }
             },

@@ -3,8 +3,8 @@
 """
 This file contains scripts for testing the qudi.core.scripting package.
 
-Copyright (c) 2021, the qudi developers. See the AUTHORS.md file at the top-level directory of this
-distribution and on <https://github.com/Ulm-IQO/qudi-core/>
+Copyright (c) 2021-2024, the qudi developers. See the AUTHORS.md file at the top-level directory of
+this distribution and on <https://github.com/Ulm-IQO/qudi-core/>
 
 This file is part of qudi.
 
@@ -20,48 +20,61 @@ You should have received a copy of the GNU Lesser General Public License along w
 If not, see <https://www.gnu.org/licenses/>.
 """
 
-from typing import Iterable, Sequence, Mapping, Union, Any, Optional, Tuple
+import time
+from typing import Iterable, Sequence, Mapping, Optional, Tuple
 
-from qudi.core.scripting.moduletask import ModuleTask
+from qudi.core.task import ModuleTask
 from qudi.core.connector import Connector
 
 
 class TestTask(ModuleTask):
 
-    _derp = Connector(name='derp', interface='TemplateLogic')
+    # _derp = Connector(name='derp', interface='TemplateLogic')
 
-    def _setup(self) -> None:
-        i = 0
-        for i in range(100000000):
-            i += 1
-
-    def _cleanup(self) -> None:
-        i = 0
-        for i in range(100000000):
-            i += 1
-
-    def _run(self, pos_arg='abc', kw_arg=42):
-        i = 0
-        for i in range(10000000):
+    def _activate(self) -> None:
+        start = time.time()
+        while (time.time() - start) < 3:
+            time.sleep(0.1)
             self._check_interrupt()
-            i += 1
+        # i = 0
+        # for i in range(100000000):
+        #     i += 1
+
+    def _deactivate(self) -> None:
+        time.sleep(3)
+        # i = 0
+        # for i in range(100000000):
+        #     i += 1
+
+    def _run(self, str_arg: str, int_arg: int, duration_sec: Optional[float] = 5):
+        start = time.time()
+        while (time.time() - start) < duration_sec:
+            time.sleep(0.1)
+            self._check_interrupt()
+        # i = 0
+        # for i in range(10000000):
+        #     self._check_interrupt()
+        #     i += 1
 
 
 class TestTask2(ModuleTask):
 
     _derp = Connector(name='derp', interface='TemplateLogic')
 
-    def _setup(self) -> None:
+    def _activate(self) -> None:
         i = 0
         for i in range(100000000):
             i += 1
 
-    def _cleanup(self) -> None:
+    def _deactivate(self) -> None:
         i = 0
         for i in range(100000000):
             i += 1
 
-    def _run(self, seq_arg: Sequence[int], iter_arg: Iterable[str], map_arg: Mapping[str, int],
+    def _run(self,
+             seq_arg: Sequence[int],
+             iter_arg: Iterable[str],
+             map_arg: Mapping[str, int],
              opt_arg: Optional[int] = 42
              ) -> Tuple[Sequence[int], Iterable[str], Mapping[str, int], int]:
         i = 0

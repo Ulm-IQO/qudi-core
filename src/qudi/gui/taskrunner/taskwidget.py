@@ -2,8 +2,8 @@
 """
 This file contains a widget to control a ModuleTask and display its state.
 
-Copyright (c) 2021, the qudi developers. See the AUTHORS.md file at the top-level directory of this
-distribution and on <https://github.com/Ulm-IQO/qudi-core/>
+Copyright (c) 2021-2024, the qudi developers. See the AUTHORS.md file at the top-level directory of
+this distribution and on <https://github.com/Ulm-IQO/qudi-core/>
 
 This file is part of qudi.
 
@@ -19,192 +19,285 @@ You should have received a copy of the GNU Lesser General Public License along w
 If not, see <https://www.gnu.org/licenses/>.
 """
 
-__all__ = ['TaskWidget']
+__all__ = ['TaskTableView', 'TaskResultDelegate', 'TaskStateDelegate', 'TaskArgumentsDelegate',
+           'TaskStateWidget', 'TaskArgumentsWidget']
 
 import os
-from typing import Type, Optional, Dict, Tuple, Any, Iterable
+import inspect
+from typing import Optional, Dict, Any, Mapping, Callable
 from PySide2 import QtCore, QtWidgets, QtGui
 
-from qudi.util.helpers import is_integer
 from qudi.util.paths import get_artwork_dir
 from qudi.util.parameters import ParameterWidgetMapper
-from qudi.util.widgets.loading_indicator import CircleLoadingIndicator
-from qudi.util.widgets.separator_lines import VerticalLine
-from qudi.core.scripting.moduletask import ModuleTask
+from qudi.util.helpers import call_slot_from_native_thread
+from qudi.core.task import ModuleTaskState, ModuleTaskWorker, ModuleTaskManager
 
 
-class TestToolButton(QtWidgets.QToolButton):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+class TaskArgumentsWidget(QtWidgets.QScrollArea):
+    """ """
+    def __init__(self,
+                 parameters: Mapping[str, inspect.Parameter],
+                 parent: Optional[QtCore.QObject] = None):
+        super().__init__(parent=parent)
+        self.setWidgetResizable(True)
+        self.setFocusPolicy(QtCore.Qt.NoFocus)
 
-    def resizeEvent(self, event: QtGui.QResizeEvent) -> None:
-        super().resizeEvent(event)
-        self.setIconSize(event.size())
-
-
-class TaskWidget(QtWidgets.QWidget):
-    """ QWidget to control a ModuleTask and display its state.
-    """
-
-    sigStartTask = QtCore.Signal(dict)  # parameters
-    sigInterruptTask = QtCore.Signal()
-
-    _ParamWidgetsIterable = Iterable[Tuple[QtWidgets.QLabel, QtWidgets.QWidget]]
-    _ParamWidgetsDict = Dict[str, Tuple[QtWidgets.QLabel, QtWidgets.QWidget]]
-
-    def __init__(self, *args, task_type: Type[ModuleTask], max_columns: Optional[int] = None,
-                 max_rows: Optional[int] = None, **kwargs):
-        super().__init__(*args, **kwargs)
-
-        if max_rows is not None and max_columns is not None:
-            raise ValueError('Can either set "max_columns" OR "max_rows" but not both.')
-        if max_columns is not None and not is_integer(max_columns):
-            raise ValueError('"max_columns" must be None or integer value')
-        if max_rows is not None and not is_integer(max_rows):
-            raise ValueError('"max_rows" must be None or integer value')
-
-        if max_rows is None and max_columns is None:
-            max_rows = 8
-        elif max_rows is None:
-            number_of_widgets = len(task_type.call_parameters())
-            max_rows = number_of_widgets // max_columns + number_of_widgets % max_columns
-
-        # Create control button and state label. Arrange them in a sub-layout and connect button.
-        # Also add animated busy-indicator
-        icon_dir = os.path.join(get_artwork_dir(), 'icons')
-        self._play_icon = QtGui.QIcon(os.path.join(icon_dir, 'media-playback-start'))
-        self._stop_icon = QtGui.QIcon(os.path.join(icon_dir, 'media-playback-stop'))
-        self.state_label = QtWidgets.QLabel('stopped')
-        self.state_label.setAlignment(QtCore.Qt.AlignCenter)
-        font = self.state_label.font()
-        font.setBold(True)
-        self.state_label.setFont(font)
-        control_width = self.state_label.sizeHint().width() * 2
-        self.run_interrupt_button = QtWidgets.QToolButton()
-        self.run_interrupt_button.setIcon(self._play_icon)
-        self.run_interrupt_button.setToolButtonStyle(QtGui.Qt.ToolButtonIconOnly)
-        self.run_interrupt_button.setFixedWidth(control_width)
-        self.run_interrupt_button.setFixedHeight(control_width)
-        self.run_interrupt_button.setIconSize(self.run_interrupt_button.size())
-
-        self.running_indicator = CircleLoadingIndicator()
-        self.running_indicator.setFixedWidth(control_width // 1.5)
-        self.running_indicator.setFixedHeight(control_width // 1.5)
-        tmp = self.running_indicator.sizePolicy()
-        tmp.setRetainSizeWhenHidden(True)
-        self.running_indicator.setSizePolicy(tmp)
-        ctrl_layout = QtWidgets.QVBoxLayout()
-        ctrl_layout.addStretch(1)
-        ctrl_layout.addWidget(self.running_indicator, 0, QtCore.Qt.AlignCenter)
-        ctrl_layout.addWidget(self.state_label)
-        ctrl_layout.addWidget(self.run_interrupt_button, 0, QtCore.Qt.AlignCenter)
-        self.running_indicator.hide()
-
-        self.run_interrupt_button.clicked.connect(self._run_interrupt_clicked)
-
-        # Create task parameter editors and put them in a sub-layout
-        self.parameter_widgets = self.__create_parameter_editor_widgets(task_type)
-        param_layout = self.__layout_parameter_widgets(self.parameter_widgets.values(), max_rows)
-
-        # Add sub-layouts to main layout
-        main_layout = QtWidgets.QHBoxLayout()
-        main_layout.addLayout(param_layout)
-        main_layout.addWidget(VerticalLine())
-        main_layout.addLayout(ctrl_layout)
-        self.setLayout(main_layout)
-
-        # State flag to indicate current button functionality (start or interrupt)
-        self._interrupt_enabled = False
-
-    @staticmethod
-    def __create_parameter_editor_widgets(task_type: Type[ModuleTask]) -> _ParamWidgetsDict:
-        """ Helper function to create editor widgets and labels for each ModuleTask call parameter
-        """
-        task_parameters = task_type.call_parameters()
-        param_widgets = dict()
-        for param_name, param in task_parameters.items():
+        # Create task parameter editors and put them in the scroll area
+        self.parameter_widgets = dict()
+        layout = QtWidgets.QGridLayout()
+        for row, (name, param) in enumerate(parameters.items()):
             editor = ParameterWidgetMapper.widget_for_parameter(param)
             if editor is None:
                 editor = QtWidgets.QLabel('Unknown parameter type')
                 editor.setSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Minimum)
             else:
                 editor = editor()
-                # ToDo: Set default values here
-            label = QtWidgets.QLabel(f'{param_name}:')
+                editor.setMinimumWidth(100)
+            label = QtWidgets.QLabel(f'{name}:')
             label.setAlignment(QtCore.Qt.AlignVCenter | QtCore.Qt.AlignRight)
-            param_widgets[param_name] = (label, editor)
-        return param_widgets
-
-    @staticmethod
-    def __layout_parameter_widgets(param_widgets: _ParamWidgetsIterable,
-                                   max_rows: int) -> QtWidgets.QGridLayout:
-        """ Helper function to layout parameter widgets in a QGridLayout """
-        row = 0
-        column = 0
-        layout = QtWidgets.QGridLayout()
+            self.parameter_widgets[name] = (label, editor)
+            layout.addWidget(label, row, 0)
+            layout.addWidget(editor, row, 1)
         layout.setColumnStretch(1, 1)
-        max_height = 0
-        for label, editor in param_widgets:
-            layout.addWidget(label, row, column)
-            layout.addWidget(editor, row, column + 1)
-            max_height = max(max_height, editor.sizeHint().height())
-            if row + 1 >= max_rows:
-                row = 0
-                column += 2
-                layout.setColumnStretch(column + 1, 1)
-            else:
-                row += 1
-        for ii in range(row):
-            layout.setRowMinimumHeight(ii, max_height)
-        layout.setRowStretch(row, 1)
-        return layout
+        widget = QtWidgets.QWidget()
+        widget.setLayout(layout)
+        self.setWidget(widget)
 
-    @QtCore.Slot()
-    def _run_interrupt_clicked(self) -> None:
-        """ Callback method for button clicks """
-        if self._interrupt_enabled:
-            self.sigInterruptTask.emit()
-        else:
-            self.run_interrupt_button.setEnabled(False)
-            self.sigStartTask.emit(self.get_parameters())
-
-    @QtCore.Slot()
-    def task_started(self) -> None:
-        self._interrupt_enabled = True
-        self.run_interrupt_button.setIcon(self._stop_icon)
-        self.run_interrupt_button.setEnabled(True)
-        self.running_indicator.show()
-
-    @QtCore.Slot(str)
-    def task_state_changed(self, new_state: str) -> None:
-        """ Callback method for ModuleTask state changes """
-        self.state_label.setText(new_state)
-
-    @QtCore.Slot(object, bool)
-    def task_finished(self, result: Any, success: bool) -> None:
-        """ Callback for task finished event """
-        self._interrupt_enabled = False
-        self.run_interrupt_button.setIcon(self._play_icon)
-        self.run_interrupt_button.setEnabled(True)
-        self.running_indicator.hide()
-        self.set_task_result(result, success)
-
-    @QtCore.Slot(object, bool)
-    def set_task_result(self, result: Any, success: bool) -> None:
-        """ Updates the task result display """
-        print(result, success)
-
-    def get_parameters(self) -> Dict[str, Any]:
-        """ Reads parameters from parameter editors and returns them in a dict """
-        parameters = dict()
-        for param_name, (_, editor) in self.parameter_widgets.items():
+    def get_arguments(self) -> Dict[str, Any]:
+        arguments = dict()
+        for name, (_, editor) in self.parameter_widgets.items():
             if isinstance(editor, QtWidgets.QLabel):
                 continue
             try:
-                parameters[param_name] = editor.value()
+                arguments[name] = editor.value()
             except AttributeError:
                 try:
-                    parameters[param_name] = editor.isChecked()
+                    arguments[name] = editor.isChecked()
                 except AttributeError:
-                    parameters[param_name] = editor.text()
-        return parameters
+                    arguments[name] = editor.text()
+        return arguments
+
+    def set_arguments(self, arguments: Mapping[str, Any]) -> None:
+        for name, value in arguments.items():
+            try:
+                editor = self.parameter_widgets[name][1]
+            except KeyError:
+                continue
+            if isinstance(editor, QtWidgets.QLabel):
+                continue
+            try:
+                editor.setValue(value)
+            except AttributeError:
+                try:
+                    editor.setChecked(value)
+                except AttributeError:
+                    editor.setText(value)
+
+
+class TaskStateWidget(QtWidgets.QWidget):
+    """ """
+    sigRunInterruptClicked = QtCore.Signal(bool)  # run: True, interrupt: False
+
+    def __init__(self,
+                 parent: Optional[QtWidgets.QWidget] = None,
+                 f: Optional[QtCore.Qt.WindowFlags] = QtCore.Qt.WindowFlags()) -> None:
+        super().__init__(parent=parent, f=f)
+        # Remember icons for swapping and current button state
+        icon_dir = os.path.join(get_artwork_dir(), 'icons')
+        self._play_icon = QtGui.QIcon(os.path.join(icon_dir, 'media-playback-start'))
+        self._stop_icon = QtGui.QIcon(os.path.join(icon_dir, 'media-playback-stop'))
+        self._interrupt_enabled = True
+
+        # Create state label and run/interrupt button
+        self.state_label = QtWidgets.QLabel(ModuleTaskState.RUNNING.value)
+        self.state_label.setAlignment(QtCore.Qt.AlignCenter)
+        font = self.state_label.font()
+        font.setBold(True)
+        self.state_label.setFont(font)
+        self.run_interrupt_button = QtWidgets.QToolButton()
+        self.run_interrupt_button.setIcon(self._stop_icon)
+        self.run_interrupt_button.setToolButtonStyle(QtGui.Qt.ToolButtonIconOnly)
+        control_width = self.state_label.sizeHint().width() * 1.5
+        self.run_interrupt_button.setFixedWidth(control_width)
+        self.run_interrupt_button.setFixedHeight(control_width)
+        self.run_interrupt_button.setIconSize(self.run_interrupt_button.size())
+        self.run_interrupt_button.clicked.connect(self._run_interrupt_clicked)
+        # layout
+        layout = QtWidgets.QVBoxLayout()
+        layout.addWidget(self.run_interrupt_button, alignment=QtCore.Qt.AlignCenter)
+        layout.addWidget(self.state_label)
+        self.setLayout(layout)
+
+    @QtCore.Slot()
+    def _run_interrupt_clicked(self) -> None:
+        self.run_interrupt_button.setEnabled(False)
+        self.sigRunInterruptClicked.emit(not self._interrupt_enabled)
+
+    @QtCore.Slot(ModuleTaskState)
+    def update_state(self, state: ModuleTaskState) -> None:
+        self.state_label.setText(state.value)
+        if state.running:
+            self.run_interrupt_button.setIcon(self._stop_icon)
+            self._interrupt_enabled = True
+        else:
+            self.run_interrupt_button.setIcon(self._play_icon)
+            self._interrupt_enabled = False
+        self.run_interrupt_button.setEnabled(True)
+
+
+class TaskArgumentsDelegate(QtWidgets.QStyledItemDelegate):
+    """ """
+    def __init__(self, parent: Optional[QtCore.QObject] = None) -> None:
+        super().__init__(parent=parent)
+        self._size_hint = QtCore.QSize(300, 50)
+
+    def createEditor(self, parent, option, index) -> QtWidgets.QWidget:
+        editor = TaskArgumentsWidget(parameters=index.data(QtCore.Qt.UserRole).call_parameters,
+                                     parent=parent)
+        # Found no other way to perfectly match editor and rendered item view (using paint())
+        editor.setContentsMargins(2, 2, 2, 2)
+        return editor
+
+    def setEditorData(self, editor, index) -> None:
+        editor.set_arguments(index.data(QtCore.Qt.DisplayRole))
+
+    def setModelData(self, editor, model, index) -> None:
+        model.setData(index, editor.get_arguments())
+
+    def destroyEditor(self, editor, index):
+        # Needed for persistent editor (does not automatically commit data to model)
+        self.setModelData(editor, index.model(), index)
+        return super().destroyEditor(editor, index)
+
+    def sizeHint(self, option=None, index=None):
+        return self._size_hint
+
+    def paint(self, painter, option, index):
+        task = index.data(QtCore.Qt.UserRole)
+        widget = TaskArgumentsWidget(parameters=task.call_parameters)
+        widget.set_arguments(task.arguments)
+        widget.setGeometry(option.rect)
+        painter.save()
+        painter.translate(option.rect.topLeft())
+        widget.render(painter, QtCore.QPoint())
+        painter.restore()
+
+
+class TaskStateDelegate(QtWidgets.QStyledItemDelegate):
+    """ """
+
+    _sigRunTask = QtCore.Signal()
+
+    def __init__(self, parent: Optional[QtCore.QObject] = None) -> None:
+        super().__init__(parent=parent)
+        self._render_widget = TaskStateWidget()
+        self._size_hint = self._render_widget.sizeHint()
+
+    def createEditor(self, parent, option, index) -> QtWidgets.QWidget:
+        task = index.data(QtCore.Qt.UserRole)
+        editor = TaskStateWidget(parent=parent)
+        editor.sigRunInterruptClicked.connect(self.__get_run_interrupt_slot(task))
+        # Found no other way to perfectly match editor and rendered item view (using paint())
+        editor.setContentsMargins(2, 2, 2, 2)
+        return editor
+
+    def setEditorData(self, editor, index) -> None:
+        editor.update_state(index.data(QtCore.Qt.DisplayRole))
+
+    def destroyEditor(self, editor, index):
+        editor.sigRunInterruptClicked.disconnect()
+        return super().destroyEditor(editor, index)
+
+    def sizeHint(self, option=None, index=None):
+        return self._size_hint
+
+    def paint(self, painter, option, index):
+        self._render_widget.update_state(index.data(QtCore.Qt.DisplayRole))
+        self._render_widget.setGeometry(option.rect)
+        painter.save()
+        painter.translate(option.rect.topLeft())
+        self._render_widget.render(painter, QtCore.QPoint())
+        painter.restore()
+
+    @staticmethod
+    def __get_run_interrupt_slot(task: ModuleTaskWorker) -> Callable[[bool], None]:
+
+        def run_interrupt_slot(run: bool) -> None:
+            if run:
+                call_slot_from_native_thread(task, 'run', blocking=False)
+            else:
+                task.interrupt()
+
+        return run_interrupt_slot
+
+
+class TaskResultDelegate(QtWidgets.QStyledItemDelegate):
+    """ """
+
+    def __init__(self, parent: Optional[QtCore.QObject] = None) -> None:
+        super().__init__(parent=parent)
+        icon_dir = os.path.join(get_artwork_dir(), 'icons')
+        self._invalid_icon = QtGui.QIcon(os.path.join(icon_dir, 'edit-delete'))
+        self._valid_icon = QtGui.QIcon(os.path.join(icon_dir, 'dialog-ok-apply'))
+        self._size_hint = QtCore.QSize(32, 32)
+
+    def sizeHint(self, option=None, index=None):
+        return self._size_hint
+
+    def paint(self, painter, option, index):
+        if index.data(QtCore.Qt.DisplayRole)[1]:
+            self._valid_icon.paint(painter, option.rect)
+        else:
+            self._invalid_icon.paint(painter, option.rect)
+
+
+class TaskTableView(QtWidgets.QTableView):
+    """ """
+    def __init__(self, task_manager: ModuleTaskManager, parent: Optional[QtWidgets.QWidget] = None):
+        super().__init__(parent=parent)
+        self.setModel(task_manager)
+        # Set delegates
+        self._arguments_delegate = TaskArgumentsDelegate()
+        self._state_delegate = TaskStateDelegate()
+        self._result_delegate = TaskResultDelegate()
+        self.setItemDelegateForColumn(0, self._arguments_delegate)
+        self.setItemDelegateForColumn(1, self._state_delegate)
+        self.setItemDelegateForColumn(2, self._result_delegate)
+        # Set column size and resize policy
+        self.resizeRowsToContents()
+        self.resizeColumnsToContents()
+        self.horizontalHeader().setMinimumWidth(
+            self.horizontalHeader().sectionSize(0) +
+            self.horizontalHeader().sectionSize(1) +
+            self.horizontalHeader().sectionSize(2)
+        )
+        self.horizontalHeader().setSectionResizeMode(0, QtWidgets.QHeaderView.ResizeMode.Stretch)
+        self.horizontalHeader().setSectionResizeMode(1, QtWidgets.QHeaderView.ResizeMode.Fixed)
+        self.horizontalHeader().setSectionResizeMode(2, QtWidgets.QHeaderView.ResizeMode.Fixed)
+        self.setMinimumWidth(self.width())
+        self.setMinimumHeight(
+            self.horizontalHeader().height() +
+            max(self._arguments_delegate.sizeHint().height(),
+                self._state_delegate.sizeHint().height(),
+                self._result_delegate.sizeHint().height())
+        )
+        # Ensure editing upon mouse hover works
+        self.setMouseTracking(True)
+        self.entered.connect(self._index_entered_callback)
+        self.__edited_index = QtCore.QModelIndex()
+
+    def _index_entered_callback(self, index: QtCore.QModelIndex) -> None:
+        if self.__edited_index != index:
+            if self.__edited_index.isValid():
+                self.closePersistentEditor(self.__edited_index)
+                self.__edited_index = QtCore.QModelIndex()
+            if index.isValid() and (0 <= index.column() <= 1):
+                self.setCurrentIndex(index)
+                self.openPersistentEditor(index)
+                self.__edited_index = index
+
+    def leaveEvent(self, event: QtCore.QEvent) -> None:
+        if self.__edited_index.isValid():
+            self.closePersistentEditor(self.__edited_index)
+            self.__edited_index = QtCore.QModelIndex()
+        super().leaveEvent(event)

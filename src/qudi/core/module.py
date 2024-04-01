@@ -228,7 +228,7 @@ class ModuleStateMachine(QtCore.QObject):
             else:
                 raise ModuleStateError(f'Module already in state "{self._current_state.value}"')
         except ModuleStateError:
-            if module.is_module_threaded:
+            if module.module_threaded:
                 module.log.exception('Exception during threaded deactivation:')
             raise
         finally:
