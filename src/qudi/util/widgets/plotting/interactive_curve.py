@@ -489,6 +489,10 @@ class InteractiveCurvesWidget(QtWidgets.QWidget):
             return self._get_valid_generic_name(index + 1)
         return name
 
+    @property
+    def plot_widget(self) -> PlotWidget:
+        return self._plot_widget
+
     def plot(self, name: Optional[str] = None, **kwargs) -> str:
         # Delete old plot if present
         if name is None:
