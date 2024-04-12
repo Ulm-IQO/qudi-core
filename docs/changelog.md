@@ -7,7 +7,7 @@ None
 
 ### Bugfixes
 - Fixed a bug where `TextDataStorage` would load one line of data less than it saves.
-- Updated the import in `qudi.util.units` to fix a bug concerning a new version of scipy,
+- Updated the import in `qudi.util.math` to fix a bug concerning a new version of scipy,
 since windowing functions have been moved from scipy.signal to scipy.signal.windows.
 - In `qudi.util.widgets.plotting.interactive_curve.InteractiveCurvesWidget`, the plot widget was made into 
 a private attribute. Added a getter method to access it.
