@@ -22,7 +22,7 @@ If not, see <https://www.gnu.org/licenses/>.
 __all__ = ('compute_ft', 'ft_windows')
 
 import numpy as np
-from scipy import signal
+from scipy.signal import windows
 
 # Available windows to be applied on signal data before FT.
 # To find out the amplitude normalization factor check either the scipy implementation on
@@ -32,17 +32,17 @@ from scipy import signal
 #     MM=1000000  # choose a big number
 #     print(sum(signal.hanning(MM))/MM)
 ft_windows = {'none': {'func': np.ones, 'ampl_norm': 1.0},
-              'hamming': {'func': signal.hamming, 'ampl_norm': 1.0/0.54},
-              'hann': {'func': signal.hann, 'ampl_norm': 1.0/0.5},
-              'blackman': {'func': signal.blackman, 'ampl_norm': 1.0/0.42},
-              'triang': {'func': signal.triang, 'ampl_norm': 1.0/0.5},
-              'flattop': {'func': signal.flattop, 'ampl_norm': 1.0/0.2156},
-              'bartlett': {'func': signal.bartlett, 'ampl_norm': 1.0/0.5},
-              'parzen': {'func': signal.parzen, 'ampl_norm': 1.0/0.375},
-              'bohman': {'func': signal.bohman, 'ampl_norm': 1.0/0.4052847},
-              'blackmanharris': {'func': signal.blackmanharris, 'ampl_norm': 1.0/0.35875},
-              'nuttall': {'func': signal.nuttall, 'ampl_norm': 1.0/0.3635819},
-              'barthann': {'func': signal.barthann, 'ampl_norm': 1.0/0.5}
+              'hamming': {'func': windows.hamming, 'ampl_norm': 1.0/0.54},
+              'hann': {'func': windows.hann, 'ampl_norm': 1.0/0.5},
+              'blackman': {'func': windows.blackman, 'ampl_norm': 1.0/0.42},
+              'triang': {'func': windows.triang, 'ampl_norm': 1.0/0.5},
+              'flattop': {'func': windows.flattop, 'ampl_norm': 1.0/0.2156},
+              'bartlett': {'func': windows.bartlett, 'ampl_norm': 1.0/0.5},
+              'parzen': {'func': windows.parzen, 'ampl_norm': 1.0/0.375},
+              'bohman': {'func': windows.bohman, 'ampl_norm': 1.0/0.4052847},
+              'blackmanharris': {'func': windows.blackmanharris, 'ampl_norm': 1.0/0.35875},
+              'nuttall': {'func': windows.nuttall, 'ampl_norm': 1.0/0.3635819},
+              'barthann': {'func': windows.barthann, 'ampl_norm': 1.0/0.5}
               }
 
 
