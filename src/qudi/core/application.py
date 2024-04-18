@@ -41,6 +41,8 @@ from qudi.core.threadmanager import ThreadManager
 from qudi.core.gui.gui import Gui
 from qudi.core.servers import RemoteModulesServer, QudiNamespaceServer
 
+import qudi.util.fit_models.model
+
 # Use non-GUI "Agg" backend for matplotlib by default since it is reasonably thread-safe. Otherwise
 # you can only plot from main thread and not e.g. in a logic module.
 # This causes qudi to not be able to spawn matplotlib GUIs (by calling matplotlib.pyplot.show())
@@ -175,12 +177,23 @@ class Qudi(QtCore.QObject):
         self._is_running = False
         self._shutting_down = False
 
+        self._init_additional_fits()
+
+
         # Set qudi style for matplotlib
         try:
             import matplotlib.pyplot as plt
             plt.style.use(QudiMatplotlibStyle.style)
         except ImportError:
             pass
+
+    def _init_additional_fits(self):
+        # write module wide persistent variable
+        fit_models_module = sys.modules['qudi.util.fit_models.model']
+        fit_models_module._additional_fits_path = self.configuration['additional_fits_path']
+
+        print(fit_models_module._additional_fits_path)  # debug only
+
 
     def _qudi_excepthook(self, ex_type, ex_value, ex_traceback):
         """ Handler function to be used as sys.excepthook. Should forward all unhandled exceptions
