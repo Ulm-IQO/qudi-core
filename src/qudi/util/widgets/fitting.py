@@ -296,6 +296,8 @@ class _FitConfigPanel(QtWidgets.QWidget):
         row = 1
         for param_name, param in fit_config.default_parameters.items():
             customize_checkbox = QtWidgets.QCheckBox()
+            if param.expr:
+                customize_checkbox.setDisabled(True)
             param_layout.addWidget(customize_checkbox, row, 0)
             label = QtWidgets.QLabel(param_name + ':')
             label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)

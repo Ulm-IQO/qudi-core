@@ -106,6 +106,14 @@ def config_schema() -> Dict[str, Any]:
                             'type': 'string'
                         },
                         'default': list()
+                    },
+                    'additional_fits_path': {
+                        'type': 'array',
+                        'uniqueItems': True,
+                        'items': {
+                            'type': 'string'
+                        },
+                        'default': list()
                     }
                 }
             },
