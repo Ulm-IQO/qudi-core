@@ -19,7 +19,7 @@ unix_dep = [
     'PySide2==5.15.2.1',
     'rpyc>=5.0.1',
     'ruamel.yaml>=0.17.16',
-    'scipy>=1.7.1',
+    'scipy>=1.8.0',
     'jsonschema>=4.2.1',
 ]
 
@@ -38,7 +38,7 @@ windows_dep = [
     'PySide2==5.15.2.1',
     'rpyc>=5.0.1',
     'ruamel.yaml>=0.17.16',
-    'scipy>=1.7.1',
+    'scipy>=1.8.0',
     'jsonschema>=4.2.1',
 ]
 
