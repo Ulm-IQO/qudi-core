@@ -23,7 +23,6 @@ If not, see <https://www.gnu.org/licenses/>.
 
 __all__ = ('estimator', 'FitCompositeModelBase', 'FitCompositeModelMeta', 'FitModelBase',
            'FitModelMeta')
-_additional_fits_path = []   # written based on config on startup
 
 import inspect
 from abc import ABCMeta, abstractmethod

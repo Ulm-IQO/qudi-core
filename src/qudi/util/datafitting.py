@@ -45,24 +45,19 @@ def is_fit_model(cls):
     return inspect.isclass(cls) and issubclass(cls, FitModelBase) and (cls is not FitModelBase)
 
 
-add_path = _fit_models_ns.model._additional_fits_path
-fit_model_paths = [(_fit_models_ns.__path__, _fit_models_ns.__name__ + '.')]
-# todo: will break finding prefix for files loaded from outside qudi-core folder
-fit_model_paths.extend([(path, path.replace("\\",".").split("qudi-core.src.")[1] + '.') for path in add_path])
 # Upon import of this module the global attribute _fit_models is initialized with a dict
 # containing all importable fit model objects with names as keys.
 _fit_models = dict()
-for path, prefix in fit_model_paths:
-    for mod_finder in iter_modules_recursive(path, prefix):
-        try:
-            _fit_models.update(
-                {name: cls for name, cls in
-                 inspect.getmembers(importlib.import_module(mod_finder.name), is_fit_model)}
-            )
-        except:
-            _log.exception(
-                f'Exception while importing qudi.util.fit_models sub-module "{mod_finder.name}":'
-            )
+for mod_finder in iter_modules_recursive(_fit_models_ns.__path__, _fit_models_ns.__name__ + '.'):
+    try:
+        _fit_models.update(
+            {name: cls for name, cls in
+             inspect.getmembers(importlib.import_module(mod_finder.name), is_fit_model)}
+        )
+    except:
+        _log.exception(
+            f'Exception while importing qudi.util.fit_models sub-module "{mod_finder.name}":'
+        )
 
 
 def get_all_fit_models():
