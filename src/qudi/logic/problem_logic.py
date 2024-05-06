@@ -40,6 +40,11 @@ class ProblemLogic(LogicBase):
         self.log.debug("Deactivating Exception Logic.")
 
     def connect_signal(self, connection: int = 1):
+        # try disconnecting the signal, before connecting to a new function
+        try:
+            self.signal.disconnect()
+        except:
+            pass
         if connection == 1:
             self.signal.connect(
                 self.exceptionlogic().exception_method, QtCore.Qt.QueuedConnection
