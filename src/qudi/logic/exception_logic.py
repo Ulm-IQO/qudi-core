@@ -38,8 +38,8 @@ class ExceptionLogic(LogicBase):
         try:
             self.exception_method()
         except Exception as e:
-            self.log.error(e)
-            raise Exception from e
+            self.log.exception(e)
+            raise
 
     def exception_method(self):
         # Method that logs the calling of itself and just raises an exception.

@@ -81,8 +81,8 @@ class ProblemLogic(LogicBase):
             # which is caught by the try, except statement
             # thus the code below can be reached
         except Exception as e:
-            self.log.error(e)
+            self.log.exception(e)
             self.log.debug(
                 "Code after exception throw is reached and exception is logged."
             )
-            raise Exception from e
+            raise
