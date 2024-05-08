@@ -123,6 +123,7 @@ class QudiMainGui(GuiBase):
         self.mw.action_clear_all_appdata.triggered.connect(
             qudi_main.module_manager.clear_all_appdata
         )
+        self.mw.action_dump_all_appdata.triggered.connect(qudi_main.module_manager.dump_all_appdata)
         self.mw.action_view_default.triggered.connect(self.reset_default_layout)
         # Settings dialog
         self.mw.settings_dialog.accepted.connect(self.apply_settings)
@@ -150,6 +151,7 @@ class QudiMainGui(GuiBase):
         self.mw.action_load_all_modules.triggered.disconnect()
         self.mw.action_deactivate_all_modules.triggered.disconnect()
         self.mw.action_clear_all_appdata.triggered.disconnect()
+        self.mw.action_dump_all_appdata.triggered.disconnect()
         self.mw.action_view_default.triggered.disconnect()
         # Settings dialog
         self.mw.settings_dialog.accepted.disconnect()

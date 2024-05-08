@@ -87,6 +87,10 @@ class QudiMainWindow(QtWidgets.QMainWindow):
         self.action_clear_all_appdata.setIcon(QtGui.QIcon(os.path.join(icon_path, 'edit-clear')))
         self.action_clear_all_appdata.setText('Clear all AppData')
         self.action_clear_all_appdata.setToolTip('Clear AppData of all modules in configuration')
+        self.action_dump_all_appdata = QtWidgets.QAction()
+        self.action_dump_all_appdata.setIcon(QtGui.QIcon(os.path.join(icon_path, 'document-save')))
+        self.action_dump_all_appdata.setText('Dump all AppData')
+        self.action_dump_all_appdata.setToolTip('Dump AppData of all active modules to file')
         # quit action
         self.action_quit = QtWidgets.QAction()
         self.action_quit.setIcon(QtGui.QIcon(os.path.join(icon_path, 'application-exit')))
@@ -149,6 +153,7 @@ class QudiMainWindow(QtWidgets.QMainWindow):
         self.toolbar.addAction(self.action_load_all_modules)
         self.toolbar.addAction(self.action_deactivate_all_modules)
         self.toolbar.addAction(self.action_clear_all_appdata)
+        self.toolbar.addAction(self.action_dump_all_appdata)
         self.addToolBar(self.toolbar)
 
         # Create menu bar
@@ -162,6 +167,7 @@ class QudiMainWindow(QtWidgets.QMainWindow):
         menu.addAction(self.action_load_all_modules)
         menu.addAction(self.action_deactivate_all_modules)
         menu.addAction(self.action_clear_all_appdata)
+        menu.addAction(self.action_dump_all_appdata)
         menu.addSeparator()
         menu.addAction(self.action_settings)
         menu.addSeparator()
