@@ -64,6 +64,7 @@ class ModuleManager(QtCore.QObject):
         super().__init__(*args, **kwargs)
         self._qudi_main_ref = weakref.ref(qudi_main, self._qudi_main_ref_dead_callback)
         self._modules = dict()
+        self._automated_status_variable_dumping_timer_interval = 1
 
     @classmethod
     def instance(cls):
@@ -282,6 +283,63 @@ class ModuleManager(QtCore.QObject):
             for _, module in self.modules.items():
                 if module.is_active:
                     module.instance._dump_status_variables()
+
+    def toggle_automated_status_variable_dumping(self, toggle):
+        """
+        Method that creates or destroys the QTimer for handling the automatic dumping of status variables.
+
+        @param int toogle: boolean that determines whether timer is created or destroyed.
+        """
+        if toggle != QtCore.Qt.Checked:
+            logger.info(f"Automated status variable saving disabled.")
+            self.automated_status_variable_dumping_timer.timeout.disconnect()
+            self.automated_status_variable_dumping_timer.stop()
+            self.automated_status_variable_dumping_timer.deleteLater()
+            return
+
+        logger.info(
+            f"Automated status variable saving enabled with interval {self.automated_status_variable_dumping_timer_interval} min."
+        )
+        self.automated_status_variable_dumping_timer = QtCore.QTimer()
+        self.automated_status_variable_dumping_timer.setInterval(
+            self.automated_status_variable_dumping_timer_interval * 60e3
+        )
+        self.automated_status_variable_dumping_timer.timeout.connect(
+            self.dump_status_variables, QtCore.Qt.QueuedConnection
+        )
+        self.automated_status_variable_dumping_timer.start()
+
+    @property
+    def automated_status_variable_dumping_timer_interval(self):
+        return self._automated_status_variable_dumping_timer_interval
+
+    @automated_status_variable_dumping_timer_interval.setter
+    def automated_status_variable_dumping_timer_interval(self, interval):
+        """
+        Setter method for the timer used to automatically dump status variables.
+
+        @param int interval: interval of the timer in min
+        """
+        self._automated_status_variable_dumping_timer_interval = interval
+
+    def automated_status_variable_dumping_timer_interval_slot(self, interval):
+        """
+        Method that acts as slot method for calling automated_status_variable_dumping_timer_interval setter.
+
+        @param int interval: interval of the timer in min
+        """
+        logger.info(
+            f"Setting automated status variable saving timer interval to {interval} min."
+        )
+        self.automated_status_variable_dumping_timer_interval = interval
+        if not hasattr(self, "automated_status_variable_dumping_timer"):
+            return
+        if (
+            self.automated_status_variable_dumping_timer is None
+            and self.automated_status_variable_dumping_timer.isDeleted()
+        ):
+            return
+        self.automated_status_variable_dumping_timer.setInterval(interval * 60e3)
 
 
 class ManagedModule(QtCore.QObject):

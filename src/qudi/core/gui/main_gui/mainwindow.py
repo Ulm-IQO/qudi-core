@@ -30,110 +30,133 @@ from qudi.core.gui.main_gui.configwidget import ConfigQTreeWidget
 from qudi.util.paths import get_artwork_dir
 from qudi.util.widgets.advanced_dockwidget import AdvancedDockWidget
 from qtconsole.rich_jupyter_widget import RichJupyterWidget
+from qudi.util.widgets.scientific_spinbox import ScienSpinBox
 
 
 class QudiMainWindow(QtWidgets.QMainWindow):
     """
     Main Window definition for the manager GUI.
     """
+
     def __init__(self, parent=None, debug_mode=False, **kwargs):
         super().__init__(parent, **kwargs)
-        self.setWindowTitle('qudi: Manager')
+        self.setWindowTitle("qudi: Manager")
         screen_size = QtWidgets.QApplication.instance().primaryScreen().availableSize()
         width = (screen_size.width() * 3) // 4
         height = (screen_size.height() * 3) // 4
         self.resize(width, height)
 
         self.module_widget = ModuleWidget()
-        self.module_widget.setObjectName('moduleTabWidget')
+        self.module_widget.setObjectName("moduleTabWidget")
         self.setCentralWidget(self.module_widget)
 
         # Create actions
         # Toolbar actions
-        icon_path = os.path.join(get_artwork_dir(), 'icons')
+        icon_path = os.path.join(get_artwork_dir(), "icons")
         self.action_load_configuration = QtWidgets.QAction()
         self.action_load_configuration.setIcon(
-            QtGui.QIcon(os.path.join(icon_path, 'document-open')))
-        self.action_load_configuration.setText('Load configuration')
-        self.action_load_configuration.setToolTip('Load configuration')
+            QtGui.QIcon(os.path.join(icon_path, "document-open"))
+        )
+        self.action_load_configuration.setText("Load configuration")
+        self.action_load_configuration.setToolTip("Load configuration")
         self.action_open_configuration_editor = QtWidgets.QAction()
         self.action_open_configuration_editor.setIcon(
-            QtGui.QIcon(os.path.join(icon_path, 'document-new'))
+            QtGui.QIcon(os.path.join(icon_path, "document-new"))
         )
-        self.action_open_configuration_editor.setText('New configuration')
+        self.action_open_configuration_editor.setText("New configuration")
         self.action_open_configuration_editor.setToolTip(
-            'Open the graphical configuration editor for editing or creating a new qudi '
-            'configuration'
+            "Open the graphical configuration editor for editing or creating a new qudi "
+            "configuration"
         )
         self.action_reload_qudi = QtWidgets.QAction()
         self.action_reload_qudi.setIcon(
-            QtGui.QIcon(os.path.join(icon_path, 'view-refresh')))
-        self.action_reload_qudi.setText('Reload current configuration')
-        self.action_reload_qudi.setToolTip('Reload current configuration')
+            QtGui.QIcon(os.path.join(icon_path, "view-refresh"))
+        )
+        self.action_reload_qudi.setText("Reload current configuration")
+        self.action_reload_qudi.setToolTip("Reload current configuration")
         self.action_load_all_modules = QtWidgets.QAction()
         self.action_load_all_modules.setIcon(
-            QtGui.QIcon(os.path.join(icon_path, 'dialog-warning')))
-        self.action_load_all_modules.setText('Load all modules')
-        self.action_load_all_modules.setToolTip('Load all available modules found in configuration')
+            QtGui.QIcon(os.path.join(icon_path, "dialog-warning"))
+        )
+        self.action_load_all_modules.setText("Load all modules")
+        self.action_load_all_modules.setToolTip(
+            "Load all available modules found in configuration"
+        )
+        # Dump status variables action
         self.action_dump_status_variables = QtWidgets.QAction()
         self.action_dump_status_variables.setIcon(
-            QtGui.QIcon(os.path.join(icon_path, 'document-save')))
-        self.action_dump_status_variables.setText('Save all Status Variables')
-        self.action_dump_status_variables.setToolTip('Save Status Variables of all active modules')
+            QtGui.QIcon(os.path.join(icon_path, "document-save"))
+        )
+        self.action_dump_status_variables.setText("Save all Status Variables")
+        self.action_dump_status_variables.setToolTip(
+            "Save Status Variables of all active modules"
+        )
+        self.label_automatic_status_variable_dumping = QtWidgets.QLabel()
+        self.label_automatic_status_variable_dumping.setText("Automatic StatusVar saving: ")
+        self.checkbox_automatic_status_variable_dumping = QtWidgets.QCheckBox()
+        self.checkbox_automatic_status_variable_dumping.setChecked(False)
+        self.checkbox_automatic_status_variable_dumping.setToolTip("Activate / Deactivate automatic dumping of status variables")
+        self.dump_status_variables_interval_spinbox = ScienSpinBox()
+        self.dump_status_variables_interval_spinbox.setToolTip("Time interval for automatic dumping of status variables")
+        self.dump_status_variables_interval_spinbox.setSuffix("min")
+        self.dump_status_variables_interval_spinbox.setMinimum(1)
+        self.dump_status_variables_interval_spinbox.setMaximum(1440)
+        self.dump_status_variables_interval_spinbox.setMinimumSize(QtCore.QSize(80, 0))
+        self.dump_status_variables_interval_spinbox.setValue(1)
         # quit action
         self.action_quit = QtWidgets.QAction()
-        self.action_quit.setIcon(QtGui.QIcon(os.path.join(icon_path, 'application-exit')))
-        self.action_quit.setText('Quit qudi')
-        self.action_quit.setToolTip('Quit qudi')
-        self.action_quit.setShortcut(QtGui.QKeySequence('Ctrl+Q'))
+        self.action_quit.setIcon(
+            QtGui.QIcon(os.path.join(icon_path, "application-exit"))
+        )
+        self.action_quit.setText("Quit qudi")
+        self.action_quit.setToolTip("Quit qudi")
+        self.action_quit.setShortcut(QtGui.QKeySequence("Ctrl+Q"))
         # view actions
         self.action_view_console = QtWidgets.QAction()
         self.action_view_console.setCheckable(True)
         self.action_view_console.setChecked(True)
-        self.action_view_console.setText('Show console')
-        self.action_view_console.setToolTip('Show IPython console')
+        self.action_view_console.setText("Show console")
+        self.action_view_console.setToolTip("Show IPython console")
         self.action_view_log = QtWidgets.QAction()
         self.action_view_log.setCheckable(True)
         self.action_view_log.setChecked(True)
-        self.action_view_log.setText('Show log')
-        self.action_view_log.setToolTip('Show log dockwidget')
+        self.action_view_log.setText("Show log")
+        self.action_view_log.setToolTip("Show log dockwidget")
         self.action_view_config = QtWidgets.QAction()
         self.action_view_config.setCheckable(True)
         self.action_view_config.setChecked(False)
-        self.action_view_config.setText('Show configuration')
-        self.action_view_config.setToolTip('Show configuration dockwidget')
+        self.action_view_config.setText("Show configuration")
+        self.action_view_config.setToolTip("Show configuration dockwidget")
         self.action_view_remote = QtWidgets.QAction()
         self.action_view_remote.setCheckable(True)
         self.action_view_remote.setChecked(False)
-        self.action_view_remote.setText('Show remote')
-        self.action_view_remote.setToolTip('Show remote connections dockwidget')
+        self.action_view_remote.setText("Show remote")
+        self.action_view_remote.setToolTip("Show remote connections dockwidget")
         self.action_view_threads = QtWidgets.QAction()
         self.action_view_threads.setCheckable(True)
         self.action_view_threads.setChecked(False)
-        self.action_view_threads.setText('Show threads')
-        self.action_view_threads.setToolTip('Show threads dockwidget')
+        self.action_view_threads.setText("Show threads")
+        self.action_view_threads.setToolTip("Show threads dockwidget")
         self.action_view_default = QtWidgets.QAction()
-        self.action_view_default.setText('Restore default')
-        self.action_view_default.setToolTip('Restore default view')
+        self.action_view_default.setText("Restore default")
+        self.action_view_default.setToolTip("Restore default view")
         # Dialog actions
         self.action_settings = QtWidgets.QAction()
-        self.action_settings.setIcon(QtGui.QIcon(os.path.join(icon_path, 'configure')))
-        self.action_settings.setText('Settings')
-        self.action_settings.setToolTip('Open settings dialog')
+        self.action_settings.setIcon(QtGui.QIcon(os.path.join(icon_path, "configure")))
+        self.action_settings.setText("Settings")
+        self.action_settings.setToolTip("Open settings dialog")
         self.action_about_qudi = QtWidgets.QAction()
-        self.action_about_qudi.setIcon(
-            QtGui.QIcon(os.path.join(icon_path, 'go-home')))
-        self.action_about_qudi.setText('About qudi')
-        self.action_about_qudi.setToolTip('Read up about qudi')
+        self.action_about_qudi.setIcon(QtGui.QIcon(os.path.join(icon_path, "go-home")))
+        self.action_about_qudi.setText("About qudi")
+        self.action_about_qudi.setToolTip("Read up about qudi")
         self.action_about_qt = QtWidgets.QAction()
-        self.action_about_qt.setIcon(
-            QtGui.QIcon(os.path.join(icon_path, 'go-home')))
-        self.action_about_qt.setText('About Qt')
-        self.action_about_qt.setToolTip('Read up about Qt')
+        self.action_about_qt.setIcon(QtGui.QIcon(os.path.join(icon_path, "go-home")))
+        self.action_about_qt.setText("About Qt")
+        self.action_about_qt.setToolTip("Read up about Qt")
 
         # Create toolbar
         self.toolbar = QtWidgets.QToolBar()
-        self.toolbar.setObjectName('QudiMainWindow Toolbar')
+        self.toolbar.setObjectName("QudiMainWindow Toolbar")
         self.toolbar.setOrientation(QtCore.Qt.Horizontal)
         self.toolbar.addAction(self.action_open_configuration_editor)
         self.toolbar.addAction(self.action_load_configuration)
@@ -141,11 +164,14 @@ class QudiMainWindow(QtWidgets.QMainWindow):
         self.toolbar.addSeparator()
         self.toolbar.addAction(self.action_load_all_modules)
         self.toolbar.addAction(self.action_dump_status_variables)
+        self.toolbar.addWidget(self.label_automatic_status_variable_dumping)
+        self.toolbar.addWidget(self.checkbox_automatic_status_variable_dumping)
+        self.toolbar.addWidget(self.dump_status_variables_interval_spinbox)
         self.addToolBar(self.toolbar)
 
         # Create menu bar
         self.menubar = QtWidgets.QMenuBar()
-        menu = QtWidgets.QMenu('File')
+        menu = QtWidgets.QMenu("File")
         menu.addAction(self.action_open_configuration_editor)
         menu.addSeparator()
         menu.addAction(self.action_load_configuration)
@@ -158,7 +184,7 @@ class QudiMainWindow(QtWidgets.QMainWindow):
         menu.addSeparator()
         menu.addAction(self.action_quit)
         self.menubar.addMenu(menu)
-        menu = QtWidgets.QMenu('View')
+        menu = QtWidgets.QMenu("View")
         menu.addAction(self.action_view_console)
         menu.addAction(self.action_view_log)
         menu.addAction(self.action_view_config)
@@ -167,7 +193,7 @@ class QudiMainWindow(QtWidgets.QMainWindow):
         menu.addSeparator()
         menu.addAction(self.action_view_default)
         self.menubar.addMenu(menu)
-        menu = QtWidgets.QMenu('About')
+        menu = QtWidgets.QMenu("About")
         menu.addAction(self.action_about_qudi)
         menu.addAction(self.action_about_qt)
         self.menubar.addMenu(menu)
@@ -182,33 +208,34 @@ class QudiMainWindow(QtWidgets.QMainWindow):
 
         # Create dialogues
         self.about_qudi_dialog = AboutQudiDialog()
-        self.about_qudi_dialog.setWindowTitle('About qudi')
+        self.about_qudi_dialog.setWindowTitle("About qudi")
         self.settings_dialog = SettingsDialog()
 
         # Create dockwidgets
         self.config_widget = ConfigQTreeWidget()
-        self.config_dockwidget = AdvancedDockWidget('Configuration')
+        self.config_dockwidget = AdvancedDockWidget("Configuration")
         self.config_dockwidget.setWidget(self.config_widget)
         self.config_dockwidget.setAllowedAreas(
             QtCore.Qt.BottomDockWidgetArea | QtCore.Qt.LeftDockWidgetArea
         )
         self.log_widget = LogWidget(debug_mode=debug_mode)
-        self.log_dockwidget = AdvancedDockWidget('Log')
+        self.log_dockwidget = AdvancedDockWidget("Log")
         self.log_dockwidget.setWidget(self.log_widget)
         self.log_dockwidget.setAllowedAreas(QtCore.Qt.BottomDockWidgetArea)
         self.remote_widget = RemoteWidget()
-        self.remote_dockwidget = AdvancedDockWidget('Remote modules')
+        self.remote_dockwidget = AdvancedDockWidget("Remote modules")
         self.remote_dockwidget.setWidget(self.remote_widget)
         self.remote_dockwidget.setAllowedAreas(QtCore.Qt.BottomDockWidgetArea)
         self.threads_widget = QtWidgets.QListView()
-        self.threads_dockwidget = AdvancedDockWidget('Threads')
+        self.threads_dockwidget = AdvancedDockWidget("Threads")
         self.threads_dockwidget.setWidget(self.threads_widget)
         self.threads_dockwidget.setAllowedAreas(QtCore.Qt.BottomDockWidgetArea)
         self.console_widget = RichJupyterWidget()
-        self.console_dockwidget = AdvancedDockWidget('Console')
+        self.console_dockwidget = AdvancedDockWidget("Console")
         self.console_dockwidget.setWidget(self.console_widget)
         self.console_dockwidget.setAllowedAreas(
-            QtCore.Qt.RightDockWidgetArea | QtCore.Qt.LeftDockWidgetArea)
+            QtCore.Qt.RightDockWidgetArea | QtCore.Qt.LeftDockWidgetArea
+        )
 
         # Add dockwidgets to main window
         self.addDockWidget(QtCore.Qt.BottomDockWidgetArea, self.config_dockwidget)
@@ -218,15 +245,21 @@ class QudiMainWindow(QtWidgets.QMainWindow):
         self.addDockWidget(QtCore.Qt.RightDockWidgetArea, self.console_dockwidget)
 
         # Synchronize dockwidget visibility change signals
-        self.config_dockwidget.sigClosed.connect(lambda: self.action_view_config.setChecked(False))
+        self.config_dockwidget.sigClosed.connect(
+            lambda: self.action_view_config.setChecked(False)
+        )
         self.log_dockwidget.sigClosed.connect(
-            lambda: self.action_view_log.setChecked(False))
+            lambda: self.action_view_log.setChecked(False)
+        )
         self.remote_dockwidget.sigClosed.connect(
-            lambda: self.action_view_remote.setChecked(False))
+            lambda: self.action_view_remote.setChecked(False)
+        )
         self.threads_dockwidget.sigClosed.connect(
-            lambda: self.action_view_threads.setChecked(False))
+            lambda: self.action_view_threads.setChecked(False)
+        )
         self.console_dockwidget.sigClosed.connect(
-            lambda: self.action_view_console.setChecked(False))
+            lambda: self.action_view_console.setChecked(False)
+        )
         self.action_view_config.toggled.connect(self.config_dockwidget.setVisible)
         self.action_view_log.toggled.connect(self.log_dockwidget.setVisible)
         self.action_view_remote.toggled.connect(self.remote_dockwidget.setVisible)
@@ -238,3 +271,13 @@ class QudiMainWindow(QtWidgets.QMainWindow):
         self.action_about_qt.triggered.connect(QtWidgets.QApplication.aboutQt)
         self.action_settings.triggered.connect(self.settings_dialog.exec_)  # modal
         return
+
+    def toggle_dump_status_variables_interval_spinbox(self, toggle):
+        """
+        Method that toggles active status of the dump_status_variables_interval_spinbox spinbox.
+        @param int toggle: Indicates whether to set spinbox as active or not.
+            """
+        if toggle != QtCore.Qt.Checked:
+            self.dump_status_variables_interval_spinbox.setEnabled(False)
+            return
+        self.dump_status_variables_interval_spinbox.setEnabled(True)
