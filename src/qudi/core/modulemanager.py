@@ -315,7 +315,7 @@ class ManagedModule(QtCore.QObject):
 
         self._qudi_main_ref = qudi_main_ref  # Weak reference to qudi main instance
         self._name = name  # Each qudi module needs a unique string identifier
-        self._base = base  # Remember qudi module base
+        self._base = base  # Remember qudi module base name ('gui', 'logic', 'hardware')
         self._instance = None  # Store the module instance later on
 
         cfg = copy.deepcopy(configuration)
