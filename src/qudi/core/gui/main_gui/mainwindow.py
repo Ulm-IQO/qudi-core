@@ -30,7 +30,6 @@ from qudi.core.gui.main_gui.configwidget import ConfigQTreeWidget
 from qudi.util.paths import get_artwork_dir
 from qudi.util.widgets.advanced_dockwidget import AdvancedDockWidget
 from qtconsole.rich_jupyter_widget import RichJupyterWidget
-from qudi.util.widgets.scientific_spinbox import ScienSpinBox
 
 
 class QudiMainWindow(QtWidgets.QMainWindow):
@@ -91,18 +90,6 @@ class QudiMainWindow(QtWidgets.QMainWindow):
         self.action_dump_status_variables.setToolTip(
             "Save Status Variables of all active modules"
         )
-        self.label_automatic_status_variable_dumping = QtWidgets.QLabel()
-        self.label_automatic_status_variable_dumping.setText("Automatic StatusVar saving: ")
-        self.checkbox_automatic_status_variable_dumping = QtWidgets.QCheckBox()
-        self.checkbox_automatic_status_variable_dumping.setChecked(False)
-        self.checkbox_automatic_status_variable_dumping.setToolTip("Activate / Deactivate automatic dumping of status variables")
-        self.dump_status_variables_interval_spinbox = ScienSpinBox()
-        self.dump_status_variables_interval_spinbox.setToolTip("Time interval for automatic dumping of status variables")
-        self.dump_status_variables_interval_spinbox.setSuffix("min")
-        self.dump_status_variables_interval_spinbox.setMinimum(1)
-        self.dump_status_variables_interval_spinbox.setMaximum(1440)
-        self.dump_status_variables_interval_spinbox.setMinimumSize(QtCore.QSize(80, 0))
-        self.dump_status_variables_interval_spinbox.setValue(1)
         # quit action
         self.action_quit = QtWidgets.QAction()
         self.action_quit.setIcon(
@@ -164,9 +151,6 @@ class QudiMainWindow(QtWidgets.QMainWindow):
         self.toolbar.addSeparator()
         self.toolbar.addAction(self.action_load_all_modules)
         self.toolbar.addAction(self.action_dump_status_variables)
-        self.toolbar.addWidget(self.label_automatic_status_variable_dumping)
-        self.toolbar.addWidget(self.checkbox_automatic_status_variable_dumping)
-        self.toolbar.addWidget(self.dump_status_variables_interval_spinbox)
         self.addToolBar(self.toolbar)
 
         # Create menu bar
@@ -271,13 +255,3 @@ class QudiMainWindow(QtWidgets.QMainWindow):
         self.action_about_qt.triggered.connect(QtWidgets.QApplication.aboutQt)
         self.action_settings.triggered.connect(self.settings_dialog.exec_)  # modal
         return
-
-    def toggle_dump_status_variables_interval_spinbox(self, toggle):
-        """
-        Method that toggles active status of the dump_status_variables_interval_spinbox spinbox.
-        @param int toggle: Indicates whether to set spinbox as active or not.
-            """
-        if toggle != QtCore.Qt.Checked:
-            self.dump_status_variables_interval_spinbox.setEnabled(False)
-            return
-        self.dump_status_variables_interval_spinbox.setEnabled(True)

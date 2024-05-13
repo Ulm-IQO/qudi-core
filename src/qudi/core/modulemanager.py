@@ -48,6 +48,7 @@ class ModuleManager(QtCore.QObject):
     sigModuleStateChanged = QtCore.Signal(str, str, str)
     sigModuleAppDataChanged = QtCore.Signal(str, str, bool)
     sigManagedModulesChanged = QtCore.Signal(dict)
+    automated_status_variable_dumping_timer = QtCore.QTimer()
 
     def __new__(cls, *args, **kwargs):
         with cls._lock:
@@ -292,15 +293,14 @@ class ModuleManager(QtCore.QObject):
         """
         if toggle != QtCore.Qt.Checked:
             logger.info(f"Automated status variable saving disabled.")
-            self.automated_status_variable_dumping_timer.timeout.disconnect()
             self.automated_status_variable_dumping_timer.stop()
-            self.automated_status_variable_dumping_timer.deleteLater()
+            self.automated_status_variable_dumping_timer.timeout.disconnect()
             return
 
         logger.info(
             f"Automated status variable saving enabled with interval {self.automated_status_variable_dumping_timer_interval} min."
         )
-        self.automated_status_variable_dumping_timer = QtCore.QTimer()
+
         self.automated_status_variable_dumping_timer.setInterval(
             self.automated_status_variable_dumping_timer_interval * 60e3
         )
@@ -328,18 +328,11 @@ class ModuleManager(QtCore.QObject):
 
         @param int interval: interval of the timer in min
         """
+        self.automated_status_variable_dumping_timer_interval = interval
+        self.automated_status_variable_dumping_timer.setInterval(interval * 60e3)
         logger.info(
             f"Setting automated status variable saving timer interval to {interval} min."
         )
-        self.automated_status_variable_dumping_timer_interval = interval
-        if not hasattr(self, "automated_status_variable_dumping_timer"):
-            return
-        if (
-            self.automated_status_variable_dumping_timer is None
-            and self.automated_status_variable_dumping_timer.isDeleted()
-        ):
-            return
-        self.automated_status_variable_dumping_timer.setInterval(interval * 60e3)
 
 
 class ManagedModule(QtCore.QObject):
