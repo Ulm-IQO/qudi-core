@@ -237,6 +237,7 @@ class Qudi(QtCore.QObject):
                     # If no module and class name can be determined, use the application logger
                     logger = self.log
                     msg = 'Unhandled qudi exception:'
+        print('the msg is ',msg)
         # Log exception with qudi log handler
         logger.error(msg, exc_info=(ex_type, ex_value, ex_traceback))
 

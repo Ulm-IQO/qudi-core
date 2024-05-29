@@ -27,6 +27,8 @@ import os
 import pytest
 from PySide2 import QtCore, QtWidgets
 from PySide2.QtCore import QTimer
+import logging
+LOGGER = logging.getLogger(__name__)
 
 
 SEED = 42
@@ -37,42 +39,37 @@ RUN_SUCCESS_STR = 'Starting Qt event loop'
 
 @pytest.fixture(scope="session")
 def qudi_instance():
-    return application.Qudi()
-    
-@pytest.fixture(scope="session")
-def log_file(qudi_instance):
-    return os.path.join(qudi_instance.log_dir, DEFAULT_LOGFILE)
+    instance = application.Qudi.instance()
+    return instance if instance is not None else application.Qudi()
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="module")
 def qt_app():
-    return QtCore.QCoreApplication()
+    app_cls = QtCore.QCoreApplication
+    app = app_cls.instance()
+    if app is None:
+        print('it is none')
+        app = app_cls()
+    return app
 
 
-def test_qudi_excepthook_handled(qudi_instance,log_file):
+def test_qudi_excepthook_handled(qudi_instance,caplog):
     """ Test for handled exceptions that will be logged """
     try:
         1 / 0
     except Exception as ex:
         qudi_instance._qudi_excepthook(ex.__class__, ex, ex.__traceback__)
-
-        logs = open(log_file).readlines()
-        f_line = logs[0]
         current_file = os.path.basename(__file__).split('.')[0]
-        assert current_file in f_line
-        l_line = logs[-1]
-        assert ex.__class__.__name__ in l_line
+        assert current_file in caplog.text
+        assert ex.__class__.__name__ in caplog.text
 
 
-def test_qudi_excepthook_unhandled(qudi_instance,log_file):
+def test_qudi_excepthook_unhandled(qudi_instance,caplog):
     """ Test for unhandled exceptions which won't be logged """
     try:
         sys.exit()
     except SystemExit as ex:
         qudi_instance._qudi_excepthook(ex.__class__, ex, ex.__traceback__)
-
-        logs = open(log_file).readlines()
-        l_line = logs[-1]
-        assert ex.__class__.__name__ not in l_line
+        assert ex.__class__.__name__ not in caplog.text
         
 def test_configure_qudi(qudi_instance,qt_app):
     """ Test whether modules are loaded upon configuring qudi instance"""
@@ -84,12 +81,14 @@ def test_configure_qudi(qudi_instance,qt_app):
     assert bool(qudi_instance.module_manager.modules)
 
 
-def test_run_exit(qudi_instance,qt_app,log_file):
+def test_run_exit(qudi_instance,qt_app,caplog):
     qudi_instance.no_gui = True
     try:
         QTimer.singleShot(5000, qt_app.quit)
         qudi_instance.run()
     except SystemExit as e:
-        logs = '\n'.join(open(log_file).readlines())
-        assert RUN_SUCCESS_STR in logs
+        assert RUN_SUCCESS_STR in caplog.text
         assert not qudi_instance.is_running
+        qt_app.exit(0)
+        del qt_app
+        
