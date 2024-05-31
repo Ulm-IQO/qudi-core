@@ -77,8 +77,7 @@ def module_manager(qudi_instance):
 
 def test_add_module( module_manager, sample_module_gui, qtbot):
     '''
-    What this function does.
-
+    Test the add_module function if it correctly adds modules
     Parameters
     ----------
     module_manager : ModuleManager
@@ -134,3 +133,14 @@ def test_refresh_module_links(module_manager, sample_module_gui, sample_module_l
     # And the GUI module should be in dependent modules list of logic module
     logic_dependent_modules = [ref() for ref in logic_module.dependent_modules]
     assert gui_module in logic_dependent_modules
+
+
+def test_ranking_active_dependent_modules(module_manager, config):
+    for base in ['gui', 'logic', 'hardware']:
+        for module_name, module_cfg in config[base].items():
+            module_manager.add_module(module_name, base, module_cfg, allow_overwrite=True, emit_change=True )
+            #active_modules = module_manager.modules[].ranking_active_dependent_modules()
+            print(module_manager.modules)
+
+    
+
