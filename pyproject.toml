@@ -72,6 +72,27 @@ dependencies = [
     "jsonschema>=4.2.1",
 ]
 
+[tool.setuptools.packages.find]
+where = ["src"]
+exclude = ["qudi.artwork"]
+
+[tool.setuptools.package-dir]
+"" = "src"
+
+
+
+[tool.setuptools.package-data]
+"qudi" = [
+    "artwork/icons/*",
+    "artwork/icons/**/*",
+    "artwork/icons/**/**/*",
+    "artwork/styles/*",
+    "artwork/styles/**/*",
+    "artwork/styles/**/**/*",
+    "artwork/logo/*"
+]
+
+
 [project.optional-dependencies]
 dev-docs = [
     "Sphinx==7.2.6",

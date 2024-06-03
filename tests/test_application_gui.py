@@ -61,7 +61,14 @@ def config():
     return configuration
 
 def test_qudi_excepthook_handled(qudi_instance,caplog):
-    """ Test for handled exceptions that will be logged """
+    """Test for handled exceptions that will be logged
+    Parameters
+    ----------
+    qudi_instance : fixture
+        fixture for Qudi instance
+    caplog : fixture
+        pytest fixture to capture logs
+    """
     try:
         1 / 0
     except Exception as ex:
@@ -72,7 +79,14 @@ def test_qudi_excepthook_handled(qudi_instance,caplog):
 
 
 def test_qudi_excepthook_unhandled(qudi_instance,caplog):
-    """ Test for unhandled exceptions which won't be logged """
+    """Test for unhandled exceptions which won't be logged
+    Parameters
+    ----------
+    qudi_instance : fixture
+        fixture for Qudi instance
+    caplog : fixture
+        pytest fixture to capture logs
+    """    
     try:
         sys.exit()
     except SystemExit as ex:
@@ -80,7 +94,17 @@ def test_qudi_excepthook_unhandled(qudi_instance,caplog):
         assert ex.__class__.__name__ not in caplog.text
         
 def test_configure_qudi(qudi_instance,qt_app,config):
-    """ Test whether modules are loaded upon configuring qudi instance"""
+    """Test whether modules are loaded upon configuring qudi instance
+    Parameters
+    ----------
+    qudi_instance : fixture
+        fixture for Qudi instance
+    qt_app : fixture
+        fixture for QT app
+    config : fixture
+        fixture for loaded yaml config
+    """    
+
     assert not bool(qudi_instance.module_manager.modules)
             
     qudi_instance._configure_qudi()
@@ -95,6 +119,16 @@ def test_configure_qudi(qudi_instance,qt_app,config):
 
 
 def test_run_exit(qudi_instance,qt_app,caplog):
+    """Test if the qudi application runs and exits properly
+    Parameters
+    ----------
+    qudi_instance : fixture
+        fixture for Qudi instance
+    qt_app : fixture
+        fixture for QT app
+    caplog : fixture
+        pytest fixture to capture logs
+    """    
     try:
         QTimer.singleShot(5000, qt_app.quit)
         qudi_instance.run()

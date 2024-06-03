@@ -26,11 +26,12 @@ import numpy as np
 import yaml
 import pytest
 from PySide2 import QtCore, QtWidgets
+from PySide2.QtCore import QTimer
 import weakref
 
 
 CONFIG = 'C:/qudi/qudi-core/tests/dummy.cfg'
-CONFIG = 'C:/qudi/default.cfg'
+CONFIG = 'C:/qudi/default_2.cfg'
 
 
 @pytest.fixture(scope="module")
@@ -68,6 +69,12 @@ def sample_module_logic(config):
     sample_module_name, sample_module_cfg = list(config[sample_base].items())[0]
     return sample_base, sample_module_name, sample_module_cfg
 
+@pytest.fixture(scope='module')
+def sample_module_hardware(config):
+    sample_base = 'hardware'
+    sample_module_name, sample_module_cfg = list(config[sample_base].items())[0]
+    return sample_base, sample_module_name, sample_module_cfg
+
 @pytest.fixture(scope="module")
 def module_manager(qudi_instance):
     return qudi_instance.module_manager
@@ -75,16 +82,35 @@ def module_manager(qudi_instance):
 
 
 
-def test_ranking_active_dependent_modules(module_manager, config,sample_module_logic):
+def test_ranking_active_dependent_modules(module_manager, config,sample_module_hardware, sample_module_logic, sample_module_gui):
     for base in ['gui', 'logic', 'hardware']:
         for module_name, module_cfg in list(config[base].items()):
             module_manager.add_module(module_name, base, module_cfg, allow_overwrite=False, emit_change=True )
     module_manager.start_all_modules()
-    sample_base, sample_module_name, sample_module_cfg = sample_module_logic
-    print( type(module_manager.modules[sample_module_name]))
-    active_modules = module_manager.modules[sample_module_name].ranking_active_dependent_modules
-    print(f'active dep modules for {sample_module_name} are {active_modules}')
-    assert False
+    _, sample_hardware, _ = sample_module_hardware
+    _, sample_logic, _ = sample_module_logic
+    _, sample_gui, _ = sample_module_gui
+
+    active_dep_modules = module_manager.modules[sample_hardware].ranking_active_dependent_modules
+    active_dep_modules = [ref() for ref in active_dep_modules]
+    print(f'active dep modules for {sample_hardware} are {active_dep_modules}')
+    #assert module_manager.modules[sample_logic] in active_dep_modules
+    assert module_manager.modules[sample_gui] in active_dep_modules
+    module_manager.clear()
+
+def test_activate(module_manager, config, sample_module_hardware, sample_module_logic, sample_module_gui,qtbot):
+        for base in ['gui', 'logic', 'hardware']:
+            for module_name, module_cfg in list(config[base].items()):
+                module_manager.add_module(module_name, base, module_cfg, allow_overwrite=False, emit_change=True )
+        
+        _, sample_hardware, _ = sample_module_hardware
+        _, sample_logic, _ = sample_module_logic
+        _, sample_gui, _ = sample_module_gui
+        hardware_managed_module = module_manager.modules[sample_hardware]
+        with qtbot.waitSignal( hardware_managed_module.sigStateChanged) as blockers:
+            hardware_managed_module.activate( )
+        emitted_signal = blockers.args
+
 
     
 

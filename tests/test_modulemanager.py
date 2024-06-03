@@ -76,18 +76,16 @@ def module_manager(qudi_instance):
 
 
 def test_add_module( module_manager, sample_module_gui, qtbot):
-    '''
-    Test the add_module function if it correctly adds modules
+    """  Test the add_module function if it correctly adds modules
     Parameters
     ----------
-    module_manager : ModuleManager
-        This argument does something.
-    ...
-
-    Returns
-    -------
-    None
-    '''
+    module_manager : fixture
+        fixture for instance of module manager
+    sample_module_gui : fixture
+        fixture for instance of managed module for a sample gui module
+    qtbot : fixture
+        pytest fixture for qt
+    """    
     sample_base, sample_module_name, sample_module_cfg = sample_module_gui    
     assert sample_module_name not in module_manager.module_names
 
@@ -101,6 +99,16 @@ def test_add_module( module_manager, sample_module_gui, qtbot):
     
 
 def test_remove_module(module_manager, sample_module_gui, qtbot):
+    """  Test the remove_module function if it correctly removes modules
+    Parameters
+    ----------
+    module_manager : fixture
+        fixture for instance of module manager
+    sample_module_gui : fixture
+        fixture for instance of managed module for a sample gui module
+    qtbot : fixture
+        pytest fixture for qt
+    """    
     sample_base, sample_module_name, sample_module_cfg = sample_module_gui
     assert sample_module_name in module_manager.module_names 
 
@@ -113,6 +121,16 @@ def test_remove_module(module_manager, sample_module_gui, qtbot):
 
     
 def test_refresh_module_links(module_manager, sample_module_gui, sample_module_logic):
+    """  Test the refresh_module_lins function if it correctly refreshed the links between modules: (dependent and required) module lists
+    Parameters
+    ----------
+    module_manager : fixture
+        fixture for instance of module manager
+    sample_module_gui : fixture
+        fixture for instance of managed module for a sample gui module
+    sample_module_logic : fixture
+        fixture for instance of managed module for a sample logic module
+    """    
     sample_base, sample_module_name, sample_module_cfg = sample_module_gui  
     # Adding a sample gui module   
     gui_module = modulemanager.ManagedModule(module_manager._qudi_main_ref,sample_module_name, sample_base, sample_module_cfg)
@@ -135,12 +153,7 @@ def test_refresh_module_links(module_manager, sample_module_gui, sample_module_l
     assert gui_module in logic_dependent_modules
 
 
-def test_ranking_active_dependent_modules(module_manager, config):
-    for base in ['gui', 'logic', 'hardware']:
-        for module_name, module_cfg in config[base].items():
-            module_manager.add_module(module_name, base, module_cfg, allow_overwrite=True, emit_change=True )
-            #active_modules = module_manager.modules[].ranking_active_dependent_modules()
-            print(module_manager.modules)
+
 
     
 
