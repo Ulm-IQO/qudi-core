@@ -289,12 +289,15 @@ class ModuleManager(QtCore.QObject):
         """
         Method that creates or destroys the QTimer for handling the automatic dumping of status variables.
 
-        @param int toogle: boolean that determines whether timer is created or destroyed.
+        @param bool toggle: boolean that determines whether timer is created or destroyed.
         """
-        if toggle != QtCore.Qt.Checked:
+        if not toggle:
             logger.info(f"Automated status variable saving disabled.")
             self.automated_status_variable_dumping_timer.stop()
-            self.automated_status_variable_dumping_timer.timeout.disconnect()
+            try:
+                self.automated_status_variable_dumping_timer.timeout.disconnect()
+            except RuntimeError:
+                pass
             return
 
         logger.info(

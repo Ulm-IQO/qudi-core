@@ -100,9 +100,6 @@ class SettingsDialog(QtWidgets.QDialog):
     def toggle_dump_status_variables_interval_spinbox(self, toggle):
         """
         Method that toggles active status of the dump_status_variables_interval_spinbox spinbox.
-        @param int toggle: Indicates whether to set spinbox as active or not.
+        @param bool toggle: Indicates whether to set spinbox as active or not.
         """
-        if toggle != QtCore.Qt.Checked:
-            self.dump_status_variables_interval_spinbox.setEnabled(False)
-            return
-        self.dump_status_variables_interval_spinbox.setEnabled(True)
+        self.dump_status_variables_interval_spinbox.setEnabled(toggle)
