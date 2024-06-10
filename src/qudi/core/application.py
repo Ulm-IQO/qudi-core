@@ -27,6 +27,7 @@ import inspect
 import warnings
 import traceback
 import faulthandler
+from functools import partial
 from logging import DEBUG, INFO, Logger
 from PySide2 import QtCore, QtWidgets, QtGui
 from typing import Optional, Union, Dict, Callable, Tuple, Iterable, List
@@ -42,8 +43,10 @@ from qudi.core.module import ModuleState, ModuleBase
 from qudi.core.modulemanager import ModuleManager
 from qudi.core.threadmanager import ThreadManager
 from qudi.core.gui import configure_pyqtgraph, initialize_app_icon, set_theme, set_stylesheet
-from qudi.core.gui import close_windows, prompt_restart, prompt_shutdown
+from qudi.core.gui import close_windows
 from qudi.core.servers import RemoteModulesServer, QudiNamespaceServer
+from qudi.core.trayicon import QudiTrayIcon
+from qudi.core.message import prompt_restart, prompt_shutdown
 
 
 def setup_environment() -> None:
@@ -65,151 +68,6 @@ def setup_environment() -> None:
         os.environ['QT_LOGGING_RULES'] = '*.debug=false;*.info=false;*.notice=false;*.warning=false'
 
 
-class _ModuleListProxyModel(QtCore.QSortFilterProxyModel):
-    """ Model proxy that filters all modules for ModuleBase.GUI type and collapses the table model
-    to a list of data tuples
-    """
-    def columnCount(self, parent: Optional[QtCore.QModelIndex] = None) -> int:
-        return 1
-
-    def filterAcceptsRow(self, source_row: int, source_parent: QtCore.QModelIndex) -> bool:
-        return self.sourceModel().index(source_row, 0, source_parent).data() == ModuleBase.GUI
-
-    def data(self,
-             index: QtCore.QModelIndex,
-             role: Optional[QtCore.Qt.ItemDataRole] = QtCore.Qt.DisplayRole
-             ) -> Union[None, Tuple[str, ModuleState]]:
-        if index.isValid() and (role == QtCore.Qt.DisplayRole):
-            source_index = self.mapToSource(index)
-            module = source_index.data(QtCore.Qt.UserRole)
-            return module.name, module.state
-        return None
-
-
-class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
-    """ QSystemTrayIcon for graphical qudi application """
-    def __init__(self,
-                 module_manager: ModuleManager,
-                 quit_callback: Callable[[], None],
-                 restart_callback: Callable[[], None],
-                 parent: Optional[QtCore.QObject] = None):
-        """ Tray icon constructor. Adds all the appropriate menus and actions. """
-        super().__init__(icon=QtWidgets.QApplication.instance().windowIcon(), parent=parent)
-
-        self._module_manager = module_manager
-        self._module_actions: Dict[str, QtWidgets.QAction] = dict()
-        self._right_menu = QtWidgets.QMenu('Menu')
-        self._left_menu = QtWidgets.QMenu('Modules')
-
-        iconpath = os.path.join(get_artwork_dir(), 'icons')
-
-        icon = QtGui.QIcon()
-        icon.addFile(os.path.join(iconpath, 'application-exit'), QtCore.QSize(16, 16))
-        self._quit_action = QtWidgets.QAction(icon, 'Quit', self._right_menu)
-        self._quit_action.triggered.connect(quit_callback, QtCore.Qt.QueuedConnection)
-        self._right_menu.addAction(self._quit_action)
-        icon = QtGui.QIcon()
-        icon.addFile(os.path.join(iconpath, 'view-refresh'), QtCore.QSize(16, 16))
-        self._restart_action = QtWidgets.QAction(icon, 'Restart', self._right_menu)
-        self._restart_action.triggered.connect(restart_callback, QtCore.Qt.QueuedConnection)
-        self._right_menu.addAction(self._restart_action)
-        if self._module_manager.has_main_gui:
-            icon = QtGui.QIcon()
-            icon.addFile(os.path.join(iconpath, 'go-home'), QtCore.QSize(16, 16))
-            self._main_gui_action = QtWidgets.QAction(icon, 'Main GUI', self._left_menu)
-            self._main_gui_action.triggered.connect(
-                self._module_manager.activate_main_gui,
-                QtCore.Qt.QueuedConnection
-            )
-            self._left_menu.addAction(self._main_gui_action)
-            self._left_menu.addSeparator()
-
-        self.setContextMenu(self._right_menu)
-        self.activated.connect(self._handle_activation)
-
-        self._model_proxy = _ModuleListProxyModel(parent=self)
-        self._model_proxy.setSourceModel(module_manager)
-        self._model_proxy.modelReset.connect(self.__reset_modules)
-        self._model_proxy.rowsInserted.connect(self.__reset_modules)
-        self._model_proxy.rowsRemoved.connect(self.__reset_modules)
-        self._model_proxy.dataChanged.connect(self.__module_states_changed)
-        self.__reset_modules()
-
-    @QtCore.Slot(str, str, object, object)
-    def notification_bubble(self,
-                            title: str,
-                            message: str,
-                            time: Optional[float] = None,
-                            icon: Optional[QtGui.QIcon] = None) -> None:
-        """ Helper method to invoke balloon messages in the system tray by calling
-        QSystemTrayIcon.showMessage.
-
-        @param str title: The notification title of the balloon
-        @param str message: The message to be shown in the balloon
-        @param float time: optional, The lingering time of the balloon in seconds
-        @param QIcon icon: optional, an icon to be used in the balloon. "None" will use OS default.
-        """
-        if self.supportsMessages():
-            if icon is None:
-                icon = QtGui.QIcon()
-            if time is None:
-                time = 10
-            self.showMessage(title, message, icon, int(round(time * 1000)))
-        else:
-            get_logger('pop-up message').warning(f'{title}:\n{message}')
-
-    @QtCore.Slot(QtWidgets.QSystemTrayIcon.ActivationReason)
-    def _handle_activation(self, reason: QtWidgets.QSystemTrayIcon.ActivationReason) -> None:
-        """ This method is called when the tray icon is left-clicked. It opens a menu at the
-        position of the click.
-        """
-        if reason == self.Trigger:
-            self._left_menu.exec_(QtGui.QCursor.pos())
-
-    def _add_module_action(self, name: str) -> None:
-        if name not in self._module_actions:
-            icon = QtGui.QIcon()
-            iconpath = os.path.join(get_artwork_dir(), 'icons')
-            icon.addFile(os.path.join(iconpath, 'go-next'))
-            action = QtWidgets.QAction(icon=icon, text=name)
-            action.triggered.connect(lambda: self._module_manager.activate_module(name))
-            self._left_menu.addAction(action)
-            self._module_actions[name] = action
-
-    def _remove_module_action(self, name: str) -> None:
-        action = self._module_actions.pop(name, None)
-        if action is not None:
-            action.triggered.disconnect()
-            self._left_menu.removeAction(action)
-
-    def _clear_module_actions(self) -> None:
-        for label in list(self._module_actions):
-            self._remove_module_action(label)
-
-    @QtCore.Slot()
-    def __reset_modules(self) -> None:
-        self._clear_module_actions()
-        module_states = [
-            self._model_proxy.index(row, 0).data() for row in range(self._model_proxy.rowCount())
-        ]
-        for name, state in module_states:
-            if state.activated:
-                self._add_module_action(name)
-
-    @QtCore.Slot(QtCore.QModelIndex, QtCore.QModelIndex, object)
-    def __module_states_changed(self,
-                               top_left: QtCore.QModelIndex,
-                               bottom_right: QtCore.QModelIndex,
-                               roles: Iterable[QtCore.Qt.ItemDataRole]) -> None:
-        model = top_left.model()
-        for row in range(top_left.row(), bottom_right.row() + 1):
-            name, state = model.index(row, 0).data()
-            if state.deactivated:
-                self._remove_module_action(name)
-            else:
-                self._add_module_action(name)
-
-
 class Qudi(QtCore.QObject):
     """ The main runtime singleton for qudi.
     Sets up everything and calling "run" starts the application.
@@ -228,7 +86,7 @@ class Qudi(QtCore.QObject):
     remote_modules_server: Union[RemoteModulesServer, None]
     local_namespace_server: QudiNamespaceServer
     watchdog: Union[AppWatchdog, None]
-    tray_icon: Union[SystemTrayIcon, None]
+    tray_icon: Union[QudiTrayIcon, None]
     _configured_extension_paths: List[str]
     _is_running: bool
     _shutting_down: bool
@@ -431,10 +289,20 @@ class Qudi(QtCore.QObject):
         set_stylesheet(self.configuration['stylesheet'])
         configure_pyqtgraph()
         # Create system tray icon
-        self.tray_icon = SystemTrayIcon(module_manager=self.module_manager,
-                                        quit_callback=self.quit,
-                                        restart_callback=self.restart,
-                                        parent=None)
+        if self.module_manager.has_main_gui:
+            self.tray_icon = QudiTrayIcon(quit_callback=self.quit,
+                                          restart_callback=self.restart,
+                                          main_gui_callback=self.module_manager.activate_main_gui)
+        else:
+            self.tray_icon = QudiTrayIcon(quit_callback=self.quit,
+                                          restart_callback=self.restart)
+        for row in range(self.module_manager.rowCount()):
+            if self.module_manager.index(row, 0).data() == ModuleBase.GUI:
+                name = self.module_manager.index(row, 1).data()
+                self.tray_icon.add_module_action(
+                    name=name,
+                    callback=partial(self.module_manager.activate_module, name)
+                )
         self.tray_icon.show()
         # Start main GUI
         if self.module_manager.has_main_gui:
@@ -553,36 +421,20 @@ class Qudi(QtCore.QObject):
                         locked_modules = True
                         break
 
-                if self.no_gui:
-                    # command line prompt
-                    question = '\nSome modules are still locked. ' if locked_modules else '\n'
-                    if restart:
-                        question += 'Do you really want to restart qudi (y/N)?: '
-                    else:
-                        question += 'Do you really want to quit qudi (y/N)?: '
-                    while True:
-                        response = input(question).lower()
-                        if response in ('y', 'yes'):
-                            break
-                        elif response in ('', 'n', 'no'):
-                            self._shutting_down = False
-                            return
+                # Prompt user either via GUI or command line
+                if not self.no_gui and self.module_manager.has_main_gui:
+                    # ToDo: Get QMainWindow instance from GuiBase instance
+                    parent = None
                 else:
-                    # GUI prompt
-                    if self.module_manager.has_main_gui:
-                        instance = self.module_manager.get_main_gui_instance()
-                        # ToDo: Get QMainWindow instance from GuiBase instance
-                        parent = None
-                    else:
-                        parent = None
-                    if restart:
-                        if not prompt_restart(locked_modules, parent):
-                            self._shutting_down = False
-                            return
-                    else:
-                        if not prompt_shutdown(locked_modules, parent):
-                            self._shutting_down = False
-                            return
+                    parent = None
+                if restart:
+                    if not prompt_restart(locked_modules, parent):
+                        self._shutting_down = False
+                        return
+                else:
+                    if not prompt_shutdown(locked_modules, parent):
+                        self._shutting_down = False
+                        return
 
             QtCore.QCoreApplication.instance().processEvents()
             self.log.info('Qudi shutting down...')

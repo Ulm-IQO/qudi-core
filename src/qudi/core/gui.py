@@ -20,7 +20,7 @@ If not, see <https://www.gnu.org/licenses/>.
 """
 
 __all__ = ['set_theme', 'set_stylesheet', 'close_windows', 'initialize_app_icon',
-           'configure_pyqtgraph', 'prompt_shutdown', 'prompt_restart', 'pop_up_message']
+           'configure_pyqtgraph']
 
 import os
 import platform
@@ -98,47 +98,3 @@ def configure_pyqtgraph(use_opengl: Optional[bool] = False) -> None:
     pyqtgraph.setConfigOption('useOpenGL', use_opengl)
     # Disable pyqtgraph "application exit workarounds" because they cause errors on exit
     pyqtgraph.setConfigOption('exitCleanup', False)
-
-
-def pop_up_message(title: str,
-                   message: str,
-                   parent: Optional[QtWidgets.QMainWindow] = None) -> None:
-    """ Slot prompting a dialog window with a message and an OK button to dismiss it.
-
-    @param str title: The window title of the dialog
-    @param str message: The message to be shown in the dialog window
-    @param QMainWindow parent: The parent main window to make this pop-up modal to
-    """
-    QtWidgets.QMessageBox.information(parent, title, message, QtWidgets.QMessageBox.Ok)
-
-
-def prompt_shutdown(modules_locked: Optional[bool] = False,
-                    parent: Optional[QtWidgets.QMainWindow] = None) -> bool:
-    """ Display a dialog, asking the user to confirm shutdown """
-    if modules_locked:
-        msg = 'Some qudi modules are locked right now.\n' \
-              'Do you really want to quit and force modules to deactivate?'
-    else:
-        msg = 'Do you really want to quit?'
-    result = QtWidgets.QMessageBox.question(parent,
-                                            'Qudi: Quit?',
-                                            msg,
-                                            QtWidgets.QMessageBox.Yes,
-                                            QtWidgets.QMessageBox.No)
-    return result == QtWidgets.QMessageBox.Yes
-
-
-def prompt_restart(modules_locked: Optional[bool] = False,
-                   parent: Optional[QtWidgets.QMainWindow] = None) -> bool:
-    """ Display a dialog, asking the user to confirm restart """
-    if modules_locked:
-        msg = 'Some qudi modules are locked right now.\n' \
-              'Do you really want to restart and force modules to deactivate?'
-    else:
-        msg = 'Do you really want to restart?'
-    result = QtWidgets.QMessageBox.question(parent,
-                                            'Qudi: Restart?',
-                                            msg,
-                                            QtWidgets.QMessageBox.Yes,
-                                            QtWidgets.QMessageBox.No)
-    return result == QtWidgets.QMessageBox.Yes

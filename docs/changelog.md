@@ -25,7 +25,12 @@ activation and it is destroyed upon deactivation.
 serves as singular central data source for all managed qudi modules and their status. The main GUI 
 and module servers (remote and local) have been adjusted accordingly.
 - GUI modules can no longer be shared by the remote module and local namespace servers.
-- Refactored `qudi.core.gui`
+- Refactored `qudi.core.gui` into a set of static functions
+- moved all popup and balloon message prompt functions into new `qudi.core.message` module. Works 
+for both GUI and headless mode. Also removed the corresponding member methods from 
+`qudi.core.module.Base` class. If you need to use it, import it from the new module.
+- Moved `qudi.core.application.SystemTrayIcon` to `qudi.core.trayicon.QudiTrayIcon` and made it a 
+singleton
 
 ### Bugfixes
 - Python module reload during runtime is now only performed if explicitly requested by the user

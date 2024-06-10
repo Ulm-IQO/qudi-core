@@ -290,7 +290,9 @@ class Base(QudiObject):
                  qudi_main: Any,
                  name: str,
                  options: Optional[Mapping[str, Any]] = None,
-                 connections: Optional[MutableMapping[str, Any]] = None):
+                 connections: Optional[MutableMapping[str, Any]] = None,
+                 default_data_root: Optional[str] = None,
+                 daily_data_dirs: Optional[bool] = False):
         """ Initialize Base instance. Set up its state machine, initializes ConfigOption meta
         attributes from given config and connects activated module dependencies.
         """
@@ -309,6 +311,11 @@ class Base(QudiObject):
 
         # Keep reference to qudi main instance
         self.__qudi_main = qudi_main
+        # default data dir parameters
+        if default_data_root is None:
+            default_data_root = get_default_data_dir()
+        self.__default_data_root = os.path.expanduser(default_data_root)
+        self.__daily_data_dirs = daily_data_dirs
         # Add additional module info
         self.__module_url = mod_url
         # Initialize module state
@@ -367,36 +374,11 @@ class Base(QudiObject):
         Module implementations can overwrite this property with a custom path but should only do so
         with a very good reason.
         """
-        config = self._qudi_main.configuration
-        data_root = config['default_data_dir']
-        if data_root is None:
-            data_root = get_default_data_dir()
-        data_root = os.path.expanduser(data_root)
-        if config['daily_data_dirs']:
-            data_dir = os.path.join(get_daily_directory(root=data_root), self.module_name)
+        if self.__daily_data_dirs:
+            root_dir = get_daily_directory(root=self.__default_data_root)
         else:
-            data_dir = os.path.join(data_root, self.module_name)
-        return data_dir
-
-    @final
-    def _send_balloon_message(self,
-                              title: str,
-                              message: str,
-                              time: Optional[float] = None,
-                              icon: Optional[QtGui.QIcon] = None) -> None:
-        if self.__qudi_main.gui is None:
-            log = get_logger('balloon-message')
-            log.warning(f'{title}:\n{message}')
-            return
-        self.__qudi_main.gui.balloon_message(title, message, time, icon)
-
-    @final
-    def _send_pop_up_message(self, title: str, message: str) -> None:
-        if self.__qudi_main.gui is None:
-            log = get_logger('pop-up-message')
-            log.warning(f'{title}:\n{message}')
-            return
-        self.__qudi_main.gui.pop_up_message(title, message)
+            root_dir = self.__default_data_root
+        return os.path.join(root_dir, self.module_name)
 
     @abstractmethod
     def on_activate(self) -> None:
