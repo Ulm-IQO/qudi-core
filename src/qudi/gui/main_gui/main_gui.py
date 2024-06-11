@@ -40,6 +40,7 @@ from qudi.gui.main_gui.mainwindow import QudiMainWindow
 from qudi.core.module import GuiBase
 from qudi.core.logger import get_signal_handler
 from qudi.core.config import Configuration
+from qudi.core.application import Qudi
 
 
 class QudiMainGui(GuiBase):
@@ -52,6 +53,7 @@ class QudiMainGui(GuiBase):
         self.error_dialog = None
         self._mw = None
         self._has_console = False  # Flag indicating if an IPython console is available
+        self._qudi_main = Qudi.instance()
 
     def on_activate(self) -> None:
         """ Activation method called on change to active state.
@@ -71,7 +73,7 @@ class QudiMainGui(GuiBase):
             self.mw.about_qudi_dialog.version_label.setText('version {0}'.format(version))
             self.mw.version_label.setText(
                 '<a style=\"color: cyan;\"> version {0} </a>  configured from {1}'
-                ''.format(version, self._qudi_main.configuration.file_path))
+                ''.format(version, self._configuration.file_path))
         else:
             self.mw.about_qudi_dialog.version_label.setText(
                 '<a href=\"https://github.com/Ulm-IQO/qudi/commit/{0}\" style=\"color: cyan;\"> {0}'
@@ -79,7 +81,7 @@ class QudiMainGui(GuiBase):
             self.mw.version_label.setText(
                 '<a href=\"https://github.com/Ulm-IQO/qudi/commit/{0}\" style=\"color: cyan;\"> {0}'
                 ' </a>, on branch {1}, configured from {2}'
-                ''.format(version[0], version[1], self._qudi_main.configuration.file_path))
+                ''.format(version[0], version[1], self._configuration.file_path))
 
         self._connect_signals()
         self.keep_settings()
@@ -120,7 +122,7 @@ class QudiMainGui(GuiBase):
         )
         self.mw.action_view_default.triggered.connect(self.reset_default_layout)
         # Connect signals from manager
-        qudi_main.configuration.sigConfigChanged.connect(self.update_config_widget)
+        self._configuration.sigConfigChanged.connect(self.update_config_widget)
         # Settings dialog
         self.mw.settings_dialog.accepted.connect(self.apply_settings)
         self.mw.settings_dialog.rejected.connect(self.keep_settings)
@@ -147,7 +149,7 @@ class QudiMainGui(GuiBase):
         self.mw.action_clear_all_appdata.triggered.disconnect()
         self.mw.action_view_default.triggered.disconnect()
         # Disconnect signals from manager
-        qudi_main.configuration.sigConfigChanged.disconnect(self.update_config_widget)
+        self._configuration.sigConfigChanged.disconnect(self.update_config_widget)
         # Settings dialog
         self.mw.settings_dialog.accepted.disconnect()
         self.mw.settings_dialog.rejected.disconnect()
@@ -303,7 +305,7 @@ class QudiMainGui(GuiBase):
     def update_config_widget(self, config: Optional[Configuration] = None) -> None:
         """ Clear and refill the tree widget showing the configuration """
         if config is None:
-            config = self._qudi_main.configuration
+            config = self._configuration
         self.mw.config_widget.set_config(config.config_map)
 
     def get_qudi_version(self) -> str:
@@ -345,7 +347,7 @@ class QudiMainGui(GuiBase):
             )
             if reply == QtWidgets.QMessageBox.Cancel:
                 return
-            self._qudi_main.configuration.set_default_path(filename)
+            self._configuration.set_default_path(filename)
             if reply == QtWidgets.QMessageBox.Yes:
                 self._qudi_main.restart()
 

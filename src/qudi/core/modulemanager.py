@@ -422,13 +422,10 @@ class LocalManagedModule(ManagedModule):
             connections = {
                 conn: required_targets[target] for conn, target in self._connections.items()
             }
-            self._instance = self._class(
-                qudi_main=self._qudi_main,
-                name=self.name,
-                options=self._options,
-                connections=connections,
-                default_data_root=self._qudi_main.configuration['default_data_dir'],
-                daily_data_dirs=self._qudi_main.configuration['daily_data_dirs'])
+            self._instance = self._class(name=self.name,
+                                         configuration=self._qudi_main.configuration,
+                                         options=self._options,
+                                         connections=connections)
         except Exception as err:
             self._instance = None
             raise RuntimeError(f'Error during __init__ of qudi module "{self.url}".') from err

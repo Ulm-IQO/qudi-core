@@ -27,14 +27,15 @@ import warnings
 from abc import abstractmethod
 from enum import Enum
 from uuid import uuid4, UUID
-from PySide2 import QtCore, QtGui, QtWidgets
+from PySide2 import QtCore, QtWidgets
 from typing import Any, Mapping, Optional, Union, Dict, Final, MutableMapping, final
 
-from qudi.core.statusvariable import StatusVar
-from qudi.util.paths import get_daily_directory, get_default_data_dir
 from qudi.core.object import QudiObject
 from qudi.core.logger import get_logger
+from qudi.core.statusvariable import StatusVar
+from qudi.core.config import Configuration
 from qudi.util.helpers import current_is_native_thread
+from qudi.util.paths import get_daily_directory, get_default_data_dir
 
 
 def module_url(module: str, class_name: str, name: str) -> str:
@@ -287,12 +288,10 @@ class Base(QudiObject):
     __url_uuid_map: Final[Dict[str, UUID]] = dict()  # Same module url will result in same UUID
 
     def __init__(self,
-                 qudi_main: Any,
                  name: str,
+                 configuration: Configuration,
                  options: Optional[Mapping[str, Any]] = None,
-                 connections: Optional[MutableMapping[str, Any]] = None,
-                 default_data_root: Optional[str] = None,
-                 daily_data_dirs: Optional[bool] = False):
+                 connections: Optional[MutableMapping[str, Any]] = None):
         """ Initialize Base instance. Set up its state machine, initializes ConfigOption meta
         attributes from given config and connects activated module dependencies.
         """
@@ -309,23 +308,18 @@ class Base(QudiObject):
             uuid=uuid
         )
 
-        # Keep reference to qudi main instance
-        self.__qudi_main = qudi_main
-        # default data dir parameters
+        # global config and default data dir parameters
+        self._configuration = configuration
+        default_data_root = configuration['default_data_dir']
         if default_data_root is None:
             default_data_root = get_default_data_dir()
         self.__default_data_root = os.path.expanduser(default_data_root)
-        self.__daily_data_dirs = daily_data_dirs
+        self.__daily_data_dirs = configuration['daily_data_dirs']
         # Add additional module info
         self.__module_url = mod_url
         # Initialize module state
         self.module_state = ModuleStateMachine(module_instance=self)
         self.__warned = False
-
-    @property
-    @final
-    def _qudi_main(self) -> Any:
-        return self.__qudi_main
 
     @property
     @final
