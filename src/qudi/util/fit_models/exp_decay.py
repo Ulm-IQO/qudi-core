@@ -94,7 +94,7 @@ class ExponentialDecay(FitModelBase):
         # perform a linear fit on the logarithm of the remaining data
         try:
             poly_coef = np.polyfit(x[:stop_index], np.log(data_smoothed[:stop_index]), deg=1)
-            decay = 1 / np.sqrt(abs(poly_coef[0]))
+            decay = 1 / abs(poly_coef[0])
             amplitude = np.exp(poly_coef[1])
         except:
             warnings.warn('Estimation of decay constant and amplitude failed.')
