@@ -20,15 +20,11 @@ If not, see <https://www.gnu.org/licenses/>.
 
 import os
 import sys
-import logging
 import subprocess
-from types import MethodWrapperType
 import jupyter_client.kernelspec
 from PySide2 import QtCore, QtWidgets
 from qtconsole.manager import QtKernelManager
-from collections.abc import Mapping, Sequence, Set
 
-from qudi.core import modulemanager
 from qudi.core.statusvariable import StatusVar
 from qudi.core.threadmanager import ThreadManager
 from qudi.util.paths import get_main_dir, get_default_config_dir
@@ -174,7 +170,8 @@ class QudiMainGui(GuiBase):
             QtCore.Qt.QueuedConnection,
         )
         self.mw.settings_dialog.checkbox_automatic_status_variable_dumping.stateChanged.connect(
-            self.mw.settings_dialog.toggle_dump_status_variables_interval_spinbox
+            self.mw.settings_dialog.toggle_dump_status_variables_interval_spinbox,
+            QtCore.Qt.QueuedConnection,
         )
         self.mw.action_view_default.triggered.connect(self.reset_default_layout)
         # Connect signals from manager
