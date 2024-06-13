@@ -25,7 +25,7 @@ import copy
 import weakref
 import fysom
 
-from typing import FrozenSet, Iterable
+from typing import FrozenSet
 from functools import partial
 from PySide2 import QtCore
 
