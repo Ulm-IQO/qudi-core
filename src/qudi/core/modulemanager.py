@@ -314,6 +314,11 @@ class ModuleManager(QtCore.QObject):
 
     @property
     def automated_status_variable_dumping_timer_interval(self):
+        """
+        Property for the timer interval of the automatic status variable saving in min.
+
+        @return int: timer interval in min
+        """
         return self._automated_status_variable_dumping_timer_interval
 
     @automated_status_variable_dumping_timer_interval.setter
@@ -327,7 +332,8 @@ class ModuleManager(QtCore.QObject):
 
     def automated_status_variable_dumping_timer_interval_slot(self, interval):
         """
-        Method that acts as slot method for calling automated_status_variable_dumping_timer_interval setter.
+        Method that acts as slot method for calling automated_status_variable_dumping_timer_interval setter
+        and simultaneously sets the interval of the timer.
 
         @param int interval: interval of the timer in min
         """

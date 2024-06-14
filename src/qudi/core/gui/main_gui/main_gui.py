@@ -162,7 +162,7 @@ class QudiMainGui(GuiBase):
             QtCore.Qt.QueuedConnection,
         )
         self.signal_update_automatic_status_var_checkstate.connect(
-            self.mw.settings_dialog.toggle_dump_status_variables_interval_spinbox,
+            self.mw.settings_dialog.dump_status_variables_interval_spinbox.setEnabled,
             QtCore.Qt.QueuedConnection,
         )
         self.signal_update_automatic_status_var_interval.connect(
@@ -170,7 +170,7 @@ class QudiMainGui(GuiBase):
             QtCore.Qt.QueuedConnection,
         )
         self.mw.settings_dialog.checkbox_automatic_status_variable_dumping.stateChanged.connect(
-            self.mw.settings_dialog.toggle_dump_status_variables_interval_spinbox,
+            self.mw.settings_dialog.dump_status_variables_interval_spinbox.setEnabled,
             QtCore.Qt.QueuedConnection,
         )
         self.mw.action_view_default.triggered.connect(self.reset_default_layout)
@@ -406,7 +406,7 @@ class QudiMainGui(GuiBase):
         self.signal_update_automatic_status_var_interval.emit(interval)
         self._automatic_status_var_dump_interval = interval
 
-        toggle = self._get_automatic_status_var_check_state()
+        toggle = self.mw.settings_dialog.checkbox_automatic_status_variable_dumping.isChecked()
         self.signal_update_automatic_status_var_checkstate.emit(toggle)
         self._automatic_status_var_dump = toggle
 
@@ -510,9 +510,3 @@ class QudiMainGui(GuiBase):
                 stdout=sys.stdout,
                 stderr=sys.stderr,
             )
-
-    def _get_automatic_status_var_check_state(self):
-        """
-        Method to set the correct state of automatic status variable dumping.
-        """
-        return self.mw.settings_dialog.checkbox_automatic_status_variable_dumping.isChecked()

@@ -96,10 +96,3 @@ class SettingsDialog(QtWidgets.QDialog):
         buttonbox.accepted.connect(self.accept)
         buttonbox.rejected.connect(self.reject)
         buttonbox.button(buttonbox.Apply).clicked.connect(self.accepted)
-
-    def toggle_dump_status_variables_interval_spinbox(self, toggle):
-        """
-        Method that toggles active status of the dump_status_variables_interval_spinbox spinbox.
-        @param bool toggle: Indicates whether to set spinbox as active or not.
-        """
-        self.dump_status_variables_interval_spinbox.setEnabled(toggle)
