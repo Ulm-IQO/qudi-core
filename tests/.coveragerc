@@ -1,0 +1,7 @@
+[run]
+source = ../../qudi-iqo-modules
+
+[report]
+show_missing = True
+include_namespace_packages = True
+

@@ -23,11 +23,12 @@ If not, see <https://www.gnu.org/licenses/>.
 from qudi.core import modulemanager,application
 from qudi.core.logger import get_logger
 import numpy as np
-import yaml
+from qudi.util.yaml import yaml_load
 import pytest
 from PySide2 import QtCore, QtWidgets
 import weakref
-
+import coverage
+import os
 
 
 CONFIG = 'C:/qudi/qudi-core/tests/dummy.cfg'
@@ -53,8 +54,7 @@ def qudi_instance(qt_app):
 
 @pytest.fixture(scope='module')
 def config():
-    with open(CONFIG) as stream:
-        configuration = (yaml.safe_load(stream))
+    configuration = (yaml_load(CONFIG))
     return configuration
 
 @pytest.fixture(scope='module')
@@ -69,12 +69,37 @@ def sample_module_logic(config):
     sample_module_name, sample_module_cfg = list(config[sample_base].items())[0]
     return sample_base, sample_module_name, sample_module_cfg
 
+@pytest.fixture(scope='module')
+def sample_module_hardware(config):
+    sample_base = 'hardware'
+    sample_module_name, sample_module_cfg = list(config[sample_base].items())[0]
+    return sample_base, sample_module_name, sample_module_cfg
+
 @pytest.fixture(scope="module")
 def module_manager(qudi_instance):
     return qudi_instance.module_manager
 
 
+@pytest.fixture(autouse=True)
+def coverage_for_each_test(request):
+    # Start coverage collection
+    cov = coverage.Coverage()
+    cov.start()
+    yield
+    # Stop coverage collection
+    cov.stop()
+    
+    # Create a unique directory for each test function
+    test_dir =  f"coverage_{request.node.nodeid.replace('/', '_').replace(':', '_')}"
+    os.makedirs(test_dir, exist_ok=True)
+    
+    # Save the coverage report
+    cov.html_report(directory=test_dir)
+    cov.save()
 
+    print(f"Coverage report saved to {test_dir}")
+
+'''
 def test_add_module( module_manager, sample_module_gui, qtbot):
     """  Test the add_module function if it correctly adds modules
     Parameters
@@ -131,15 +156,15 @@ def test_refresh_module_links(module_manager, sample_module_gui, sample_module_l
     sample_module_logic : fixture
         fixture for instance of managed module for a sample logic module
     """    
-    sample_base, sample_module_name, sample_module_cfg = sample_module_gui  
+    sample_gui_base, sample_gui_name, sample_gui_cfg = sample_module_gui  
     # Adding a sample gui module   
-    gui_module = modulemanager.ManagedModule(module_manager._qudi_main_ref,sample_module_name, sample_base, sample_module_cfg)
-    module_manager._modules[sample_module_name] = gui_module
+    gui_module = modulemanager.ManagedModule(module_manager._qudi_main_ref,sample_gui_name, sample_gui_base, sample_gui_cfg)
+    module_manager._modules[sample_gui_name] = gui_module
 
-    sample_base, sample_module_name, sample_module_cfg = sample_module_logic  
+    sample_logic_base, sample_logic_name, sample_logic_cfg = sample_module_logic  
     # Adding a sample logic module to check if refresh links works  
-    logic_module = modulemanager.ManagedModule(module_manager._qudi_main_ref,sample_module_name, sample_base, sample_module_cfg)
-    module_manager._modules[sample_module_name] = logic_module
+    logic_module = modulemanager.ManagedModule(module_manager._qudi_main_ref,sample_logic_name, sample_logic_base, sample_logic_cfg)
+    module_manager._modules[sample_logic_name] = logic_module
 
 
     module_manager.refresh_module_links()
@@ -152,8 +177,26 @@ def test_refresh_module_links(module_manager, sample_module_gui, sample_module_l
     logic_dependent_modules = [ref() for ref in logic_module.dependent_modules]
     assert gui_module in logic_dependent_modules
 
+    gui_module = module_manager._modules.pop(sample_gui_name, None)
+    #gui_module.deactivate()
 
+    logic_module = module_manager._modules.pop(sample_logic_name, None)
+    #logic_module.deactivate()
 
+'''
+def test_activate_module(module_manager, config, sample_module_hardware, sample_module_logic, sample_module_gui):
+        for base in ['gui', 'logic', 'hardware']:
+            for module_name, module_cfg in list(config[base].items()):
+                module_manager.add_module(module_name, base, module_cfg, allow_overwrite=False, emit_change=True )
+        
+        _, sample_hardware, _ = sample_module_hardware
+        _, sample_logic, _ = sample_module_logic
+        _, sample_gui, _ = sample_module_gui
+        module_manager.activate_module(sample_gui)
+        print(sample_gui)
+        gui_managed_module = module_manager.modules[sample_gui]
+        hardware_managed_module = module_manager.modules[sample_hardware]
 
-    
+        assert hardware_managed_module.is_active
+        assert gui_managed_module.is_active
 
