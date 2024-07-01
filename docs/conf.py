@@ -28,6 +28,9 @@ extensions = [
     'sphinx.ext.viewcode',
     'sphinx_rtd_dark_mode',
     'sphinx.ext.intersphinx',
+    'sphinx.ext.doctest', 
+    'sphinx.ext.coverage', 
+    'sphinx.ext.napoleon',
 ]
 intersphinx_mapping = {
     'PySide2': (
@@ -48,9 +51,9 @@ autodoc_mock_imports = ['lmfit']
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
-# html_theme = 'pydata_sphinx_theme'
+html_theme = 'pydata_sphinx_theme'
 # html_theme = 'sphinx_book_theme'
-html_theme = 'sphinx_rtd_theme'
+# html_theme = 'sphinx_rtd_theme'
 html_theme_options = {
     'navigation_with_keys': False,  # See https://github.com/pydata/pydata-sphinx-theme/issues/1492
 }
@@ -60,6 +63,22 @@ default_dark_mode = False  # For sphinx_rtd_dark_mode. Dark mode needs tweaking 
 numpydoc_show_class_members = False
 numpydoc_show_inherited_class_members = False
 numpydoc_class_members_toctree = False
+
+# Example autodoc settings
+autodoc_default_options = {
+    'members': True,    # Document all members (methods and attributes)
+    'undoc-members': True,   # Include members without docstrings
+    'show-inheritance': True,   # Show inheritance links
+    # Other options as needed
+}
+
+napoleon_numpy_docstring = True
+napoleon_google_docstring = False
+napoleon_include_init_with_doc = True
+napoleon_include_private_with_doc = False
+napoleon_include_special_with_doc = True
+napoleon_use_param = True
+napoleon_use_rtype = True
 
 
 # This gives the full name of the inherited classes in the documentation. It would be better if we could

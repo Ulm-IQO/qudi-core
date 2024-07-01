@@ -40,14 +40,27 @@ from qudi.util.fit_models.linear import Linear
 
 
 def multiple_gaussian(x, centers, sigmas, amplitudes):
-    """Mathematical definition of the sum of multiple gaussian functions without any bias.
+    """
+    Mathematical definition of the sum of multiple Gaussian functions without any bias.
 
-    WARNING: iterable parameters "centers", "sigmas" and "amplitudes" must have same length.
+    WARNING: Iterable parameters "centers", "sigmas", and "amplitudes" must have the same length.
 
-    @param float x: The independent variable to calculate gauss(x)
-    @param iterable centers: Iterable containing center positions for all gaussians
-    @param iterable sigmas: Iterable containing sigmas for all gaussians
-    @param iterable amplitudes: Iterable containing amplitudes for all gaussians
+    Parameters
+    ----------
+    x : float
+        The independent variable to calculate gauss(x).
+    centers : iterable
+        Iterable containing center positions for all Gaussians.
+    sigmas : iterable
+        Iterable containing standard deviations (sigmas) for all Gaussians.
+    amplitudes : iterable
+        Iterable containing amplitudes for all Gaussians.
+
+    Returns
+    -------
+    float
+        The result given x for gauss(x).
+
     """
     assert len(centers) == len(sigmas) == len(amplitudes)
     return sum(

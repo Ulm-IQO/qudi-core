@@ -33,13 +33,15 @@ Welcome to Qudi Core's documentation!
     :template: custom-module-template.rst
     :recursive:
 
-    qudi.core 
-    qudi.gui 
-    qudi.logic 
-    qudi.tasks
-    qudi.tools 
-    qudi.util 
-    qudi.runnable 
+    qudi
+
+    .. qudi.core 
+    .. qudi.gui 
+    .. qudi.logic 
+    .. qudi.tasks
+    .. qudi.tools 
+    .. qudi.util 
+    .. qudi.runnable 
 
 
 Indices and tables

@@ -50,18 +50,28 @@ def smooth_data(data, filter_width=None):
 
 
 def correct_offset_histogram(data, bin_width=None):
-    """Subtracts a constant offset from a copy of given data array and returns it.
+    """
+    Subtracts a constant offset from a copy of given data array and returns it.
     The offset is assumed to be the most common value in data. This value is determined by creating
-    a histogram of <data> with bin width <bin_width> and taking the value with most occurrences.
+    a histogram of <data> with bin width <bin_width> and taking the value with the most occurrences.
     If no bin width has been specified, assume bin width of 1/50th of data length (min. 1).
 
     For best results, make sure to filter noisy data beforehand. The used smoothing filter width
     is a good estimate for optimal bin_width.
 
-    @param iterable data: Peak data to correct offset for. Must be convertible using numpy.asarray.
-    @param int bin_width: optional, bin width in samples to use for histogram creation.
+    Parameters
+    ----------
+    data : iterable
+        Peak data to correct offset for. Must be convertible using numpy.asarray.
+    bin_width : int, optional
+        Bin width in samples to use for histogram creation. Default is None, which sets bin width
+        to 1/50th of data length (minimum 1).
 
-    @return numpy.ndarray, float: New array with offset-corrected data, the offset value
+    Returns
+    -------
+    numpy.ndarray, float
+        New array with offset-corrected data, the offset value.
+
     """
     data = np.asarray(data)
     if bin_width is None:

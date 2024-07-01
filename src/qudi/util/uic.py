@@ -45,12 +45,24 @@ def loadUi(file_path, base_widget):
     the generated class will be used to initialize the widget given in <base_widget>.
     Creates a temporary file in the systems tmp directory using the tempfile module.
     The original .ui file will remain untouched.
-
+    
     WARNING: base_widget must be of the same class as the top-level widget in the .ui file.
              Compatible subclasses of the top-level widget in the .ui file will also work.
 
-    @param str file_path: The full path to the .ui-file to load
-    @param object base_widget: Instance of the base widget represented by the .ui-file
+    Parameters
+    ----------
+    str :
+        file_path: The full path to the .ui-file to load
+    object :
+        base_widget: Instance of the base widget represented by the .ui-file
+    file_path :
+        
+    base_widget :
+        
+
+    Returns
+    -------
+
     """
     # This step is a workaround because Qt Designer will only specify relative paths which is very
     # error prone if the user changes the cwd (e.g. os.chdir)
@@ -112,8 +124,18 @@ def _convert_ui_to_absolute_paths(file_path):
     """Converts the .ui file in order to change all relative path declarations containing the
     keyword "/artwork/" into absolute paths pointing to the qudi artwork data directory.
 
-    @param str file_path: The path to the .ui file to convert
-    @return str|NoneType: Converted file content of the .ui file, None if conversion is not needed
+    Parameters
+    ----------
+    str :
+        file_path: The path to the .ui file to convert
+    file_path :
+        
+
+    Returns
+    -------
+    type
+        str|NoneType: Converted file content of the .ui file, None if conversion is not needed
+
     """
     path_prefix = get_artwork_dir()
     with open(file_path, 'r') as file:

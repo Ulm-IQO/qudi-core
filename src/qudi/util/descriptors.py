@@ -220,7 +220,7 @@ class ReadOnlyAttribute(ReadOnlyMixin, DefaultAttribute):
 
     Example usage:
 
-        class Test:
+    class Test:
             variable_a = ReadOnlyAttribute(42)
             variable_b = ReadOnlyAttribute()
             def __init__(self):
@@ -240,7 +240,7 @@ class TypedAttribute(TypedMixin, DefaultAttribute):
 
     Example usage:
 
-        class Test:
+    class Test:
             variable_a = TypedAttribute([int, float])
             variable_b = TypedAttribute([str], None)
             def __init__(self):
