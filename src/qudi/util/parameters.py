@@ -2,41 +2,50 @@
 """
 This file contains utility methods to annotate arguments for which the user can potentially edit
 values via GUI. These arguments are boiled down to simple builtin types that can be represented by
-a GUI editor:
+a GUI editor.
 
-:int: :py:class:`qudi.util.widgets.scientific_spinbox.ScienSpinBox`
-:float: :py:class:`qudi.util.widgets.scientific_spinbox.ScienDSpinbox`
-:str: :py:class:`PySide2.QtWidgets.QLineEdit`
-:complex: :py:class:`qudi.util.widgets.literal_lineedit.ComplexLineEdit`
-:set: :py:class:`qudi.util.widgets.literal_lineedit.SetLineEdit`
-:dict: :py:class:`qudi.util.widgets.literal_lineedit.DictLineEdit`
-:list: :py:class:`qudi.util.widgets.literal_lineedit.ListLineEdit`
-:tuple: :py:class:`qudi.util.widgets.literal_lineedit.TupleLineEdit`
+Parameters
+----------
+:int: :class:`~qudi.util.widgets.scientific_spinbox.ScienSpinBox`
+    An integer type represented by a scientific spinbox widget.
+:float: :class:`~qudi.util.widgets.scientific_spinbox.ScienDSpinbox`
+    A floating-point type represented by a double precision scientific spinbox widget.
+:str: :class:`~PySide2.QtWidgets.QLineEdit`
+    A string type represented by a QLineEdit widget.
+:complex: :class:`~qudi.util.widgets.literal_lineedit.ComplexLineEdit`
+    A complex number type represented by a custom ComplexLineEdit widget.
+:set: :class:`~qudi.util.widgets.literal_lineedit.SetLineEdit`
+    A set type represented by a custom SetLineEdit widget.
+:dict: :class:`~qudi.util.widgets.literal_lineedit.DictLineEdit`
+    A dictionary type represented by a custom DictLineEdit widget.
+:list: :class:`~qudi.util.widgets.literal_lineedit.ListLineEdit`
+    A list type represented by a custom ListLineEdit widget.
+:tuple: :class:`~qudi.util.widgets.literal_lineedit.TupleLineEdit`
+    A tuple type represented by a custom TupleLineEdit widget.
+:FilePath: :class:`~PySide2.QtWidgets.QLineEdit`
+    A type for file paths represented by a QLineEdit widget.
 
+Notes
+-----
 Here defined are also custom generic types that can be used like any other type from
-the typing module.
-Arguments annotated with these types are represented with the following widgets:
+the typing module. Arguments annotated with these types are represented with the corresponding widgets. Any other type annotation that cannot be mapped to a simple builtin or a custom generic type (see above) will result in no corresponding widget (None).
 
-FilePath: PySide2.QtWidgets.QLineEdit
 
-Any other type annotation that can not be mapped to a simple builtin or a custom generic type
-(see above) will result in no corresponding widget (None).
-
-Copyright (c) 2021, the qudi developers. See the AUTHORS.md file at the top-level directory of this
-distribution and on <https://github.com/Ulm-IQO/qudi-core/>
-
-This file is part of qudi.
-
-Qudi is free software: you can redistribute it and/or modify it under the terms of
-the GNU Lesser General Public License as published by the Free Software Foundation,
-either version 3 of the License, or (at your option) any later version.
-
-Qudi is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
-without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-See the GNU Lesser General Public License for more details.
-
-You should have received a copy of the GNU Lesser General Public License along with qudi.
-If not, see <https://www.gnu.org/licenses/>.
+.. Copyright (c) 2021, the qudi developers. See the AUTHORS.md file at the top-level directory of this
+.. distribution and on <https://github.com/Ulm-IQO/qudi-core/>
+..
+.. This file is part of qudi.
+..
+.. Qudi is free software: you can redistribute it and/or modify it under the terms of
+.. the GNU Lesser General Public License as published by the Free Software Foundation,
+.. either version 3 of the License, or (at your option) any later version.
+..
+.. Qudi is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+.. without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+.. See the GNU Lesser General Public License for more details.
+..
+.. You should have received a copy of the GNU Lesser General Public License along with qudi.
+.. If not, see <https://www.gnu.org/licenses/>.
 """
 
 __all__ = ['FilePath', 'RealNumber', 'ParameterWidgetMapper']

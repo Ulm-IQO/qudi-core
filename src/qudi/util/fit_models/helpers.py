@@ -3,21 +3,21 @@
 """
 This file contains helper methods to find and estimate multiple peaks/dips for fit models.
 
-Copyright (c) 2021, the qudi developers. See the AUTHORS.md file at the top-level directory of this
-distribution and on <https://github.com/Ulm-IQO/qudi-core/>
-
-This file is part of qudi.
-
-Qudi is free software: you can redistribute it and/or modify it under the terms of
-the GNU Lesser General Public License as published by the Free Software Foundation,
-either version 3 of the License, or (at your option) any later version.
-
-Qudi is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
-without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-See the GNU Lesser General Public License for more details.
-
-You should have received a copy of the GNU Lesser General Public License along with qudi.
-If not, see <https://www.gnu.org/licenses/>.
+.. Copyright (c) 2021, the qudi developers. See the AUTHORS.md file at the top-level directory of this
+.. distribution and on <https://github.com/Ulm-IQO/qudi-core/>
+..
+.. This file is part of qudi.
+..
+.. Qudi is free software: you can redistribute it and/or modify it under the terms of
+.. the GNU Lesser General Public License as published by the Free Software Foundation,
+.. either version 3 of the License, or (at your option) any later version.
+..
+.. Qudi is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+.. without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+.. See the GNU Lesser General Public License for more details.
+..
+.. You should have received a copy of the GNU Lesser General Public License along with qudi.
+.. If not, see <https://www.gnu.org/licenses/>.
 """
 
 __all__ = (
@@ -50,18 +50,28 @@ def smooth_data(data, filter_width=None):
 
 
 def correct_offset_histogram(data, bin_width=None):
-    """Subtracts a constant offset from a copy of given data array and returns it.
+    """
+    Subtracts a constant offset from a copy of given data array and returns it.
     The offset is assumed to be the most common value in data. This value is determined by creating
-    a histogram of <data> with bin width <bin_width> and taking the value with most occurrences.
+    a histogram of <data> with bin width <bin_width> and taking the value with the most occurrences.
     If no bin width has been specified, assume bin width of 1/50th of data length (min. 1).
 
     For best results, make sure to filter noisy data beforehand. The used smoothing filter width
     is a good estimate for optimal bin_width.
 
-    @param iterable data: Peak data to correct offset for. Must be convertible using numpy.asarray.
-    @param int bin_width: optional, bin width in samples to use for histogram creation.
+    Parameters
+    ----------
+    data : iterable
+        Peak data to correct offset for. Must be convertible using numpy.asarray.
+    bin_width : int, optional
+        Bin width in samples to use for histogram creation. Default is None, which sets bin width
+        to 1/50th of data length (minimum 1).
 
-    @return numpy.ndarray, float: New array with offset-corrected data, the offset value
+    Returns
+    -------
+    numpy.ndarray, float
+        New array with offset-corrected data, the offset value.
+
     """
     data = np.asarray(data)
     if bin_width is None:

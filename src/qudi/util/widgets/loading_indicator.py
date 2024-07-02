@@ -3,21 +3,21 @@
 """
 This file contains custom QWidgets to show (animated) loading indicators.
 
-Copyright (c) 2021, the qudi developers. See the AUTHORS.md file at the top-level directory of this
-distribution and on <https://github.com/Ulm-IQO/qudi-core/>
-
-This file is part of qudi.
-
-Qudi is free software: you can redistribute it and/or modify it under the terms of
-the GNU Lesser General Public License as published by the Free Software Foundation,
-either version 3 of the License, or (at your option) any later version.
-
-Qudi is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
-without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-See the GNU Lesser General Public License for more details.
-
-You should have received a copy of the GNU Lesser General Public License along with qudi.
-If not, see <https://www.gnu.org/licenses/>.
+.. Copyright (c) 2021, the qudi developers. See the AUTHORS.md file at the top-level directory of this
+.. distribution and on <https://github.com/Ulm-IQO/qudi-core/>
+..
+.. This file is part of qudi.
+..
+.. Qudi is free software: you can redistribute it and/or modify it under the terms of
+.. the GNU Lesser General Public License as published by the Free Software Foundation,
+.. either version 3 of the License, or (at your option) any later version.
+..
+.. Qudi is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+.. without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+.. See the GNU Lesser General Public License for more details.
+..
+.. You should have received a copy of the GNU Lesser General Public License along with qudi.
+.. If not, see <https://www.gnu.org/licenses/>.
 """
 
 from PySide2 import QtWidgets, QtCore, QtGui
@@ -44,15 +44,25 @@ class CircleLoadingIndicator(QtWidgets.QWidget):
         **kwargs,
     ):
         """
-        @param float cycle_time: The animation time in seconds for a full cycle
-        @param int indicator_length: Length of the indicator arc in 1/16th of a degree
-        @param float indicator_width_ratio: Ratio of the indicator arc width WRT widget size
+        Parameters
+        ----------
+        cycle_time : float
+            The animation time in seconds for a full cycle.
+        indicator_length : int
+            Length of the indicator arc in 1/16th of a degree.
+        indicator_width_ratio : float
+            Ratio of the indicator arc width with respect to the widget size.
+
+        Returns
+        -------
+        None
+            (or specify the return type and description if the function returns something)
         """
-        assert cycle_time > 0, 'cycle_time must be larger than 0'
-        assert 0 < indicator_length < 5760, 'indicator_length must be >0 and <5760'
+        assert cycle_time > 0, "cycle_time must be larger than 0"
+        assert 0 < indicator_length < 5760, "indicator_length must be >0 and <5760"
         assert (
             0 < indicator_width_ratio <= 0.5
-        ), 'indicator_width_ratio must be >0 and <=0.5'
+        ), "indicator_width_ratio must be >0 and <=0.5"
         super().__init__(*args, **kwargs)
         self.setMinimumSize(6, 6)
         self.setMouseTracking(False)
@@ -113,7 +123,7 @@ class CircleLoadingIndicator(QtWidgets.QWidget):
         super().showEvent(ev)
         if self.__animation is None:
             self.__animation = QtCore.QPropertyAnimation(
-                self, b'indicator_position', self
+                self, b"indicator_position", self
             )
             self.__animation.setDuration(self._cycle_time_ms)
             self.__animation.setStartValue(0)

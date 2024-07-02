@@ -2,24 +2,24 @@
 """
 This file contains Qt models for Python data structures.
 
-Copyright (c) 2021, the qudi developers. See the AUTHORS.md file at the top-level directory of this
-distribution and on <https://github.com/Ulm-IQO/qudi-core/>
-
-This file is part of qudi.
-
-Qudi is free software: you can redistribute it and/or modify it under the terms of
-the GNU Lesser General Public License as published by the Free Software Foundation,
-either version 3 of the License, or (at your option) any later version.
-
-Qudi is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
-without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-See the GNU Lesser General Public License for more details.
-
-You should have received a copy of the GNU Lesser General Public License along with qudi.
-If not, see <https://www.gnu.org/licenses/>.
+.. Copyright (c) 2021, the qudi developers. See the AUTHORS.md file at the top-level directory of this
+.. distribution and on <https://github.com/Ulm-IQO/qudi-core/>
+..
+.. This file is part of qudi.
+..
+.. Qudi is free software: you can redistribute it and/or modify it under the terms of
+.. the GNU Lesser General Public License as published by the Free Software Foundation,
+.. either version 3 of the License, or (at your option) any later version.
+..
+.. Qudi is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+.. without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+.. See the GNU Lesser General Public License for more details.
+..
+.. You should have received a copy of the GNU Lesser General Public License along with qudi.
+.. If not, see <https://www.gnu.org/licenses/>.
 """
 
-__all__ = ['DictTableModel', 'ListTableModel']
+__all__ = ["DictTableModel", "ListTableModel"]
 
 from PySide2 import QtCore
 from typing import Any, Optional, Union, Sequence
@@ -35,7 +35,7 @@ class DictTableModel(QtCore.QAbstractTableModel):
         if isinstance(headers, str):
             self._headers = [headers]
         elif not all(isinstance(h, str) for h in headers):
-            raise TypeError('DictTableModel header entries must be str type.')
+            raise TypeError("DictTableModel header entries must be str type.")
         else:
             self._headers = list(headers)
         self._storage = dict()
@@ -89,8 +89,8 @@ class DictTableModel(QtCore.QAbstractTableModel):
                     key = next(it)
             except StopIteration:
                 raise IndexError(
-                    f'Index {n:d} out of bounds for table model with '
-                    f'{len(self._storage):d} rows'
+                    f"Index {n:d} out of bounds for table model with "
+                    f"{len(self._storage):d} rows"
                 ) from None
             return key
 
@@ -210,7 +210,7 @@ class ListTableModel(QtCore.QAbstractTableModel):
         if isinstance(headers, str):
             self._headers = headers
         elif not all(isinstance(h, str) for h in headers):
-            raise TypeError('DictTableModel header entries must be str type.')
+            raise TypeError("DictTableModel header entries must be str type.")
         else:
             self._headers = list(headers)
         self._storage = list()
@@ -283,10 +283,16 @@ class ListTableModel(QtCore.QAbstractTableModel):
             return item in self._storage
 
     def insert(self, n, data):
-        """Insert a row into table.
+        """
+        Insert a row into a table before the nth element.
 
-        @param int n: insert before nth element
-        @param data: row to insert
+        Parameters
+        ----------
+        n : int
+            Index before which the row should be inserted.
+        data : object
+            Row to insert into the table.
+
         """
         with self._lock:
             if 0 <= n <= len(self._storage):
@@ -297,9 +303,14 @@ class ListTableModel(QtCore.QAbstractTableModel):
                 raise IndexError
 
     def append(self, data):
-        """Append row to table.
+        """
+        Append a row to a table.
 
-        @param data: row to append
+        Parameters
+        ----------
+        data : object
+            Row to append to the table.
+
         """
         with self._lock:
             n = len(self._storage)
@@ -308,11 +319,19 @@ class ListTableModel(QtCore.QAbstractTableModel):
             self.endInsertRows()
 
     def pop(self, n):
-        """Remove nth row from table.
+        """
+        Remove the nth row from a table.
 
-        @param int n: index of row to remove
+        Parameters
+        ----------
+        n : int
+            Index of the row to remove.
 
-        @return data: removed row
+        Returns
+        -------
+        object
+            Removed row.
+
         """
         with self._lock:
             if 0 <= n < len(self._storage):

@@ -2,21 +2,21 @@
 """
 This file contains Qudi methods for data filtering.
 
-Copyright (c) 2021, the qudi developers. See the AUTHORS.md file at the top-level directory of this
-distribution and on <https://github.com/Ulm-IQO/qudi-core/>
-
-This file is part of qudi.
-
-Qudi is free software: you can redistribute it and/or modify it under the terms of
-the GNU Lesser General Public License as published by the Free Software Foundation,
-either version 3 of the License, or (at your option) any later version.
-
-Qudi is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
-without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-See the GNU Lesser General Public License for more details.
-
-You should have received a copy of the GNU Lesser General Public License along with qudi.
-If not, see <https://www.gnu.org/licenses/>.
+.. Copyright (c) 2021, the qudi developers. See the AUTHORS.md file at the top-level directory of this
+.. distribution and on <https://github.com/Ulm-IQO/qudi-core/>
+..
+.. This file is part of qudi.
+..
+.. Qudi is free software: you can redistribute it and/or modify it under the terms of
+.. the GNU Lesser General Public License as published by the Free Software Foundation,
+.. either version 3 of the License, or (at your option) any later version.
+..
+.. Qudi is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+.. without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+.. See the GNU Lesser General Public License for more details.
+..
+.. You should have received a copy of the GNU Lesser General Public License along with qudi.
+.. If not, see <https://www.gnu.org/licenses/>.
 """
 
 __all__ = ('scan_blink_correction',)
@@ -29,18 +29,30 @@ _logger = logging.getLogger(__name__)
 
 
 def scan_blink_correction(image, axis=1):
-    """This filter can be used to filter out impulsive noise from a 2D array along a single axis.
-    As filter we apply a sequence of two filters. First a min-filter and then a max-filter.
-    This composite non-linear filter technique is also called opening filter.
+    """
+    Filter out impulsive noise from a 2D array along a single axis using an opening filter.
 
-    This filter will completely remove single-pixel (along given axis) brightness spikes from the
-    image but will cause the image to be more "blocky"/less smooth.
-    Of course you need to ensure that the image features of interest are larger than
+    The opening filter applies a sequence of two filters: first a min-filter and then a max-filter.
+    This technique is effective at removing single-pixel brightness spikes along the specified axis,
+    but it may make the image appear more "blocky" or less smooth.
 
-    @param numpy.ndarray image: A 2D numpy array to be filtered (e.g. image data)
-    @param int axis: The axis along which to apply the 1D filter
+    Parameters
+    ----------
+    image : numpy.ndarray
+        A 2D numpy array to be filtered (e.g., image data).
+    axis : int
+        The axis along which to apply the 1D filter.
 
-    @return numpy.ndarray: The filtered image. Same dimensions as input image
+    Returns
+    -------
+    numpy.ndarray
+        The filtered image, with the same dimensions as the input image.
+
+    Notes
+    -----
+    Ensure that the image features of interest are larger than the impulsive noise spikes
+    to achieve effective noise reduction without loss of significant image detail.
+
     """
 
     if not isinstance(image, np.ndarray):

@@ -4,24 +4,24 @@ ConfigOption object to be used in qudi modules. The value of each ConfigOption c
 (if it has a default value) or must be specified by the user in the config file.
 Usually these values should be constant for the duration of a qudi session.
 
-Copyright (c) 2021, the qudi developers. See the AUTHORS.md file at the top-level directory of this
-distribution and on <https://github.com/Ulm-IQO/qudi-core/>
-
-This file is part of qudi.
-
-Qudi is free software: you can redistribute it and/or modify it under the terms of
-the GNU Lesser General Public License as published by the Free Software Foundation,
-either version 3 of the License, or (at your option) any later version.
-
-Qudi is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
-without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-See the GNU Lesser General Public License for more details.
-
-You should have received a copy of the GNU Lesser General Public License along with qudi.
-If not, see <https://www.gnu.org/licenses/>.
+.. Copyright (c) 2021, the qudi developers. See the AUTHORS.md file at the top-level directory of this
+.. distribution and on <https://github.com/Ulm-IQO/qudi-core/>
+..
+.. This file is part of qudi.
+..
+.. Qudi is free software: you can redistribute it and/or modify it under the terms of
+.. the GNU Lesser General Public License as published by the Free Software Foundation,
+.. either version 3 of the License, or (at your option) any later version.
+..
+.. Qudi is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+.. without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+.. See the GNU Lesser General Public License for more details.
+..
+.. You should have received a copy of the GNU Lesser General Public License along with qudi.
+.. If not, see <https://www.gnu.org/licenses/>.
 """
 
-__all__ = ['ConfigOption', 'MissingOption']
+__all__ = ["ConfigOption", "MissingOption"]
 
 import copy
 import inspect
@@ -48,20 +48,31 @@ class ConfigOption:
         name: Optional[str] = None,
         default: Optional[Any] = None,
         *,
-        missing: Optional[str] = 'nothing',
+        missing: Optional[str] = "nothing",
         constructor: Optional[Callable] = None,
         checker: Optional[Callable] = None,
         converter: Optional[Callable] = None,
     ):
         """Create a ConfigOption object.
 
-        @param name: identifier of the option in the configuration file
-        @param default: default value for the case that the option is not set in the config file
-        @param missing: action to take when the option is not set. 'nothing' does nothing, 'warn'
-                        logs a warning, 'error' logs an error and prevents the module from loading
-        @param constructor: constructor function for complex config option behaviour
-        @param checker: static function that checks if value is ok
-        @param converter: static function that forces type interpretation
+        Parameters
+        ----------
+        name : Optional[str], optional
+            Identifier of the option in the configuration file.
+        default : Optional[Any], optional
+            Default value for the case that the option is not set in the config file.
+        missing : Optional[str], optional
+            Action to take when the option is not set.
+            'nothing' does nothing,
+            'warn' logs a warning,
+            'error' logs an error and prevents the module from loading.
+        constructor : Optional[Callable], optional
+            Constructor function for complex config option behavior.
+        checker : Optional[Callable], optional
+            Static function that checks if value is okay.
+        converter : Optional[Callable], optional
+            Static function that forces type interpretation.
+
         """
         self.missing = MissingOption[missing]
 
@@ -88,17 +99,20 @@ class ConfigOption:
         return self.missing != MissingOption.error
 
     def copy(self, **kwargs):
-        """Create a new instance of ConfigOption with copied values and update
+        """Create a new instance of ConfigOption with copied values and update.
 
-        @param kwargs: extra arguments or overrides for the constructor of this class
+        Parameters
+        ----------
+        **kwargs
+            Extra arguments or overrides for the constructor of this class.
         """
         newargs = {
-            'name': self.name,
-            'default': copy.deepcopy(self.default),
-            'missing': self.missing.name,
-            'constructor': self.constructor_function,
-            'checker': self.checker,
-            'converter': self.converter,
+            "name": self.name,
+            "default": copy.deepcopy(self.default),
+            "missing": self.missing.name,
+            "constructor": self.constructor_function,
+            "checker": self.checker,
+            "converter": self.converter,
         }
         newargs.update(kwargs)
         return ConfigOption(**newargs)
@@ -116,21 +130,28 @@ class ConfigOption:
         return value
 
     def constructor(self, func: Callable) -> Callable:
-        """This is the decorator for declaring a constructor function for this ConfigOption.
+        """Decorator for declaring a constructor function for this ConfigOption.
 
-        @param func: constructor function for this ConfigOption
-        @return: return the original function so this can be used as a decorator
+        Parameters
+        ----------
+        func : Callable
+            Constructor function for this ConfigOption.
+
+        Returns
+        -------
+        Callable
+            Returns the original function so it can be used as a decorator.
         """
         self.constructor_function = self._assert_func_signature(func)
         return func
 
     @staticmethod
     def _assert_func_signature(func: Callable) -> Callable:
-        assert callable(func), 'ConfigOption constructor must be callable'
+        assert callable(func), "ConfigOption constructor must be callable"
         params = tuple(inspect.signature(func).parameters)
         assert 0 < len(params) < 3, (
-            'ConfigOption constructor must be function with '
-            '1 (static) or 2 (bound method) parameters.'
+            "ConfigOption constructor must be function with "
+            "1 (static) or 2 (bound method) parameters."
         )
         if len(params) == 1:
 

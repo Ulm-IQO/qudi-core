@@ -2,26 +2,24 @@
 """
 Parent poller mechanism from IPython.
 
-Copyright (c) 2015, IPython Development Team
-
-Copyright (c) 2021, the qudi developers. See the AUTHORS.md file at the top-level directory of this
-distribution and on <https://github.com/Ulm-IQO/qudi-core/>
-
-This file is part of qudi.
-
-Qudi is free software: you can redistribute it and/or modify it under the terms of
-the GNU Lesser General Public License as published by the Free Software Foundation,
-either version 3 of the License, or (at your option) any later version.
-
-Qudi is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
-without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-See the GNU Lesser General Public License for more details.
-
-You should have received a copy of the GNU Lesser General Public License along with qudi.
-If not, see <https://www.gnu.org/licenses/>.
+.. Copyright (c) 2021, the qudi developers. See the AUTHORS.md file at the top-level directory of this
+.. distribution and on <https://github.com/Ulm-IQO/qudi-core/>
+..
+.. This file is part of qudi.
+..
+.. Qudi is free software: you can redistribute it and/or modify it under the terms of
+.. the GNU Lesser General Public License as published by the Free Software Foundation,
+.. either version 3 of the License, or (at your option) any later version.
+..
+.. Qudi is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+.. without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+.. See the GNU Lesser General Public License for more details.
+..
+.. You should have received a copy of the GNU Lesser General Public License along with qudi.
+.. If not, see <https://www.gnu.org/licenses/>.
 """
 
-__all__ = ['ParentPollerUnix', 'ParentPollerWindows']
+__all__ = ["ParentPollerUnix", "ParentPollerWindows"]
 
 import ctypes
 import os
@@ -39,14 +37,17 @@ class ParentPollerUnix(Thread):
     """
 
     def __init__(self, quit_function=None):
-        """Create the parentpoller.
+        """Create the parent poller.
 
-        @param callable quitfunction: function to run before exiting
+        Parameters
+        ----------
+        quitfunction : callable
+            Function to run before exiting.
         """
         if quit_function is None:
             pass
         elif not callable(quit_function):
-            raise TypeError('argument quit_function must be a callable.')
+            raise TypeError("argument quit_function must be a callable.")
         super().__init__()
         self.daemon = True
         self.quit_function = quit_function
@@ -60,9 +61,9 @@ class ParentPollerUnix(Thread):
             try:
                 if os.getppid() == 1:
                     if self.quit_function is None:
-                        logger.critical('Parent process died!')
+                        logger.critical("Parent process died!")
                     else:
-                        logger.critical('Parent process died! Qudi shutting down...')
+                        logger.critical("Parent process died! Qudi shutting down...")
                         self.quit_function()
                     return
             except OSError as e:
@@ -80,14 +81,17 @@ class ParentPollerWindows(Thread):
     def __init__(self, parent_handle, quit_function=None):
         """Create the parent poller.
 
-        @param callable quit_function: Function to call for shutdown if parent process is dead.
-        @param int parent_handle: The program will terminate immediately when this handle is
-                                  signaled.
+        Parameters
+        ----------
+        quit_function : callable
+            Function to call for shutdown if the parent process is dead.
+        parent_handle : int
+            The program will terminate immediately when this handle is signaled.
         """
         if quit_function is None:
             pass
         elif not callable(quit_function):
-            raise TypeError('argument quit_function must be a callable.')
+            raise TypeError("argument quit_function must be a callable.")
         super().__init__()
         self.daemon = True
         self.quit_function = quit_function
@@ -104,7 +108,7 @@ class ParentPollerWindows(Thread):
         # Build the list of handle to listen on.
         handle_list = [self.parent_handle]
         arch = platform.architecture()[0]
-        c_int = ctypes.c_int64 if arch.startswith('64') else ctypes.c_int
+        c_int = ctypes.c_int64 if arch.startswith("64") else ctypes.c_int
 
         # Listen forever.
         while True:
@@ -124,15 +128,15 @@ class ParentPollerWindows(Thread):
                 continue
             elif result < WAIT_OBJECT_0:
                 # wait failed, just give up and stop polling.
-                logger.critical('Parent poll failed!!!!!')
+                logger.critical("Parent poll failed!!!!!")
                 return
             else:
                 handle = handle_list[result - WAIT_OBJECT_0]
                 if handle == self.parent_handle:
                     if self.quit_function is None:
-                        logger.critical('Parent process died!')
+                        logger.critical("Parent process died!")
                     else:
-                        logger.critical('Parent process died! Qudi shutting down...')
+                        logger.critical("Parent process died! Qudi shutting down...")
                         self.quit_function()
                     return
 

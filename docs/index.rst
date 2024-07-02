@@ -35,6 +35,15 @@ Welcome to Qudi Core's documentation!
 
     qudi
 
+    .. qudi.core 
+    .. qudi.gui 
+    .. qudi.logic 
+    .. qudi.tasks
+    .. qudi.tools 
+    .. qudi.util 
+    .. qudi.runnable 
+
+
 Indices and tables
 ==================
 

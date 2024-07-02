@@ -3,21 +3,21 @@
 """
 This file contains models of exponential decay fitting routines for qudi based on the lmfit package.
 
-Copyright (c) 2021, the qudi developers. See the AUTHORS.md file at the top-level directory of this
-distribution and on <https://github.com/Ulm-IQO/qudi-core/>
-
-This file is part of qudi.
-
-Qudi is free software: you can redistribute it and/or modify it under the terms of
-the GNU Lesser General Public License as published by the Free Software Foundation,
-either version 3 of the License, or (at your option) any later version.
-
-Qudi is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
-without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-See the GNU Lesser General Public License for more details.
-
-You should have received a copy of the GNU Lesser General Public License along with qudi.
-If not, see <https://www.gnu.org/licenses/>.
+.. Copyright (c) 2021, the qudi developers. See the AUTHORS.md file at the top-level directory of this
+.. distribution and on <https://github.com/Ulm-IQO/qudi-core/>
+..
+.. This file is part of qudi.
+..
+.. Qudi is free software: you can redistribute it and/or modify it under the terms of
+.. the GNU Lesser General Public License as published by the Free Software Foundation,
+.. either version 3 of the License, or (at your option) any later version.
+..
+.. Qudi is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+.. without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+.. See the GNU Lesser General Public License for more details.
+..
+.. You should have received a copy of the GNU Lesser General Public License along with qudi.
+.. If not, see <https://www.gnu.org/licenses/>.
 """
 
 __all__ = ('ExponentialDecay', 'multiple_exponential_decay')
@@ -29,18 +29,31 @@ from qudi.util.fit_models.model import FitModelBase, estimator
 
 
 def multiple_exponential_decay(x, amplitudes, decays, stretches):
-    """Mathematical definition of the sum of multiple stretched exponential decays without any
-    bias.
-
-    WARNING: iterable parameters "amplitudes", "decays" and "stretches" must have same length.
-
-    @param float x: The independent variable to calculate f(x)
-    @param iterable amplitudes: Iterable containing amplitudes for all exponentials
-    @param iterable decays: Iterable containing decay constants for all exponentials
-    @param iterable stretches: Iterable containing stretch constants for all exponentials
-
-    @return float|numpy.ndarray: The result given x for f(x)
+   def sum_stretched_exponentials(x, amplitudes, decays, stretches):
     """
+    Mathematical definition of the sum of multiple stretched exponential decays without any bias.
+
+    WARNING: Iterable parameters "amplitudes", "decays", and "stretches" must have the same length.
+
+    Parameters
+    ----------
+    x : float
+        The independent variable to calculate f(x).
+    amplitudes : iterable
+        Iterable containing amplitudes for all exponentials.
+    decays : iterable
+        Iterable containing decay constants for all exponentials.
+    stretches : iterable
+        Iterable containing stretch constants for all exponentials.
+
+    Returns
+    -------
+    float or numpy.ndarray
+        The result given x for f(x).
+
+    """
+    # Implementation of the function
+
     assert len(decays) == len(amplitudes) == len(stretches)
     return sum(
         amp * np.exp(-((x / decay) ** stretch))
