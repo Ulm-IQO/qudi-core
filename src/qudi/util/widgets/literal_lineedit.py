@@ -3,6 +3,7 @@
 """
 This module provides QWidget subclasses to enter different literals (complex, dict, list, tuple,
 set).
+
 .. Copyright (c) 2021, the qudi developers. See the AUTHORS.md file at the top-level directory of this
 .. distribution and on <https://github.com/Ulm-IQO/qudi-core/>
 ..

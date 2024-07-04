@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 Descriptor objects that can be used to simplify common tasks related to object attributes.
+
 .. Copyright (c) 2021, the qudi developers. See the AUTHORS.md file at the top-level directory of this
 .. distribution and on <https://github.com/Ulm-IQO/qudi-core/>
 ..
