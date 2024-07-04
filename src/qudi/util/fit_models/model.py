@@ -3,6 +3,7 @@
 """
 This file contains base and meta class for data fit model classes for qudi based on the lmfit
 package. Also contains an estimator decorator for fit models to name estimator methods.
+
 .. Copyright (c) 2021, the qudi developers. See the AUTHORS.md file at the top-level directory of this
 .. distribution and on <https://github.com/Ulm-IQO/qudi-core/>
 ..

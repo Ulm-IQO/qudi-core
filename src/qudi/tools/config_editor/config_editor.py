@@ -2,6 +2,7 @@
 
 """
 Configuration editor App for creation and editing of qudi configuration files.
+
 .. Copyright (c) 2021, the qudi developers. See the AUTHORS.md file at the top-level directory of this
 .. distribution and on <https://github.com/Ulm-IQO/qudi-core/>
 ..
