@@ -35,4 +35,4 @@ jobs:
         pip install -e ".[dev-test]"
     - name: Test with pytest
       run: |
-        pytest --ignore=fit_methods -s
+        pytest --ignore= tests/fit_methods
