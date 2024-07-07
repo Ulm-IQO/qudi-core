@@ -8,7 +8,7 @@ import sys
 import os
 
 
-CONFIG = os.path.join(os.getcwd(),'test.cfg')
+CONFIG = os.path.join(os.getcwd(),'tests/test.cfg')
 
 @pytest.fixture(scope="module")
 def qt_app():

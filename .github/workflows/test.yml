@@ -22,7 +22,6 @@ jobs:
         python-version: ["3.8", "3.9", "3.10"]
 
     steps:
-
     - uses: actions/checkout@v4
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v5
@@ -34,9 +33,7 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install -e ".[dev-test]"
-    - name: Print working directory
-      run: pwd
     - name: Test with pytest
       run: |
-        pytest --ignore= tests/fit_methods -s
+        pytest --ignore=tests/fit_methods -s
  
