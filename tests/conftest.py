@@ -5,9 +5,10 @@ from PySide2 import QtWidgets
 import weakref
 import logging
 import sys 
+import os
 
-CONFIG = 'C:/qudi/qudi-core/tests/dummy.cfg'
-CONFIG = 'C:/qudi/default.cfg'
+
+CONFIG = os.path.join(os.getcwd(),'test.cfg')
 
 @pytest.fixture(scope="module")
 def qt_app():

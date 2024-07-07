@@ -26,7 +26,8 @@ import coverage
 import os
 
 
-@pytest.fixture(autouse=True)
+#@pytest.fixture(autouse=True)
+#Uncomment above line to get coverage
 def coverage_for_each_test(request):
     # Start coverage collection
     cov = coverage.Coverage()
@@ -41,7 +42,6 @@ def coverage_for_each_test(request):
     cov.html_report(directory=test_dir)
     cov.save()
 
-    print(f"Coverage report saved to {test_dir}")
 
 
 def test_add_module( module_manager, sample_module_gui, qtbot):
