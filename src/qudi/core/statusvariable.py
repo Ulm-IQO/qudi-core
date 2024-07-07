@@ -3,24 +3,24 @@
 StatusVar object for qudi modules to allow storing of application status variables on disk.
 These variables get stored during deactivation of qudi modules and loaded back in during activation.
 
-Copyright (c) 2021, the qudi developers. See the AUTHORS.md file at the top-level directory of this
-distribution and on <https://github.com/Ulm-IQO/qudi-core/>
-
-This file is part of qudi.
-
-Qudi is free software: you can redistribute it and/or modify it under the terms of
-the GNU Lesser General Public License as published by the Free Software Foundation,
-either version 3 of the License, or (at your option) any later version.
-
-Qudi is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
-without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-See the GNU Lesser General Public License for more details.
-
-You should have received a copy of the GNU Lesser General Public License along with qudi.
-If not, see <https://www.gnu.org/licenses/>.
+.. Copyright (c) 2021, the qudi developers. See the AUTHORS.md file at the top-level directory of this
+.. distribution and on <https://github.com/Ulm-IQO/qudi-core/>
+..
+.. This file is part of qudi.
+..
+.. Qudi is free software: you can redistribute it and/or modify it under the terms of
+.. the GNU Lesser General Public License as published by the Free Software Foundation,
+.. either version 3 of the License, or (at your option) any later version.
+..
+.. Qudi is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+.. without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+.. See the GNU Lesser General Public License for more details.
+..
+.. You should have received a copy of the GNU Lesser General Public License along with qudi.
+.. If not, see <https://www.gnu.org/licenses/>.
 """
 
-__all__ = ['StatusVar']
+__all__ = ["StatusVar"]
 
 import copy
 import inspect
@@ -41,10 +41,16 @@ class StatusVar:
         representer: Optional[Callable] = None,
     ):
         """
-        @param name: identifier of the status variable when stored
-        @param default: default value for the status variable when a saved version is not present
-        @param constructor: constructor function for variable; use for type checks or conversion
-        @param representer: representer function for status variable; use for saving conversion
+        Parameters
+        ----------
+        name : str
+            Identifier of the status variable when stored.
+        default : Any
+            Default value for the status variable when a saved version is not present.
+        constructor : callable
+            Constructor function for the variable; use for type checks or conversion.
+        representer : callable
+            Representer function for the status variable; use for saving conversion.
         """
         self.name = name
         self.default = default
@@ -68,13 +74,16 @@ class StatusVar:
     def copy(self, **kwargs):
         """Create a new instance of StatusVar with copied and updated values.
 
-        @param kwargs: Additional or overridden parameters for the constructor of this class
+        Parameters
+        ----------
+        **kwargs : dict
+            Additional or overridden parameters for the constructor of this class.
         """
         newargs = {
-            'name': self.name,
-            'default': copy.deepcopy(self.default),
-            'constructor': self.constructor_function,
-            'representer': self.representer_function,
+            "name": self.name,
+            "default": copy.deepcopy(self.default),
+            "constructor": self.constructor_function,
+            "representer": self.representer_function,
         }
         newargs.update(kwargs)
         return StatusVar(**newargs)
@@ -82,8 +91,15 @@ class StatusVar:
     def constructor(self, func: Callable) -> Callable:
         """This is the decorator for declaring constructor function for this StatusVar.
 
-        @param func: constructor function for this StatusVar
-        @return: return the original function so this can be used as a decorator
+        Parameters
+        ----------
+        func : callable
+            Constructor function for this StatusVar.
+
+        Returns
+        -------
+        callable
+            The original function so this can be used as a decorator.
         """
         self.constructor_function = self._assert_func_signature(func)
         return func
@@ -91,19 +107,26 @@ class StatusVar:
     def representer(self, func: Callable) -> Callable:
         """This is the decorator for declaring a representer function for this StatusVar.
 
-        @param func: representer function for this StatusVar
-        @return: return the original function so this can be used as a decorator
+        Parameters
+        ----------
+        func : callable
+            Representer function for this StatusVar.
+
+        Returns
+        -------
+        callable
+            The original function so this can be used as a decorator.
         """
         self.representer_function = self._assert_func_signature(func)
         return func
 
     @staticmethod
     def _assert_func_signature(func: Callable) -> Callable:
-        assert callable(func), 'StatusVar constructor/representer must be callable'
+        assert callable(func), "StatusVar constructor/representer must be callable"
         params = tuple(inspect.signature(func).parameters)
         assert 0 < len(params) < 3, (
-            'StatusVar constructor/representer must be function with '
-            '1 (static) or 2 (bound method) parameters.'
+            "StatusVar constructor/representer must be function with "
+            "1 (static) or 2 (bound method) parameters."
         )
         if len(params) == 1:
 

@@ -2,24 +2,24 @@
 """
 This module provides functionality for linear transformations of cartesian coordinate systems.
 
-Copyright (c) 2022, the qudi developers. See the AUTHORS.md file at the top-level directory of this
-distribution and on <https://github.com/Ulm-IQO/qudi-iqo-modules/>
-
-This file is part of qudi.
-
-Qudi is free software: you can redistribute it and/or modify it under the terms of
-the GNU Lesser General Public License as published by the Free Software Foundation,
-either version 3 of the License, or (at your option) any later version.
-
-Qudi is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
-without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-See the GNU Lesser General Public License for more details.
-
-You should have received a copy of the GNU Lesser General Public License along with qudi.
-If not, see <https://www.gnu.org/licenses/>.
+.. Copyright (c) 2021, the qudi developers. See the AUTHORS.md file at the top-level directory of this
+.. distribution and on <https://github.com/Ulm-IQO/qudi-core/>
+..
+.. This file is part of qudi.
+..
+.. Qudi is free software: you can redistribute it and/or modify it under the terms of
+.. the GNU Lesser General Public License as published by the Free Software Foundation,
+.. either version 3 of the License, or (at your option) any later version.
+..
+.. Qudi is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+.. without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+.. See the GNU Lesser General Public License for more details.
+..
+.. You should have received a copy of the GNU Lesser General Public License along with qudi.
+.. If not, see <https://www.gnu.org/licenses/>.
 """
 
-__all__ = ['LinearTransformation', 'LinearTransformation3D', 'LinearTransformation2D']
+__all__ = ["LinearTransformation", "LinearTransformation3D", "LinearTransformation2D"]
 
 import numpy as np
 from typing import Sequence, Optional, Union, Tuple
@@ -41,25 +41,25 @@ class LinearTransformation:
         if matrix is not None:
             self._matrix = np.array(matrix, dtype=float)
             if self._matrix.ndim != 2:
-                raise ValueError('LinearTransformation matrix must be 2-dimensional')
+                raise ValueError("LinearTransformation matrix must be 2-dimensional")
             if self._matrix.shape[0] != self._matrix.shape[1]:
-                raise ValueError('LinearTransformation matrix must be square')
+                raise ValueError("LinearTransformation matrix must be square")
         elif dimensions is not None:
             if not is_integer(dimensions):
                 raise TypeError(
-                    f'LinearTransformation dimensions must be integer type. '
-                    f'Received {type(dimensions)} instead.'
+                    f"LinearTransformation dimensions must be integer type. "
+                    f"Received {type(dimensions)} instead."
                 )
             if dimensions < 1:
                 raise ValueError(
-                    f'LinearTransformation dimensions must >= 1. '
-                    f'Received {dimensions:d} instead.'
+                    f"LinearTransformation dimensions must >= 1. "
+                    f"Received {dimensions:d} instead."
                 )
             self._matrix = np.eye(dimensions + 1, dimensions + 1)
         else:
             raise ValueError(
-                'Must either provide homogenous transformation matrix or number of '
-                'dimensions'
+                "Must either provide homogenous transformation matrix or number of "
+                "dimensions"
             )
 
     def __call__(
@@ -80,7 +80,7 @@ class LinearTransformation:
         elif node_dim == 1:
             nodes = np.append(nodes, 1)
             return np.matmul(matrix, nodes)[: self.dimensions]
-        raise ValueError('nodes to transform must either be 1D or 2D array')
+        raise ValueError("nodes to transform must either be 1D or 2D array")
 
     @property
     def matrix(self) -> np.ndarray:
@@ -110,10 +110,10 @@ class LinearTransformation:
         matrix = np.asarray(matrix, dtype=float)
         if matrix.shape != self._matrix.shape:
             raise ValueError(
-                f'LinearTransformation.add_transform expects a homogenious '
-                f'transformation matrix with the same shape as '
-                f'LinearTransformation.matrix {self._matrix.shape}. '
-                f'Received {matrix.shape} instead.'
+                f"LinearTransformation.add_transform expects a homogenious "
+                f"transformation matrix with the same shape as "
+                f"LinearTransformation.matrix {self._matrix.shape}. "
+                f"Received {matrix.shape} instead."
             )
         self._matrix = np.matmul(matrix, self._matrix)
 
@@ -124,8 +124,8 @@ class LinearTransformation:
         dim = self.dimensions
         if len(args) != dim:
             raise ValueError(
-                f'LinearTransformation.translate requires as many arguments as '
-                f'number of dimensions ({dim:d})'
+                f"LinearTransformation.translate requires as many arguments as "
+                f"number of dimensions ({dim:d})"
             )
         translate_matrix = np.asarray(np.diag([1] * (dim + 1)), dtype=float)
         translate_matrix[:-1, -1] = args
@@ -142,8 +142,8 @@ class LinearTransformation:
             diagonal[:-1] *= args
         else:
             raise ValueError(
-                f'LinearTransformation.scale requires either a single argument or as '
-                f'many arguments as number of dimensions ({self.dimensions:d})'
+                f"LinearTransformation.scale requires either a single argument or as "
+                f"many arguments as number of dimensions ({self.dimensions:d})"
             )
         scale_matrix = np.diag(diagonal)
         self.add_transform(scale_matrix)
@@ -153,7 +153,7 @@ class LinearTransformation:
         axis (dimension).
         """
         raise NotImplementedError(
-            'Arbitrary rotation transformation not implemented yet'
+            "Arbitrary rotation transformation not implemented yet"
         )
 
     def from_support_vectors(self):
@@ -271,8 +271,16 @@ def find_changing_axes(points: np.ndarray) -> np.ndarray:
     """
     From a set of column vectors, find the axes which do not have the same coordinate for all vectors.
 
-    :param points: each row is a vector
-    :return: array of the indices of the changing axes
+    Parameters
+    ----------
+    points : numpy.ndarray
+        Each row represents a vector.
+
+    Returns
+    -------
+    numpy.ndarray
+        Array of the indices of the changing axes.
+
     """
     num_axes = len(points[0])
     axes_changing_p = np.zeros(num_axes, dtype=np.bool_)
@@ -289,10 +297,19 @@ def find_changing_axes(points: np.ndarray) -> np.ndarray:
 
 def compute_reduced_vectors(points: np.ndarray) -> np.ndarray:
     """
-    From a set of column vectors, keep only the columns (= axes) that are not constant coordinates for all vectors.
+    From a set of column vectors, keep only the columns (axes) that are not constant coordinates
+    for all vectors.
 
-    :param points: each row is a vector
-    :return: reduced array
+    Parameters
+    ----------
+    points : numpy.ndarray
+        Each row represents a vector.
+
+    Returns
+    -------
+    numpy.ndarray
+        Reduced array containing only the non-constant axes.
+
     """
     axes_changing_p = find_changing_axes(points)
     return points[:, axes_changing_p]
@@ -302,19 +319,33 @@ def compute_rotation_matrix_to_plane(
     v0: np.ndarray, v1: np.ndarray, v2: np.ndarray, ez=[0, 0, 1]
 ) -> np.ndarray:
     """
-    Find the rotation matrix that transforms a plane given by 3 support vectors onto the z plane.
-    This rotation will be around the origin of the coordinate system.
-    Optionally, define the target plane by it's normal vector.
+    Find the rotation matrix that transforms a plane given by three support vectors onto the z plane.
+    This rotation is around the origin of the coordinate system.
+    Optionally, define the target plane by its normal vector.
+
+    Parameters
+    ----------
+    v0 : numpy.ndarray
+        Support vector 0.
+    v1 : numpy.ndarray
+        Support vector 1.
+    v2 : numpy.ndarray
+        Support vector 2.
+    ez : numpy.ndarray, optional
+        Normal vector defining the target plane. By default, this is the z plane.
+
+    Returns
+    -------
+    numpy.ndarray
+        3x3 rotation matrix.
+
+    Notes
+    -----
     See the math here: https://en.wikipedia.org/wiki/Rodrigues'_rotation_formula
 
-    :param v0: Support vector 0
-    :param v1: Support vector 1
-    :param v2: Support vector 2
-    :param ez: Normal vector defining the target plane. By default this is the z plane.
-    :return: 3x3 rotation matrix
     """
     if len(v0) != 3 or len(v1) != 3 or len(v2) != 3:
-        raise ValueError('The support vectors should have a length of 3.')
+        raise ValueError("The support vectors should have a length of 3.")
     s0 = v1 - v0
     s1 = v2 - v0
     ez = np.asarray(ez)

@@ -3,21 +3,21 @@
 """
 This file contains models of Poissonian fitting routines for qudi based on the lmfit package.
 
-Copyright (c) 2021, the qudi developers. See the AUTHORS.md file at the top-level directory of this
-distribution and on <https://github.com/Ulm-IQO/qudi-core/>
-
-This file is part of qudi.
-
-Qudi is free software: you can redistribute it and/or modify it under the terms of
-the GNU Lesser General Public License as published by the Free Software Foundation,
-either version 3 of the License, or (at your option) any later version.
-
-Qudi is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
-without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-See the GNU Lesser General Public License for more details.
-
-You should have received a copy of the GNU Lesser General Public License along with qudi.
-If not, see <https://www.gnu.org/licenses/>.
+.. Copyright (c) 2021, the qudi developers. See the AUTHORS.md file at the top-level directory of this
+.. distribution and on <https://github.com/Ulm-IQO/qudi-core/>
+..
+.. This file is part of qudi.
+..
+.. Qudi is free software: you can redistribute it and/or modify it under the terms of
+.. the GNU Lesser General Public License as published by the Free Software Foundation,
+.. either version 3 of the License, or (at your option) any later version.
+..
+.. Qudi is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+.. without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+.. See the GNU Lesser General Public License for more details.
+..
+.. You should have received a copy of the GNU Lesser General Public License along with qudi.
+.. If not, see <https://www.gnu.org/licenses/>.
 """
 
 __all__ = ('DoublePoissonian', 'Poissonian', 'multiple_poissonian')
@@ -34,14 +34,25 @@ from qudi.util.fit_models.gaussian import multiple_gaussian
 
 
 def multiple_poissonian(x, mus, amplitudes):
-    """Mathematical definition of the sum of multiple scaled Poissonian distributions without any
-    bias.
+    """
+    Mathematical definition of the sum of multiple scaled Poissonian distributions without any bias.
 
-    WARNING: iterable parameters "mus", and "amplitudes" must have same length.
+    WARNING: Iterable parameters "mus" and "amplitudes" must have the same length.
 
-    @param float x: The independent variable to calculate Poissonian
-    @param iterable mus: Iterable containing center positions for all Poissonians
-    @param iterable amplitudes: Iterable containing amplitudes for all Poissonians
+    Parameters
+    ----------
+    x : float
+        The independent variable to calculate the Poissonian.
+    mus : iterable
+        Iterable containing center positions (means) for all Poissonians.
+    amplitudes : iterable
+        Iterable containing amplitudes for all Poissonians.
+
+    Returns
+    -------
+    float
+        The result given x for the sum of scaled Poissonian distributions.
+
     """
     assert len(mus) == len(amplitudes)
 

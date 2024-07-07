@@ -2,24 +2,24 @@
 """
 This file contains qudi methods for mathematical operations/transformations.
 
-Copyright (c) 2021, the qudi developers. See the AUTHORS.md file at the top-level directory of this
-distribution and on <https://github.com/Ulm-IQO/qudi-core/>
-
-This file is part of qudi.
-
-Qudi is free software: you can redistribute it and/or modify it under the terms of
-the GNU Lesser General Public License as published by the Free Software Foundation,
-either version 3 of the License, or (at your option) any later version.
-
-Qudi is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
-without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-See the GNU Lesser General Public License for more details.
-
-You should have received a copy of the GNU Lesser General Public License along with qudi.
-If not, see <https://www.gnu.org/licenses/>.
+.. Copyright (c) 2021, the qudi developers. See the AUTHORS.md file at the top-level directory of this
+.. distribution and on <https://github.com/Ulm-IQO/qudi-core/>
+..
+.. This file is part of qudi.
+..
+.. Qudi is free software: you can redistribute it and/or modify it under the terms of
+.. the GNU Lesser General Public License as published by the Free Software Foundation,
+.. either version 3 of the License, or (at your option) any later version.
+..
+.. Qudi is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+.. without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+.. See the GNU Lesser General Public License for more details.
+..
+.. You should have received a copy of the GNU Lesser General Public License along with qudi.
+.. If not, see <https://www.gnu.org/licenses/>.
 """
 
-__all__ = ('compute_ft', 'ft_windows')
+__all__ = ("compute_ft", "ft_windows")
 
 import numpy as np
 from scipy.signal import windows as window_func
@@ -105,10 +105,10 @@ def compute_ft(x_val, y_val, zeropad_num=0, window='none', base_corr=True, psd=F
     ampl_norm_fact = 1.0
     # apply window to data to account for spectral leakage:
     if window in ft_windows:
-        window_val = ft_windows[window]['func'](len(y_val))
+        window_val = ft_windows[window]["func"](len(y_val))
         corrected_y = corrected_y * window_val
         # to get the correct amplitude in the amplitude spectrum
-        ampl_norm_fact = ft_windows[window]['ampl_norm']
+        ampl_norm_fact = ft_windows[window]["ampl_norm"]
 
     # zeropad for sinc interpolation:
     zeropad_arr = np.zeros(len(corrected_y) * (zeropad_num + 1))
