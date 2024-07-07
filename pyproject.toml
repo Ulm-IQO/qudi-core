@@ -70,6 +70,7 @@ dependencies = [
     "ruamel.yaml>=0.17.16",
     "scipy>=1.7.1",
     "jsonschema>=4.2.1",
+    "opencv-python"
 ]
 
 [tool.setuptools.packages.find]
