@@ -20,16 +20,12 @@ You should have received a copy of the GNU Lesser General Public License along w
 If not, see <https://www.gnu.org/licenses/>.
 """
 
-from qudi.core import application,modulemanager
+from qudi.core import modulemanager
 from qudi.core.logger import get_logger
 import numpy as np
 import sys
 import os
-import pytest
-from PySide2 import QtCore, QtWidgets
 from PySide2.QtCore import QTimer
-import weakref
-import yaml
 LOGGER = get_logger(__name__)
 
 
@@ -38,27 +34,6 @@ RUN_SUCCESS_STR = 'Starting Qt event loop'
 CONFIG = 'C:/qudi/qudi-core/tests/dummy.cfg'
 CONFIG = 'C:/qudi/default.cfg'
 
-@pytest.fixture(scope="session")
-def qudi_instance():
-    instance = application.Qudi.instance()
-    if instance is None:
-        instance = application.Qudi(config_file=CONFIG)
-    instance_weak = weakref.ref(instance)
-    return instance_weak()
-
-@pytest.fixture(scope="module")
-def qt_app():
-    app_cls = QtWidgets.QApplication
-    app = app_cls.instance()
-    if app is None:
-        app = app_cls()
-    return app
-
-@pytest.fixture(scope='module')
-def config():
-    with open(CONFIG) as stream:
-        configuration = (yaml.safe_load(stream))
-    return configuration
 
 def test_qudi_excepthook_handled(qudi_instance,caplog):
     """Test for handled exceptions that will be logged
@@ -104,7 +79,6 @@ def test_configure_qudi(qudi_instance,qt_app,config):
     config : fixture
         fixture for loaded yaml config
     """    
-
     assert not bool(qudi_instance.module_manager.modules)
             
     qudi_instance._configure_qudi()
@@ -118,7 +92,7 @@ def test_configure_qudi(qudi_instance,qt_app,config):
     #print(len(qudi_instance.module_manager.modules)) # 43 modules 
 
 
-def test_run_exit(qudi_instance,qt_app,caplog):
+def test_run_exit(qudi_instance,qt_app,caplog, teardown_modules):
     """Test if the qudi application runs and exits properly
     Parameters
     ----------
@@ -135,11 +109,7 @@ def test_run_exit(qudi_instance,qt_app,caplog):
     except SystemExit as e:
         assert RUN_SUCCESS_STR in caplog.text
         assert not qudi_instance.is_running 
- 
-        qt_app.shutdown()
-        del qt_app
-        
-        app_cls = QtWidgets.QApplication
-        app = app_cls.instance()
-        assert app is None
-        
+
+
+
+
