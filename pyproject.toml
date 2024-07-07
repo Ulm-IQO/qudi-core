@@ -105,7 +105,8 @@ dev-lint-format = ["ruff==0.2.1",]
 
 dev-test = [
     "pytest==8.0.1",
-    "pytest-qt"
+    "pytest-qt",
+    "coverage"
 ]
 
 [project.scripts]
