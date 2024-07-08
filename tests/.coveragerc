@@ -1,0 +1,9 @@
+[run]
+branch = True
+source = ../
+
+[report]
+show_missing = True
+include_namespace_packages = True
+
+

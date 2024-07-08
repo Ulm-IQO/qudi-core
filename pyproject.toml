@@ -70,7 +70,29 @@ dependencies = [
     "ruamel.yaml>=0.17.16",
     "scipy>=1.7.1",
     "jsonschema>=4.2.1",
+    "opencv-python-headless"
 ]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+exclude = ["qudi.artwork"]
+
+[tool.setuptools.package-dir]
+"" = "src"
+
+
+
+[tool.setuptools.package-data]
+"qudi" = [
+    "artwork/icons/*",
+    "artwork/icons/**/*",
+    "artwork/icons/**/**/*",
+    "artwork/styles/*",
+    "artwork/styles/**/*",
+    "artwork/styles/**/**/*",
+    "artwork/logo/*"
+]
+
 
 [project.optional-dependencies]
 dev-docs = [
@@ -82,7 +104,11 @@ dev-docs = [
 
 dev-lint-format = ["ruff==0.2.1",]
 
-dev-test = ["pytest==8.0.1",]
+dev-test = [
+    "pytest==8.0.1",
+    "pytest-qt",
+    "coverage"
+]
 
 [project.scripts]
 qudi = 'qudi.runnable:main'
