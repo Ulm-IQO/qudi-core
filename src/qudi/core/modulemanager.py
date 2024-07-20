@@ -688,7 +688,8 @@ class ManagedModule(QtCore.QObject):
                 else:
                     # qudi module import and reload
                     mod = importlib.import_module(f'qudi.{self._base}.{self._module}')
-                    importlib.reload(mod)
+                    if reload:
+                        importlib.reload(mod)
 
                     # Try getting qudi module class from imported module
                     mod_class = getattr(mod, self._class, None)
