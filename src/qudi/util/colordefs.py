@@ -1137,8 +1137,8 @@ class ColorScaleViridis(ColorScale):
 class QudiPalette:
     """ Qudi saturated color palette """
 
-    blue = pg.mkColor(34, 23, 244)
-    c1 = blue
+    lightblue = pg.mkColor(183, 178, 242)
+    c1 = lightblue
 
     orange = pg.mkColor(255, 164, 14)
     c2 = orange
