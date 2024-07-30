@@ -258,10 +258,12 @@ class ScalarConstraint:
         """
         if self._enforce_int:
             if not is_integer(value):
-                raise TypeError(f"values must be int type (received {value})")
+                raise TypeError(f"values must be int type (received {type(value)})")
         else:
             if not (is_integer(value) or is_float(value)):
-                raise TypeError(f"values must be int or float type (received {value})")
+                raise TypeError(
+                    f"values must be int or float type (received {type(value)})"
+                )
 
     def __repr__(self) -> str:
         """
