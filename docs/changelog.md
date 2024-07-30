@@ -11,7 +11,8 @@ None
 - Fixed syntax error in `qudi.util.fit_models.lorentzian.LorentzianLinear` fit model
 
 ### New Features
-None
+- Introduced `DiscreteScalarConstraint` that expands the functionality of `ScalarConstraint` to check whether a value 
+is in a set of discrete values
 
 ### Other
 None
