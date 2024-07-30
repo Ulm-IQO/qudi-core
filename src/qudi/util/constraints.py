@@ -19,24 +19,25 @@ You should have received a copy of the GNU Lesser General Public License along w
 If not, see <https://www.gnu.org/licenses/>.
 """
 
-__all__ = ['ScalarConstraint']
+__all__ = ["ScalarConstraint"]
 
-from typing import Union, Optional, Tuple, Callable, Any
+from typing import Union, Optional, Tuple, Callable, Any, Set
 from qudi.util.helpers import is_float, is_integer
+import numpy as np
 
 
 class ScalarConstraint:
-    """
-    """
-    def __init__(self,
-                 default: Union[int, float],
-                 bounds: Tuple[Union[int, float], Union[int, float]],
-                 increment: Optional[Union[int, float]] = None,
-                 enforce_int: Optional[bool] = False,
-                 checker: Optional[Callable[[Union[int, float]], bool]] = None
-                 ) -> None:
-        """
-        """
+    """ """
+
+    def __init__(
+        self,
+        default: Union[int, float],
+        bounds: Tuple[Union[int, float], Union[int, float]],
+        increment: Optional[Union[int, float]] = None,
+        enforce_int: Optional[bool] = False,
+        checker: Optional[Callable[[Union[int, float]], bool]] = None,
+    ) -> None:
+        """ """
         self._enforce_int = bool(enforce_int)
         self.check_value_type(default)
         for value in bounds:
@@ -44,15 +45,17 @@ class ScalarConstraint:
         if increment is not None:
             self.check_value_type(increment)
         if checker is not None and not callable(checker):
-            raise TypeError('checker must be either None or a callable accepting a single scalar '
-                            'and returning a valid-flag bool or raising ValueError')
+            raise TypeError(
+                "checker must be either None or a callable accepting a single scalar "
+                "and returning a valid-flag bool or raising ValueError"
+            )
         self._default = default
         self._minimum, self._maximum = sorted(bounds)
         self._increment = increment
         self._checker = checker
 
         if not self.is_valid(self._default):
-            raise ValueError(f'invalid default value ({self._default}) encountered')
+            raise ValueError(f"invalid default value ({self._default}) encountered")
 
     @property
     def bounds(self) -> Tuple[Union[int, float], Union[int, float]]:
@@ -94,11 +97,13 @@ class ScalarConstraint:
         return min(self._maximum, max(self._minimum, value))
 
     def copy(self) -> object:
-        return ScalarConstraint(default=self.default,
-                                bounds=self.bounds,
-                                increment=self.increment,
-                                enforce_int=self.enforce_int,
-                                checker=self._checker)
+        return ScalarConstraint(
+            default=self.default,
+            bounds=self.bounds,
+            increment=self.increment,
+            enforce_int=self.enforce_int,
+            checker=self._checker,
+        )
 
     def check_custom(self, value: Any) -> None:
         if (self._checker is not None) and (not self._checker(value)):
@@ -111,20 +116,22 @@ class ScalarConstraint:
     def check_value_type(self, value: Any) -> None:
         if self._enforce_int:
             if not is_integer(value):
-                raise TypeError(f'values must be int type (received {value})')
+                raise TypeError(f"values must be int type (received {value})")
         else:
             if not (is_integer(value) or is_float(value)):
-                raise TypeError(f'values must be int or float type (received {value})')
+                raise TypeError(f"values must be int or float type (received {value})")
 
     def __repr__(self) -> str:
         cls = self.__class__.__name__
         module = self.__class__.__module__
-        return f'{module}.{cls}(' \
-               f'default={self.default}, ' \
-               f'bounds={self.bounds}, ' \
-               f'increment={self.increment}, ' \
-               f'enforce_int={self.enforce_int}, ' \
-               f'checker={self._checker})'
+        return (
+            f"{module}.{cls}("
+            f"default={self.default}, "
+            f"bounds={self.bounds}, "
+            f"increment={self.increment}, "
+            f"enforce_int={self.enforce_int}, "
+            f"checker={self._checker})"
+        )
 
     def __copy__(self):
         return self.copy()
@@ -138,7 +145,7 @@ class ScalarConstraint:
     @default.setter
     def default(self, value: Union[int, float]):
         if not self.is_valid(value):
-            raise ValueError(f'invalid default value ({value}) encountered')
+            raise ValueError(f"invalid default value ({value}) encountered")
         self._default = value
 
     @property
@@ -164,3 +171,97 @@ class ScalarConstraint:
     @step.setter
     def step(self, value: Union[None, int, float]):
         self._increment = value
+
+
+class DiscreteScalarConstraint(ScalarConstraint):
+    """ """
+
+    def __init__(
+        self,
+        default: Union[int, float],
+        value_set: Optional[Set[Union[int, float]]] = None,
+        bounds: Optional[Tuple[Union[int, float], Union[int, float]]] = None,
+        increment: Optional[Union[int, float]] = None,
+        enforce_int: Optional[bool] = False,
+        checker: Optional[Callable[[Union[int, float]], bool]] = None,
+        precision: Optional[float] = None,
+    ) -> None:
+        """ """
+        if value_set is not None:
+            self._value_set = value_set
+            if bounds is not None:
+                raise ValueError(
+                    "Parameters value_set and bounds are both set simultaneously. Don't specify bounds as they are calculated from min and max value of value_set."
+                )
+            bounds = (min(self._value_set), max(self._value_set))
+
+        elif bounds is not None and increment is not None:
+            bounds = sorted(bounds)
+            self._value_set = set(np.arange(bounds[0], bounds[1], increment))
+
+        else:
+            raise ValueError(
+                "Parameters value_set, bounds and increment are None. Please specify either value_set or bounds and increment."
+            )
+
+        super().__init__(default, bounds, increment, enforce_int, checker)
+        self._precision = precision
+
+        if not self.is_valid(self._default):
+            raise ValueError(f"invalid default value ({self._default}) encountered")
+
+    @property
+    def value_set(self) -> Set[Union[int, float]]:
+        """
+        Set of values that the constraint allows.
+        """
+        return self._value_set
+
+    @property
+    def precision(self) -> float:
+        """
+        Precision with which floating point discrete values are checked for equality.
+        """
+        return self._precision
+
+    def check(self, value: Union[int, float]) -> None:
+        self.check_value_type(value)
+        self.check_value_range(value)
+        self.check_value_set(value)
+        self.check_custom(value)
+
+    def check_value_set(self, value: Union[int, float]):
+        if value in self.value_set:
+            return
+
+        if self.precision is not None:
+            for val in self.value_set:
+                if abs(val - value) < abs(self.precision):
+                    return
+
+        raise ValueError(f"Value {value} is not in allowed discrete value set.")
+
+    def copy(self) -> object:
+        return DiscreteScalarConstraint(
+            default=self.default,
+            value_set=self.value_set,
+            bounds=self.bounds,
+            increment=self.increment,
+            enforce_int=self.enforce_int,
+            checker=self._checker,
+            precision=self.precision,
+        )
+
+    def __repr__(self) -> str:
+        cls = self.__class__.__name__
+        module = self.__class__.__module__
+        return (
+            f"{module}.{cls}("
+            f"default={self.default}, "
+            f"value_set={self.value_set}, "
+            f"bounds={self.bounds}, "
+            f"increment={self.increment}, "
+            f"enforce_int={self.enforce_int}, "
+            f"checker={self._checker},"
+            f"precision={self.precision})"
+        )
