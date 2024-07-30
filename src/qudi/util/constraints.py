@@ -59,34 +59,104 @@ class ScalarConstraint:
 
     @property
     def bounds(self) -> Tuple[Union[int, float], Union[int, float]]:
+        """
+        Returns the interval within values are valid in this constraint.
+
+        Returns
+        -------
+        Tuple([int, float], [int, float])
+        """
         return self._minimum, self._maximum
 
     @property
     def minimum(self) -> Union[int, float]:
+        """
+        Returns minimum allowed value.
+
+        Returns
+        -------
+        int, float
+        """
         return self._minimum
 
     @property
     def maximum(self) -> Union[int, float]:
+        """
+        Returns maximum allowed value.
+
+        Returns
+        -------
+        int, float
+        """
         return self._maximum
 
     @property
     def default(self) -> Union[int, float]:
+        """
+        Returns default value.
+
+        Returns
+        -------
+        int, float
+        """
         return self._default
 
     @property
     def increment(self) -> Union[None, int, float]:
+        """
+        Returns the increment between values that is normally used.
+        This is often used for the increment in e.g. QSpinBox.
+
+        Returns
+        -------
+        int, float
+        """
         return self._increment
 
     @property
     def enforce_int(self) -> bool:
+        """
+        Returns whether only integer values are allowed.
+
+        Returns
+        -------
+        bool
+        """
         return self._enforce_int
 
     def check(self, value: Union[int, float]) -> None:
+        """
+        Method that checks whether the given value is allowed by the constraint by calling various checker functions.
+        If a checker function fails it will raise an Exception, indicating what is wrong with the value.
+
+        Parameters
+        ----------
+            int, float
+                value to check
+
+        Returns
+        -------
+        None
+        """
+
         self.check_value_type(value)
         self.check_value_range(value)
         self.check_custom(value)
 
     def is_valid(self, value: Union[int, float]) -> bool:
+        """
+        Method that checks whether the given value is valid.
+
+        Parameters
+        ----------
+            int, float
+                value to check
+
+        Returns
+        -------
+        bool
+            Is the value valid or not
+        """
         try:
             self.check(value)
         except (ValueError, TypeError):
@@ -94,9 +164,30 @@ class ScalarConstraint:
         return True
 
     def clip(self, value: Union[int, float]) -> Union[int, float]:
+        """
+        Method that clips the given value at the bounds of the constraint.
+
+        Parameters
+        ----------
+            int, float
+                value to clip
+
+        Returns
+        -------
+        int, float
+            value if in bounds, or the minimum or maximum allowed value
+        """
         return min(self._maximum, max(self._minimum, value))
 
     def copy(self) -> object:
+        """
+        Method copies this ScalarConstraint instance.
+
+        Returns
+        -------
+        ScalarConstraint
+            Copy of this instance
+        """
         return ScalarConstraint(
             default=self.default,
             bounds=self.bounds,
@@ -106,14 +197,65 @@ class ScalarConstraint:
         )
 
     def check_custom(self, value: Any) -> None:
+        """
+        Method that checks the given value with the supplied custom checker function.
+
+        Parameters
+        ----------
+            int, float
+                value to check
+
+        Returns
+        -------
+        None
+
+        Raises
+        ------
+        ValueError
+            If checker function returns False.
+        """
         if (self._checker is not None) and (not self._checker(value)):
             raise ValueError(f'Custom checker failed to validate value "{value}"')
 
     def check_value_range(self, value: Union[int, float]) -> None:
+        """
+        Method that checks the given value if it is in bounds.
+
+        Parameters
+        ----------
+            int, float
+                value to check
+
+        Returns
+        -------
+        None
+
+        Raises
+        ------
+        ValueError
+            If value out of bounds.
+        """
         if not (self._minimum <= value <= self._maximum):
             raise ValueError(f'Value "{value}" is out of bounds {self.bounds}')
 
     def check_value_type(self, value: Any) -> None:
+        """
+        Method that checks the given value if it is in bounds.
+
+        Parameters
+        ----------
+            int, float
+                value to check
+
+        Returns
+        -------
+        None
+
+        Raises
+        ------
+        TypeError
+            If value is not int or float or if _enforce_int is set if it is not int.
+        """
         if self._enforce_int:
             if not is_integer(value):
                 raise TypeError(f"values must be int type (received {value})")
@@ -122,6 +264,14 @@ class ScalarConstraint:
                 raise TypeError(f"values must be int or float type (received {value})")
 
     def __repr__(self) -> str:
+        """
+        Method that gives a readable representation of this constraint.
+
+        Returns
+        -------
+        str
+            Readable representation of the constraint.
+        """
         cls = self.__class__.__name__
         module = self.__class__.__module__
         return (
@@ -134,9 +284,25 @@ class ScalarConstraint:
         )
 
     def __copy__(self):
+        """
+        Returns the copy of this instance.
+
+        Returns
+        -------
+        ScalarConstraint
+            Copy of this instance
+        """
         return self.copy()
 
     def __deepcopy__(self, memodict={}):
+        """
+        Returns the deepcopy of this instance.
+
+        Returns
+        -------
+        ScalarConstraint
+            Deepcopy of this instance
+        """
         new_obj = self.copy()
         memodict[id(self)] = new_obj
         return new_obj
@@ -213,24 +379,59 @@ class DiscreteScalarConstraint(ScalarConstraint):
     @property
     def value_set(self) -> Set[Union[int, float]]:
         """
-        Set of values that the constraint allows.
+        Returns the set of values that the constraint allows.
+
+        Returns
+        -------
+        set([int, float])
         """
         return self._value_set
 
     @property
     def precision(self) -> float:
         """
-        Precision with which floating point discrete values are checked for equality.
+        Returns the precision with which floating point discrete values are checked for equality.
+
+        Returns
+        -------
+        float
         """
         return self._precision
 
     def check(self, value: Union[int, float]) -> None:
-        self.check_value_type(value)
-        self.check_value_range(value)
+        """
+        Method that utilizes the check function of ScalarConstraint and expands it by checking whether the given value is in the discrete value set.
+
+        Parameters
+        ----------
+            int, float
+                value to check
+
+        Returns
+        -------
+        None
+        """
+        super().check(value)
         self.check_value_set(value)
-        self.check_custom(value)
 
     def check_value_set(self, value: Union[int, float]):
+        """
+        Method that checks whether the given value is in the discrete value set.
+
+        Parameters
+        ----------
+            int, float
+                value to check
+
+        Returns
+        -------
+        None
+
+        Raises
+        ------
+        ValueError
+            If value is not in discrete value set.
+        """
         if value in self.value_set:
             return
 
@@ -242,6 +443,14 @@ class DiscreteScalarConstraint(ScalarConstraint):
         raise ValueError(f"Value {value} is not in allowed discrete value set.")
 
     def copy(self) -> object:
+        """
+        Method copies this DiscreteScalarConstraint instance.
+
+        Returns
+        -------
+        DiscreteScalarConstraint
+            Copy of this instance
+        """
         return DiscreteScalarConstraint(
             default=self.default,
             value_set=self.value_set,
@@ -253,6 +462,14 @@ class DiscreteScalarConstraint(ScalarConstraint):
         )
 
     def __repr__(self) -> str:
+        """
+        Method that gives a readable representation of this constraint.
+
+        Returns
+        -------
+        str
+            Readable representation of the constraint.
+        """
         cls = self.__class__.__name__
         module = self.__class__.__module__
         return (
