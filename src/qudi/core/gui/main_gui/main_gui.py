@@ -123,6 +123,9 @@ class QudiMainGui(GuiBase):
         self.mw.settings_dialog.dump_status_variables_interval_spinbox.setValue(
             self._automatic_status_var_dump_interval
         )
+        self.signal_update_automatic_status_var_interval.emit(
+            self._automatic_status_var_dump_interval
+        )
         self.signal_update_automatic_status_var_checkstate.emit(
             self._automatic_status_var_dump
         )
