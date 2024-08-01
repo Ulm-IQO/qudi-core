@@ -6,7 +6,9 @@
 None
 
 ### Bugfixes
-None
+- Fixed deprecated import path for `windows` module from `scipy.signal` in `qudi.util.math`
+- Fixed decay parameter estimation in `qudi.util.fit_models.exp_decay.ExponentialDecay` fit model
+- Fixed syntax error in `qudi.util.fit_models.lorentzian.LorentzianLinear` fit model
 
 ### New Features
 None
