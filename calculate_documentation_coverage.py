@@ -44,7 +44,8 @@ def parse_files(directory):
     return public_methods, documented_methods
 
 # Specify the directory containing your Python files
-directory = "src/qudi"
+directory = os.path.join("src", "qudi")
+
 
 # Call the function to parse files and calculate coverage
 total_methods, documented_methods = parse_files(directory)
