@@ -26,7 +26,6 @@ extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.autosummary',
     'sphinx.ext.viewcode',
-    'sphinx_rtd_dark_mode',
     'sphinx.ext.intersphinx',
     'sphinx.ext.doctest', 
     'sphinx.ext.coverage', 
@@ -51,10 +50,22 @@ autodoc_mock_imports = ['lmfit']
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
-# html_theme = 'pydata_sphinx_theme'
-html_theme = 'sphinx_book_theme'
-# html_theme = 'sphinx_rtd_theme'
+html_theme = 'pydata_sphinx_theme'
+#html_theme = 'sphinx_book_theme'
+#html_theme = 'sphinx_rtd_theme'
+
 html_theme_options = {
+    # "logo": {
+    #     "text": "Qudi-Core",
+    # },
+    # "navbar_start": ["navbar-logo"],
+    # "navbar_center": [
+    #     {"name": "Getting Started", "url": "docs/getting_started.rst", "external": False},
+    #     {"name": "Design Concepts", "url": "docs/design_concepts", "external": False},
+    #     {"name": "Development", "url": "docs/programming_guidelines", "external": False},
+    #     {"name": "API Reference", "url": "docs/_autosummary", "external": False}
+    # ],
+    # "navbar_end": ["search-field.html"],
     'navigation_with_keys': False,  # See https://github.com/pydata/pydata-sphinx-theme/issues/1492
 }
 html_static_path = []  # Normally defaults to '_static' but we don't have any static files.
