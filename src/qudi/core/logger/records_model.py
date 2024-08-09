@@ -53,16 +53,24 @@ class LogRecordsTableModel(QtCore.QAbstractTableModel):
         self._fill_count = 0
 
     def rowCount(self, parent=None):
-        """Returns the number of log records stored in the model.
+        """
+        Returns the number of log records stored in the model.
 
-        @return int: number of log records stored
+        Returns
+        -------
+        int
+            Number of log records stored.
         """
         return self._fill_count
 
     def columnCount(self, parent=None):
-        """Returns the number of columns each log record has.
+        """
+        Returns the number of columns each log record has.
 
-        @return int: number of log record columns
+        Returns
+        -------
+        int
+            Number of columns for each log record.
         """
         return len(self._header)
 

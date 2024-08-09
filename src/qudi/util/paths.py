@@ -39,9 +39,13 @@ from typing import Optional
 
 
 def get_main_dir() -> str:
-    """Returns the absolute path to the directory of the main software.
+    """
+    Returns the absolute path to the directory of the main software.
 
-    @return string: path to the main tree of the software
+    Returns
+    -------
+    str
+        Path to the main tree of the software.
     """
     import qudi.core as core
 

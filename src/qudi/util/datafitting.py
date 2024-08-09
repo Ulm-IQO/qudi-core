@@ -286,11 +286,15 @@ class FitConfigurationsModel(QtCore.QAbstractListModel):
         return False
 
     def dump_configs(self):
-        """Returns all currently held fit configurations as dicts representations containing only
-        data types that can be dumped as YAML in qudi app status.
-
-        @return list: List of fit config dict representations.
         """
+    Returns all currently held fit configurations as dictionary representations containing only
+    data types that can be dumped as YAML in the Qudi app status.
+
+    Returns
+    -------
+    list of dict
+        List of fit configuration dictionary representations.
+    """
         return [cfg.to_dict() for cfg in self._fit_configurations]
 
     def load_configs(self, configs):

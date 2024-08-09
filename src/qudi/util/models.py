@@ -162,12 +162,23 @@ class DictTableModel(QtCore.QAbstractTableModel):
                 self.__setitem__(key, value)
 
     def pop(self, *args):
-        """Remove key from dictionary.
-
-        @param args: dict key to remove, optional default return value
-
-        @return value: value removed from dict
         """
+    Remove a key from a dictionary and return its value.
+
+    Parameters
+    ----------
+    *args : tuple
+        The arguments should include:
+        - key : The key to remove from the dictionary.
+        - default : optional
+            The value to return if the key is not found in the dictionary.
+
+    Returns
+    -------
+    value
+        The value associated with the removed key. If the key is not found and a default 
+        value is provided, the default value is returned. Otherwise, a `KeyError` is raised.
+    """
         with self._lock:
             if args[0] in self._storage:
                 row = self.get_index_by_key(args[0])
@@ -179,12 +190,23 @@ class DictTableModel(QtCore.QAbstractTableModel):
                 return args[1]
 
     def get(self, *args):
-        """Get value for key from dictionary.
-
-        @param args: value for key, optional default return value
-
-        @return value: value for key from dict
         """
+    Get the value associated with a key from a dictionary.
+
+    Parameters
+    ----------
+    *args : tuple
+        The arguments should include:
+        - key : The key to look up in the dictionary.
+        - default : optional
+            The value to return if the key is not found in the dictionary.
+
+    Returns
+    -------
+    value
+        The value associated with the key in the dictionary. If the key is not found 
+        and a default value is provided, the default value is returned.
+    """
         with self._lock:
             return self._storage.get(*args)
 
