@@ -55,19 +55,28 @@ html_theme = 'pydata_sphinx_theme'
 #html_theme = 'sphinx_rtd_theme'
 
 html_theme_options = {
-    # "logo": {
-    #     "text": "Qudi-Core",
-    # },
-    # "navbar_start": ["navbar-logo"],
-    # "navbar_center": [
-    #     {"name": "Getting Started", "url": "docs/getting_started.rst", "external": False},
-    #     {"name": "Design Concepts", "url": "docs/design_concepts", "external": False},
-    #     {"name": "Development", "url": "docs/programming_guidelines", "external": False},
-    #     {"name": "API Reference", "url": "docs/_autosummary", "external": False}
-    # ],
-    # "navbar_end": ["search-field.html"],
+    "logo": {
+        "text": "Qudi-Core",
+    },
+    "navbar_start": ["navbar-logo"],
+    "navbar_center": ["navbar-nav"],
+    "navbar_end": ["navbar-icon-links"],
+    "navbar_persistent": ["search-button"],
+    "footer_start": ["copyright", "sphinx-version"],
+    "footer_end": ["theme-version"],
+    "show_toc_level": 1,
+    "show_nav_level": 2,
     'navigation_with_keys': False,  # See https://github.com/pydata/pydata-sphinx-theme/issues/1492
 }
+
+html_sidebars = {
+    "**": ["sidebar-nav-bs", "sidebar-ethical-ads"]
+}
+html_css_files = [
+    'custom.css',
+]
+
+
 html_static_path = []  # Normally defaults to '_static' but we don't have any static files.
 default_dark_mode = False  # For sphinx_rtd_dark_mode. Dark mode needs tweaking so not defaulting to it yet.
 

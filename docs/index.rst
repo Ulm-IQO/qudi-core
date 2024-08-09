@@ -1,52 +1,20 @@
+
 Welcome to Qudi Core's documentation!
-=====================================
+======================================
 
 .. toctree::
-    :maxdepth: 1
-    :glob:
-    :caption: Getting Started
+    :maxdepth: 2
+    :caption: Documentation Sections
 
-    getting_started
-    setup/*
-
-.. toctree::
-    :maxdepth: 1
-    :glob:
-    :caption: Design Concepts
-
-    design_concepts/*
-    core_elements/*
-
-.. toctree::
-    :maxdepth: 1
-    :glob:
-    :caption: Development
-
-    programming_guidelines/*
-    changelog
-    license
+    getting_started/index
+    design_concepts/index
+    development/index
+    api_reference/index
 
 
-.. autosummary::
-    :caption: API Reference
-    :toctree: _autosummary
-    :template: custom-module-template.rst
-    :recursive:
+    Indices and tables
+    ==================
 
-    .. qudi
-
-    qudi.core 
-    qudi.gui 
-    qudi.logic 
-    qudi.tasks
-    qudi.tools 
-    qudi.util 
-    qudi.runnable 
-
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
+    * :ref:`genindex`
+    * :ref:`modindex`
+    * :ref:`search`
