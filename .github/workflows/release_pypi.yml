@@ -8,7 +8,9 @@ jobs:
   deploy:
     if: "!github.event.release.prerelease"
     runs-on: ubuntu-latest
-
+    environment: release
+    permissions:
+      id-token: write
     steps:
     - name: checkout tag
       uses: actions/checkout@v4
