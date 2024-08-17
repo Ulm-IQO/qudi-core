@@ -6,6 +6,22 @@
 None
 
 ### Bugfixes
+None
+
+### New Features
+None
+
+### Other
+None
+
+
+## Version 1.5.1
+Released on 18.08.2024
+
+### Breaking Changes
+None
+
+### Bugfixes
 - Fixed deprecated import path for `windows` module from `scipy.signal` in `qudi.util.math`
 - Fixed decay parameter estimation in `qudi.util.fit_models.exp_decay.ExponentialDecay` fit model
 - Fixed syntax error in `qudi.util.fit_models.lorentzian.LorentzianLinear` fit model
