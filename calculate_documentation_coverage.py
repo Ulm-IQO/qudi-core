@@ -5,11 +5,13 @@ class PublicMethodVisitor(ast.NodeVisitor):
     def __init__(self):
         self.public_methods = 0
         self.documented_methods = 0
+        self.enclosing_scopes = []
 
     def visit_FunctionDef(self, node):
         if not node.name.startswith("__") and (not node.name.startswith("_") or "__all__" in self.enclosing_scopes):
             self.public_methods += 1
-            if node.body and isinstance(node.body[0], ast.Expr):
+            # Check if the first node in the function body is a string (which would be a docstring)
+            if node.body and isinstance(node.body[0], (ast.Expr, ast.Constant)) and isinstance(node.body[0].value, (ast.Str, ast.Constant)):
                 self.documented_methods += 1
         self.generic_visit(node)
 
@@ -19,10 +21,13 @@ class PublicMethodVisitor(ast.NodeVisitor):
         self.enclosing_scopes.pop()
 
     def visit_Module(self, node):
-        if hasattr(node, "__all__"):
-            self.enclosing_scopes = node.__all__
-        else:
-            self.enclosing_scopes = []
+        # Initialize enclosing scopes, and handle __all__ if present
+        self.enclosing_scopes = []
+        if hasattr(node, 'body'):
+            for item in node.body:
+                if isinstance(item, ast.Assign) and any(target.id == '__all__' for target in item.targets if isinstance(target, ast.Name)):
+                    self.enclosing_scopes = [name.s for name in item.value.elts if isinstance(name, ast.Str)]
+        self.generic_visit(node)
 
 def parse_files(directory):
     public_methods = 0
@@ -45,6 +50,7 @@ def parse_files(directory):
 
 # Specify the directory containing your Python files
 directory = os.path.join("src", "qudi")
+
 
 
 # Call the function to parse files and calculate coverage
