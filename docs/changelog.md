@@ -14,7 +14,8 @@ None
 None
 
 ### Other
-None
+- Improved documentation [`getting_started.md`](getting_started.md)
+- Added documentation [`programming_guidelines/data_fitting_integration.md`](programming_guidelines/data_fitting_integration.md)
 
 
 ## Version 1.5.0
