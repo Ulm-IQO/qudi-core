@@ -73,7 +73,7 @@ html_sidebars = {
     "**": ["sidebar-nav-bs", "sidebar-ethical-ads"]
 }
 html_css_files = [
-    'custom.css',
+    'docs\_build\html\_static\custom.css',
 ]
 
 

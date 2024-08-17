@@ -81,6 +81,7 @@ cover/
 # Sphinx documentation
 docs/_build/
 docs/_autosummary/
+docs/api_reference/_autosummary/
 docs/_static/
 
 # Jupyter Notebook
