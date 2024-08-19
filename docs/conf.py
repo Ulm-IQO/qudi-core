@@ -47,14 +47,11 @@ autodoc_mock_imports = ['lmfit']
 html_theme = 'pydata_sphinx_theme'
 #html_theme = 'sphinx_book_theme'
 #html_theme = 'sphinx_rtd_theme'
-
+html_logo = "_static/qudi_logo.png"
 html_theme_options = {
     "logo": {
         "text": "Qudi-Core",
-        'image': {
-            'path': '_static/qudi_logo.png',  # Path to your logo image
-            'alt': 'Your Logo Alt Text'  # Alternative text for the logo
-        }
+        "image_dark": "_static/qudi_logo2.png",
     },
     'dark_mode': True,
     "navbar_start": ["navbar-logo"],
@@ -73,9 +70,9 @@ html_sidebars = {
     "**": ["sidebar-nav-bs", "sidebar-ethical-ads"]
 }
 html_static_path = ['_static']
-html_css_files = [
-    'custom.css',
-]
+# html_css_files = [
+#     'custom.css',
+# ]
 
 
 
