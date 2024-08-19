@@ -1,4 +1,3 @@
-`index <../index.rst>`__
 
 --------------
 
@@ -190,5 +189,3 @@ above also shows), you could combine that with the ``@staticmethod``
 decorator. But this is not necessary and just good style.
 
 --------------
-
-`index <../index.rst>`__

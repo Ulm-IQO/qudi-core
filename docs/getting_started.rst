@@ -1,4 +1,3 @@
-`index <index.rst>`__
 
 --------------
 
@@ -193,4 +192,3 @@ modules <design_concepts/measurement_modules.rst>`__ documentation.
 
 --------------
 
-`index <index.rst>`__
