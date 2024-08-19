@@ -57,28 +57,36 @@ html_theme = 'pydata_sphinx_theme'
 html_theme_options = {
     "logo": {
         "text": "Qudi-Core",
+        'image': {
+            'path': '_static/qudi_logo.png',  # Path to your logo image
+            'alt': 'Your Logo Alt Text'  # Alternative text for the logo
+        }
     },
+    'dark_mode': True,
     "navbar_start": ["navbar-logo"],
     "navbar_center": ["navbar-nav"],
     "navbar_end": ["navbar-icon-links"],
-    "navbar_persistent": ["search-button"],
+    "navbar_persistent": ["theme-switcher", "search-button"],
     "footer_start": ["copyright", "sphinx-version"],
     "footer_end": ["theme-version"],
     "show_toc_level": 1,
     "show_nav_level": 2,
+    "collapse_navigation": True,
     'navigation_with_keys': False,  # See https://github.com/pydata/pydata-sphinx-theme/issues/1492
 }
 
 html_sidebars = {
     "**": ["sidebar-nav-bs", "sidebar-ethical-ads"]
 }
+html_static_path = ['_static']
 html_css_files = [
-    'docs\_build\html\_static\custom.css',
+    'custom.css',
 ]
 
 
-html_static_path = []  # Normally defaults to '_static' but we don't have any static files.
-default_dark_mode = False  # For sphinx_rtd_dark_mode. Dark mode needs tweaking so not defaulting to it yet.
+
+
+default_dark_mode = True  # For sphinx_rtd_dark_mode. Dark mode needs tweaking so not defaulting to it yet.
 
 numpydoc_show_class_members = False
 numpydoc_show_inherited_class_members = False
@@ -87,8 +95,9 @@ numpydoc_class_members_toctree = False
 # Example autodoc settings
 autodoc_default_options = {
     'members': True,    # Document all members (methods and attributes)
-    'undoc-members': True,   # Include members without docstrings
-    'show-inheritance': True,   # Show inheritance links
+    'undoc-members': False,   # Include members without docstrings
+    'show-inheritance': True,
+    'inherited-members': False   # Show inheritance links
     # Other options as needed
 }
 
