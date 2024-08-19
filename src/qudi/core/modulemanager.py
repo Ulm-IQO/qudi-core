@@ -670,7 +670,6 @@ class ManagedModule(QtCore.QObject):
     def reload(self):
         # Switch to the main thread if this method was called from another thread
         if QtCore.QThread.currentThread() is not self.thread():
-            logger.debug('changing thread')
             QtCore.QMetaObject.invokeMethod(self, 'reload', QtCore.Qt.BlockingQueuedConnection)
             return
 
