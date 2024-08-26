@@ -62,6 +62,25 @@ modules at once.
 `qudi.util.models.ListTableModel` from
 
 
+## Version 1.5.1
+Released on 18.08.2024
+
+### Breaking Changes
+None
+
+### Bugfixes
+- Fixed deprecated import path for `windows` module from `scipy.signal` in `qudi.util.math`
+- Fixed decay parameter estimation in `qudi.util.fit_models.exp_decay.ExponentialDecay` fit model
+- Fixed syntax error in `qudi.util.fit_models.lorentzian.LorentzianLinear` fit model
+
+### New Features
+None
+
+### Other
+- Improved documentation [`getting_started.md`](getting_started.md)
+- Added documentation [`programming_guidelines/data_fitting_integration.md`](programming_guidelines/data_fitting_integration.md)
+
+
 ## Version 1.5.0
 Released on 16.11.2023
 
