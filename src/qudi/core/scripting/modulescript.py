@@ -116,7 +116,7 @@ class ModuleScript(QtCore.QObject, metaclass=QudiObjectMeta):
         """ Mapping of Connector names (keys) to connected module target names (values).
         Unconnected Connectors are indicated by None target.
         """
-        return {conn.name: None if conn() is None else conn().module_name for conn in
+        return {conn.name: None if conn() is None else conn().nametag for conn in
                 self._meta['connectors']}
 
     @classmethod

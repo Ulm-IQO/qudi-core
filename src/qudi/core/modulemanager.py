@@ -35,7 +35,7 @@ from qudi.util.helpers import call_slot_from_native_thread, current_is_main_thre
 from qudi.util.mutex import Mutex
 from qudi.util.network import connect_to_remote_module_server
 from qudi.core.logger import get_logger
-from qudi.core.object import ABCQObject
+from qudi.core.object import ABCQObjectMixin
 from qudi.core.module import Base, LogicBase, GuiBase, ModuleStateError, ModuleState, ModuleBase
 from qudi.core.module import module_url
 from qudi.core.config.validator import validate_local_module_config, validate_remote_module_config
@@ -45,7 +45,7 @@ from qudi.core.config.validator import ValidationError, validate_module_name
 _logger = get_logger(__name__)
 
 
-class ManagedModule(ABCQObject):
+class ManagedModule(ABCQObjectMixin, QtCore.QObject):
     """ Object representing a wrapper for a qudi module (gui, logic or hardware) to be managed by
     the ModuleManager object. Contains status properties and handles initialization, state
     transitions and connection of the module.

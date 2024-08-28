@@ -9,13 +9,13 @@ FSM itself.
 - Intoduced new enum types `ModuleState` and `ModuleBase` in `qudi.core.module` for state and 
 module base type representation.
 - Changed `qudi.core.module.Base` properties `is_module_threaded` and `module_base` to read-only 
-class descriptors
+class descriptors. Renamed `is_module_threaded` to `module_threaded`.
 - Turned `ConfigOption`, `StatusVar` and `Connector` into descriptors, eliminating the need to call 
 or explicitly construct them
-- Combined meta object, id, logging and appdata functionality in new general purpose 
-`QudiObjectMeta` and `QudiObject` (meta)classes. This new object serves as base class for 
-`qudi.core.module.Base`
-- `Connector` and `ConfigOption` now need to be initialized in `QudiObject.__init__`
+- Combined meta object, id, logging, appdata and abc functionality in new general purpose mixin 
+class `QudiQObjectMixin` that can be inherited in conjunction with any `QObject` or `QWidget`
+(sub-)class. This new mixin is used as base class for `qudi.core.module.Base` among others.
+- `Connector` and `ConfigOption` now need to be initialized in `Base.__init__`
 - Refactoring of `qudi.util.overload.OverloadProxy` which is now a subclass of a more general 
 object proxy found in the new module `qudi.util.proxy`.
 - Adjusted `ModuleManager` according to the meta object changes in `qudi.core.module`. Now there is 
@@ -35,6 +35,9 @@ singleton
 ### Bugfixes
 - Python module reload during runtime is now only performed if explicitly requested by the user
 - Fixed a `scipy` warning about the deprecated `scipy.ndimage.filters` namespace
+- Exceptions during initialization and construction of `ConfigOption` and `StatusVar` will now 
+cause the affected descriptor to be initialized to its default value and no longer prevent the 
+module from activating. `Connector` behaves similar if it is optional.
 
 ### New Features
 - New context manager `qudi.util.mutex.acquire_timeout` to facilitate (Recursive)Mutex/(R)Lock 
@@ -55,11 +58,11 @@ configured modules at once.
 modules at once.
 
 ### Other
-- Deprecated calling `qudi.core.module.Base.module_state` and `Connector` meta attributes.
+- Deprecated calling `qudi.core.module.Base.module_state` property and `Connector` meta attributes.
 - Deprecated `qudi.util.paths.get_module_app_data_path` in favor of 
 `qudi.util.paths.get_module_appdata_path`
 - Improved performance reading and mutating `qudi.util.models.DictTableModel` and 
-`qudi.util.models.ListTableModel` from
+`qudi.util.models.ListTableModel`
 
 
 ## Version 1.5.1

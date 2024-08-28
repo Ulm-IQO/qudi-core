@@ -19,15 +19,14 @@ You should have received a copy of the GNU Lesser General Public License along w
 If not, see <https://www.gnu.org/licenses/>.
 """
 
-__all__ = ['ABCQObject', 'QudiObject']
+__all__ = ['ABCQObjectMixin', 'QudiQObjectMixin']
 
 import os
 import copy
 import logging
-
 from uuid import uuid4, UUID
 from typing import MutableMapping, Mapping, Optional, Any, final, Union, Dict
-from PySide2.QtCore import QObject, Signal, Slot, QCoreApplication
+from PySide2.QtCore import Slot, QCoreApplication
 
 from qudi.core.logger import get_logger
 from qudi.core.meta import ABCQObjectMeta, QudiObjectMeta
@@ -99,7 +98,7 @@ class _ThreadedDescriptor:
         raise AttributeError('Read-Only')
 
 
-class ABCQObject(QObject, metaclass=ABCQObjectMeta):
+class ABCQObjectMixin(metaclass=ABCQObjectMeta):
     """ Base class for an abstract QObject.
     This is necessary because of a known bug in PySide2(6).
     See: https://bugreports.qt.io/browse/PYSIDE-1434 for more details
@@ -112,28 +111,25 @@ class ABCQObject(QObject, metaclass=ABCQObjectMeta):
         return super().__new__(cls, *args, **kwargs)
 
 
-class QudiObject(ABCQObject, metaclass=QudiObjectMeta):
-    """ Base class for any qudi QObjects that want to employ meta attribute magic, i.e. StatusVar,
-    ConfigOption and Connector
+class QudiQObjectMixin(ABCQObjectMixin, metaclass=QudiObjectMeta):
+    """ Mixin for any qudi QObjects that want to employ meta attribute magic,
+    i.e. StatusVar, ConfigOption and Connector.
+
+    Use with QObject types only and make sure this mixin comes before QObject in mro!
     """
 
     appdata_handler = _QudiObjectAppDataDescriptor()
 
-    __uuid: UUID
-    __nametag: str
-    __logger: logging.Logger
-
     def __init__(self,
+                 *args,
                  options: Optional[Mapping[str, Any]] = None,
                  connections: Optional[MutableMapping[str, Any]] = None,
                  nametag: Optional[str] = '',
                  uuid: Optional[UUID] = None,
-                 parent: Optional[QObject] = None):
-        super().__init__(parent=parent)
-
+                 **kwargs):
         # Create unique UUID for this object if needed
-        self.__uuid = uuid if isinstance(uuid, UUID) else uuid4()
-        self.__nametag = nametag
+        self.__uuid: UUID = uuid if isinstance(uuid, UUID) else uuid4()
+        self.__nametag: str = nametag
         # Create logger instance for this object instance
         if nametag:
             logger_name = f'{self.__module__}.{self.__class__.__name__}::{nametag}'
@@ -141,12 +137,14 @@ class QudiObject(ABCQObject, metaclass=QudiObjectMeta):
             logger_name = f'{self.__module__}.{self.__class__.__name__}'
         self.__logger = get_logger(logger_name)
 
+        super().__init__(*args, **kwargs)
+
         # Initialize ConfigOption and Connector meta-attributes (descriptors)
         self.__init_config_options(dict() if options is None else options)
         self.__init_connectors(dict() if connections is None else connections)
 
     def __eq__(self, other):
-        if isinstance(other, QudiObject):
+        if isinstance(other, QudiQObjectMixin):
             return self.__uuid == other.uuid
         return False
 
@@ -199,6 +197,7 @@ class QudiObject(ABCQObject, metaclass=QudiObjectMeta):
         else:
             call_slot_from_native_thread(self, 'move_to_main_thread', blocking=True)
 
+    @Slot()
     @final
     def dump_status_variables(self) -> None:
         """ Dumps current values of StatusVar meta-attributes to a file in AppData that is unique
@@ -224,6 +223,7 @@ class QudiObject(ABCQObject, metaclass=QudiObjectMeta):
                 f'Error dumping status variables to file for "{cls.__module__}.{cls.__name__}"'
             ) from err
 
+    @Slot()
     @final
     def load_status_variables(self) -> None:
         """ Loads status variables from file (if present) and tries to initialize the instance

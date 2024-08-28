@@ -51,7 +51,7 @@ class QudiMainGui(GuiBase):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.error_dialog = None
-        self._mw = None
+        self.mw = None
         self._has_console = False  # Flag indicating if an IPython console is available
         self._qudi_main = Qudi.instance()
 
