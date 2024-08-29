@@ -19,7 +19,7 @@ You should have received a copy of the GNU Lesser General Public License along w
 If not, see <https://www.gnu.org/licenses/>.
 """
 
-__all__ = ['ABCQObjectMixin', 'QudiQObjectMixin']
+__all__ = ['ABCQObjectMixin', 'QudiQObjectMixin', 'QudiQObjectFileHandlerFactory']
 
 import os
 import copy
@@ -28,21 +28,20 @@ from uuid import uuid4, UUID
 from typing import MutableMapping, Mapping, Optional, Any, final, Union, Dict
 from PySide2.QtCore import Slot, QCoreApplication
 
+from qudi.core import StatusVar
 from qudi.core.logger import get_logger
-from qudi.core.meta import ABCQObjectMeta, QudiObjectMeta
+from qudi.core.meta import ABCQObjectMeta, QudiQObjectMeta
 from qudi.util.yaml import YamlFileHandler
 from qudi.util.helpers import call_slot_from_native_thread, current_is_native_thread
 from qudi.util.paths import get_appdata_dir
 
 
-class _QudiObjectAppDataHelper:
-    """ File handler helper class for writing/deleting/checking AppData of a QudiObject instance """
-
-    class_name: str
+class QudiQObjectFileHandlerFactory:
+    """ YamlFileHandler factory for QudiQObjectMixin """
 
     def __init__(self, class_name: str) -> None:
         super().__init__()
-        self.class_name = class_name
+        self.class_name: str = class_name
 
     def __call__(self, nametag: str) -> YamlFileHandler:
         if nametag:
@@ -51,35 +50,23 @@ class _QudiObjectAppDataHelper:
             filename = f'status-{self.class_name}.cfg'
         return YamlFileHandler(os.path.join(get_appdata_dir(), filename))
 
-    def exists(self, nametag: str) -> bool:
-        return self(nametag).exists
 
-    def clear(self, nametag: str) -> None:
-        self(nametag).clear()
-
-    def dump(self, nametag: str, data: Mapping[str, Any]) -> None:
-        self(nametag).dump(data)
-
-    def load(self, nametag: str, ignore_missing: Optional[bool] = False) -> Dict[str, Any]:
-        return self(nametag).load(ignore_missing)
-
-
-class _QudiObjectAppDataDescriptor:
+class _QudiQObjectAppDataDescriptor:
     """ Descriptor object for AppData handlers of QudiObject classes """
 
-    appdata_helper: Union[_QudiObjectAppDataHelper, None]
-
-    def __init__(self) -> None:
-        self.appdata_helper = None
-
-    def __set_name__(self, owner, name) -> None:
-        self.appdata_helper = _QudiObjectAppDataHelper(owner.__name__)
-
-    def __get__(self, instance, owner) -> Union[_QudiObjectAppDataHelper, YamlFileHandler]:
+    def __get__(self, instance, owner=None) -> Union[QudiQObjectFileHandlerFactory, YamlFileHandler]:
+        if owner is None:
+            owner = type(instance)
         if instance is None:
-            return self.appdata_helper
+            return QudiQObjectFileHandlerFactory(owner.__name__)
         else:
-            return self.appdata_helper(instance.nametag)
+            return QudiQObjectFileHandlerFactory(owner.__name__)(instance.nametag)
+
+    def __delete__(self, instance):
+        raise AttributeError('Can not delete')
+
+    def __set__(self, instance, value):
+        raise AttributeError('Read-Only')
 
 
 class _ThreadedDescriptor:
@@ -111,14 +98,14 @@ class ABCQObjectMixin(metaclass=ABCQObjectMeta):
         return super().__new__(cls, *args, **kwargs)
 
 
-class QudiQObjectMixin(ABCQObjectMixin, metaclass=QudiObjectMeta):
+class QudiQObjectMixin(ABCQObjectMixin, metaclass=QudiQObjectMeta):
     """ Mixin for any qudi QObjects that want to employ meta attribute magic,
     i.e. StatusVar, ConfigOption and Connector.
 
     Use with QObject types only and make sure this mixin comes before QObject in mro!
     """
 
-    appdata_handler = _QudiObjectAppDataDescriptor()
+    appdata_handler = _QudiQObjectAppDataDescriptor()
 
     def __init__(self,
                  *args,
@@ -197,7 +184,6 @@ class QudiQObjectMixin(ABCQObjectMixin, metaclass=QudiObjectMeta):
         else:
             call_slot_from_native_thread(self, 'move_to_main_thread', blocking=True)
 
-    @Slot()
     @final
     def dump_status_variables(self) -> None:
         """ Dumps current values of StatusVar meta-attributes to a file in AppData that is unique
@@ -205,53 +191,67 @@ class QudiQObjectMixin(ABCQObjectMixin, metaclass=QudiObjectMeta):
         Ignores variables that fail to dump either due to exceptions in the respective StatusVar
         representer or any other reason.
         """
-        data = dict()
-        cls = self.__class__
-        for attr_name, var in self._meta['status_variables'].items():
+        appdata = dict()
+        for attr_name, status_variable in self._meta['status_variables'].items():
             try:
-                data[var.name] = var.represent(self)
+                appdata[status_variable.name] = status_variable.represent(self)
             except:
-                self.__logger.exception(
-                    f'Error while representing status variable "{var.name}" at '
-                    f'"{cls.__module__}.{cls.__name__}.{attr_name}". '
-                    f'This variable will NOT be saved.'
+                self.log.exception(
+                    f'Error while representing status variable "{status_variable.name}" from '
+                    f'attribute "{attr_name}". This variable will not be saved.'
                 )
-        try:
-            self.appdata_handler.dump(data)
-        except Exception as err:
-            raise RuntimeError(
-                f'Error dumping status variables to file for "{cls.__module__}.{cls.__name__}"'
-            ) from err
+        self.__dump_appdata(appdata)
 
-    @Slot()
     @final
     def load_status_variables(self) -> None:
         """ Loads status variables from file (if present) and tries to initialize the instance
         meta-attributes with them. If a variable is not found in AppData or fails to initialize,
         the default initialization is used instead.
         """
-        cls = self.__class__
+        appdata = self.__load_appdata()
+        for attr_name, status_variable in self._meta['status_variables'].items():
+            try:
+                self.__construct_status_variable(status_variable, appdata)
+            except Exception as err:
+                raise RuntimeError(
+                    f'Default initialization of status variable "{status_variable.name}" as '
+                    f'attribute "{attr_name}" failed'
+                ) from err
+
+    def __dump_appdata(self, data: Mapping[str, Any]) -> None:
+        try:
+            self.appdata_handler.dump(data)
+        except:
+            object_descr = f' for "{self.nametag}"' if self.nametag else ''
+            self.log.exception(
+                f'Error dumping status variables to file{object_descr}. Status not saved.'
+            )
+
+    def __load_appdata(self) -> Dict[str, Any]:
         try:
             data = self.appdata_handler.load(ignore_missing=True)
-        except Exception as err:
-            raise RuntimeError(
-                f'Error loading status variables from file for "{cls.__module__}.{cls.__name__}"'
-            ) from err
-        for attr_name, var in self._meta['status_variables'].items():
-            if var.name in data:
-                value = data[var.name]
-                try:
-                    var.construct(self, value)
-                except:
-                    self.__logger.exception(
-                        f'Error while constructing status variable "{var.name}" at '
-                        f'"{cls.__module__}.{cls.__name__}.{attr_name}" from value "{value}". '
-                        f'Using default initialization instead.'
-                    )
-                else:
-                    continue
+        except:
+            data = dict()
+            object_descr = f' for "{self.nametag}"' if self.nametag else ''
+            self.log.exception(
+                f'Error loading status variables from disk{object_descr}. '
+                f'Falling back to default values.'
+            )
+        return data
+
+    def __construct_status_variable(self,
+                                    status_variable: StatusVar,
+                                    appdata: MutableMapping[str, Any]) -> None:
+        if status_variable.name in appdata:
+            value = appdata.pop(status_variable.name)
             try:
-                var.construct(self)
-            except Exception as err:
-                raise RuntimeError(f'Default initialization of status variable "{var.name}" at '
-                                   f'"{cls.__module__}.{cls.__name__}.{attr_name}" failed') from err
+                status_variable.construct(self, value)
+            except:
+                self.log.exception(
+                    f'Error while constructing status variable "{status_variable.name}" from '
+                    f'stored value "{value}". Falling back to default value.'
+                )
+            else:
+                status_variable.construct(self)
+        else:
+            status_variable.construct(self)

@@ -32,7 +32,7 @@ from PySide2 import QtCore
 from logging import Logger
 from typing import Mapping, Any, Type, Optional, Union, Dict
 
-from qudi.core.meta import QudiObjectMeta
+from qudi.core.meta import QudiQObjectMeta
 from qudi.core.module import Base
 from qudi.core.logger import get_logger
 from qudi.util.models import DictTableModel
@@ -45,7 +45,7 @@ class ModuleScriptInterrupted(Exception):
     pass
 
 
-class ModuleScript(QtCore.QObject, metaclass=QudiObjectMeta):
+class ModuleScript(QtCore.QObject, metaclass=QudiQObjectMeta):
     """
     The only part that can be interrupted is the _run() method.
     The implementations must occasionally call _check_interrupt() to raise an exception at that

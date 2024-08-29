@@ -19,7 +19,7 @@ You should have received a copy of the GNU Lesser General Public License along w
 If not, see <https://www.gnu.org/licenses/>.
 """
 
-__all__ = ['ABCQObjectMeta', 'QObjectMeta', 'QudiObjectMeta']
+__all__ = ['ABCQObjectMeta', 'QObjectMeta', 'QudiQObjectMeta']
 
 from abc import ABCMeta
 from PySide2.QtCore import QObject
@@ -50,7 +50,7 @@ class ABCQObjectMeta(ABCMeta, QObjectMeta):
         return cls
 
 
-class QudiObjectMeta(ABCQObjectMeta):
+class QudiQObjectMeta(ABCQObjectMeta):
     """ General purpose metaclass for abstract QObject subclasses that include qudi meta attributes
     (Connector, StatusVar, ConfigOption).
     Collects all meta attributes in new "_meta" class variable for easier access.

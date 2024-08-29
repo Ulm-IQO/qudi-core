@@ -35,7 +35,7 @@ from qudi.util.helpers import call_slot_from_native_thread, current_is_main_thre
 from qudi.util.mutex import Mutex
 from qudi.util.network import connect_to_remote_module_server
 from qudi.core.logger import get_logger
-from qudi.core.object import ABCQObjectMixin
+from qudi.core.object import ABCQObjectMixin, QudiQObjectFileHandlerFactory
 from qudi.core.module import Base, LogicBase, GuiBase, ModuleStateError, ModuleState, ModuleBase
 from qudi.core.module import module_url
 from qudi.core.config.validator import validate_local_module_config, validate_remote_module_config
@@ -262,8 +262,10 @@ class LocalManagedModule(ManagedModule):
                                                                self._class_name,
                                                                reload=False)
         self._instance = None
+        # Initialize appdata file handler
+        self._appdata_handler = QudiQObjectFileHandlerFactory(self._class_name)(self.name)
 
-        self._update_appdata(self._class.appdata_handler.exists(name))
+        self._update_appdata(self._appdata_handler.exists)
         self._update_state(ModuleState.DEACTIVATED)
 
     @property
@@ -288,12 +290,8 @@ class LocalManagedModule(ManagedModule):
 
     @QtCore.Slot()
     def clear_appdata(self) -> None:
-        try:
-            self._instance.appdata_handler.clear()
-            self._update_appdata(self._instance.appdata_handler.exists)
-        except AttributeError:
-            self._class.appdata_handler.clear(self.name)
-            self._update_appdata(self._class.appdata_handler.exists(self.name))
+        self._appdata_handler.clear()
+        self._update_appdata(self._appdata_handler.exists)
 
     @QtCore.Slot()
     def activate(self) -> None:
@@ -332,13 +330,12 @@ class LocalManagedModule(ManagedModule):
         except Exception:
             self._instance = None
             self._update_state(ModuleState.DEACTIVATED)
-            self._update_appdata(self._class.appdata_handler.exists(self.name))
             raise
         else:
             self._instance.module_state.sigStateChanged.connect(self._update_state)
             self._update_state(self._instance.module_state.current)
-            self._update_appdata(self._instance.appdata_handler.exists)
         finally:
+            self._update_appdata(self._appdata_handler.exists)
             self.__activating = False
         _logger.info(f'Module "{self.url}" successfully activated.')
 
@@ -376,7 +373,7 @@ class LocalManagedModule(ManagedModule):
         finally:
             self._instance = None
             self._update_state(ModuleState.DEACTIVATED)
-            self._update_appdata(self._class.appdata_handler.exists(self.name))
+            self._update_appdata(self._appdata_handler.exists)
             self.__deactivating = False
         _logger.info(f'Module "{self.url}" successfully deactivated.')
 
