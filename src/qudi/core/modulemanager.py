@@ -194,6 +194,13 @@ class ModuleManager(QtCore.QObject):
                                                module_name in mod_ref().connection_cfg.values())
 
     def activate_module(self, module_name):
+        if QtCore.QThread.currentThread() is not self.thread():
+            self.current_module_name = module_name
+            QtCore.QMetaObject.invokeMethod(self,
+            "_activate_module_slot",
+            QtCore.Qt.BlockingQueuedConnection)
+            return
+
         with self._lock:
             if module_name not in self._modules:
                 raise KeyError(f'No module named "{module_name}" found in managed qudi modules. '
@@ -201,6 +208,13 @@ class ModuleManager(QtCore.QObject):
             self._modules[module_name].activate()
 
     def deactivate_module(self, module_name):
+        if QtCore.QThread.currentThread() is not self.thread():
+            self.current_module_name = module_name
+            QtCore.QMetaObject.invokeMethod(self,
+            "_deactivate_module_slot",
+            QtCore.Qt.BlockingQueuedConnection)
+            return
+
         with self._lock:
             if module_name not in self._modules:
                 raise KeyError(f'No module named "{module_name}" found in managed qudi modules. '
@@ -245,6 +259,20 @@ class ModuleManager(QtCore.QObject):
         logger.error('Qudi main reference no longer valid. This should never happen. Tearing down '
                      'ModuleManager.')
         self.clear()
+
+    @QtCore.Slot()
+    def _activate_module_slot(self):
+        """
+        Helper slot that should only be called by activate_module when this method is switching to the main thread.
+        """
+        self.activate_module(self.current_module_name)
+
+    @QtCore.Slot()
+    def _deactivate_module_slot(self):
+        """
+        Helper slot that should only be called by deactivate_module when this method is switching to the main thread.
+        """
+        self.deactivate_module(self.current_module_name)
 
 
 class ManagedModule(QtCore.QObject):
