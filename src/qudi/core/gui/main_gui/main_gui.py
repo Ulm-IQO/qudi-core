@@ -151,10 +151,10 @@ class QudiMainGui(GuiBase):
             qudi_main.module_manager.toggle_automated_status_variable_dumping,
             QtCore.Qt.QueuedConnection,
         )
-        self.signal_update_automatic_status_var_checkstate.connect(
-            self.mw.settings_dialog.dump_status_variables_interval_spinbox.setEnabled,
-            QtCore.Qt.QueuedConnection,
-        )
+        #self.signal_update_automatic_status_var_checkstate.connect(
+        #    self.mw.settings_dialog.dump_status_variables_interval_spinbox.setEnabled,
+        #    QtCore.Qt.QueuedConnection,
+        #)
         self.signal_update_automatic_status_var_interval.connect(
             qudi_main.module_manager.automated_status_variable_dumping_timer_interval_slot,
             QtCore.Qt.QueuedConnection,
@@ -259,6 +259,9 @@ class QudiMainGui(GuiBase):
 
         self.mw.action_view_console.setChecked(self._has_console)
         self.mw.action_view_console.setVisible(self._has_console)
+
+        self.mw.settings_dialog.checkbox_automatic_status_variable_dumping.setChecked(self._automatic_status_var_dump)
+        self.mw.settings_dialog.dump_status_variables_interval_spinbox.setEnabled(self._automatic_status_var_dump)
         return
 
     def handle_log_record(self, entry):

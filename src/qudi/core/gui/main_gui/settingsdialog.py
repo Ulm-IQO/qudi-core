@@ -80,6 +80,7 @@ class SettingsDialog(QtWidgets.QDialog):
         self.dump_status_variables_interval_spinbox.setMaximum(1440)
         self.dump_status_variables_interval_spinbox.setMinimumSize(QtCore.QSize(80, 0))
         self.dump_status_variables_interval_spinbox.setValue(1)
+        self.dump_status_variables_interval_spinbox.setEnabled(False)
         layout.addWidget(label, 3, 0)
         layout.addWidget(self.dump_status_variables_interval_spinbox, 3, 1)
 
