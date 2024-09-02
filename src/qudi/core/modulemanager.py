@@ -309,8 +309,7 @@ class ModuleManager(QtCore.QObject):
 
     def automated_status_variable_dumping_timer_interval_slot(self, interval):
         """
-        Method that acts as slot method for calling automated_status_variable_dumping_timer_interval setter
-        and simultaneously sets the interval of the timer.
+        Method that acts as slot method for calling automated_status_variable_dumping_timer_interval setter.
 
         @param int interval: interval of the timer in s
         """
