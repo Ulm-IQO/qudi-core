@@ -51,7 +51,7 @@ class QudiMainGui(GuiBase):
     _automatic_status_var_dump = StatusVar(
         name="automatic_status_var_dump", default=False
     )
-    _automatic_status_var_dump_interval = StatusVar(
+    _automatic_status_var_dump_interval_min = StatusVar(
         name="automatic_status_var_dump_interval", default=5
     )
     signal_update_automatic_status_var_checkstate = QtCore.Signal(bool)
@@ -115,10 +115,10 @@ class QudiMainGui(GuiBase):
         self.reset_default_layout()
         # set correct automatic status variable dumping behaviour
         self.mw.settings_dialog.dump_status_variables_interval_spinbox.setValue(
-            self._automatic_status_var_dump_interval
+            self._automatic_status_var_dump_interval_min
         )
         self.signal_update_automatic_status_var_interval.emit(
-            self._automatic_status_var_dump_interval
+            self._automatic_status_var_dump_interval_min * 60 # convert min to s
         )
         self.signal_update_automatic_status_var_checkstate.emit(
             self._automatic_status_var_dump
@@ -348,7 +348,7 @@ class QudiMainGui(GuiBase):
             self._automatic_status_var_dump
         )
         self.mw.settings_dialog.dump_status_variables_interval_spinbox.setValue(
-            self._automatic_status_var_dump_interval
+            self._automatic_status_var_dump_interval_min
         )
 
     def apply_settings(self):
@@ -369,8 +369,8 @@ class QudiMainGui(GuiBase):
         interval = (
             self.mw.settings_dialog.dump_status_variables_interval_spinbox.value()
         )
-        self.signal_update_automatic_status_var_interval.emit(interval)
-        self._automatic_status_var_dump_interval = interval
+        self.signal_update_automatic_status_var_interval.emit(interval*60) # convert min to s
+        self._automatic_status_var_dump_interval_min = interval
 
         toggle = self.mw.settings_dialog.checkbox_automatic_status_variable_dumping.isChecked()
         self.signal_update_automatic_status_var_checkstate.emit(toggle)

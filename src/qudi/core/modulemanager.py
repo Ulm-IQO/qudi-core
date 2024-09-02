@@ -63,7 +63,7 @@ class ModuleManager(QtCore.QObject):
         super().__init__(*args, **kwargs)
         self._qudi_main_ref = weakref.ref(qudi_main, self._qudi_main_ref_dead_callback)
         self._modules = dict()
-        self._automated_status_variable_dumping_timer_interval = 1
+        self._automated_status_variable_dumping_timer_interval = 60
 
     @classmethod
     def instance(cls):
@@ -274,11 +274,11 @@ class ModuleManager(QtCore.QObject):
             return
 
         logger.info(
-            f"Automated status variable saving enabled with interval {self.automated_status_variable_dumping_timer_interval} min."
+            f"Automated status variable saving enabled with interval {self.automated_status_variable_dumping_timer_interval} s."
         )
 
         self.automated_status_variable_dumping_timer.setInterval(
-            self.automated_status_variable_dumping_timer_interval * 60e3
+            self.automated_status_variable_dumping_timer_interval * 1e3
         )
         self.automated_status_variable_dumping_timer.timeout.connect(
             self.dump_status_variables, QtCore.Qt.QueuedConnection
@@ -288,33 +288,33 @@ class ModuleManager(QtCore.QObject):
     @property
     def automated_status_variable_dumping_timer_interval(self):
         """
-        Property for the timer interval of the automatic status variable saving in min.
+        Property for the timer interval of the automatic status variable saving in s.
 
-        @return int: timer interval in min
+        @return float: timer interval in s
         """
         return self._automated_status_variable_dumping_timer_interval
 
     @automated_status_variable_dumping_timer_interval.setter
-    def automated_status_variable_dumping_timer_interval(self, interval):
+    def automated_status_variable_dumping_timer_interval(self, interval: float):
         """
         Setter method for the timer used to automatically dump status variables.
 
-        @param int interval: interval of the timer in min
+        @param float interval: interval of the timer in s
         """
         self._automated_status_variable_dumping_timer_interval = interval
+        self.automated_status_variable_dumping_timer.setInterval(interval * 1e3)
+        logger.info(
+            f"Setting automated status variable saving timer interval to {interval} s."
+        )
 
     def automated_status_variable_dumping_timer_interval_slot(self, interval):
         """
         Method that acts as slot method for calling automated_status_variable_dumping_timer_interval setter
         and simultaneously sets the interval of the timer.
 
-        @param int interval: interval of the timer in min
+        @param int interval: interval of the timer in s
         """
         self.automated_status_variable_dumping_timer_interval = interval
-        self.automated_status_variable_dumping_timer.setInterval(interval * 60e3)
-        logger.info(
-            f"Setting automated status variable saving timer interval to {interval} min."
-        )
 
 
 class ManagedModule(QtCore.QObject):
