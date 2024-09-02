@@ -299,8 +299,10 @@ class ModuleManager(QtCore.QObject):
         """
         Setter method for the timer used to automatically dump status variables.
 
-        @param float interval: interval of the timer in s
+        @param float interval: interval of the timer in s > 0
         """
+        if interval <= 0:
+            raise ValueError(f"Requested automatic timer {interval=} <= 0. Please choose an interval > 0.")
         self._automated_status_variable_dumping_timer_interval = interval
         self.automated_status_variable_dumping_timer.setInterval(interval * 1e3)
         logger.info(
