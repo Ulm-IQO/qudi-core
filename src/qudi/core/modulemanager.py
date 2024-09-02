@@ -256,7 +256,7 @@ class ModuleManager(QtCore.QObject):
         with self._lock:
             for _, module in self.modules.items():
                 if module.is_active:
-                    module.instance._dump_status_variables()
+                    module.instance.dump_status_variables()
 
     def toggle_automated_status_variable_dumping(self, toggle):
         """
