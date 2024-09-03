@@ -21,6 +21,7 @@ unix_dep = [
     'ruamel.yaml>=0.17.16',
     'scipy>=1.7.1',
     'jsonschema>=4.2.1',
+    'qtconsole>=5.5.0',
 ]
 
 windows_dep = [
@@ -40,6 +41,7 @@ windows_dep = [
     'ruamel.yaml>=0.17.16',
     'scipy>=1.7.1',
     'jsonschema>=4.2.1',
+    'qtconsole>=5.5.0',
 ]
 
 with open('VERSION', 'r') as file:
