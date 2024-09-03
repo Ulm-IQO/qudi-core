@@ -7,12 +7,14 @@ None
 
 ### Bugfixes
 - Fixed a bug where qudi would deadlock when starting a GUI module via the ipython terminal
+- Fixed a bug with the `qtconsole` package no longer being part of `jupyter`. It is now listed 
+explicitly in the dependencies.
 
 ### New Features
 None
 
 ### Other
-None
+- Removed `setup.py` and moved fully to `pyproject.toml` instead
 
 
 ## Version 1.5.1
