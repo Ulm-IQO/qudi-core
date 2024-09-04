@@ -82,6 +82,12 @@ cover/
 docs/_build/
 docs/_autosummary/
 docs/api_reference/_autosummary/
+docs/core/_autosummary/
+docs/gui/_autosummary/
+docs/logic/_autosummary/
+docs/tools/_autosummary/
+docs/tasks/_autosummary/
+docs/util/_autosummary/
 docs/_static/
 
 # Jupyter Notebook

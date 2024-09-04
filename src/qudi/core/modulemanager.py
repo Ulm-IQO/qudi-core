@@ -362,12 +362,13 @@ class ManagedModule(QtCore.QObject):
     def class_name(self):
         return self._class
 
-    @property
+    
     def module_name(self):
         return self._module
 
     @property
     def options(self):
+        """."""
         return copy.deepcopy(self._options)
 
     @property

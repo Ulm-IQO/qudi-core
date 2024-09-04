@@ -20,7 +20,7 @@ on your own computer first.
   simulate this hardware type in the absence of a real instrument.
 
 The installation however is always the same. You can refer to the
-detailed step-by-step `installation guide <setup/installation.rst>`__ to
+detailed step-by-step `installation guide <https://ulm-iqo.github.io/qudi-core/setup/installation.html>`__ to
 install qudi.
 
 Startup
