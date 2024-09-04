@@ -45,13 +45,11 @@ autodoc_mock_imports = ['lmfit']
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
 html_theme = 'pydata_sphinx_theme'
-#html_theme = 'sphinx_book_theme'
-#html_theme = 'sphinx_rtd_theme'
-html_logo = "_static/qudi_logo.png"
+html_logo = "../src/qudi/artwork/logo/logo_qudi.ico"
 html_theme_options = {
     "logo": {
         "text": "Qudi-Core",
-        "image_dark": "_static/qudi_logo2.png",
+        "image_dark": "../src/qudi/artwork/logo/logo_qudi.ico",
     },
     'dark_mode': True,
     "navbar_start": ["navbar-logo"],
@@ -61,8 +59,9 @@ html_theme_options = {
     "footer_start": ["copyright", "sphinx-version"],
     "footer_end": ["theme-version"],
     "show_toc_level": 1,
-    "show_nav_level": 2,
+    "show_nav_level": 4,
     "collapse_navigation": True,
+    "sidebar_hide_name": False,
     'navigation_with_keys': False,  # See https://github.com/pydata/pydata-sphinx-theme/issues/1492
 }
 

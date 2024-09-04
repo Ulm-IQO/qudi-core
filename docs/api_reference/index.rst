@@ -1,18 +1,16 @@
 API Reference
 =============
 
-.. autosummary::
-    :caption: API Reference
-    :toctree: _autosummary
-    :template: custom-module-template.rst
-    :recursive:
+.. toctree::
+    :maxdepth: 6
+    :hidden:
 
-    .. qudi
 
-    qudi.core 
-    qudi.gui 
-    qudi.logic 
-    qudi.tasks
-    qudi.tools 
-    qudi.util 
-    qudi.runnable 
+    ../core/index
+    ../gui/index 
+    ../logic/index 
+    ../tasks/index
+    ../tools/index
+    ../util/index
+
+.. include::  ../core/index.rst
