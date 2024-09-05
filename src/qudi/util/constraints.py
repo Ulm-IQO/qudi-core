@@ -19,7 +19,7 @@ You should have received a copy of the GNU Lesser General Public License along w
 If not, see <https://www.gnu.org/licenses/>.
 """
 
-__all__ = ["ScalarConstraint"]
+__all__ = ['ScalarConstraint', 'DiscreteScalarConstraint']
 
 from typing import Union, Optional, Tuple, Callable, Any, Set
 from qudi.util.helpers import is_float, is_integer
@@ -27,17 +27,17 @@ import numpy as np
 
 
 class ScalarConstraint:
-    """ """
-
-    def __init__(
-        self,
-        default: Union[int, float],
-        bounds: Tuple[Union[int, float], Union[int, float]],
-        increment: Optional[Union[int, float]] = None,
-        enforce_int: Optional[bool] = False,
-        checker: Optional[Callable[[Union[int, float]], bool]] = None,
-    ) -> None:
-        """ """
+    """
+    """
+    def __init__(self,
+                 default: Union[int, float],
+                 bounds: Tuple[Union[int, float], Union[int, float]],
+                 increment: Optional[Union[int, float]] = None,
+                 enforce_int: Optional[bool] = False,
+                 checker: Optional[Callable[[Union[int, float]], bool]] = None
+                 ) -> None:
+        """
+        """
         self._enforce_int = bool(enforce_int)
         self.check_value_type(default)
         for value in bounds:
@@ -45,17 +45,15 @@ class ScalarConstraint:
         if increment is not None:
             self.check_value_type(increment)
         if checker is not None and not callable(checker):
-            raise TypeError(
-                "checker must be either None or a callable accepting a single scalar "
-                "and returning a valid-flag bool or raising ValueError"
-            )
+            raise TypeError('checker must be either None or a callable accepting a single scalar '
+                            'and returning a valid-flag bool or raising ValueError')
         self._default = default
         self._minimum, self._maximum = sorted(bounds)
         self._increment = increment
         self._checker = checker
 
         if not self.is_valid(self._default):
-            raise ValueError(f"invalid default value ({self._default}) encountered")
+            raise ValueError(f'invalid default value ({self._default}) encountered')
 
     @property
     def bounds(self) -> Tuple[Union[int, float], Union[int, float]]:
@@ -188,13 +186,11 @@ class ScalarConstraint:
         ScalarConstraint
             Copy of this instance
         """
-        return ScalarConstraint(
-            default=self.default,
-            bounds=self.bounds,
-            increment=self.increment,
-            enforce_int=self.enforce_int,
-            checker=self._checker,
-        )
+        return ScalarConstraint(default=self.default,
+                                bounds=self.bounds,
+                                increment=self.increment,
+                                enforce_int=self.enforce_int,
+                                checker=self._checker)
 
     def check_custom(self, value: Any) -> None:
         """
@@ -258,12 +254,10 @@ class ScalarConstraint:
         """
         if self._enforce_int:
             if not is_integer(value):
-                raise TypeError(f"values must be int type (received {type(value)})")
+                raise TypeError(f'values must be int type (received {value})')
         else:
             if not (is_integer(value) or is_float(value)):
-                raise TypeError(
-                    f"values must be int or float type (received {type(value)})"
-                )
+                raise TypeError(f'values must be int or float type (received {value})')
 
     def __repr__(self) -> str:
         """
@@ -276,14 +270,12 @@ class ScalarConstraint:
         """
         cls = self.__class__.__name__
         module = self.__class__.__module__
-        return (
-            f"{module}.{cls}("
-            f"default={self.default}, "
-            f"bounds={self.bounds}, "
-            f"increment={self.increment}, "
-            f"enforce_int={self.enforce_int}, "
-            f"checker={self._checker})"
-        )
+        return f'{module}.{cls}(' \
+               f'default={self.default}, ' \
+               f'bounds={self.bounds}, ' \
+               f'increment={self.increment}, ' \
+               f'enforce_int={self.enforce_int}, ' \
+               f'checker={self._checker})'
 
     def __copy__(self):
         """
@@ -313,7 +305,7 @@ class ScalarConstraint:
     @default.setter
     def default(self, value: Union[int, float]):
         if not self.is_valid(value):
-            raise ValueError(f"invalid default value ({value}) encountered")
+            raise ValueError(f'invalid default value ({value}) encountered')
         self._default = value
 
     @property
