@@ -27,6 +27,11 @@ extensions = [
     'sphinx.ext.autosummary',
     'sphinx.ext.viewcode',
     'sphinx.ext.intersphinx',
+<<<<<<< HEAD
+=======
+    'sphinx.ext.doctest', 
+    'sphinx.ext.coverage'
+>>>>>>> d6ba3df2 (Fixing hyperlinks)
 ]
 intersphinx_mapping = {
     'PySide2': ('https://doc.qt.io/qtforpython-5', None),  # This is broken, some bug with PySide2 (and PySide6). See https://bugreports.qt.io/browse/PYSIDE-2215
@@ -91,13 +96,13 @@ autodoc_default_options = {
     # Other options as needed
 }
 
-napoleon_numpy_docstring = True
-napoleon_google_docstring = False
-napoleon_include_init_with_doc = True
-napoleon_include_private_with_doc = False
-napoleon_include_special_with_doc = True
-napoleon_use_param = True
-napoleon_use_rtype = True
+# napoleon_numpy_docstring = True
+# napoleon_google_docstring = False
+# napoleon_include_init_with_doc = True
+# napoleon_include_private_with_doc = False
+# napoleon_include_special_with_doc = True
+# napoleon_use_param = True
+# napoleon_use_rtype = True
 
 
 # This gives the full name of the inherited classes in the documentation. It would be better if we could

@@ -63,7 +63,7 @@ error
 
 Records of level “error” or higher should usually only be logged while
 handling an exception (see: `exception handling
-guidelines <../404.rst>`__).
+guidelines </docs/_build/html/404.html>`__).
 
 Unhandled exceptions will automatically be logged on the “error” level.
 
@@ -125,7 +125,7 @@ qudi Measurement Modules
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
 The base class of any `qudi measurement
-module <measurement_modules.rst>`__ already provides you with an
+module </docs/_build/html/design_concepts/measurement_modules.html>`__ already provides you with an
 appropriate ``Logger`` object that can be accessed with the ``log``
 property:
 
