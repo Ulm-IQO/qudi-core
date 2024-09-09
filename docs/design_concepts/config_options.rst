@@ -4,7 +4,7 @@
 Configuration Options
 =====================
 
-When working with `measurement modules </docs/_build/html/design_concepts/measurement_modules.html>`__
+When working with `measurement modules :doc:</design_concepts/measurement_modules>`
 (hardware/logic/GUI) you may want to give the user the opportunity to
 statically configure certain aspects of the measurement module.
 
