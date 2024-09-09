@@ -2,6 +2,8 @@
 
 --------------
 
+.. _installation:
+
 Installation
 ============
 
