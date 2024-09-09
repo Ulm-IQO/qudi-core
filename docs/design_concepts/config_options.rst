@@ -1,23 +1,25 @@
 
 --------------
 
+.. _config_options:
+
 Configuration Options
 =====================
 
-When working with `measurement modules :doc:</design_concepts/measurement_modules>`
+When working with :ref:`measurement modules <measurement_modules>`
 (hardware/logic/GUI) you may want to give the user the opportunity to
 statically configure certain aspects of the measurement module.
 
-| `Static configuration </docs/_build/html/design_concepts/configuration.html>`__ in qudi is generally
+| :ref:`Static configuration <configuration>` in qudi is generally
   handled via a YAML configuration file that is read and parsed during
   the application startup process.
-| All `measurement modules </docs/_build/html/design_concepts/measurement_modules.html>`__ included in the
+| All :ref:`measurement modules <measurement_modules>`__ included in the
   qudi session are declared in this file (among other things). But apart
   from the mandatory properties you can declare any number of additional
   properties inside the ``options`` property for each measurement
   module.
-| Please refer to the `qudi configuration
-  documentation </docs/_build/html/design_concepts/configuration.html>`__ for more details on config files.
+| Please refer to the :ref:`qudi configuration
+  documentation <configuration>` for more details on config files.
 
 A measurement module constant that is automatically initialized from the
 qudi configuration is called a “configuration option” or “config
@@ -38,7 +40,7 @@ members and prevent each measurement module to implement their own
 solution, qudi provides the meta object
 ``qudi.core.configoption.ConfigOption``.
 
-When implementing a `measurement_module </docs/_build/html/design_concepts/measurement_modules.html>`__
+When implementing a :ref:`measurement_module <measurement_modules>`
 (hardware/logic/GUI) you can simply instantiate ``ConfigOption`` class
 variables. These meta objects will be transformed into regular variable
 members of your measurement module instances and can be used like any

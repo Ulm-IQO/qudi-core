@@ -1,3 +1,5 @@
+.. _remote_modules:
+
 Remote Modules
 ==============
 

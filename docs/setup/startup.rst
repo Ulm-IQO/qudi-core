@@ -2,11 +2,13 @@
 
 --------------
 
+.. _startup:
+
 Starting qudi
 =============
 
-If you have followed the `installation
-instructions </docs/_build/html/setup/installation.html>`__, the easiest way of running qudi is by
+If you have followed the :ref:`installation
+instructions <installation>`, the easiest way of running qudi is by
 command line (do not forget to activate the Python environment
 beforehand):
 

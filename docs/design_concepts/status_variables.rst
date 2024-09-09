@@ -2,10 +2,12 @@
 
 --------------
 
+.. _status_variables:
+
 Status Variables
 ================
 
-When working with `measurement modules </docs/_build/html/design_concepts/measurement_modules.html>`__
+When working with :ref:`measurement modules <measurement_modules>`
 (hardware/logic/GUI) you may want to preserve some variable values
 across consecutive runs of qudi.
 
@@ -50,7 +52,7 @@ to/from disk and prevent each measurement module to implement their own
 solution, qudi provides the meta object
 ``qudi.core.statusvariable.StatusVar``.
 
-When implementing a `measurement module </docs/_build/html/design_concepts/measurement_modules.html>`__
+When implementing a :ref:`measurement module <measurement_modules>`
 (hardware/logic/GUI) you can simply instantiate ``StatusVar`` class
 variables. These meta objects will be transformed into regular variable
 members of your measurement module instances and can be used like any
