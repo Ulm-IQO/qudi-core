@@ -2,6 +2,8 @@
 
 --------------
 
+.. _logging:
+
 Logging
 =======
 
@@ -62,8 +64,8 @@ error
 ~~~~~
 
 Records of level “error” or higher should usually only be logged while
-handling an exception (see: `exception handling
-guidelines </docs/_build/html/404.html>`__).
+handling an exception (see: :ref:`exception handling
+guidelines <error>`).
 
 Unhandled exceptions will automatically be logged on the “error” level.
 
@@ -124,8 +126,8 @@ You can do this easily by calling ``exception`` on the logger instance:
 qudi Measurement Modules
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-The base class of any `qudi measurement
-module </docs/_build/html/design_concepts/measurement_modules.html>`__ already provides you with an
+The base class of any :ref:`qudi measurement
+module <measurement_modules>` already provides you with an
 appropriate ``Logger`` object that can be accessed with the ``log``
 property:
 

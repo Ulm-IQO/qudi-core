@@ -2,6 +2,8 @@
 
 --------------
 
+.. _measurement_modules:
+
 Qudi Measurement Modules
 ========================
 
@@ -16,8 +18,8 @@ hardware, logic and graphical user interface (GUI) modules.
    | In our case a “qudi/measurement module” refers to a non-abstract
      subclass of ``qudi.core.Base`` (``LogicBase`` and ``GuiBase`` are
      subclasses of ``Base`` as well) that is declared in a Python module
-     usually located at ``qudi/[hardware|logic|gui]/`` (exception: `qudi
-     extension <../404.rst>`__ directories).
+     usually located at ``qudi/[hardware|logic|gui]/`` (exception: :ref:`qudi
+     extension <error>` directories).
 
    Historical reasons… you know…
 
@@ -29,8 +31,8 @@ orchestration to name only a few common tasks.
 If an application requires hardware instrumentation you also need qudi
 hardware modules to provide abstracted hardware interfaces to logic
 modules. If you want to know more about hardware abstraction in qudi,
-please read the `hardware interface
-documentation </docs/_build/html/design_concepts/hardware_interface.html>`__.
+please read the :ref:`hardware interface
+documentation <hardware_interface>`.
 
 Having a logic module and possibly a hardware module is the bare minimum
 of a qudi measurement application. The logic module provides a set of
@@ -89,7 +91,7 @@ property ``module_state``:
 
    FSM state diagram
 
-The qudi `module manager </docs/_build/html/404.html>`__ uses this FSM to control and
+The qudi :ref:`module manager <error>` uses this FSM to control and
 monitor qudi measurement modules.
 
 | It can also be accessed by other entities in order to check if the
@@ -104,7 +106,7 @@ monitor qudi measurement modules.
 Logic modules (subclass of ``qudi.core.module.LogicBase``) will run by
 default in their own thread. Hardware and GUI modules will not live in
 their own threads by default. This is why it is so important to
-facilitate `inter-module communication </docs/_build/html/404.html>`__ mainly with Qt
+facilitate :ref:`inter-module communication <error>` mainly with Qt
 Signals in order to automatically respect thread affinity.
 
 You can access the Qt ``QThread`` object that represents the native
@@ -129,7 +131,7 @@ thread or in the main thread, respectively, i.e.:
        ...
 
 Spawning and joining threads is handled automatically by the qudi
-`thread manager </docs/_build/html/404.html>`__.
+:ref:`thread manager <error>`.
 
 4. Balloon and Pop-Up Messaging
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -164,7 +166,7 @@ can call ``_dump_status_variables``.
    depending on the type and size of the variables. So think carefully
    before using manual dumping.
 
-See also the `qudi status variable documentation </docs/_build/html/404.html>`__.
+See also the :ref:`qudi status variable documentation <error>`.
 
 6. Static Configuration
 ~~~~~~~~~~~~~~~~~~~~~~~
@@ -177,7 +179,7 @@ See also the `qudi status variable documentation </docs/_build/html/404.html>`__
   initialized once at the instantiation of the module and NOT each time
   the module is activated.
 
-See also the `qudi configuration option documentation </docs/_build/html/404.html>`__.
+See also the :ref:`qudi configuration option documentation <error>`.
 
 7. Measurement Module Interconnection
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -218,7 +220,7 @@ module:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Each measurement module holds a (weak) reference to the
-```qudi.core.application.Qudi`` </docs/_build/html/404.html>`__ singleton instance. This
+:ref:```qudi.core.application.Qudi`` <error>` singleton instance. This
 object holds references to all running core facilities like the
 currently loaded ``Configuration``, the ``ModuleManager``,
 ``ThreadManager`` and the ``rpyc`` servers for remote module and IPython

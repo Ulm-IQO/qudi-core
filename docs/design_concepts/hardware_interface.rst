@@ -2,6 +2,8 @@
 
 --------------
 
+.. _hardware_interface:
+
 Hardware Interface
 ==================
 
@@ -23,8 +25,8 @@ hardware interface classes usually located in ``qudi.interface``.
   interface.
 
 Since the interface subclass that implements all the abstract members is
-also a subclass of ``Base``, this class is then called a `hardware
-module </docs/_build/html/404.html>`__.
+also a subclass of ``Base``, this class is then called a :ref:`hardware
+module <error>`.
 
 .. raw:: html
 

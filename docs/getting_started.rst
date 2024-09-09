@@ -26,8 +26,7 @@ install qudi.
 Startup
 -------
 
-Time to fire up the engines… Please refer to the detailed `startup
-guide </docs/_build/html/setup/startup.html>`__ to run qudi.
+Time to fire up the engines… Please refer to the detailed :ref:`startup guide <startup>` to run qudi.
 
 If you have set up everything correctly, you should see the main window
 of qudi coming up.
@@ -41,7 +40,7 @@ toolchain usually consists out of modules dedicated to - **Logic**:
 “Brains” of each application. Configure, control and monitor the
 measurement. Orchestrate hardware. - **Hardware**: Similar to a driver.
 Provide simple, abstracted
-`interfaces </docs/_build/html/design_concepts/hardware_interface.html>`__ to avoid the
+:ref:`interfaces <hardware_interface>` to avoid the
 logic from needing to “speak” the language of each specific device. -
 **GUI**: User-friendly graphical interfaces.
 
@@ -80,8 +79,8 @@ Configuration
 For telling qudi what modules to use and how they should connect to each
 other, you need to provide a setup-specific config file.
 
-Please refer to the detailed `configuration
-guide </docs/_build/html/design_concepts/configuration.html>`__ to set up a proper qudi
+Please refer to the detailed :ref:`configuration
+guide <configuration>` to set up a proper qudi
 config for your needs.
 
 Extending qudi
@@ -177,8 +176,8 @@ via config file, and - ``Signal`` for easy (asynchronous) communication
 with connected qudi modules.
 
 For more info on the software infrastructure that your custom module may
-use, please refer to the `measurement
-modules </docs/_build/html/design_concepts/measurement_modules.html>`__ documentation.
+use, please refer to the :ref:`measurement
+modules <measurement_modules>` documentation.
 
 | After you successfully loaded your custom logic in the qudi manager,
   you can go on by adding more functions and stripping away not needed

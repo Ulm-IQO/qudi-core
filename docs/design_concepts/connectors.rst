@@ -2,6 +2,8 @@
 
 --------------
 
+.. _connectors:
+
 Connectors
 ==========
 
@@ -12,7 +14,7 @@ WORK IN PROGRESS
   said module instance in order to hide the fact that modules should not
   own strong references on other modules. But this is an implementation
   detail.
-| In case of `interface overloading </docs/_build/html/404.html>`__ this proxy will also
+| In case of :ref:`interface overloading <error>` this proxy will also
   provide access to the other modules members via the right interface.
 
 --------------

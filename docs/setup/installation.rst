@@ -427,8 +427,8 @@ Unless you have a robust deployment of measurement modules at hand that
 do not need to be altered too often, you may want to install any
 measurement module namespace packages from source.
 
-If your measurement module package deployment is following the `qudi
-project suggestions <../404.rst>`__, you can install them exactly like
+If your measurement module package deployment is following the :ref:`qudi
+project suggestions <error>`, you can install them exactly like
 described in the previous step.
 
 If you are into quantum optics measurements with colorcenters in diamond

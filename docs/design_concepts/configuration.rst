@@ -2,6 +2,8 @@
 
 --------------
 
+.. _configuration:
+
 Configuration
 =============
 
@@ -287,8 +289,8 @@ is called ``MyModuleClass`` and can be imported from
            allow_remote: True
 
 | In order to interface different modules with each other, qudi modules
-  are employing a meta-object called a ``Connector`` (`more details
-  here <connectors.rst>`__).
+  are employing a meta-object called a ``Connector`` (:ref:`more details
+  here <connectors>`).
 | If the logic module in our example needs to be connected to other
   modules (logic or hardware), you have to specify this in the module
   configuration as well. The modules to connect to are addressed by
@@ -303,8 +305,8 @@ is called ``MyModuleClass`` and can be imported from
                my_connector_name: 'my_other_module'  
 
 | Now in order to configure static variables in the module configuration
-  qudi modules use ``ConfigOption`` meta-objects (`more details
-  here </docs/_build/html/design_concepts/config_options.html>`__).
+  qudi modules use ``ConfigOption`` meta-objects (:ref:`more details
+  here <config_options>`).
 | If the logic module in our example needs to have options configured,
   you have to specify this in the module configuration as well. The name
   of the config option is determined by the respective ``ConfigOption``
