@@ -28,8 +28,7 @@ extensions = [
     'sphinx.ext.viewcode',
     'sphinx.ext.intersphinx',
     'sphinx.ext.doctest', 
-    'sphinx.ext.coverage', 
-    'sphinx.ext.napoleon',
+    'sphinx.ext.coverage'
 ]
 intersphinx_mapping = {
     'PySide2': (
@@ -97,13 +96,13 @@ autodoc_default_options = {
     # Other options as needed
 }
 
-napoleon_numpy_docstring = True
-napoleon_google_docstring = False
-napoleon_include_init_with_doc = True
-napoleon_include_private_with_doc = False
-napoleon_include_special_with_doc = True
-napoleon_use_param = True
-napoleon_use_rtype = True
+# napoleon_numpy_docstring = True
+# napoleon_google_docstring = False
+# napoleon_include_init_with_doc = True
+# napoleon_include_private_with_doc = False
+# napoleon_include_special_with_doc = True
+# napoleon_use_param = True
+# napoleon_use_rtype = True
 
 
 # This gives the full name of the inherited classes in the documentation. It would be better if we could

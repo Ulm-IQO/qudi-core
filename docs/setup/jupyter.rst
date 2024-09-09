@@ -84,7 +84,7 @@ to see it in action.
 In this way you can write your own measurements scripts that employ qudi
 modules. This can be useful to configure a fully automated measurement
 sequence for example. You can read more about the qudi kernel on the
-`Integrated IPython kernel <../404.rst>`__ page.
+`Integrated IPython kernel </docs/_build/html/404.html>`__ page.
 
 --------------
 

@@ -304,7 +304,7 @@ is called ``MyModuleClass`` and can be imported from
 
 | Now in order to configure static variables in the module configuration
   qudi modules use ``ConfigOption`` meta-objects (`more details
-  here <config_options.rst>`__).
+  here </docs/_build/html/design_concepts/config_options.html>`__).
 | If the logic module in our example needs to have options configured,
   you have to specify this in the module configuration as well. The name
   of the config option is determined by the respective ``ConfigOption``

@@ -6,7 +6,7 @@ Starting qudi
 =============
 
 If you have followed the `installation
-instructions <installation.rst>`__, the easiest way of running qudi is by
+instructions </docs/_build/html/setup/installation.html>`__, the easiest way of running qudi is by
 command line (do not forget to activate the Python environment
 beforehand):
 
