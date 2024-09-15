@@ -1,5 +1,7 @@
 `index <../index.rst>`__
 
+.. _jupyter: 
+
 --------------
 
 Jupyter Notebook Integration
