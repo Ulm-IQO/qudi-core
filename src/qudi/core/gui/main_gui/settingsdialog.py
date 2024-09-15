@@ -43,7 +43,7 @@ class SettingsDialog(QtWidgets.QDialog):
         self.font_size_spinbox.setValue(10)
         label = QtWidgets.QLabel('Console font size:')
         label.setObjectName('fontSizeLabel')
-        label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+        label.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight | QtCore.Qt.AlignmentFlag.AlignVCenter)
         layout.addWidget(label, 0, 0)
         layout.addWidget(self.font_size_spinbox, 0, 1)
 
@@ -52,14 +52,14 @@ class SettingsDialog(QtWidgets.QDialog):
         self.show_error_popups_checkbox.setChecked(True)
         label = QtWidgets.QLabel('Show error popups:')
         label.setObjectName('showErrorPopupsLabel')
-        label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+        label.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight | QtCore.Qt.AlignmentFlag.AlignVCenter)
         layout.addWidget(label, 1, 0)
         layout.addWidget(self.show_error_popups_checkbox, 1, 1)
 
         buttonbox = QtWidgets.QDialogButtonBox(QtWidgets.QDialogButtonBox.StandardButton.Ok
                                                | QtWidgets.QDialogButtonBox.StandardButton.Cancel
                                                | QtWidgets.QDialogButtonBox.StandardButton.Apply)
-        buttonbox.setOrientation(QtCore.Qt.Horizontal)
+        buttonbox.setOrientation(QtCore.Qt.Orientation.Horizontal)
         layout.addWidget(buttonbox, 2, 0, 1, 2)
 
         # Add internal signals

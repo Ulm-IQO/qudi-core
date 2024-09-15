@@ -260,7 +260,7 @@ class InfiniteLine(QtCore.QObject):
         self._z_value = None
         self._is_dragged = False
         self.line = _InfiniteLine(pos=position,
-                                  angle=0 if orientation is QtCore.Qt.Horizontal else 90,
+                                  angle=0 if orientation is QtCore.Qt.Orientation.Horizontal else 90,
                                   movable=movable,
                                   pen=pen,
                                   hoverPen=hover_pen)
@@ -273,7 +273,7 @@ class InfiniteLine(QtCore.QObject):
 
     @property
     def orientation(self) -> QtCore.Qt.Orientation:
-        return QtCore.Qt.Vertical if self.line.angle == 90 else QtCore.Qt.Horizontal
+        return QtCore.Qt.Orientation.Vertical if self.line.angle == 90 else QtCore.Qt.Orientation.Horizontal
 
     @property
     def movable(self) -> bool:
@@ -416,7 +416,7 @@ class LinearRegion(QtCore.QObject):
             brush = self._default_brush
         if hover_brush is None:
             hover_brush = self._default_hover_brush
-        orientation = 'vertical' if orientation == QtCore.Qt.Vertical else 'horizontal'
+        orientation = 'vertical' if orientation == QtCore.Qt.Orientation.Vertical else 'horizontal'
 
         self._bounds = self._normalize_bounds(bounds)
         self.region = _LinearRegionItem(values=span,
@@ -440,7 +440,7 @@ class LinearRegion(QtCore.QObject):
 
     @property
     def orientation(self) -> QtCore.Qt.Orientation:
-        return QtCore.Qt.Vertical if self.region.orientation == 'vertical' else QtCore.Qt.Horizontal
+        return QtCore.Qt.Orientation.Vertical if self.region.orientation == 'vertical' else QtCore.Qt.Orientation.Horizontal
 
     @property
     def movable(self) -> bool:

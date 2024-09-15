@@ -98,7 +98,7 @@ class LogRecordsTableModel(QtCore.QAbstractTableModel):
 
         @return QVariant: header data for given column and role
         """
-        if (role is None or role == QtCore.Qt.DisplayRole) and orientation == QtCore.Qt.Horizontal:
+        if (role is None or role == QtCore.Qt.DisplayRole) and orientation == QtCore.Qt.Orientation.Horizontal:
             try:
                 return self._header[section]
             except IndexError:

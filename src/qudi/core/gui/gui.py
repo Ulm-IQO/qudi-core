@@ -142,18 +142,18 @@ class Gui(QtCore.QObject):
             self.set_style_sheet(stylesheet_path)
         self.system_tray_icon = SystemTrayIcon()
 
-        self._sigPopUpMessage.connect(self.pop_up_message, QtCore.Qt.QueuedConnection)
-        self._sigBalloonMessage.connect(self.balloon_message, QtCore.Qt.QueuedConnection)
+        self._sigPopUpMessage.connect(self.pop_up_message, QtCore.Qt.ConnectionType.QueuedConnection)
+        self._sigBalloonMessage.connect(self.balloon_message, QtCore.Qt.ConnectionType.QueuedConnection)
 
         self._configure_pyqtgraph(use_opengl)
         self.main_gui_module = QudiMainGui(qudi_main_weakref=weakref.ref(qudi_instance),
                                            name='qudi_main_gui')
         self.system_tray_icon.managerAction.triggered.connect(self.activate_main_gui,
-                                                              QtCore.Qt.QueuedConnection)
+                                                              QtCore.Qt.ConnectionType.QueuedConnection)
         self.system_tray_icon.quitAction.triggered.connect(qudi_instance.quit,
-                                                           QtCore.Qt.QueuedConnection)
+                                                           QtCore.Qt.ConnectionType.QueuedConnection)
         self.system_tray_icon.restartAction.triggered.connect(qudi_instance.restart,
-                                                              QtCore.Qt.QueuedConnection)
+                                                              QtCore.Qt.ConnectionType.QueuedConnection)
         qudi_instance.module_manager.sigModuleStateChanged.connect(self._tray_module_action_changed)
         self.show_system_tray_icon()
 

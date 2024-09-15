@@ -65,7 +65,7 @@ class ModuleEditorWidget(QtWidgets.QStackedWidget):
         sub_layout = QtWidgets.QHBoxLayout()
         sub_layout.setStretch(1, 1)
         label = QtWidgets.QLabel('* Module Name:')
-        label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+        label.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight | QtCore.Qt.AlignmentFlag.AlignVCenter)
         self.module_name_lineedit = QtWidgets.QLineEdit()
         self.module_name_lineedit.setPlaceholderText('Enter locally unique module name')
         self.module_name_lineedit.setFont(font)

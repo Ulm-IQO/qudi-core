@@ -75,7 +75,7 @@ class DictTableModel(QtCore.QAbstractTableModel):
         """ Data for the table view headers """
         with self._lock:
             if role == QtCore.Qt.DisplayRole:
-                if orientation == QtCore.Qt.Horizontal:
+                if orientation == QtCore.Qt.Orientation.Horizontal:
                     return self._headers[section]
             return None
 
@@ -242,7 +242,7 @@ class ListTableModel(QtCore.QAbstractTableModel):
         """ Data for the table view headers
         """
         if role == QtCore.Qt.DisplayRole:
-            if orientation == QtCore.Qt.Horizontal:
+            if orientation == QtCore.Qt.Orientation.Horizontal:
                 return self._headers[section]
         return None
 

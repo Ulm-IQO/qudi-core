@@ -73,7 +73,7 @@ class TaskMainWindow(QtWidgets.QMainWindow):
 
         # # Create toolbar
         # self.toolbar = QtWidgets.QToolBar()
-        # self.toolbar.setOrientation(QtCore.Qt.Horizontal)
+        # self.toolbar.setOrientation(QtCore.Qt.Orientation.Horizontal)
         # self.toolbar.addAction(self.action_start_task)
         # self.toolbar.addAction(self.action_pause_task)
         # self.toolbar.addAction(self.action_stop_task)

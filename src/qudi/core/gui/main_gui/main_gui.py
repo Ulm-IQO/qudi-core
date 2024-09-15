@@ -116,13 +116,13 @@ class QudiMainGui(GuiBase):
         self.mw.close()
 
     def _connect_signals(self):
-        get_signal_handler().sigRecordLogged.connect(self.handle_log_record, QtCore.Qt.QueuedConnection)
+        get_signal_handler().sigRecordLogged.connect(self.handle_log_record, QtCore.Qt.ConnectionType.QueuedConnection)
         qudi_main = self._qudi_main
         # Connect up the main windows actions
-        self.mw.action_quit.triggered.connect(qudi_main.prompt_quit, QtCore.Qt.QueuedConnection)
+        self.mw.action_quit.triggered.connect(qudi_main.prompt_quit, QtCore.Qt.ConnectionType.QueuedConnection)
         self.mw.action_load_configuration.triggered.connect(self.load_configuration)
         self.mw.action_reload_qudi.triggered.connect(
-            qudi_main.prompt_restart, QtCore.Qt.QueuedConnection)
+            qudi_main.prompt_restart, QtCore.Qt.ConnectionType.QueuedConnection)
         self.mw.action_open_configuration_editor.triggered.connect(self.new_configuration)
         self.mw.action_load_all_modules.triggered.connect(
             qudi_main.module_manager.start_all_modules)

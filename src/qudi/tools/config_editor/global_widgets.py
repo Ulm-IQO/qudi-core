@@ -47,7 +47,7 @@ class RemoteServerWidget(QtWidgets.QWidget):
 
         # server enable flag
         label = QtWidgets.QLabel('Remote modules server:')
-        label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+        label.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight | QtCore.Qt.AlignmentFlag.AlignVCenter)
         self.enable_checkbox = QtWidgets.QCheckBox()
         self.enable_checkbox.setChecked(True)
         self.enable_checkbox.setToolTip(
@@ -63,7 +63,7 @@ class RemoteServerWidget(QtWidgets.QWidget):
         self._server_layout.setColumnStretch(1, 1)
         layout.addLayout(self._server_layout, 1, 0, 1, 2)
         label = QtWidgets.QLabel('Host address:')
-        label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+        label.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight | QtCore.Qt.AlignmentFlag.AlignVCenter)
         self.host_lineedit = QtWidgets.QLineEdit()
         self.host_lineedit.setToolTip(
             'The host address to share qudi modules with other qudi instances'
@@ -72,7 +72,7 @@ class RemoteServerWidget(QtWidgets.QWidget):
         self._server_layout.addWidget(self.host_lineedit, 0, 1)
 
         label = QtWidgets.QLabel('Port:')
-        label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+        label.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight | QtCore.Qt.AlignmentFlag.AlignVCenter)
         self.port_spinbox = QtWidgets.QSpinBox()
         self.port_spinbox.setToolTip('Port number for the remote modules server to bind to')
         self.port_spinbox.setRange(0, 65535)
@@ -81,7 +81,7 @@ class RemoteServerWidget(QtWidgets.QWidget):
         self._server_layout.addWidget(self.port_spinbox, 1, 1)
 
         label = QtWidgets.QLabel('Certificate file:')
-        label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+        label.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight | QtCore.Qt.AlignmentFlag.AlignVCenter)
         self.certfile_lineedit = PathLineEdit(dialog_caption='Select SSL Certificate File',
                                               follow_symlinks=True)
         self.certfile_lineedit.setPlaceholderText('No certificate')
@@ -90,7 +90,7 @@ class RemoteServerWidget(QtWidgets.QWidget):
         self._server_layout.addWidget(self.certfile_lineedit, 2, 1)
 
         label = QtWidgets.QLabel('Key file:')
-        label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+        label.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight | QtCore.Qt.AlignmentFlag.AlignVCenter)
         self.keyfile_lineedit = PathLineEdit(dialog_caption='Select SSL Key File',
                                              follow_symlinks=True)
         self.keyfile_lineedit.setPlaceholderText('No key')
@@ -171,7 +171,7 @@ class GlobalOptionsWidget(QtWidgets.QWidget):
 
         # Create local module server port editor
         label = QtWidgets.QLabel('Namespace server port:')
-        label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+        label.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight | QtCore.Qt.AlignmentFlag.AlignVCenter)
         self.namespace_port_spinbox = QtWidgets.QSpinBox()
         self.namespace_port_spinbox.setToolTip('Port number for the local namespace server')
         self.namespace_port_spinbox.setRange(0, 65535)
@@ -180,7 +180,7 @@ class GlobalOptionsWidget(QtWidgets.QWidget):
 
         # Create flag editor to enforce remote calls by value
         label = QtWidgets.QLabel('Force remote calls by value:')
-        label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+        label.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight | QtCore.Qt.AlignmentFlag.AlignVCenter)
         self.force_calls_by_value_checkbox = QtWidgets.QCheckBox()
         self.force_calls_by_value_checkbox.setToolTip(
             'Will force all arguments from remote calls to qudi API methods to pass by value\n'
@@ -191,7 +191,7 @@ class GlobalOptionsWidget(QtWidgets.QWidget):
 
         # Create flag editor to hide manager window upon startup
         label = QtWidgets.QLabel('Hide manager window:')
-        label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+        label.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight | QtCore.Qt.AlignmentFlag.AlignVCenter)
         self.hide_manager_window_checkbox = QtWidgets.QCheckBox()
         self.hide_manager_window_checkbox.setToolTip(
             'Whether to suppress the qudi module manager window at startup.'
@@ -201,7 +201,7 @@ class GlobalOptionsWidget(QtWidgets.QWidget):
 
         # Create flag editor to auomatically create a data sub-directory for each day
         label = QtWidgets.QLabel('Create daily data directories:')
-        label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+        label.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight | QtCore.Qt.AlignmentFlag.AlignVCenter)
         self.daily_data_dirs_checkbox = QtWidgets.QCheckBox()
         self.daily_data_dirs_checkbox.setToolTip(
             'Whether to automatically create daily sub-directories in the data directory for file '
@@ -212,7 +212,7 @@ class GlobalOptionsWidget(QtWidgets.QWidget):
 
         # Create default data path editor
         label = QtWidgets.QLabel('Default data directory:')
-        label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+        label.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight | QtCore.Qt.AlignmentFlag.AlignVCenter)
         self.data_directory_lineedit = PathLineEdit(dialog_caption='Select Default Data Directory',
                                                     select_directory=True)
         self.data_directory_lineedit.setPlaceholderText('Default "<UserHome>/qudi/Data/"')
@@ -223,7 +223,7 @@ class GlobalOptionsWidget(QtWidgets.QWidget):
 
         # Create startup modules editor
         label = QtWidgets.QLabel('Startup Modules:')
-        label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+        label.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight | QtCore.Qt.AlignmentFlag.AlignVCenter)
         self.startup_lineedit = QtWidgets.QLineEdit()
         self.startup_lineedit.setPlaceholderText('No startup modules')
         self.startup_lineedit.setToolTip('Modules to be automatically activated on qudi startup.\n'
@@ -233,7 +233,7 @@ class GlobalOptionsWidget(QtWidgets.QWidget):
 
         # Create stylesheet file path editor
         label = QtWidgets.QLabel('Stylesheet:')
-        label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+        label.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight | QtCore.Qt.AlignmentFlag.AlignVCenter)
         self.stylesheet_lineedit = PathLineEdit(dialog_caption='Select QSS Stylesheet',
                                                 filters='Stylesheets (*.qss)',
                                                 follow_symlinks=True)

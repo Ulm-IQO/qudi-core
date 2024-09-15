@@ -42,7 +42,7 @@ class ParameterEditor(QtWidgets.QWidget):
         parameters = inspect.signature(func).parameters
         for row, (name, param) in enumerate(parameters.items()):
             label = QtWidgets.QLabel(f'{name}:')
-            label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+            label.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight | QtCore.Qt.AlignmentFlag.AlignVCenter)
             editor = ParameterWidgetMapper.widget_for_parameter(param)
             if editor is None:
                 editor = QtWidgets.QLabel('Unknown argument type!')
@@ -101,14 +101,14 @@ class ParameterEditorDialog(QtWidgets.QDialog):
         self.scroll_area = QtWidgets.QScrollArea()
         self.scroll_area.setWidget(self.parameter_editor)
         self.button_box = QtWidgets.QDialogButtonBox(
-            QtWidgets.QDialogButtonBox.Ok |
-            QtWidgets.QDialogButtonBox.Cancel |
-            QtWidgets.QDialogButtonBox.Apply,
-            orientation=QtCore.Qt.Horizontal
+            QtWidgets.QDialogButtonBox.StandardButton.Ok |
+            QtWidgets.QDialogButtonBox.StandardButton.Cancel |
+            QtWidgets.QDialogButtonBox.StandardButton.Apply,
+            orientation=QtCore.Qt.Orientation.Horizontal
         )
-        self.ok_button = self.button_box.button(QtWidgets.QDialogButtonBox.Ok)
-        self.cancel_button = self.button_box.button(QtWidgets.QDialogButtonBox.Cancel)
-        self.apply_button = self.button_box.button(QtWidgets.QDialogButtonBox.Apply)
+        self.ok_button = self.button_box.button(QtWidgets.QDialogButtonBox.StandardButton.Ok)
+        self.cancel_button = self.button_box.button(QtWidgets.QDialogButtonBox.StandardButton.Cancel)
+        self.apply_button = self.button_box.button(QtWidgets.QDialogButtonBox.StandardButton.Apply)
         layout = QtWidgets.QVBoxLayout()
         layout.addWidget(self.scroll_area)
         layout.addWidget(self.button_box)

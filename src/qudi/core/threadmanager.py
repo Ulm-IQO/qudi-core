@@ -102,7 +102,7 @@ class ThreadManager(QtCore.QAbstractListModel):
             self._threads.append(thread)
             self._thread_names.append(name)
             thread.finished.connect(
-                partial(self.unregister_thread, name=name), QtCore.Qt.QueuedConnection)
+                partial(self.unregister_thread, name=name), QtCore.Qt.ConnectionType.QueuedConnection)
             self.endInsertRows()
 
     @QtCore.Slot(object)
@@ -207,7 +207,7 @@ class ThreadManager(QtCore.QAbstractListModel):
 
         @return str: header data for given column/row and role
         """
-        if role == QtCore.Qt.DisplayRole and orientation == QtCore.Qt.Horizontal and section == 0:
+        if role == QtCore.Qt.DisplayRole and orientation == QtCore.Qt.Orientation.Horizontal and section == 0:
             return 'Thread Name'
         return None
 

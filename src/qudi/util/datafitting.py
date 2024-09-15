@@ -210,7 +210,7 @@ class FitConfigurationsModel(QtCore.QAbstractListModel):
 
     def headerData(self, section, orientation, role=QtCore.Qt.DisplayRole):
         if role == QtCore.Qt.DisplayRole:
-            if (orientation == QtCore.Qt.Horizontal) and (section == 0):
+            if (orientation == QtCore.Qt.Orientation.Horizontal) and (section == 0):
                 return 'Fit Configurations'
             elif orientation == QtCore.Qt.Vertical:
                 try:

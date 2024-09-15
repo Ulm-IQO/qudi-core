@@ -62,7 +62,7 @@ class TaskRunnerLogic(LogicBase):
             if not issubclass(task, ModuleTask):
                 raise TypeError('Configured task is not a ModuleTask (sub)class')
             self._configured_task_types[name] = task
-        self._sigStartTask.connect(self._run_task, QtCore.Qt.QueuedConnection)
+        self._sigStartTask.connect(self._run_task, QtCore.Qt.ConnectionType.QueuedConnection)
         self._consecutive_activation = True
 
     def on_deactivate(self) -> None:
@@ -180,14 +180,14 @@ class TaskRunnerLogic(LogicBase):
             self.log.exception('Exception during thread creation:')
             raise
         task.moveToThread(thread)
-        thread.started.connect(task.run, QtCore.Qt.QueuedConnection)
+        thread.started.connect(task.run, QtCore.Qt.ConnectionType.QueuedConnection)
         thread.finished.connect(partial(self._thread_finished_callback, name=name))
 
     def __connect_task_signals(self, name: str, task: ModuleTask) -> None:
         task.sigFinished.connect(partial(self._task_finished_callback, name=name),
-                                 QtCore.Qt.QueuedConnection)
+                                 QtCore.Qt.ConnectionType.QueuedConnection)
         task.sigStateChanged.connect(partial(self._task_state_changed_callback, name=name),
-                                     QtCore.Qt.QueuedConnection)
+                                     QtCore.Qt.ConnectionType.QueuedConnection)
 
     def __start_task(self, name: str, task: ModuleTask) -> None:
         self._running_tasks[name] = task

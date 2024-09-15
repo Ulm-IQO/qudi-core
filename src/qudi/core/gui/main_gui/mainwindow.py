@@ -129,7 +129,7 @@ class QudiMainWindow(QtWidgets.QMainWindow):
         # Create toolbar
         self.toolbar = QtWidgets.QToolBar()
         self.toolbar.setObjectName('QudiMainWindow Toolbar')
-        self.toolbar.setOrientation(QtCore.Qt.Horizontal)
+        self.toolbar.setOrientation(QtCore.Qt.Orientation.Horizontal)
         self.toolbar.addAction(self.action_open_configuration_editor)
         self.toolbar.addAction(self.action_load_configuration)
         self.toolbar.addAction(self.action_reload_qudi)
@@ -183,32 +183,32 @@ class QudiMainWindow(QtWidgets.QMainWindow):
         self.config_dockwidget = AdvancedDockWidget('Configuration')
         self.config_dockwidget.setWidget(self.config_widget)
         self.config_dockwidget.setAllowedAreas(
-            QtCore.Qt.BottomDockWidgetArea | QtCore.Qt.LeftDockWidgetArea
+            QtCore.Qt.DockWidgetArea.BottomDockWidgetArea | QtCore.Qt.DockWidgetArea.LeftDockWidgetArea
         )
         self.log_widget = LogWidget(debug_mode=debug_mode)
         self.log_dockwidget = AdvancedDockWidget('Log')
         self.log_dockwidget.setWidget(self.log_widget)
-        self.log_dockwidget.setAllowedAreas(QtCore.Qt.BottomDockWidgetArea)
+        self.log_dockwidget.setAllowedAreas(QtCore.Qt.DockWidgetArea.BottomDockWidgetArea)
         self.remote_widget = RemoteWidget()
         self.remote_dockwidget = AdvancedDockWidget('Remote modules')
         self.remote_dockwidget.setWidget(self.remote_widget)
-        self.remote_dockwidget.setAllowedAreas(QtCore.Qt.BottomDockWidgetArea)
+        self.remote_dockwidget.setAllowedAreas(QtCore.Qt.DockWidgetArea.BottomDockWidgetArea)
         self.threads_widget = QtWidgets.QListView()
         self.threads_dockwidget = AdvancedDockWidget('Threads')
         self.threads_dockwidget.setWidget(self.threads_widget)
-        self.threads_dockwidget.setAllowedAreas(QtCore.Qt.BottomDockWidgetArea)
+        self.threads_dockwidget.setAllowedAreas(QtCore.Qt.DockWidgetArea.BottomDockWidgetArea)
         self.console_widget = RichJupyterWidget()
         self.console_dockwidget = AdvancedDockWidget('Console')
         self.console_dockwidget.setWidget(self.console_widget)
         self.console_dockwidget.setAllowedAreas(
-            QtCore.Qt.RightDockWidgetArea | QtCore.Qt.LeftDockWidgetArea)
+            QtCore.Qt.DockWidgetArea.RightDockWidgetArea | QtCore.Qt.DockWidgetArea.LeftDockWidgetArea)
 
         # Add dockwidgets to main window
-        self.addDockWidget(QtCore.Qt.BottomDockWidgetArea, self.config_dockwidget)
-        self.addDockWidget(QtCore.Qt.BottomDockWidgetArea, self.log_dockwidget)
-        self.addDockWidget(QtCore.Qt.BottomDockWidgetArea, self.remote_dockwidget)
-        self.addDockWidget(QtCore.Qt.BottomDockWidgetArea, self.threads_dockwidget)
-        self.addDockWidget(QtCore.Qt.RightDockWidgetArea, self.console_dockwidget)
+        self.addDockWidget(QtCore.Qt.DockWidgetArea.BottomDockWidgetArea, self.config_dockwidget)
+        self.addDockWidget(QtCore.Qt.DockWidgetArea.BottomDockWidgetArea, self.log_dockwidget)
+        self.addDockWidget(QtCore.Qt.DockWidgetArea.BottomDockWidgetArea, self.remote_dockwidget)
+        self.addDockWidget(QtCore.Qt.DockWidgetArea.BottomDockWidgetArea, self.threads_dockwidget)
+        self.addDockWidget(QtCore.Qt.DockWidgetArea.RightDockWidgetArea, self.console_dockwidget)
 
         # Synchronize dockwidget visibility change signals
         self.config_dockwidget.sigClosed.connect(lambda: self.action_view_config.setChecked(False))

@@ -92,7 +92,7 @@ class CustomItemsWidget(QtWidgets.QWidget):
             raise ValueError(f'Item name to add "{name}" is already present')
 
         label = QtWidgets.QLabel(f'{name}:')
-        label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+        label.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight | QtCore.Qt.AlignmentFlag.AlignVCenter)
         label.setTextInteractionFlags(QtCore.Qt.TextSelectableByMouse)
         label.setFocusPolicy(QtCore.Qt.FocusPolicy.NoFocus)
         if self._allowed_values:

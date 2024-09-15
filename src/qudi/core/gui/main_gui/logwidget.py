@@ -152,7 +152,7 @@ class LogWidget(QtWidgets.QSplitter):
         @param QObject parent: Qt parent object for log widget
         @param Manager manager: Manager instance this widget belongs to
         """
-        super().__init__(QtCore.Qt.Horizontal, parent, **kwargs)
+        super().__init__(QtCore.Qt.Orientation.Horizontal, parent, **kwargs)
 
         # Build GUI elements
         # Set up QTableView to display log entries

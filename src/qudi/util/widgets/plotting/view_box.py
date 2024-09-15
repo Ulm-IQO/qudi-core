@@ -143,7 +143,7 @@ class DataSelectionMixin:
     def mouseClickEvent(self, ev: MouseClickEvent) -> None:
         if self.allow_tracking_outside_data or self.pointer_on_data(ev.scenePos()):
             selection_enabled = self._marker_selection_mode != self.SelectionMode.Disabled
-            if selection_enabled and (ev.button() == QtCore.Qt.LeftButton) and not ev.double():
+            if selection_enabled and (ev.button() == QtCore.Qt.MouseButton.LeftButton) and not ev.double():
                 ev.accept()
                 pos = self.mapToView(ev.pos())
                 self.add_marker_selection((pos.x(), pos.y()))
@@ -153,7 +153,7 @@ class DataSelectionMixin:
         if not ev.isAccepted():
             selection_enabled = self._region_selection_mode != self.SelectionMode.Disabled
             no_mod = ev.modifiers() == QtCore.Qt.NoModifier
-            is_left_button = ev.button() == QtCore.Qt.LeftButton
+            is_left_button = ev.button() == QtCore.Qt.MouseButton.LeftButton
             data_valid = self.allow_tracking_outside_data or self.pointer_on_data(
                 ev.buttonDownScenePos()
             )
@@ -260,11 +260,11 @@ class DataSelectionMixin:
             )
         else:
             if mode == self.SelectionMode.X:
-                orientation = QtCore.Qt.Vertical
+                orientation = QtCore.Qt.Orientation.Vertical
                 bounds = None if self._selection_bounds is None else self._selection_bounds[0]
                 values = span[0]
             else:
-                orientation = QtCore.Qt.Horizontal
+                orientation = QtCore.Qt.Orientation.Horizontal
                 bounds = None if self._selection_bounds is None else self._selection_bounds[1]
                 values = span[1]
             item = LinearRegion(viewbox=self,
@@ -303,11 +303,11 @@ class DataSelectionMixin:
                                      hover_pen=self._selection_hover_pen)
         else:
             if mode == self.SelectionMode.X:
-                orientation = QtCore.Qt.Vertical
+                orientation = QtCore.Qt.Orientation.Vertical
                 bounds = None if self._selection_bounds is None else self._selection_bounds[0]
                 pos = position[0]
             else:
-                orientation = QtCore.Qt.Horizontal
+                orientation = QtCore.Qt.Orientation.Horizontal
                 bounds = None if self._selection_bounds is None else self._selection_bounds[1]
                 pos = position[1]
             item = InfiniteLine(viewbox=self,
@@ -335,7 +335,7 @@ class DataSelectionMixin:
         item = self.__regions[index]
         item.blockSignals(True)
         if isinstance(item, LinearRegion):
-            if item.orientation == QtCore.Qt.Vertical:
+            if item.orientation == QtCore.Qt.Orientation.Vertical:
                 item.set_area(sorted(span[0]))
             else:
                 item.set_area(sorted(span[1]))
@@ -361,7 +361,7 @@ class DataSelectionMixin:
         item = self.__markers[index]
         item.blockSignals(True)
         if isinstance(item, InfiniteLine):
-            item.set_position(position[0 if item.orientation == QtCore.Qt.Vertical else 1])
+            item.set_position(position[0 if item.orientation == QtCore.Qt.Orientation.Vertical else 1])
         elif isinstance(item, InfiniteCrosshair):
             item.set_position(position)
         item.blockSignals(False)
@@ -437,11 +437,11 @@ class DataSelectionMixin:
         return {
             self.SelectionMode.X: [
                 m.position for m in self.__markers if
-                isinstance(m, InfiniteLine) and m.orientation == QtCore.Qt.Vertical
+                isinstance(m, InfiniteLine) and m.orientation == QtCore.Qt.Orientation.Vertical
             ],
             self.SelectionMode.Y: [
                 m.position for m in self.__markers if
-                isinstance(m, InfiniteLine) and m.orientation == QtCore.Qt.Horizontal
+                isinstance(m, InfiniteLine) and m.orientation == QtCore.Qt.Orientation.Horizontal
             ],
             self.SelectionMode.XY: [
                 m.position for m in self.__markers if isinstance(m, InfiniteCrosshair)
@@ -453,11 +453,11 @@ class DataSelectionMixin:
         return {
             self.SelectionMode.X: [
                 r.area for r in self.__regions if
-                isinstance(r, LinearRegion) and r.orientation == QtCore.Qt.Vertical
+                isinstance(r, LinearRegion) and r.orientation == QtCore.Qt.Orientation.Vertical
             ],
             self.SelectionMode.Y: [
                 r.area for r in self.__regions if
-                isinstance(r, LinearRegion) and r.orientation == QtCore.Qt.Horizontal
+                isinstance(r, LinearRegion) and r.orientation == QtCore.Qt.Orientation.Horizontal
             ],
             self.SelectionMode.XY: [r.area for r in self.__regions if isinstance(r, Rectangle)]
         }
@@ -475,12 +475,12 @@ class DataSelectionMixin:
             x_bounds, y_bounds = self._selection_bounds
         for m in self.__markers:
             if isinstance(m, InfiniteLine):
-                m.set_bounds(x_bounds if m.orientation == QtCore.Qt.Vertical else y_bounds)
+                m.set_bounds(x_bounds if m.orientation == QtCore.Qt.Orientation.Vertical else y_bounds)
             elif isinstance(m, InfiniteCrosshair):
                 m.set_bounds((x_bounds, y_bounds))
         for r in self.__regions:
             if isinstance(r, LinearRegion):
-                r.set_bounds(x_bounds if r.orientation == QtCore.Qt.Vertical else y_bounds)
+                r.set_bounds(x_bounds if r.orientation == QtCore.Qt.Orientation.Vertical else y_bounds)
             elif isinstance(r, Rectangle):
                 r.set_bounds((x_bounds, y_bounds))
 
@@ -534,8 +534,8 @@ class RubberbandZoomMixin:
         """ Additional mouse drag event handling to implement rubber band selection and zooming.
         """
         if not ev.isAccepted():
-            no_mod = ev.modifiers() == QtCore.Qt.NoModifier
-            is_left_button = ev.button() == QtCore.Qt.LeftButton
+            no_mod = ev.modifiers() == QtCore.Qt.KeyboardModifier.NoModifier
+            is_left_button = ev.button() == QtCore.Qt.MouseButton.LeftButton
             mode = self._rubberband_zoom_selection_mode
             zoom_enabled = mode != self.SelectionMode.Disabled
 

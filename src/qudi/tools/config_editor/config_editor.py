@@ -76,7 +76,7 @@ class ConfigurationEditor(QtWidgets.QMainWindow):
         self.global_config_editor = GlobalEditorWidget()
 
         label = QtWidgets.QLabel('Included Modules')
-        label.setAlignment(QtCore.Qt.AlignCenter)
+        label.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
         font = label.font()
         font.setBold(True)
         font.setPointSize(font.pointSize() + 4)
@@ -90,7 +90,7 @@ class ConfigurationEditor(QtWidgets.QMainWindow):
         left_widget.setLayout(layout)
 
         label = QtWidgets.QLabel('Module Configuration')
-        label.setAlignment(QtCore.Qt.AlignCenter)
+        label.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
         label.setFont(font)
         layout = QtWidgets.QVBoxLayout()
         layout.addWidget(label)
@@ -99,13 +99,13 @@ class ConfigurationEditor(QtWidgets.QMainWindow):
         font = label.font()
         font.setBold(True)
         label.setFont(font)
-        label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+        label.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight | QtCore.Qt.AlignmentFlag.AlignVCenter)
         layout.addWidget(label)
         layout.setStretch(1, 1)
         right_widget = QtWidgets.QWidget()
         right_widget.setLayout(layout)
 
-        splitter = QtWidgets.QSplitter(QtCore.Qt.Horizontal)
+        splitter = QtWidgets.QSplitter(QtCore.Qt.Orientation.Horizontal)
         splitter.addWidget(left_widget)
         splitter.addWidget(right_widget)
         splitter.setChildrenCollapsible(False)
@@ -163,7 +163,7 @@ class ConfigurationEditor(QtWidgets.QMainWindow):
 
         # Create toolbar
         toolbar = QtWidgets.QToolBar()
-        toolbar.setToolButtonStyle(QtCore.Qt.ToolButtonTextUnderIcon)
+        toolbar.setToolButtonStyle(QtCore.Qt.ToolButtonStyle.ToolButtonTextUnderIcon)
         toolbar.addAction(self.new_action)
         toolbar.addAction(self.load_action)
         toolbar.addAction(self.save_action)
@@ -270,9 +270,9 @@ class ConfigurationEditor(QtWidgets.QMainWindow):
             self,
             'Qudi Config Editor: Overwrite?',
             f'Do you really want to overwrite existing Qudi configuration at\n"{file_path}"?',
-            QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No,
-            QtWidgets.QMessageBox.No)
-        return answer == QtWidgets.QMessageBox.Yes
+            QtWidgets.QMessageBox.StandardButton.Yes | QtWidgets.QMessageBox.StandardButton.No,
+            QtWidgets.QMessageBox.StandardButton.No)
+        return answer == QtWidgets.QMessageBox.StandardButton.Yes
 
     def save_config(self):
         if self._current_file_path is None:
@@ -293,10 +293,10 @@ class ConfigurationEditor(QtWidgets.QMainWindow):
             'Qudi Config Editor: Quit?',
             'Do you really want to quit the Qudi configuration editor?\nAll unsaved work will be '
             'lost.',
-            QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No,
-            QtWidgets.QMessageBox.No
+            QtWidgets.QMessageBox.StandardButton.Yes | QtWidgets.QMessageBox.StandardButton.No,
+            QtWidgets.QMessageBox.StandardButton.No
         )
-        return answer == QtWidgets.QMessageBox.Yes
+        return answer == QtWidgets.QMessageBox.StandardButton.Yes
 
     def closeEvent(self, event):
         if self.prompt_close():
@@ -336,7 +336,7 @@ class ConfigurationEditor(QtWidgets.QMainWindow):
             self.module_tree_widget.blockSignals(False)
 
     def keyPressEvent(self, event: QtGui.QKeyEvent) -> None:
-        if event.key() == QtCore.Qt.Key_Escape:
+        if event.key() == QtCore.Qt.Key.Key_Escape:
             self.module_tree_widget.clearSelection()
             event.accept()
         else:

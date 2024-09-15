@@ -32,7 +32,7 @@ class AboutQudiDialog(QtWidgets.QDialog):
         self.setWindowFlags(QtCore.Qt.WindowTitleHint | QtCore.Qt.WindowCloseButtonHint)
 
         buttonbox = QtWidgets.QDialogButtonBox(QtWidgets.QDialogButtonBox.StandardButton.Ok)
-        buttonbox.setOrientation(QtCore.Qt.Horizontal)
+        buttonbox.setOrientation(QtCore.Qt.Orientation.Horizontal)
         self.ok_button = buttonbox.button(buttonbox.StandardButton.Ok)
         self.ok_button.clicked.connect(self.accept)
 

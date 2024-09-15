@@ -75,19 +75,19 @@ class ColorBarWidget(QtWidgets.QWidget):
         self.min_spinbox = ScienDSpinBox()
         self.min_spinbox.setSizePolicy(QtWidgets.QSizePolicy.Preferred,
                                        QtWidgets.QSizePolicy.Fixed)
-        self.min_spinbox.setAlignment(QtCore.Qt.AlignRight)
+        self.min_spinbox.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
         self.min_spinbox.setMinimumWidth(75)
         self.min_spinbox.setValue(0)
         self.max_spinbox = ScienDSpinBox()
         self.max_spinbox.setSizePolicy(QtWidgets.QSizePolicy.Preferred,
                                        QtWidgets.QSizePolicy.Fixed)
-        self.max_spinbox.setAlignment(QtCore.Qt.AlignRight)
+        self.max_spinbox.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
         self.min_spinbox.setMinimumWidth(75)
         self.max_spinbox.setValue(1)
         self.low_percentile_spinbox = ScienDSpinBox()
         self.low_percentile_spinbox.setSizePolicy(QtWidgets.QSizePolicy.Preferred,
                                                   QtWidgets.QSizePolicy.Fixed)
-        self.low_percentile_spinbox.setAlignment(QtCore.Qt.AlignRight)
+        self.low_percentile_spinbox.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
         self.low_percentile_spinbox.setMinimumWidth(75)
         self.low_percentile_spinbox.setSuffix('%')
         self.low_percentile_spinbox.setMinimalStep('0.01')
@@ -95,7 +95,7 @@ class ColorBarWidget(QtWidgets.QWidget):
         self.high_percentile_spinbox = ScienDSpinBox()
         self.high_percentile_spinbox.setSizePolicy(QtWidgets.QSizePolicy.Preferred,
                                                    QtWidgets.QSizePolicy.Fixed)
-        self.high_percentile_spinbox.setAlignment(QtCore.Qt.AlignRight)
+        self.high_percentile_spinbox.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
         self.high_percentile_spinbox.setMinimumWidth(75)
         self.high_percentile_spinbox.setSuffix('%')
         self.high_percentile_spinbox.setMinimalStep('0.01')
