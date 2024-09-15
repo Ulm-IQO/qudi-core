@@ -45,8 +45,8 @@ forget to enable the qudi environment beforehand) with the command
 
 and wait for the lab to open in your browser (the classic notebook
 server is equally supported). If nothing opens up automatically, try the
-default address ```http://localhost:8888/`` <http://localhost:8888/>`__
-in your browser.
+default address `<http://localhost:8888/>`__ in your browser.
+
 
 A launcher should have started in JupyterLab. Create a new notebook
 connected to the qudi kernel by clicking the ``qudi`` button in the top

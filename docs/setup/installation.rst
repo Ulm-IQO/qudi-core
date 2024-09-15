@@ -70,8 +70,7 @@ Variant 1: Python standard library
 .. raw:: html
 
    <details>
-
-Windows users click here to expand
+   <summary>Windows users click here to expand</summary>
 
 Check first if you are using Python version 3.10:
 
@@ -99,8 +98,7 @@ directory.
 .. raw:: html
 
    <details>
-
-Unix users click here to expand
+   <summary>Unix users click here to expand</summary>
 
 Check first if you are using Python version 3.10:
 
@@ -158,8 +156,7 @@ You can find OS specific commands to create the environment below.
 .. raw:: html
 
    <details>
-
-Windows users click here to expand
+   <summary>Windows users click here to expand</summary>
 
 You can execute these commands from any working directory since the
 environment will be created in an Anaconda/Miniconda specific default
@@ -178,8 +175,7 @@ directory.
 .. raw:: html
 
    <details>
-
-Unix users click here to expand
+   <summary>Unix users click here to expand</summary>
 
 You can execute these commands from any working directory since the
 environment will be created in an Anaconda/Miniconda specific default
@@ -194,6 +190,9 @@ directory.
 .. raw:: html
 
    </details>
+
+
+
 
 You can delete the environment again by calling:
 
@@ -228,8 +227,7 @@ Variant 1: Python standard library
 .. raw:: html
 
    <details>
-
-Windows users click here to expand
+   <summary>Windows users click here to expand</summary>
 
    **⚠ WARNING:**
 
@@ -265,8 +263,7 @@ name. In this example it would look like:
 .. raw:: html
 
    <details>
-
-Unix users click here to expand
+   <summary>Unix users click here to expand</summary>
 
 Execute the ``activate`` script in ``qudi-env/Scripts/``
 
@@ -281,6 +278,9 @@ Execute the ``activate`` script in ``qudi-env/Scripts/``
 .. raw:: html
 
    </details>
+
+
+
 
 You can deactivate the environment with the command ``deactivate``.
 
@@ -348,35 +348,23 @@ This is as easy as installing any other Python package:
 Variant 2: Installing from source (dev)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-| In order to install ``qudi-core`` from source, you need to copy the
-  ``qudi-core`` repository to your computer.
-| There are mainly two ways of doing that: - Download and extract the
-  latest `release from
-  GitHub <https://github.com/Ulm-IQO/qudi-core/releases>`__
+In order to install ``qudi-core`` from source, you need to copy the ``qudi-core`` repository to your computer. There are mainly two ways of doing that:
 
-OR
+1. Download and extract the latest `release from GitHub <https://github.com/Ulm-IQO/qudi-core/releases>`__
 
--  Clone the `repository ``main``
-   branch <https://github.com/Ulm-IQO/qudi-core>`__ to your local
-   machine using ```git`` <https://git-scm.com/>`__
+2. Clone the `main branch of the repository <https://github.com/Ulm-IQO/qudi-core>`__ to your local machine using `git <https://git-scm.com/>`__
 
-The latter option enables you to contribute code and/or to pull the
-latest development version from all branches, but it requires you to
-install ```git`` <https://git-scm.com/>`__ on your system.
+The latter option enables you to contribute code and/or to pull the latest development version from all branches, but it requires you to install `git <https://git-scm.com/>`__ on your system.
 
-NOTE: The exact directory location on your local machine does not matter
-as long as you keep it there and do not copy it around later on.
+**Note:** The exact directory location on your local machine does not matter as long as you keep it there and do not copy it around later on.
 
-Once you have a copy of the source code on your local machine, you can
-change into this directory (top directory containing ``setup.py``) and
-install ``qudi-core`` using ``pip`` with the development flag ``-e``
-set:
+Once you have a copy of the source code on your local machine, you can change into this directory (top directory containing ``setup.py``) and install ``qudi-core`` using ``pip`` with the development flag ``-e`` set:
 
 .. code:: console
 
    python -m pip install -e .
 
---------------
+
 
 All dependencies will be installed by ``pip`` and it will register
 several entry points that are executables within the Python environment:
@@ -423,21 +411,12 @@ several entry points that are executables within the Python environment:
 Step 4: Install measurement module addons
 -----------------------------------------
 
-Unless you have a robust deployment of measurement modules at hand that
-do not need to be altered too often, you may want to install any
-measurement module namespace packages from source.
+Unless you have a robust deployment of measurement modules at hand that do not need to be altered too often, you may want to install any measurement module namespace packages from source.
 
-If your measurement module package deployment is following the :ref:`qudi
-project suggestions <error>`, you can install them exactly like
-described in the previous step.
+If your measurement module package deployment is following the :ref:`qudi project suggestions <error>`, you can install them exactly as described in the previous step.
 
-If you are into quantum optics measurements with colorcenters in diamond
-or similar semiconductors, you may want to consider using the
-`measurement modules package
-``qudi-iqo-modules`` <https://github.com/Ulm-IQO/qudi-iqo-modules>`__
-provided by the Institute for Quantum Optics
-(`Ulm-IQO <https://github.com/Ulm-IQO/>`__) under the LGPL v3 license.
+If you are into quantum optics measurements with color centers in diamond or similar semiconductors, you may want to consider using the `qudi-iqo-modules <https://github.com/Ulm-IQO/qudi-iqo-modules>`__ measurement modules package, provided by the Institute for Quantum Optics (`Ulm-IQO <https://github.com/Ulm-IQO/>`__) under the LGPL v3 license.
 
---------------
+------------
 
 `index <../index.rst>`__
