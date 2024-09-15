@@ -6,7 +6,7 @@
 __all__ = ['AvailableModulesTreeWidget', 'SelectedModulesTreeWidget', 'ConfigModulesTreeWidget']
 
 from re import compile
-from PySide2 import QtCore, QtWidgets, QtGui
+from PySide6 import QtCore, QtGui, QtWidgets
 from typing import Optional, Iterable, Mapping, Tuple, Dict, List, Sequence
 
 
@@ -56,7 +56,7 @@ class AvailableModulesTreeWidget(QtWidgets.QTreeWidget):
         item = QtWidgets.QTreeWidgetItem()
         item.setText(1, module_class)
         item.setFlags(
-            QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsDragEnabled
+            QtCore.Qt.ItemFlag.ItemIsEnabled | QtCore.Qt.ItemFlag.ItemIsSelectable | QtCore.Qt.ItemIsDragEnabled
         )
         self.top_level_items[base].addChild(item)
 
@@ -81,7 +81,7 @@ class AvailableModulesTreeWidget(QtWidgets.QTreeWidget):
         self.clear()
         for disp_base in ('GUI', 'Logic', 'Hardware'):
             item = QtWidgets.QTreeWidgetItem()
-            item.setFlags(QtCore.Qt.ItemIsEnabled)
+            item.setFlags(QtCore.Qt.ItemFlag.ItemIsEnabled)
             item.setText(0, disp_base)
             self.addTopLevelItem(item)
             item.setExpanded(True)
@@ -168,7 +168,7 @@ class ConfigModulesTreeWidget(QtWidgets.QTreeWidget):
         item.setText(1, '<enter unique name>' if name is None else name)
         item.setText(2, module_class)
         item.setFlags(
-            QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEditable
+            QtCore.Qt.ItemFlag.ItemIsEnabled | QtCore.Qt.ItemFlag.ItemIsSelectable | QtCore.Qt.ItemIsEditable
         )
         self.top_level_items[base].addChild(item)
 
@@ -196,7 +196,7 @@ class ConfigModulesTreeWidget(QtWidgets.QTreeWidget):
         self.clear()
         for disp_base in ['GUI', 'Logic', 'Hardware']:
             item = QtWidgets.QTreeWidgetItem()
-            item.setFlags(QtCore.Qt.ItemIsEnabled)
+            item.setFlags(QtCore.Qt.ItemFlag.ItemIsEnabled)
             item.setText(0, disp_base)
             self.addTopLevelItem(item)
             item.setExpanded(True)
@@ -233,7 +233,7 @@ class SelectedModulesTreeWidget(ConfigModulesTreeWidget):
             event.ignore()
 
     def keyPressEvent(self, event: QtGui.QKeyEvent) -> None:
-        if event.key() == QtCore.Qt.Key_Delete:
+        if event.key() == QtCore.Qt.Key.Key_Delete:
             for item in self.selectedItems():
                 if item.parent() is not None:
                     item.parent().removeChild(item)

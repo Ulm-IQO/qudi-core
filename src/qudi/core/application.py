@@ -27,7 +27,7 @@ import inspect
 import traceback
 import faulthandler
 from logging import DEBUG, INFO
-from PySide2 import QtCore, QtWidgets
+from PySide6 import QtCore, QtWidgets
 
 from qudi.core.logger import init_rotating_file_handler, init_record_model_handler, clear_handlers
 from qudi.core.logger import get_logger, set_log_level
@@ -50,8 +50,8 @@ try:
 except ImportError:
     pass
 
-# Enable the High DPI scaling support of Qt5
-os.environ['QT_ENABLE_HIGHDPI_SCALING'] = '1'
+# Set QT_API environment variable to PySide6
+os.environ['QT_API'] = 'pyside6'
 
 if sys.platform == 'win32':
     # Set QT_LOGGING_RULES environment variable to suppress qt.svg related warnings that otherwise

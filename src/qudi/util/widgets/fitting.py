@@ -24,7 +24,7 @@ __all__ = ['FitWidget', 'FitConfigurationWidget', 'FitConfigurationDialog']
 
 import os
 import weakref
-from PySide2 import QtCore, QtWidgets, QtGui
+from PySide6 import QtCore, QtWidgets, QtGui
 from qudi.util.datafitting import FitContainer, FitConfigurationsModel, FitConfiguration
 from qudi.util.paths import get_artwork_dir
 from qudi.util.widgets.scientific_spinbox import ScienDSpinBox
@@ -43,12 +43,12 @@ class FitWidget(QtWidgets.QWidget):
         self.setLayout(main_layout)
 
         self.selection_combobox = QtWidgets.QComboBox()
-        self.selection_combobox.setSizeAdjustPolicy(QtWidgets.QComboBox.AdjustToContents)
+        self.selection_combobox.setSizeAdjustPolicy(QtWidgets.QComboBox.SizeAdjustPolicy.AdjustToContents)
         self.fit_pushbutton = QtWidgets.QPushButton('Fit')
         self.fit_pushbutton.setMinimumWidth(3 * self.fit_pushbutton.sizeHint().width())
         self.result_label = QtWidgets.QLabel()
-        self.result_label.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignTop)
-        self.result_label.setTextInteractionFlags(QtCore.Qt.TextSelectableByMouse)
+        self.result_label.setAlignment(QtCore.Qt.AlignmentFlag.AlignLeft | QtCore.Qt.AlignmentFlag.AlignTop)
+        self.result_label.setTextInteractionFlags(QtCore.Qt.TextInteractionFlag.TextSelectableByMouse)
         main_layout.addWidget(self.fit_pushbutton, 0, 0)
         main_layout.addWidget(self.selection_combobox, 0, 1)
         main_layout.addWidget(self.result_label, 1, 0, 1, 2)
@@ -78,10 +78,10 @@ class FitWidget(QtWidgets.QWidget):
             self.__fit_container_ref = weakref.ref(fit_container)
             self.selection_combobox.addItems(fit_container.fit_configuration_names)
             fit_container.sigFitConfigurationsChanged.connect(
-                self.update_fit_configurations, QtCore.Qt.QueuedConnection
+                self.update_fit_configurations, QtCore.Qt.ConnectionType.QueuedConnection
             )
             fit_container.sigLastFitResultChanged.connect(
-                self.update_fit_result, QtCore.Qt.QueuedConnection
+                self.update_fit_result, QtCore.Qt.ConnectionType.QueuedConnection
             )
 
     @QtCore.Slot(tuple)
@@ -126,11 +126,11 @@ class FitConfigurationWidget(QtWidgets.QWidget):
 
         # Create new fit config editor elements
         self.model_combobox = QtWidgets.QComboBox()
-        self.model_combobox.setSizeAdjustPolicy(QtWidgets.QComboBox.AdjustToContents)
+        self.model_combobox.setSizeAdjustPolicy(QtWidgets.QComboBox.SizeAdjustPolicy.AdjustToContents)
         self.model_combobox.addItems(fit_config_model.model_names)
         self.name_lineedit = QtWidgets.QLineEdit()
         self.add_config_toolbutton = QtWidgets.QToolButton()
-        self.add_config_toolbutton.setToolButtonStyle(QtCore.Qt.ToolButtonIconOnly)
+        self.add_config_toolbutton.setToolButtonStyle(QtCore.Qt.ToolButtonStyle.ToolButtonIconOnly)
         self.add_config_toolbutton.setIcon(QtGui.QIcon(os.path.join(icon_dir, 'list-add')))
         hlayout = QtWidgets.QHBoxLayout()
         hlayout.addWidget(self.model_combobox)
@@ -144,7 +144,7 @@ class FitConfigurationWidget(QtWidgets.QWidget):
         # Create fit config editor list view
         self.config_listview = FitConfigurationListView()
         self.config_listview.setSizePolicy(
-            QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding
+            QtWidgets.QSizePolicy.Policy.Expanding, QtWidgets.QSizePolicy.Policy.Expanding
         )
         self.config_listview.setModel(fit_config_model)
         main_layout.addWidget(self.config_listview)
@@ -152,7 +152,7 @@ class FitConfigurationWidget(QtWidgets.QWidget):
 
         self.add_config_toolbutton.clicked.connect(self._add_config_clicked)
         self._sigAddNewConfig.connect(
-            fit_config_model.add_configuration, QtCore.Qt.QueuedConnection
+            fit_config_model.add_configuration, QtCore.Qt.ConnectionType.QueuedConnection
         )
 
     @QtCore.Slot()
@@ -178,7 +178,7 @@ class FitConfigurationDialog(QtWidgets.QDialog):
         self.fit_config_widget = FitConfigurationWidget(fit_config_model=fit_config_model)
         main_layout.addWidget(self.fit_config_widget)
         # create dialog buttonbox
-        button_box = QtWidgets.QDialogButtonBox(QtWidgets.QDialogButtonBox.Ok, QtCore.Qt.Horizontal)
+        button_box = QtWidgets.QDialogButtonBox(QtWidgets.QDialogButtonBox.StandardButton.Ok, QtCore.Qt.Orientation.Horizontal)
         min_width = QtGui.QFontMetrics(QtGui.QFont()).horizontalAdvance('OK OK OK')
         button_box.buttons()[0].setMinimumWidth(min_width)
         button_box.setCenterButtons(True)
@@ -195,7 +195,7 @@ class FitConfigurationListView(QtWidgets.QListView):
     """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.setVerticalScrollMode(self.ScrollPerPixel)
+        self.setVerticalScrollMode(self.ScrollMode.ScrollPerPixel)
         self.setMouseTracking(True)
         self.installEventFilter(self)
         config_item_delegate = _FitConfigurationItemDelegate(parent=self)
@@ -213,7 +213,7 @@ class FitConfigurationListView(QtWidgets.QListView):
         return super().mouseMoveEvent(event)
 
     def eventFilter(self, object, event):
-        if event.type() == QtCore.QEvent.HoverLeave:
+        if event.type() == QtCore.QEvent.Type.HoverLeave:
             if not self.geometry().contains(event.pos()):
                 if self.__previous_index.isValid():
                     self.closePersistentEditor(self.__previous_index)
@@ -253,7 +253,7 @@ class _FitConfigPanel(QtWidgets.QWidget):
         icon_dir = os.path.join(get_artwork_dir(), 'icons')
         self._name = fit_config.name
         self.remove_config_toolbutton = QtWidgets.QToolButton()
-        self.remove_config_toolbutton.setToolButtonStyle(QtCore.Qt.ToolButtonIconOnly)
+        self.remove_config_toolbutton.setToolButtonStyle(QtCore.Qt.ToolButtonStyle.ToolButtonIconOnly)
         self.remove_config_toolbutton.setIcon(
             QtGui.QIcon(os.path.join(icon_dir, 'list-remove'))
         )
@@ -264,9 +264,9 @@ class _FitConfigPanel(QtWidgets.QWidget):
         # add estimator combobox
         self.estimator_selection_combobox = QtWidgets.QComboBox()
         self.estimator_selection_combobox.addItems(fit_config.available_estimators)
-        self.estimator_selection_combobox.setSizeAdjustPolicy(QtWidgets.QComboBox.AdjustToContents)
+        self.estimator_selection_combobox.setSizeAdjustPolicy(QtWidgets.QComboBox.SizeAdjustPolicy.AdjustToContents)
         label = QtWidgets.QLabel('Estimator:')
-        label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+        label.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight | QtCore.Qt.AlignmentFlag.AlignVCenter)
         hlayout = QtWidgets.QHBoxLayout()
         main_layout.addLayout(hlayout)
         hlayout.addWidget(label)
@@ -298,7 +298,7 @@ class _FitConfigPanel(QtWidgets.QWidget):
             customize_checkbox = QtWidgets.QCheckBox()
             param_layout.addWidget(customize_checkbox, row, 0)
             label = QtWidgets.QLabel(param_name + ':')
-            label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+            label.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight | QtCore.Qt.AlignmentFlag.AlignVCenter)
             param_layout.addWidget(label, row, 1)
             vary_checkbox = QtWidgets.QCheckBox()
             vary_checkbox.setChecked(param.vary)
@@ -372,7 +372,7 @@ class _FitConfigurationItemDelegate(QtWidgets.QStyledItemDelegate):
 
     def createEditor(self, parent, option, index):
         if index.isValid():
-            editor = _FitConfigPanel(parent=parent, fit_config=index.data(QtCore.Qt.DisplayRole))
+            editor = _FitConfigPanel(parent=parent, fit_config=index.data(QtCore.Qt.ItemDataRole.DisplayRole))
             editor.setGeometry(option.rect)
             editor.sigConfigurationRemovedClicked.connect(self.parent().remove_config_clicked)
             return editor
@@ -380,7 +380,7 @@ class _FitConfigurationItemDelegate(QtWidgets.QStyledItemDelegate):
 
     def setEditorData(self, editor, index):
         if index.isValid():
-            editor.update_fit_config(index.data(QtCore.Qt.DisplayRole))
+            editor.update_fit_config(index.data(QtCore.Qt.ItemDataRole.DisplayRole))
 
     def setModelData(self, editor, model, index):
         data = (editor.estimator, editor.custom_parameters)
@@ -391,14 +391,14 @@ class _FitConfigurationItemDelegate(QtWidgets.QStyledItemDelegate):
         return option.rect
 
     def sizeHint(self, option, index):
-        size = _FitConfigPanel(fit_config=index.data(QtCore.Qt.DisplayRole)).sizeHint()
+        size = _FitConfigPanel(fit_config=index.data(QtCore.Qt.ItemDataRole.DisplayRole)).sizeHint()
         return size
 
     def paint(self, painter, option, index):
         painter.save()
         r = option.rect
         painter.translate(r.topLeft())
-        widget = _FitConfigPanel(fit_config=index.data(QtCore.Qt.DisplayRole))
+        widget = _FitConfigPanel(fit_config=index.data(QtCore.Qt.ItemDataRole.DisplayRole))
         widget.setGeometry(r)
         widget.render(painter, QtCore.QPoint(0, 0), painter.viewport())
         painter.restore()

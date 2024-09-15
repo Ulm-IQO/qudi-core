@@ -23,7 +23,7 @@ __all__ = ('LogRecordsTableModel',)
 
 import traceback
 from datetime import datetime
-from PySide2 import QtCore, QtGui
+from PySide6 import QtCore, QtGui
 from qudi.util.mutex import Mutex
 
 
@@ -72,7 +72,7 @@ class LogRecordsTableModel(QtCore.QAbstractTableModel):
 
         @return Qt.ItemFlags: actions allowed for this cell
         """
-        return QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEditable
+        return QtCore.Qt.ItemFlag.ItemIsEnabled | QtCore.Qt.ItemFlag.ItemIsSelectable | QtCore.Qt.ItemIsEditable
 
     def data(self, index, role):
         """ Get data from model for a given cell. Data can have a role that affects display.
@@ -86,7 +86,7 @@ class LogRecordsTableModel(QtCore.QAbstractTableModel):
             record = self._records[(self._begin + index.row()) % self._max_records]
             if role == QtCore.Qt.TextColorRole:
                 return self._color_map.get(record[1], self._fallback_color)
-            if role in (QtCore.Qt.DisplayRole, QtCore.Qt.ToolTipRole, QtCore.Qt.EditRole):
+            if role in (QtCore.Qt.ItemDataRole.DisplayRole, QtCore.Qt.ToolTipRole, QtCore.Qt.EditRole):
                 return record[index.column()]
 
     def headerData(self, section, orientation, role=None):
@@ -98,7 +98,7 @@ class LogRecordsTableModel(QtCore.QAbstractTableModel):
 
         @return QVariant: header data for given column and role
         """
-        if (role is None or role == QtCore.Qt.DisplayRole) and orientation == QtCore.Qt.Horizontal:
+        if (role is None or role == QtCore.Qt.ItemDataRole.DisplayRole) and orientation == QtCore.Qt.Orientation.Horizontal:
             try:
                 return self._header[section]
             except IndexError:

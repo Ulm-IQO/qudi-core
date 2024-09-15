@@ -21,7 +21,7 @@ If not, see <https://www.gnu.org/licenses/>.
 
 __all__ = ['DictTableModel', 'ListTableModel']
 
-from PySide2 import QtCore
+from PySide6 import QtCore
 from typing import Any, Optional, Union, Sequence
 from qudi.util.mutex import RecursiveMutex
 
@@ -52,17 +52,17 @@ class DictTableModel(QtCore.QAbstractTableModel):
         with self._lock:
             return len(self._headers)
 
-    def flags(self, index: Optional[QtCore.QModelIndex] = None) -> QtCore.Qt.ItemFlags:
+    def flags(self, index: Optional[QtCore.QModelIndex] = None) -> QtCore.Qt.ItemFlag:
         """ Determines what can be done with the given indexed cell.
         """
-        return QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable
+        return QtCore.Qt.ItemFlag.ItemIsEnabled | QtCore.Qt.ItemFlag.ItemIsSelectable
 
     def data(self, index: QtCore.QModelIndex, role: QtCore.Qt.ItemDataRole) -> Any:
         """ Get data from model for a given cell. Data can have a role that affects display.
         Re-Implement in subclass in order to support anything else than the 2 default columns.
         """
         with self._lock:
-            if index.isValid() and role == QtCore.Qt.DisplayRole:
+            if index.isValid() and role == QtCore.Qt.ItemDataRole.DisplayRole:
                 key = self.get_key_by_index(index.row())
                 if index.column() == 0:
                     return key
@@ -71,11 +71,11 @@ class DictTableModel(QtCore.QAbstractTableModel):
             return None
 
     def headerData(self, section: int, orientation: QtCore.Qt.Orientation,
-                   role: Optional[QtCore.Qt.ItemDataRole] = QtCore.Qt.DisplayRole) -> Any:
+                   role: Optional[QtCore.Qt.ItemDataRole] = QtCore.Qt.ItemDataRole.DisplayRole) -> Any:
         """ Data for the table view headers """
         with self._lock:
-            if role == QtCore.Qt.DisplayRole:
-                if orientation == QtCore.Qt.Horizontal:
+            if role == QtCore.Qt.ItemDataRole.DisplayRole:
+                if orientation == QtCore.Qt.Orientation.Horizontal:
                     return self._headers[section]
             return None
 
@@ -224,25 +224,25 @@ class ListTableModel(QtCore.QAbstractTableModel):
         """
         return len(self._headers)
 
-    def flags(self, index: QtCore.QModelIndex) -> QtCore.Qt.ItemFlags:
+    def flags(self, index: QtCore.QModelIndex) -> QtCore.Qt.ItemFlag:
         """ Determines what can be done with entry cells in the table view.
         """
-        return QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable
+        return QtCore.Qt.ItemFlag.ItemIsEnabled | QtCore.Qt.ItemFlag.ItemIsSelectable
 
     def data(self, index: QtCore.QModelIndex, role: QtCore.Qt.ItemDataRole) -> Any:
         """ Get data from model for a given cell. Data can have a role that affects display.
         """
         with self._lock:
-            if index.isValid() and role == QtCore.Qt.DisplayRole:
+            if index.isValid() and role == QtCore.Qt.ItemDataRole.DisplayRole:
                 return self._storage[index.row()]
             return None
 
     def headerData(self, section: int, orientation: QtCore.Qt.Orientation,
-                   role: Optional[QtCore.Qt.ItemDataRole] = QtCore.Qt.DisplayRole) -> Any:
+                   role: Optional[QtCore.Qt.ItemDataRole] = QtCore.Qt.ItemDataRole.DisplayRole) -> Any:
         """ Data for the table view headers
         """
-        if role == QtCore.Qt.DisplayRole:
-            if orientation == QtCore.Qt.Horizontal:
+        if role == QtCore.Qt.ItemDataRole.DisplayRole:
+            if orientation == QtCore.Qt.Orientation.Horizontal:
                 return self._headers[section]
         return None
 
@@ -295,7 +295,7 @@ class ListTableModel(QtCore.QAbstractTableModel):
 
     def append(self, data):
         """ Append row to table.
-            
+
         @param data: row to append
         """
         with self._lock:

@@ -20,7 +20,7 @@ If not, see <https://www.gnu.org/licenses/>.
 """
 
 import os
-from PySide2 import QtCore, QtGui, QtWidgets
+from PySide6 import QtCore, QtGui, QtWidgets
 from qudi.util.paths import get_artwork_dir
 from qudi.util.mutex import Mutex
 
@@ -160,11 +160,11 @@ class ModuleListModel(QtCore.QAbstractListModel):
         name = self._module_names[row]
         state = self._module_states[name]
         app_data = self._module_app_data[name]
-        if role == QtCore.Qt.DisplayRole:
+        if role == QtCore.Qt.ItemDataRole.DisplayRole:
             return name, state, app_data
 
     def flags(self, index):
-        return QtCore.Qt.ItemNeverHasChildren | QtCore.Qt.ItemIsEnabled
+        return QtCore.Qt.ItemNeverHasChildren | QtCore.Qt.ItemFlag.ItemIsEnabled
 
     def append_module(self, name, state, app_data):
         with self._lock:
@@ -208,7 +208,7 @@ class ModuleListModel(QtCore.QAbstractListModel):
             row = self._module_names.index(name)
             self.dataChanged.emit(self.createIndex(row, 0),
                                   self.createIndex(row + 1, 0),
-                                  (QtCore.Qt.DisplayRole,))
+                                  (QtCore.Qt.ItemDataRole.DisplayRole,))
 
     def change_app_data(self, name, exists):
         with self._lock:

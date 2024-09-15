@@ -25,7 +25,7 @@ __all__ = ['Configuration', 'ValidationError', 'ParserError', 'YAMLError', 'Dupl
 
 import copy
 from numbers import Number
-from PySide2 import QtCore
+from PySide6 import QtCore
 from typing import Mapping, Optional, Union, Sequence, Set, List, MutableMapping, Any
 from collections.abc import MutableMapping as _MutableMapping
 from qudi.core.meta import ABCQObjectMeta as _ABCQObjectMeta

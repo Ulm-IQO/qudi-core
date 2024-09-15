@@ -24,8 +24,8 @@ If not, see <https://www.gnu.org/licenses/>.
 
 __all__ = ['Mutex', 'RecursiveMutex']
 
-from PySide2.QtCore import QMutex as _QMutex
-from PySide2.QtCore import QRecursiveMutex as _QRecursiveMutex
+from PySide6.QtCore import QMutex as _QMutex
+from PySide6.QtCore import QRecursiveMutex as _QRecursiveMutex
 from typing import Optional, Union
 
 
@@ -76,7 +76,7 @@ class Mutex(_QMutex):
         self.unlock()
 
 
-# Compatibility workaround for PySide2 vs. PySide6. In PySide2 we need to use QMutex with an
+# Compatibility workaround for PySide6 vs. PySide6. In PySide6 we need to use QMutex with an
 # initializer argument to construct a recursive mutex but in PySide6 we need to subclass
 # QRecursiveMutex. Check if QRecursiveMutex class has all API members (indicating it's PySide6).
 if all(hasattr(_QRecursiveMutex, attr) for attr in ('lock', 'unlock', 'tryLock')):

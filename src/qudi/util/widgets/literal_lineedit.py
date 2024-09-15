@@ -25,7 +25,7 @@ __all__ = ['ComplexLineEdit', 'ComplexValidator', 'DictLineEdit', 'DictValidator
            'ListValidator', 'LiteralLineEdit', 'LiteralValidator', 'SetLineEdit', 'SetValidator',
            'TupleLineEdit', 'TupleValidator']
 
-from PySide2 import QtCore, QtGui, QtWidgets
+from PySide6 import QtCore, QtGui, QtWidgets
 from typing import Any, Optional, Mapping, MutableSequence, Sequence, Set, FrozenSet, Union, List
 from typing import Tuple, Dict
 
@@ -41,9 +41,9 @@ class LiteralValidator(QtGui.QValidator):
         """
         try:
             self.value_from_text(text)
-            return self.Acceptable
+            return self.State.Acceptable
         except:
-            return self.Intermediate
+            return self.State.Intermediate
 
     def fixup(self, text: str) -> str:
         return text
@@ -66,9 +66,9 @@ class ComplexValidator(QtGui.QValidator):
         """
         try:
             self.value_from_text(text)
-            return self.Acceptable
+            return self.State.Acceptable
         except ValueError:
-            return self.Intermediate
+            return self.State.Intermediate
 
     def fixup(self, text: str) -> str:
         return text
@@ -93,9 +93,9 @@ class ListValidator(QtGui.QValidator):
         """
         try:
             self.value_from_text(text)
-            return self.Acceptable
+            return self.State.Acceptable
         except:
-            return self.Intermediate
+            return self.State.Intermediate
 
     def fixup(self, text: str) -> str:
         return text
@@ -123,9 +123,9 @@ class TupleValidator(QtGui.QValidator):
         """
         try:
             self.value_from_text(text)
-            return self.Acceptable
+            return self.State.Acceptable
         except:
-            return self.Intermediate
+            return self.State.Intermediate
 
     def fixup(self, text: str) -> str:
         return text
@@ -153,9 +153,9 @@ class SetValidator(QtGui.QValidator):
         """
         try:
             self.value_from_text(text)
-            return self.Acceptable
+            return self.State.Acceptable
         except:
-            return self.Intermediate
+            return self.State.Intermediate
 
     def fixup(self, text: str) -> str:
         return text
@@ -183,9 +183,9 @@ class DictValidator(QtGui.QValidator):
         """
         try:
             self.value_from_text(text)
-            return self.Acceptable
+            return self.State.Acceptable
         except:
-            return self.Intermediate
+            return self.State.Intermediate
 
     def fixup(self, text: str) -> str:
         return text
@@ -242,7 +242,7 @@ class LiteralLineEdit(QtWidgets.QLineEdit):
 
     def keyPressEvent(self, event: QtGui.QKeyEvent) -> None:
         check_text = True
-        if event.key() in (QtCore.Qt.Key_Enter, QtCore.Qt.Key_Return):
+        if event.key() in (QtCore.Qt.Key.Key_Enter, QtCore.Qt.Key.Key_Return):
             self._revert_text()
             check_text = False
         ret_val = super().keyPressEvent(event)

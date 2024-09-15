@@ -19,7 +19,7 @@ You should have received a copy of the GNU Lesser General Public License along w
 If not, see <https://www.gnu.org/licenses/>.
 """
 
-from PySide2 import QtCore, QtGui, QtWidgets
+from PySide6 import QtCore, QtGui, QtWidgets
 from qudi.core.logger import get_record_table_model
 
 
@@ -48,7 +48,7 @@ class LogFilterProxy(QtCore.QSortFilterProxyModel):
         @return bool: True if row (log entry) should be shown, False otherwise
         """
         model = self.sourceModel()
-        level = model.data(model.index(source_row, 1), QtCore.Qt.DisplayRole)
+        level = model.data(model.index(source_row, 1), QtCore.Qt.ItemDataRole.DisplayRole)
         if level is None:
             return False
         return level in self._show_levels
@@ -152,7 +152,7 @@ class LogWidget(QtWidgets.QSplitter):
         @param QObject parent: Qt parent object for log widget
         @param Manager manager: Manager instance this widget belongs to
         """
-        super().__init__(QtCore.Qt.Horizontal, parent, **kwargs)
+        super().__init__(QtCore.Qt.Orientation.Horizontal, parent, **kwargs)
 
         # Build GUI elements
         # Set up QTableView to display log entries

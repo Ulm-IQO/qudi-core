@@ -19,7 +19,7 @@ You should have received a copy of the GNU Lesser General Public License along w
 If not, see <https://www.gnu.org/licenses/>.
 """
 
-from PySide2 import QtCore, QtWidgets
+from PySide6 import QtCore, QtWidgets
 
 
 class AboutQudiDialog(QtWidgets.QDialog):
@@ -31,9 +31,9 @@ class AboutQudiDialog(QtWidgets.QDialog):
 
         self.setWindowFlags(QtCore.Qt.WindowTitleHint | QtCore.Qt.WindowCloseButtonHint)
 
-        buttonbox = QtWidgets.QDialogButtonBox(QtWidgets.QDialogButtonBox.Ok)
-        buttonbox.setOrientation(QtCore.Qt.Horizontal)
-        self.ok_button = buttonbox.button(buttonbox.Ok)
+        buttonbox = QtWidgets.QDialogButtonBox(QtWidgets.QDialogButtonBox.StandardButton.Ok)
+        buttonbox.setOrientation(QtCore.Qt.Orientation.Horizontal)
+        self.ok_button = buttonbox.button(buttonbox.StandardButton.Ok)
         self.ok_button.clicked.connect(self.accept)
 
         self.header_label = QtWidgets.QLabel('qudi')

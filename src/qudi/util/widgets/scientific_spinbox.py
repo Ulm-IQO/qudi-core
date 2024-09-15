@@ -22,7 +22,7 @@ If not, see <https://www.gnu.org/licenses/>.
 
 __all__ = ['ScienDSpinBox', 'ScienSpinBox']
 
-from PySide2 import QtCore, QtGui, QtWidgets
+from PySide6 import QtCore, QtGui, QtWidgets
 import numpy as np
 import re
 from decimal import Decimal as D  # Use decimal to avoid accumulating floating-point errors
@@ -64,27 +64,27 @@ class FloatValidator(QtGui.QValidator):
         # Return intermediate status when empty string is passed or when incomplete "[+-]inf"
         if string.strip() in '+.-.' or string.strip() in list('YZEPTGMkmµunpfazy') or re.match(
                 r'[+-]?(in$|i$)', string, re.IGNORECASE):
-            return self.Intermediate, string, position
+            return self.State.Intermediate, string, position
 
         # Accept input of [+-]inf. Not case sensitive.
         if re.match(r'[+-]?\binf$', string, re.IGNORECASE):
-            return self.Acceptable, string.lower(), position
+            return self.State.Acceptable, string.lower(), position
 
         group_dict = self.get_group_dict(string)
         if group_dict:
             if group_dict['match'] == string:
-                return self.Acceptable, string, position
+                return self.State.Acceptable, string, position
             if string.count('.') > 1:
-                return self.Invalid, group_dict['match'], position
+                return self.State.Invalid, group_dict['match'], position
             if position > len(string):
                 position = len(string)
             if string[position-1] in 'eE-+' and 'i' not in string.lower():
-                return self.Intermediate, string, position
-            return self.Invalid, group_dict['match'], position
+                return self.State.Intermediate, string, position
+            return self.State.Invalid, group_dict['match'], position
         else:
             if string[position-1] in 'eE-+.' and 'i' not in string.lower():
-                return self.Intermediate, string, position
-            return self.Invalid, '', position
+                return self.State.Intermediate, string, position
+            return self.State.Invalid, '', position
 
     def get_group_dict(self, string):
         """
@@ -144,21 +144,21 @@ class IntegerValidator(QtGui.QValidator):
         """
         # Return intermediate status when empty string is passed or cursor is at index 0
         if not string.strip() or string.strip() in list('YZEPTGMk'):
-            return self.Intermediate, string, position
+            return self.State.Intermediate, string, position
 
         group_dict = self.get_group_dict(string)
         if group_dict:
             if group_dict['match'] == string:
-                return self.Acceptable, string, position
+                return self.State.Acceptable, string, position
 
             if position > len(string):
                 position = len(string)
             if string[position-1] in 'eE-+':
-                return self.Intermediate, string, position
+                return self.State.Intermediate, string, position
 
-            return self.Invalid, group_dict['match'], position
+            return self.State.Invalid, group_dict['match'], position
         else:
-            return self.Invalid, '', position
+            return self.State.Invalid, '', position
 
     def get_group_dict(self, string):
         """
@@ -643,7 +643,7 @@ class ScienDSpinBox(QtWidgets.QAbstractSpinBox):
         @param event: QKeyEvent, a Qt QKeyEvent instance holding the event information
         """
         # Restore cached value upon pressing escape and lose focus.
-        if event.key() == QtCore.Qt.Key_Escape:
+        if event.key() == QtCore.Qt.Key.Key_Escape:
             if self.__cached_value is not None:
                 self.__value = self.__cached_value
                 self.valueChanged.emit(self.value())
@@ -651,10 +651,10 @@ class ScienDSpinBox(QtWidgets.QAbstractSpinBox):
             return
 
         # Update display upon pressing enter/return before processing the event in the default way.
-        if event.key() == QtCore.Qt.Key_Enter or event.key() == QtCore.Qt.Key_Return:
+        if event.key() == QtCore.Qt.Key.Key_Enter or event.key() == QtCore.Qt.Key.Key_Return:
             self.update_display()
 
-        if (QtCore.Qt.ControlModifier | QtCore.Qt.MetaModifier) & event.modifiers():
+        if (QtCore.Qt.KeyboardModifier.ControlModifier | QtCore.Qt.KeyboardModifier.MetaModifier) & event.modifiers():
             super().keyPressEvent(event)
             return
 
@@ -680,16 +680,16 @@ class ScienDSpinBox(QtWidgets.QAbstractSpinBox):
                 elif cursor_pos > end:
                     self.lineEdit().setCursorPosition(end)
 
-        if event.key() == QtCore.Qt.Key_Left:
+        if event.key() == QtCore.Qt.Key.Key_Left:
             if self.lineEdit().cursorPosition() == len(self.__prefix):
                 return
-        if event.key() == QtCore.Qt.Key_Right:
+        if event.key() == QtCore.Qt.Key.Key_Right:
             if self.lineEdit().cursorPosition() == len(self.text()) - len(self.__suffix):
                 return
-        if event.key() == QtCore.Qt.Key_Home:
+        if event.key() == QtCore.Qt.Key.Key_Home:
             self.lineEdit().setCursorPosition(len(self.__prefix))
             return
-        if event.key() == QtCore.Qt.Key_End:
+        if event.key() == QtCore.Qt.Key.Key_End:
             self.lineEdit().setCursorPosition(len(self.text()) - len(self.__suffix))
             return
 
@@ -718,7 +718,7 @@ class ScienDSpinBox(QtWidgets.QAbstractSpinBox):
             pen.setWidth(2)
 
             p = QtGui.QPainter(self)
-            p.setRenderHint(p.Antialiasing)
+            p.setRenderHint(p.RenderHint.Antialiasing)
             p.setPen(pen)
             p.drawRoundedRect(self.rect().adjusted(2, 2, -2, -2), 4, 4)
             p.end()
@@ -928,7 +928,7 @@ class ScienDSpinBox(QtWidgets.QAbstractSpinBox):
         """
         Enables stepping (mouse wheel, arrow up/down, clicking, PgUp/Down) by default.
         """
-        return self.StepUpEnabled | self.StepDownEnabled
+        return self.StepEnabledFlag.StepUpEnabled | self.StepEnabledFlag.StepDownEnabled
 
     def wheelEvent(self, event):
         """
@@ -1288,17 +1288,17 @@ class ScienSpinBox(QtWidgets.QAbstractSpinBox):
         @param event: QKeyEvent, a Qt QKeyEvent instance holding the event information
         """
         # Restore cached value upon pressing escape and lose focus.
-        if event.key() == QtCore.Qt.Key_Escape:
+        if event.key() == QtCore.Qt.Key.Key_Escape:
             if self.__cached_value is not None:
                 self.__value = self.__cached_value
                 self.valueChanged.emit(self.value())
             self.clearFocus()  # This will also trigger editingFinished
 
         # Update display upon pressing enter/return before processing the event in the default way.
-        if event.key() == QtCore.Qt.Key_Enter or event.key() == QtCore.Qt.Key_Return:
+        if event.key() == QtCore.Qt.Key.Key_Enter or event.key() == QtCore.Qt.Key.Key_Return:
             self.update_display()
 
-        if (QtCore.Qt.ControlModifier | QtCore.Qt.MetaModifier) & event.modifiers():
+        if (QtCore.Qt.KeyboardModifier.ControlModifier | QtCore.Qt.KeyboardModifier.MetaModifier) & event.modifiers():
             super().keyPressEvent(event)
             return
 
@@ -1326,16 +1326,16 @@ class ScienSpinBox(QtWidgets.QAbstractSpinBox):
                     self.lineEdit().setCursorPosition(end)
                     return
 
-        if event.key() == QtCore.Qt.Key_Left:
+        if event.key() == QtCore.Qt.Key.Key_Left:
             if self.lineEdit().cursorPosition() == len(self.__prefix):
                 return
-        if event.key() == QtCore.Qt.Key_Right:
+        if event.key() == QtCore.Qt.Key.Key_Right:
             if self.lineEdit().cursorPosition() == len(self.text()) - len(self.__suffix):
                 return
-        if event.key() == QtCore.Qt.Key_Home:
+        if event.key() == QtCore.Qt.Key.Key_Home:
             self.lineEdit().setCursorPosition(len(self.__prefix))
             return
-        if event.key() == QtCore.Qt.Key_End:
+        if event.key() == QtCore.Qt.Key.Key_End:
             self.lineEdit().setCursorPosition(len(self.text()) - len(self.__suffix))
             return
 
@@ -1475,7 +1475,7 @@ class ScienSpinBox(QtWidgets.QAbstractSpinBox):
         """
         Enables stepping (mouse wheel, arrow up/down, clicking, PgUp/Down) by default.
         """
-        return self.StepUpEnabled | self.StepDownEnabled
+        return self.StepEnabledFlag.StepUpEnabled | self.StepEnabledFlag.StepDownEnabled
 
     def stepBy(self, steps):
         """

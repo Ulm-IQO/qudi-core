@@ -27,7 +27,7 @@ import fysom
 
 from typing import FrozenSet, Iterable
 from functools import partial
-from PySide2 import QtCore
+from PySide6 import QtCore
 
 from qudi.util.mutex import RecursiveMutex   # provides access serialization between threads
 from qudi.core.logger import get_logger

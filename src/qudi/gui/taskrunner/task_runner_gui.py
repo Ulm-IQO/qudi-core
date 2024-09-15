@@ -19,7 +19,7 @@ You should have received a copy of the GNU Lesser General Public License along w
 If not, see <https://www.gnu.org/licenses/>.
 """
 
-from PySide2 import QtCore
+from PySide6 import QtCore
 
 from qudi.core.connector import Connector
 from qudi.core.module import GuiBase
@@ -45,13 +45,13 @@ class TaskRunnerGui(GuiBase):
         # Initialize main window and connect task widgets
         taskrunner = self._task_runner()
         self._mw = TaskMainWindow(tasks=taskrunner.configured_task_types)
-        self._mw.sigStartTask.connect(taskrunner.run_task, QtCore.Qt.QueuedConnection)
-        self._mw.sigInterruptTask.connect(taskrunner.interrupt_task, QtCore.Qt.QueuedConnection)
+        self._mw.sigStartTask.connect(taskrunner.run_task, QtCore.Qt.ConnectionType.QueuedConnection)
+        self._mw.sigInterruptTask.connect(taskrunner.interrupt_task, QtCore.Qt.ConnectionType.QueuedConnection)
         self._mw.sigClosed.connect(self._deactivate_self)
-        taskrunner.sigTaskStarted.connect(self._mw.task_started, QtCore.Qt.QueuedConnection)
+        taskrunner.sigTaskStarted.connect(self._mw.task_started, QtCore.Qt.ConnectionType.QueuedConnection)
         taskrunner.sigTaskStateChanged.connect(self._mw.task_state_changed,
-                                               QtCore.Qt.QueuedConnection)
-        taskrunner.sigTaskFinished.connect(self._mw.task_finished, QtCore.Qt.QueuedConnection)
+                                               QtCore.Qt.ConnectionType.QueuedConnection)
+        taskrunner.sigTaskFinished.connect(self._mw.task_finished, QtCore.Qt.ConnectionType.QueuedConnection)
 
         # Set current task states
         for task_name, task_state in taskrunner.task_states.items():
@@ -78,13 +78,13 @@ class TaskRunnerGui(GuiBase):
         """ Hide window and stop ipython console.
         """
         self._save_window_geometry(self._mw)
-        self._mw.close()
         self._mw.sigStartTask.disconnect()
         self._mw.sigInterruptTask.disconnect()
         self._mw.sigClosed.disconnect()
+        self._mw.close()
         taskrunner = self._task_runner()
-        taskrunner.sigTaskStarted.disconnect(self._mw.task_started, QtCore.Qt.QueuedConnection)
+        taskrunner.sigTaskStarted.disconnect(self._mw.task_started, QtCore.Qt.ConnectionType.QueuedConnection)
         taskrunner.sigTaskStateChanged.disconnect(self._mw.task_state_changed,
-                                               QtCore.Qt.QueuedConnection)
-        taskrunner.sigTaskFinished.disconnect(self._mw.task_finished, QtCore.Qt.QueuedConnection)
+                                               QtCore.Qt.ConnectionType.QueuedConnection)
+        taskrunner.sigTaskFinished.disconnect(self._mw.task_finished, QtCore.Qt.ConnectionType.QueuedConnection)
         self._mw = None

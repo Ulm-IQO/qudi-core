@@ -22,7 +22,7 @@ If not, see <https://www.gnu.org/licenses/>.
 import logging
 import weakref
 from functools import partial
-from PySide2 import QtCore
+from PySide6 import QtCore
 
 from qudi.util.mutex import RecursiveMutex
 from qudi.core.logger import get_logger
@@ -102,7 +102,7 @@ class ThreadManager(QtCore.QAbstractListModel):
             self._threads.append(thread)
             self._thread_names.append(name)
             thread.finished.connect(
-                partial(self.unregister_thread, name=name), QtCore.Qt.QueuedConnection)
+                partial(self.unregister_thread, name=name), QtCore.Qt.ConnectionType.QueuedConnection)
             self.endInsertRows()
 
     @QtCore.Slot(object)
@@ -197,7 +197,7 @@ class ThreadManager(QtCore.QAbstractListModel):
         with self._lock:
             return len(self._threads)
 
-    def headerData(self, section, orientation, role=QtCore.Qt.DisplayRole):
+    def headerData(self, section, orientation, role=QtCore.Qt.ItemDataRole.DisplayRole):
         """
         Data for the list view header.
 
@@ -207,7 +207,7 @@ class ThreadManager(QtCore.QAbstractListModel):
 
         @return str: header data for given column/row and role
         """
-        if role == QtCore.Qt.DisplayRole and orientation == QtCore.Qt.Horizontal and section == 0:
+        if role == QtCore.Qt.ItemDataRole.DisplayRole and orientation == QtCore.Qt.Orientation.Horizontal and section == 0:
             return 'Thread Name'
         return None
 
@@ -222,7 +222,7 @@ class ThreadManager(QtCore.QAbstractListModel):
         """
         with self._lock:
             row = index.row()
-            if index.isValid() and role == QtCore.Qt.DisplayRole and 0 <= row < len(self._threads):
+            if index.isValid() and role == QtCore.Qt.ItemDataRole.DisplayRole and 0 <= row < len(self._threads):
                 if index.column() == 0:
                     return self._thread_names[row]
             return None
@@ -234,4 +234,4 @@ class ThreadManager(QtCore.QAbstractListModel):
 
           @return Qt.ItemFlags: actins allowed fotr this cell
         """
-        return QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable
+        return QtCore.Qt.ItemFlag.ItemIsEnabled | QtCore.Qt.ItemFlag.ItemIsSelectable

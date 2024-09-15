@@ -25,7 +25,7 @@ __all__ = ['ConfigQTreeWidget']
 from typing import Any, Mapping
 from collections.abc import Sequence as AbstractSequence
 from collections.abc import Mapping as AbstractMapping
-from PySide2 import QtWidgets
+from PySide6 import QtWidgets
 
 
 class ConfigQTreeWidget(QtWidgets.QTreeWidget):

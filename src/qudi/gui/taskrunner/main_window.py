@@ -21,7 +21,7 @@ If not, see <https://www.gnu.org/licenses/>.
 
 import os
 from typing import Any, Mapping, Dict, Type, Callable
-from PySide2 import QtCore, QtGui, QtWidgets
+from PySide6 import QtCore, QtGui, QtWidgets
 
 from qudi.util.paths import get_artwork_dir
 from qudi.core.scripting.moduletask import ModuleTask
@@ -45,7 +45,7 @@ class TaskMainWindow(QtWidgets.QMainWindow):
 
         # Create actions
         icon_path = os.path.join(get_artwork_dir(), 'icons')
-        self.action_quit = QtWidgets.QAction()
+        self.action_quit = QtGui.QAction()
         self.action_quit.setIcon(QtGui.QIcon(os.path.join(icon_path, 'application-exit')))
         self.action_quit.setText('Close')
         self.action_quit.setToolTip('Close')
@@ -73,7 +73,7 @@ class TaskMainWindow(QtWidgets.QMainWindow):
 
         # # Create toolbar
         # self.toolbar = QtWidgets.QToolBar()
-        # self.toolbar.setOrientation(QtCore.Qt.Horizontal)
+        # self.toolbar.setOrientation(QtCore.Qt.Orientation.Horizontal)
         # self.toolbar.addAction(self.action_start_task)
         # self.toolbar.addAction(self.action_pause_task)
         # self.toolbar.addAction(self.action_stop_task)
@@ -135,3 +135,4 @@ class TaskMainWindow(QtWidgets.QMainWindow):
             self.sigInterruptTask.emit(task_name)
 
         return callback
+

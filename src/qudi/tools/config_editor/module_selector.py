@@ -20,7 +20,7 @@ If not, see <https://www.gnu.org/licenses/>.
 
 __all__ = ['ModuleSelector']
 
-from PySide2 import QtWidgets, QtCore
+from PySide6 import QtWidgets, QtCore
 from typing import Optional, Iterable, List, Mapping, Tuple, Dict
 
 from qudi.tools.config_editor.tree_widgets import AvailableModulesTreeWidget
@@ -79,7 +79,7 @@ class ModuleSelector(QtWidgets.QDialog):
         layout.addWidget(label, 0, 0, 1, 3)
         layout.addWidget(self.selected_treewidget, 1, 0, 1, 3)
         label = QtWidgets.QLabel('Module Base:')
-        label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+        label.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight | QtCore.Qt.AlignmentFlag.AlignVCenter)
         layout.addWidget(label, 2, 0)
         layout.addWidget(self.base_selection_combobox, 2, 1)
         layout.addWidget(self.add_remote_button, 2, 2)
@@ -100,12 +100,12 @@ class ModuleSelector(QtWidgets.QDialog):
         label = QtWidgets.QLabel(
             'Include qudi modules by dragging them into the right field (press DEL to remove).'
         )
-        label.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
+        label.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignmentFlag.AlignVCenter)
         font = label.font()
         font.setBold(True)
         label.setFont(font)
         self.button_box = QtWidgets.QDialogButtonBox(
-            QtWidgets.QDialogButtonBox.Cancel | QtWidgets.QDialogButtonBox.Ok
+            QtWidgets.QDialogButtonBox.StandardButton.Cancel | QtWidgets.QDialogButtonBox.StandardButton.Ok
         )
         self.button_box.accepted.connect(self.accept)
         self.button_box.rejected.connect(self.reject)

@@ -22,7 +22,7 @@ If not, see <https://www.gnu.org/licenses/>.
 __all__ = ('LogSignalHandler', 'LogTableModelHandler', 'qt_message_handler')
 
 import logging
-from PySide2 import QtCore
+from PySide6 import QtCore
 
 from .records_model import LogRecordsTableModel
 
@@ -60,7 +60,7 @@ class LogTableModelHandler(logging.Handler):
         self.__qt_signaller = QtSignaller()
         self.table_model = LogRecordsTableModel(max_records=max_records)
         self.__qt_signaller.sigSignal.connect(self.table_model.add_record,
-                                              QtCore.Qt.QueuedConnection)
+                                              QtCore.Qt.ConnectionType.QueuedConnection)
 
     def emit(self, record):
         """ Store the log record information in the table model
@@ -73,13 +73,13 @@ def qt_message_handler(msg_type, context, msg):
     A message handler handling Qt5 messages.
     """
     logger = logging.getLogger('Qt')
-    if msg_type == QtCore.QtDebugMsg:
+    if msg_type == QtCore.QtMsgType.QtDebugMsg:
         logger.debug(msg)
-    elif msg_type == QtCore.QtInfoMsg:
+    elif msg_type == QtCore.QtMsgType.QtInfoMsg:
         logger.info(msg)
-    elif msg_type == QtCore.QtWarningMsg:
+    elif msg_type == QtCore.QtMsgType.QtWarningMsg:
         logger.warning(msg)
-    elif msg_type == QtCore.QtCriticalMsg:
+    elif msg_type == QtCore.QtMsgType.QtCriticalMsg:
         logger.critical(msg)
     else:
         import traceback

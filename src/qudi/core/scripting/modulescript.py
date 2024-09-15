@@ -28,7 +28,7 @@ import importlib
 import copy
 import inspect
 from abc import abstractmethod
-from PySide2 import QtCore
+from PySide6 import QtCore
 from logging import Logger
 from typing import Mapping, Any, Type, Optional, Union, Dict
 
@@ -55,7 +55,7 @@ class ModuleScript(QtCore.QObject, metaclass=QudiObjectMeta):
 
     sigFinished = QtCore.Signal()
 
-    # FIXME: This __new__ implementation has the sole purpose to circumvent a known PySide2(6) bug.
+    # FIXME: This __new__ implementation has the sole purpose to circumvent a known PySide6(6) bug.
     #  See https://bugreports.qt.io/browse/PYSIDE-1434 for more details.
     def __new__(cls, *args, **kwargs):
         abstract = getattr(cls, '__abstractmethods__', frozenset())

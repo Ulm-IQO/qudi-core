@@ -24,7 +24,7 @@ __all__ = ['LocalModuleConfigWidget', 'RemoteModuleConfigWidget', 'ModuleConnect
            'ModuleOptionsWidget']
 
 import copy
-from PySide2 import QtCore, QtWidgets
+from PySide6 import QtCore, QtWidgets
 from typing import Optional, Iterable, Mapping, Dict, Sequence, Union, Any, Tuple, List
 
 from qudi.core import Connector, ConfigOption
@@ -126,7 +126,7 @@ class ModuleConnectorsWidget(QtWidgets.QWidget):
                            optional: bool
                            ) -> Tuple[QtWidgets.QLabel, QtWidgets.QComboBox]:
         label = QtWidgets.QLabel(f'{name}:' if optional else f'* {name}:')
-        label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+        label.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight | QtCore.Qt.AlignmentFlag.AlignVCenter)
         label.setTextInteractionFlags(QtCore.Qt.TextSelectableByMouse)
         label.setFocusPolicy(QtCore.Qt.FocusPolicy.NoFocus)
         editor = QtWidgets.QComboBox()
@@ -230,7 +230,7 @@ class ModuleOptionsWidget(QtWidgets.QWidget):
                              optional: bool
                              ) -> Tuple[QtWidgets.QLabel, QtWidgets.QLineEdit]:
         label = QtWidgets.QLabel(f'{name}:' if optional else f'* {name}:')
-        label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+        label.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight | QtCore.Qt.AlignmentFlag.AlignVCenter)
         label.setTextInteractionFlags(QtCore.Qt.TextSelectableByMouse)
         label.setFocusPolicy(QtCore.Qt.FocusPolicy.NoFocus)
         editor = QtWidgets.QLineEdit()
@@ -263,7 +263,7 @@ class LocalModuleConfigWidget(QtWidgets.QWidget):
         sub_layout.setColumnStretch(1, 1)
         layout.addLayout(sub_layout)
         label = QtWidgets.QLabel('module.Class:')
-        label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+        label.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight | QtCore.Qt.AlignmentFlag.AlignVCenter)
         self._module_label = QtWidgets.QLabel(module_class)
         font = self._module_label.font()
         font.setBold(True)
@@ -272,7 +272,7 @@ class LocalModuleConfigWidget(QtWidgets.QWidget):
         sub_layout.addWidget(self._module_label, 0, 1)
         # allow_remote flag editor
         label = QtWidgets.QLabel('Allow remote connection:')
-        label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+        label.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight | QtCore.Qt.AlignmentFlag.AlignVCenter)
         self.allow_remote_checkbox = QtWidgets.QCheckBox()
         self.allow_remote_checkbox.setToolTip(
             'Allow other qudi instances to connect to this module via remote modules server.'
@@ -285,7 +285,7 @@ class LocalModuleConfigWidget(QtWidgets.QWidget):
         layout.addWidget(HorizontalLine())
 
         # Create splitter to spread options and connectors horizontally
-        self.splitter = QtWidgets.QSplitter(QtCore.Qt.Horizontal)
+        self.splitter = QtWidgets.QSplitter(QtCore.Qt.Orientation.Horizontal)
         self.splitter.setChildrenCollapsible(False)
         self.splitter.setSizePolicy(QtWidgets.QSizePolicy.Expanding,
                                     QtWidgets.QSizePolicy.Expanding)
@@ -379,7 +379,7 @@ class RemoteModuleConfigWidget(QtWidgets.QWidget):
 
         # remote name editor
         label = QtWidgets.QLabel('* Native module name:')
-        label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+        label.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight | QtCore.Qt.AlignmentFlag.AlignVCenter)
         self.native_name_lineedit = QtWidgets.QLineEdit()
         self.native_name_lineedit.setToolTip('The native module name as configured on the remote '
                                              'host qudi instance to connect to.')
@@ -390,7 +390,7 @@ class RemoteModuleConfigWidget(QtWidgets.QWidget):
 
         # remote host editor
         label = QtWidgets.QLabel('* Remote address:')
-        label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+        label.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight | QtCore.Qt.AlignmentFlag.AlignVCenter)
         self.remote_host_lineedit = QtWidgets.QLineEdit('localhost')
         self.remote_host_lineedit.setToolTip('The IP address of the remote host. Can also be '
                                              '"localhost" for local qudi instances.')
@@ -401,7 +401,7 @@ class RemoteModuleConfigWidget(QtWidgets.QWidget):
 
         # remote port editor
         label = QtWidgets.QLabel('* Remote port:')
-        label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+        label.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight | QtCore.Qt.AlignmentFlag.AlignVCenter)
         self.remote_port_spinbox = QtWidgets.QSpinBox()
         self.remote_port_spinbox.setRange(0, 65535)
         self.remote_port_spinbox.setValue(12345)
@@ -412,7 +412,7 @@ class RemoteModuleConfigWidget(QtWidgets.QWidget):
 
         # certfile editor
         label = QtWidgets.QLabel('Certificate file:')
-        label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+        label.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight | QtCore.Qt.AlignmentFlag.AlignVCenter)
         self.certfile_lineedit = PathLineEdit(dialog_caption='Select SSL Certificate File',
                                               follow_symlinks=True)
         self.certfile_lineedit.setPlaceholderText('No certificate')
@@ -425,7 +425,7 @@ class RemoteModuleConfigWidget(QtWidgets.QWidget):
 
         # keyfile editor
         label = QtWidgets.QLabel('Key file:')
-        label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+        label.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight | QtCore.Qt.AlignmentFlag.AlignVCenter)
         self.keyfile_lineedit = PathLineEdit(dialog_caption='Select SSL Key File',
                                              follow_symlinks=True)
         self.keyfile_lineedit.setPlaceholderText('No key')
