@@ -151,13 +151,14 @@ class LogRecordsTableModel(QtCore.QAbstractTableModel):
         # Compose message to display
         message = record.getMessage()  # message if hasattr(record, 'message') else record.msg
         if record.exc_info is not None:
-            message += '\n\n{0}'.format(traceback.format_exception(*record.exc_info)[-1][:-1])
+            message += f'\n\n{traceback.format_exception(*record.exc_info)[-1][:-1]}'
             tb = '\n'.join(traceback.format_exception(*record.exc_info)[:-1])
             if tb:
-                message += '\n{0}'.format(tb)
+                message += f'\n{tb}'
 
         # Create human-readable timestamp
         timestamp = datetime.fromtimestamp(record.created).strftime('%Y-%m-%d %H:%M:%S')
 
         # return 4 element tuple (timestamp, level, name, message)
-        return timestamp, record.levelname, record.name, message
+        # Avoid problems with Qt by eliminating NULL bytes in strings.
+        return timestamp, record.levelname, record.name, message.replace('\0', '\\x00')

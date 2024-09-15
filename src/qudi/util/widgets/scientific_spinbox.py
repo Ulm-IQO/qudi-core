@@ -962,7 +962,13 @@ class ScienDSpinBox(QtWidgets.QAbstractSpinBox):
         if self.dynamic_stepping:
             for i in range(int(abs(n))):
                 if value == 0:
-                    step = self.__minimalStep
+                    if self.__minimalStep == 0:
+                        if np.isinf(self.__minimum) or np.isinf(self.__maximum):
+                            step = D('0.01')
+                        else:
+                            step = D((self.__maximum - self.__minimum)/10000)
+                    else:
+                        step = self.__minimalStep
                 else:
                     vs = [D(-1), D(1)][value >= 0]
                     fudge = D('1.01') ** (s * vs)  # fudge factor. At some places, the step size
@@ -973,9 +979,8 @@ class ScienDSpinBox(QtWidgets.QAbstractSpinBox):
                         step = max(step, self.__minimalStep)
                 value += s * step
         else:
-            value = value + max(self.__minimalStep * n, self.__singleStep * n)
+            value = value + n * max(self.__minimalStep, self.__singleStep)
         self.setValue(value)
-        return
 
     def selectAll(self):
         begin = len(self.__prefix)

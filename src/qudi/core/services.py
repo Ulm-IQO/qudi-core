@@ -21,6 +21,8 @@ If not, see <https://www.gnu.org/licenses/>.
 
 __all__ = ('RemoteModulesService', 'QudiNamespaceService')
 
+import logging
+
 import rpyc
 import weakref
 from functools import wraps
@@ -209,6 +211,10 @@ class QudiNamespaceService(rpyc.Service):
                     mod.is_active}
         mods['qudi'] = self._qudi
         return mods
+
+    def exposed_get_logger(self, name: str) -> logging.Logger:
+        """ Returns a logger object for remote processes to log into the qudi logging facility """
+        return get_logger(name)
 
 
 class ModuleRpycProxy:

@@ -21,8 +21,12 @@ If not, see <https://www.gnu.org/licenses/>.
 
 __all__ = ['StatusVar', 'ConfigOption', 'Connector', 'Base', 'LogicBase', 'GuiBase', 'get_logger']
 
+import os
 from importlib import metadata
 __version__ = metadata.version('qudi-core')
+
+# Set QT_API environment variable to PySide2
+os.environ['QT_API'] = 'pyside2'
 
 from qudi.core.statusvariable import StatusVar
 from qudi.core.configoption import ConfigOption

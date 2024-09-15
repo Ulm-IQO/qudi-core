@@ -15,9 +15,10 @@ to give the user the opportunity to statically configure certain aspects of the 
 [Static configuration](configuration.md) in qudi is generally handled via a YAML configuration file 
 that is read and parsed during the application startup process.  
 All [measurement modules](measurement_modules.md) included in the qudi session are declared in this 
-file (among other things). But apart from the mandatory `module.Class` and `connect` fields you can 
-declare any number of additional fields for each measurement module.  
-Please refer to the [qudi configuration documentation](../404.md) for more details on config files.
+file (among other things). But apart from the mandatory properties you can declare any number of 
+additional properties inside the `options` property for each measurement module.  
+Please refer to the [qudi configuration documentation](configuration.md) for more details on config 
+files.
 
 A measurement module constant that is automatically initialized from the qudi configuration is 
 called a "configuration option" or "config option".
@@ -69,7 +70,8 @@ hardware:
 logic:
     example_logic_identifier_name:
         module.Class: my_example_logic.MyExampleLogic
-        my_config_option: 'I am a string from the qudi configuration'
+        options:
+            my_config_option: 'I am a string from the qudi configuration'
         connect:
             ...
     ...

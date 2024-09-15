@@ -68,9 +68,11 @@ class DoubleSlider(QtWidgets.QSlider):
         return self.minimum() + (self.maximum() - self.minimum()) * (int_val / self._step_number)
 
     def setValue(self, val):
-        int_val = round((val - self.minimum()) * self._step_number / (self.maximum() - self.minimum()))
+        max_val = self.maximum()
+        min_val = self.minimum()
+        val = max(min_val, min(max_val, val))
+        int_val = int(round((val - min_val) * self._step_number / (max_val - min_val)))
         super().setValue(int_val)
-        return
 
     @property
     def granularity(self) -> int:

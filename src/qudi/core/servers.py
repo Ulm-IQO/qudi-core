@@ -52,11 +52,16 @@ def get_remote_module_instance(remote_url, certfile=None, keyfile=None, protocol
                            'allow_delattr': True,
                            'allow_pickle': True,
                            'sync_request_timeout': 3600}
-    connection = rpyc.ssl_connect(host=parsed.hostname,
+    if certfile is not None and keyfile is not None:
+        connection = rpyc.ssl_connect(host=parsed.hostname,
+                                      port=parsed.port,
+                                      config=protocol_config,
+                                      certfile=certfile,
+                                      keyfile=keyfile)
+    else:
+        connection = rpyc.connect(host=parsed.hostname,
                                   port=parsed.port,
-                                  config=protocol_config,
-                                  certfile=certfile,
-                                  keyfile=keyfile)
+                                  config=protocol_config,)
     logger.debug(f'get_remote_module_instance has protocol_config {protocol_config}')
     return connection.root.get_module_instance(parsed.path.replace('/', ''))
 

@@ -12,14 +12,16 @@ unix_dep = [
     'GitPython',
     'jupyter',
     'jupytext',
-    'lmfit',
+    'lmfit>=1.0.3',
     'matplotlib',
     'numpy',
-    'pyqtgraph',
+    'pyqtgraph>=0.13.0',
     'PySide6',
-    'rpyc',
-    'ruamel.yaml',
-    'scipy',
+    'rpyc>=5.0.1',
+    'ruamel.yaml>=0.17.16',
+    'scipy>=1.7.1',
+    'jsonschema>=4.2.1',
+    'qtconsole>=5.5.0',
 ]
 
 windows_dep = [
@@ -33,11 +35,13 @@ windows_dep = [
     'lmfit>=1.0.3',
     'matplotlib>=3.4.3',
     'numpy>=1.21.3',
-    'pyqtgraph>=0.12.3',
+    'pyqtgraph>=0.13.0',
     'PySide6',
     'rpyc>=5.0.1',
     'ruamel.yaml>=0.17.16',
     'scipy>=1.7.1',
+    'jsonschema>=4.2.1',
+    'qtconsole>=5.5.0',
 ]
 
 with open('VERSION', 'r') as file:
@@ -51,8 +55,7 @@ setup(
     version=version,
     packages=find_namespace_packages(where='src', exclude=['qudi.artwork']),
     package_dir={'': 'src'},
-    package_data={'': ['LICENSE', 'LICENSE.LESSER', 'AUTHORS.md', 'README.md', 'VERSION'],
-                  'qudi': ['artwork/icons/*',
+    package_data={'qudi': ['artwork/icons/*',
                            'artwork/icons/**/*',
                            'artwork/icons/**/**/*',
                            'artwork/styles/*',
@@ -60,7 +63,6 @@ setup(
                            'artwork/styles/**/**/*',
                            'artwork/logo/*',
                            ],
-                  'qudi.core': ['default.cfg']
                   },
     description='A modular measurement application framework',
     long_description=long_description,
@@ -74,6 +76,7 @@ setup(
               'diamond',
               'quantum',
               'confocal',
+              'automation',
               'experiment',
               'measurement',
               'framework',
@@ -85,7 +88,7 @@ setup(
               ],
     license='LGPLv3',
     install_requires=windows_dep if sys.platform == 'win32' else unix_dep,
-    python_requires='>=3.8, <3.10',
+    python_requires='>=3.8, <3.11',
     classifiers=['Development Status :: 5 - Production/Stable',
 
                  'Environment :: Win32 (MS Windows)',
@@ -109,6 +112,7 @@ setup(
 
                  'Programming Language :: Python :: 3.8',
                  'Programming Language :: Python :: 3.9',
+                 'Programming Language :: Python :: 3.10',
 
                  'Topic :: Scientific/Engineering',
                  'Topic :: Software Development :: Libraries :: Application Frameworks',

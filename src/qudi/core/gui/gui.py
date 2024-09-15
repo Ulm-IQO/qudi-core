@@ -125,8 +125,6 @@ class Gui(QtCore.QObject):
         )
 
     def __init__(self, qudi_instance, stylesheet_path=None, theme=None, use_opengl=False):
-        if stylesheet_path is not None and not os.path.isfile(stylesheet_path):
-            raise FileNotFoundError('stylesheet_path "{0}" not found.'.format(stylesheet_path))
         if theme is None:
             theme = 'qudiTheme'
 
@@ -210,25 +208,31 @@ class Gui(QtCore.QObject):
 
         @param str stylesheet_path: path to style sheet file
         """
-        with open(stylesheet_path, 'r') as stylesheetfile:
-            stylesheet = stylesheetfile.read()
+        try:
+            if not os.path.exists(stylesheet_path):
+                stylesheet_path = os.path.join(get_artwork_dir(), 'styles', stylesheet_path)
 
-        if stylesheet_path.endswith('qdark.qss'):
-            path = os.path.join(os.path.dirname(stylesheet_path), 'qdark').replace('\\', '/')
-            stylesheet = stylesheet.replace('{qdark}', path)
+            with open(stylesheet_path, 'r') as stylesheetfile:
+                stylesheet = stylesheetfile.read()
 
-        # see issue #12 on qdarkstyle github
-        if platform.system().lower() == 'darwin' and stylesheet_path.endswith('qdark.qss'):
-            mac_fix = '''
-            QDockWidget::title
-            {
-                background-color: #31363b;
-                text-align: center;
-                height: 12px;
-            }
-            '''
-            stylesheet += mac_fix
-        QtWidgets.QApplication.instance().setStyleSheet(stylesheet)
+            if stylesheet_path.endswith('qdark.qss'):
+                path = os.path.join(os.path.dirname(stylesheet_path), 'qdark').replace('\\', '/')
+                stylesheet = stylesheet.replace('{qdark}', path)
+
+            # see issue #12 on qdarkstyle github
+            if platform.system().lower() == 'darwin' and stylesheet_path.endswith('qdark.qss'):
+                mac_fix = '''
+                QDockWidget::title
+                {
+                    background-color: #31363b;
+                    text-align: center;
+                    height: 12px;
+                }
+                '''
+                stylesheet += mac_fix
+            QtWidgets.QApplication.instance().setStyleSheet(stylesheet)
+        except:
+            logger.exception('Exception while setting qudi stylesheet:')
 
     @staticmethod
     def close_windows():
