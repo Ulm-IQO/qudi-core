@@ -248,7 +248,7 @@ The connection to another module is done by the
 the dependency of a module on another module further down the hierarchy,
 i.e. it opens up a control flow path to another module.
 
-See the `qudi connectors documentation </docs/_build/html/design_concepts/connectors.html>`__ for more
+See the :ref:`qudi connectors documentation <connectors>` for more
 details on how connectors work.
 
 Generally the control flow between modules should be signal-driven

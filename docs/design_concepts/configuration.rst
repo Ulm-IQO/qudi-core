@@ -118,38 +118,22 @@ remote_modules_server
 In case you want to serve local modules to other qudi instances, the
 server configuration is a mapping with the following properties:
 
-+----+------+---------------------------------------------------------+
-| pr | type | description                                             |
-| op |      |                                                         |
-| er |      |                                                         |
-| ty |      |                                                         |
-+====+======+=========================================================+
-| `  | ``s  | Host name of the server to be reached with. If you want |
-| `a | tr`` | to serve only local qudi instances, you can set this to |
-| dd |      | ``'localhost'``.                                        |
-| re |      |                                                         |
-| ss |      |                                                         |
-| `` |      |                                                         |
-+----+------+---------------------------------------------------------+
-| `` | ``i  | Port number to bind the server to.                      |
-| po | nt`` |                                                         |
-| rt |      |                                                         |
-| `` |      |                                                         |
-+----+------+---------------------------------------------------------+
-| `` | `    | Path to the SSL certificate file to use for connection  |
-| ce | `Opt | encryption. Unsecured if omitted.                       |
-| rt | iona |                                                         |
-| fi | l[st |                                                         |
-| le | r]`` |                                                         |
-| `` |      |                                                         |
-+----+------+---------------------------------------------------------+
-| `  | `    | Path to the SSL key file to use for connection          |
-| `k | `Opt | encryption. Unsecured if omitted.                       |
-| ey | iona |                                                         |
-| fi | l[st |                                                         |
-| le | r]`` |                                                         |
-| `` |      |                                                         |
-+----+------+---------------------------------------------------------+
++--------------+--------------------+-----------------------------------------------------------+
+| property     | type               | description                                               |
++==============+====================+===========================================================+
+| ``address``  | ``str``            | Host name of the server to be reached. If you want to     |
+|              |                    | serve only local qudi instances, you can set this to      |
+|              |                    | ``'localhost'``.                                          |
++--------------+--------------------+-----------------------------------------------------------+
+| ``port``     | ``int``            | Port number to bind the server to.                        |
++--------------+--------------------+-----------------------------------------------------------+
+| ``certfile`` | ``Optional[str]``  | Path to the SSL certificate file to use for connection    |
+|              |                    | encryption. Unsecured if omitted.                         |
++--------------+--------------------+-----------------------------------------------------------+
+| ``keyfile``  | ``Optional[str]``  | Path to the SSL key file to use for connection            |
+|              |                    | encryption. Unsecured if omitted.                         |
++--------------+--------------------+-----------------------------------------------------------+
+
 
 Example:
 
