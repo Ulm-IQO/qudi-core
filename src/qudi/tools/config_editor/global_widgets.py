@@ -23,7 +23,7 @@ If not, see <https://www.gnu.org/licenses/>.
 __all__ = ['GlobalConfigWidget', 'GlobalOptionsWidget', 'RemoteServerWidget', 'CustomOptionsWidget']
 
 from typing import Dict, Union, Mapping, Optional, Any
-from PySide2 import QtCore, QtWidgets
+from PySide6 import QtCore, QtWidgets
 
 from qudi.util.widgets.separator_lines import HorizontalLine
 from qudi.util.widgets.path_line_edit import PathLineEdit

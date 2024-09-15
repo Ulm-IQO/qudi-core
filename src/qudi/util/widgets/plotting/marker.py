@@ -28,7 +28,7 @@ __all__ = ['InfiniteCrosshair', 'InfiniteLine', 'LinearRegion', 'Rectangle',
 from math import isinf
 from typing import Union, Tuple, Optional, List, Sequence, Any
 
-from PySide2 import QtCore
+from PySide6 import QtCore
 from pyqtgraph import ViewBox
 from pyqtgraph import ROI as _ROI
 from pyqtgraph import LinearRegionItem as _LinearRegionItem

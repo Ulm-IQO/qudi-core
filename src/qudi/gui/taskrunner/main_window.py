@@ -135,3 +135,4 @@ class TaskMainWindow(QtWidgets.QMainWindow):
             self.sigInterruptTask.emit(task_name)
 
         return callback
+
