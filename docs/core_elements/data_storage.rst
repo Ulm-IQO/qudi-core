@@ -2,6 +2,8 @@
 
 --------------
 
+.. _data_storage:
+
 Data storage with qudi
 ======================
 

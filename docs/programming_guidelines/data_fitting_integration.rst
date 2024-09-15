@@ -2,6 +2,8 @@
 
 --------------
 
+.. _data_fitting:
+
 Integrating data fitting tools in measurement modules
 =====================================================
 
