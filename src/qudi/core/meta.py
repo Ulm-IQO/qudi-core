@@ -31,12 +31,12 @@ from qudi.core.configoption import ConfigOption
 QObjectMeta = type(QObject)
 
 
-class ABCQObjectMeta(QObjectMeta):
+class ABCQObjectMeta(ABCMeta, QObjectMeta):
     """ Metaclass for abstract QObject subclasses.
     """
 
     def __new__(mcs, name, bases, attributes):
-        cls = super().__new__(mcs, name, bases, attributes)
+        cls = super(ABCQObjectMeta, mcs).__new__(mcs, name, bases, attributes)
         # Compute set of abstract method names
         abstracts = {
             attr_name for attr_name, attr in attributes.items() if \
