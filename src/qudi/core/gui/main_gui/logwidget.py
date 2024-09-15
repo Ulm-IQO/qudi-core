@@ -48,7 +48,7 @@ class LogFilterProxy(QtCore.QSortFilterProxyModel):
         @return bool: True if row (log entry) should be shown, False otherwise
         """
         model = self.sourceModel()
-        level = model.data(model.index(source_row, 1), QtCore.Qt.DisplayRole)
+        level = model.data(model.index(source_row, 1), QtCore.Qt.ItemDataRole.DisplayRole)
         if level is None:
             return False
         return level in self._show_levels

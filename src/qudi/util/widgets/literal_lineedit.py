@@ -242,7 +242,7 @@ class LiteralLineEdit(QtWidgets.QLineEdit):
 
     def keyPressEvent(self, event: QtGui.QKeyEvent) -> None:
         check_text = True
-        if event.key() in (QtCore.Qt.Key_Enter, QtCore.Qt.Key_Return):
+        if event.key() in (QtCore.Qt.Key.Key_Enter, QtCore.Qt.Key.Key_Return):
             self._revert_text()
             check_text = False
         ret_val = super().keyPressEvent(event)
