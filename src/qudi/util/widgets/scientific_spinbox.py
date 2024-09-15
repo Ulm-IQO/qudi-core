@@ -22,7 +22,7 @@ If not, see <https://www.gnu.org/licenses/>.
 
 __all__ = ['ScienDSpinBox', 'ScienSpinBox']
 
-from PySide2 import QtCore, QtGui, QtWidgets
+from PySide6 import QtCore, QtGui, QtWidgets
 import numpy as np
 import re
 from decimal import Decimal as D  # Use decimal to avoid accumulating floating-point errors

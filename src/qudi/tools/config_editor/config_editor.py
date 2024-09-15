@@ -25,7 +25,7 @@ __all__ = ('main', 'ConfigurationEditorMainWindow', 'ConfigurationEditor')
 import os
 import sys
 from typing import Optional, Mapping, Dict, Any
-from PySide2 import QtCore, QtGui, QtWidgets
+from PySide6 import QtCore, QtGui, QtWidgets
 from qudi.util.paths import get_main_dir, get_default_config_dir, get_artwork_dir
 from qudi.core.config import Configuration
 
@@ -116,23 +116,23 @@ class ConfigurationEditor(QtWidgets.QMainWindow):
         # Main window actions
         icon_dir = os.path.join(get_main_dir(), 'artwork', 'icons')
         quit_icon = QtGui.QIcon(os.path.join(icon_dir, 'application-exit'))
-        self.quit_action = QtWidgets.QAction(quit_icon, 'Quit')
+        self.quit_action = QtGui.QAction(quit_icon, 'Quit')
         self.quit_action.setShortcut(QtGui.QKeySequence('Ctrl+Q'))
         load_icon = QtGui.QIcon(os.path.join(icon_dir, 'document-open'))
-        self.load_action = QtWidgets.QAction(load_icon, 'Load')
+        self.load_action = QtGui.QAction(load_icon, 'Load')
         self.load_action.setShortcut(QtGui.QKeySequence('Ctrl+L'))
         self.load_action.setToolTip('Load a qudi configuration to edit from file.')
         save_icon = QtGui.QIcon(os.path.join(icon_dir, 'document-save'))
-        self.save_action = QtWidgets.QAction(save_icon, 'Save')
+        self.save_action = QtGui.QAction(save_icon, 'Save')
         self.save_action.setShortcut(QtGui.QKeySequence('Ctrl+S'))
         self.save_action.setToolTip('Save the current qudi configuration to file.')
-        self.save_as_action = QtWidgets.QAction('Save as ...')
+        self.save_as_action = QtGui.QAction('Save as ...')
         new_icon = QtGui.QIcon(os.path.join(icon_dir, 'document-new'))
-        self.new_action = QtWidgets.QAction(new_icon, 'New')
+        self.new_action = QtGui.QAction(new_icon, 'New')
         self.new_action.setShortcut(QtGui.QKeySequence('Ctrl+N'))
         self.new_action.setToolTip('Create a new qudi configuration from scratch.')
         select_icon = QtGui.QIcon(os.path.join(icon_dir, 'configure'))
-        self.select_modules_action = QtWidgets.QAction(select_icon, 'Select Modules')
+        self.select_modules_action = QtGui.QAction(select_icon, 'Select Modules')
         self.select_modules_action.setShortcut(QtGui.QKeySequence('Ctrl+M'))
         self.select_modules_action.setToolTip(
             'Open an editor to select the modules to include in config.'

@@ -21,7 +21,7 @@ If not, see <https://www.gnu.org/licenses/>.
 
 __all__ = ['DictTableModel', 'ListTableModel']
 
-from PySide2 import QtCore
+from PySide6 import QtCore
 from typing import Any, Optional, Union, Sequence
 from qudi.util.mutex import RecursiveMutex
 

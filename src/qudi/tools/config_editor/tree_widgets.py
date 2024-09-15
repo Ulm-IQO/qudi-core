@@ -6,7 +6,7 @@
 __all__ = ['AvailableModulesTreeWidget', 'SelectedModulesTreeWidget', 'ConfigModulesTreeWidget']
 
 from re import compile
-from PySide2 import QtCore, QtWidgets, QtGui
+from PySide6 import QtCore, QtWidgets, QtGui
 from typing import Optional, Iterable, Mapping, Tuple, Dict, List, Sequence
 
 

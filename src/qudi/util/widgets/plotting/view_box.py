@@ -29,7 +29,7 @@ import warnings
 from typing import Optional, Union, Any, Tuple, Sequence, List, Dict
 from enum import IntEnum
 
-from PySide2 import QtCore
+from PySide6 import QtCore
 from pyqtgraph import ViewBox, PlotDataItem, ImageItem, PlotCurveItem, ScatterPlotItem
 from pyqtgraph import LinearRegionItem as _LinearRegionItem
 from pyqtgraph.GraphicsScene.mouseEvents import MouseClickEvent, MouseDragEvent

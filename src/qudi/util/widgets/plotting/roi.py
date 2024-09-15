@@ -22,7 +22,7 @@ __all__ = ['RectangleROI']
 
 from math import isinf
 from typing import Union, Tuple, Optional, Sequence, List
-from PySide2 import QtCore
+from PySide6 import QtCore
 from pyqtgraph import ROI
 
 

@@ -28,7 +28,7 @@ __all__ = ['AppWatchdog']
 import os
 import sys
 import signal
-from PySide2 import QtCore
+from PySide6 import QtCore
 from qudi.core.parentpoller import ParentPollerWindows, ParentPollerUnix
 from qudi.core.logger import get_logger
 

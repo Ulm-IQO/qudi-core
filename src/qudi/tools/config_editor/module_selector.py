@@ -20,7 +20,7 @@ If not, see <https://www.gnu.org/licenses/>.
 
 __all__ = ['ModuleSelector']
 
-from PySide2 import QtWidgets, QtCore
+from PySide6 import QtWidgets, QtCore
 from typing import Optional, Iterable, List, Mapping, Tuple, Dict
 
 from qudi.tools.config_editor.tree_widgets import AvailableModulesTreeWidget

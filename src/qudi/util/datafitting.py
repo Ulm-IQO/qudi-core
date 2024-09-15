@@ -28,7 +28,7 @@ import logging
 import inspect
 import lmfit
 import numpy as np
-from PySide2 import QtCore
+from PySide6 import QtCore
 from typing import Iterable, Optional, Mapping, Union
 
 import qudi.util.fit_models as _fit_models_ns

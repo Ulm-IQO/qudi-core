@@ -27,7 +27,7 @@ import inspect
 import traceback
 import faulthandler
 from logging import DEBUG, INFO
-from PySide2 import QtCore, QtWidgets
+from PySide6 import QtCore, QtWidgets
 
 from qudi.core.logger import init_rotating_file_handler, init_record_model_handler, clear_handlers
 from qudi.core.logger import get_logger, set_log_level

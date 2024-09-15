@@ -22,7 +22,7 @@ If not, see <https://www.gnu.org/licenses/>.
 
 __all__ = ['GlobalEditorWidget']
 
-from PySide2 import QtCore, QtWidgets
+from PySide6 import QtCore, QtWidgets
 from typing import Optional, Mapping, Dict, Union, Any
 from qudi.tools.config_editor.global_widgets import GlobalConfigWidget
 

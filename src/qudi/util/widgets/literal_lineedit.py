@@ -25,7 +25,7 @@ __all__ = ['ComplexLineEdit', 'ComplexValidator', 'DictLineEdit', 'DictValidator
            'ListValidator', 'LiteralLineEdit', 'LiteralValidator', 'SetLineEdit', 'SetValidator',
            'TupleLineEdit', 'TupleValidator']
 
-from PySide2 import QtCore, QtGui, QtWidgets
+from PySide6 import QtCore, QtGui, QtWidgets
 from typing import Any, Optional, Mapping, MutableSequence, Sequence, Set, FrozenSet, Union, List
 from typing import Tuple, Dict
 

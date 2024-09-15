@@ -42,7 +42,7 @@ import os
 import logging
 import warnings
 from logging.handlers import RotatingFileHandler
-from PySide2.QtCore import qInstallMessageHandler
+from PySide6.QtCore import qInstallMessageHandler
 
 from .handlers import LogSignalHandler, LogTableModelHandler, qt_message_handler
 

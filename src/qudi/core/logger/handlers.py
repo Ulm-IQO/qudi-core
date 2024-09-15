@@ -22,7 +22,7 @@ If not, see <https://www.gnu.org/licenses/>.
 __all__ = ('LogSignalHandler', 'LogTableModelHandler', 'qt_message_handler')
 
 import logging
-from PySide2 import QtCore
+from PySide6 import QtCore
 
 from .records_model import LogRecordsTableModel
 
