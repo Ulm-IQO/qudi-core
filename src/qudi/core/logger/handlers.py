@@ -73,13 +73,13 @@ def qt_message_handler(msg_type, context, msg):
     A message handler handling Qt5 messages.
     """
     logger = logging.getLogger('Qt')
-    if msg_type == QtCore.QtDebugMsg:
+    if msg_type == QtCore.QtMsgType.QtDebugMsg:
         logger.debug(msg)
-    elif msg_type == QtCore.QtInfoMsg:
+    elif msg_type == QtCore.QtMsgType.QtInfoMsg:
         logger.info(msg)
-    elif msg_type == QtCore.QtWarningMsg:
+    elif msg_type == QtCore.QtMsgType.QtWarningMsg:
         logger.warning(msg)
-    elif msg_type == QtCore.QtCriticalMsg:
+    elif msg_type == QtCore.QtMsgType.QtCriticalMsg:
         logger.critical(msg)
     else:
         import traceback
