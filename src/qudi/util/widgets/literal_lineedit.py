@@ -41,9 +41,9 @@ class LiteralValidator(QtGui.QValidator):
         """
         try:
             self.value_from_text(text)
-            return self.Acceptable
+            return self.State.Acceptable
         except:
-            return self.Intermediate
+            return self.State.Intermediate
 
     def fixup(self, text: str) -> str:
         return text
@@ -66,9 +66,9 @@ class ComplexValidator(QtGui.QValidator):
         """
         try:
             self.value_from_text(text)
-            return self.Acceptable
+            return self.State.Acceptable
         except ValueError:
-            return self.Intermediate
+            return self.State.Intermediate
 
     def fixup(self, text: str) -> str:
         return text
@@ -93,9 +93,9 @@ class ListValidator(QtGui.QValidator):
         """
         try:
             self.value_from_text(text)
-            return self.Acceptable
+            return self.State.Acceptable
         except:
-            return self.Intermediate
+            return self.State.Intermediate
 
     def fixup(self, text: str) -> str:
         return text
@@ -123,9 +123,9 @@ class TupleValidator(QtGui.QValidator):
         """
         try:
             self.value_from_text(text)
-            return self.Acceptable
+            return self.State.Acceptable
         except:
-            return self.Intermediate
+            return self.State.Intermediate
 
     def fixup(self, text: str) -> str:
         return text
@@ -153,9 +153,9 @@ class SetValidator(QtGui.QValidator):
         """
         try:
             self.value_from_text(text)
-            return self.Acceptable
+            return self.State.Acceptable
         except:
-            return self.Intermediate
+            return self.State.Intermediate
 
     def fixup(self, text: str) -> str:
         return text
@@ -183,9 +183,9 @@ class DictValidator(QtGui.QValidator):
         """
         try:
             self.value_from_text(text)
-            return self.Acceptable
+            return self.State.Acceptable
         except:
-            return self.Intermediate
+            return self.State.Intermediate
 
     def fixup(self, text: str) -> str:
         return text
