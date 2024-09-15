@@ -93,6 +93,8 @@ Example:
        my_gui_module:
            ...
 
+.. _remote_module_server:
+
 remote_modules_server
 ^^^^^^^^^^^^^^^^^^^^^
 
@@ -309,6 +311,8 @@ is called ``MyModuleClass`` and can be imported from
                    - 42
                    - 123.456
                    - ['a', 'b', 'c']
+
+.. _remote_module:
 
 Remote Module
 ^^^^^^^^^^^^^
