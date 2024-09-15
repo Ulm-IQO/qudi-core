@@ -32,8 +32,8 @@ module <error>`.
 
    <!-- This link to the IQO modules needs to be updated once that documentation is up -->
 
-See also the detailed `qudi
-modules <https://github.com/Ulm-IQO/qudi-iqo-modules/blob/main/docs/installation_guide.md>`__
+See also the detailed :ref:`qudi
+modules <iqo>`
 documentation if you want to know more about what defines a qudi module
 and the respective inheritance trees.
 
