@@ -52,8 +52,6 @@ except ImportError:
 
 # Set QT_API environment variable to PySide6
 os.environ['QT_API'] = 'pyside6'
-# Enable the High DPI scaling support of Qt5
-os.environ['QT_ENABLE_HIGHDPI_SCALING'] = '1'
 
 if sys.platform == 'win32':
     # Set QT_LOGGING_RULES environment variable to suppress qt.svg related warnings that otherwise
