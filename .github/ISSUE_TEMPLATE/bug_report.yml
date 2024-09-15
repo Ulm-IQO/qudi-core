@@ -17,6 +17,7 @@ body:
       description: What version of our software are you running?
       options:
         - Development
+        - Release v1.5.1
         - Release v1.5.0
         - Release v1.4.1
         - Release v1.3.0
@@ -67,14 +68,6 @@ body:
     id: comments
     attributes:
       label: Additional Comments
-    validations:
-      required: false
-  - type: input
-    id: contact
-    attributes:
-      label: Contact Details
-      description: How can we get in touch with you if we need more info?
-      placeholder: email@example.com
     validations:
       required: false
   #- type: checkboxes
