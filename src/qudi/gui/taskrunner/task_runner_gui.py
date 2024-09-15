@@ -78,10 +78,10 @@ class TaskRunnerGui(GuiBase):
         """ Hide window and stop ipython console.
         """
         self._save_window_geometry(self._mw)
-        self._mw.close()
         self._mw.sigStartTask.disconnect()
         self._mw.sigInterruptTask.disconnect()
         self._mw.sigClosed.disconnect()
+        self._mw.close()
         taskrunner = self._task_runner()
         taskrunner.sigTaskStarted.disconnect(self._mw.task_started, QtCore.Qt.QueuedConnection)
         taskrunner.sigTaskStateChanged.disconnect(self._mw.task_state_changed,
