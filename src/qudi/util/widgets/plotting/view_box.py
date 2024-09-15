@@ -99,8 +99,8 @@ class DataSelectionMixin:
 
     SelectionMode = SelectionMode
 
-    sigMarkerSelectionChanged = QtCore.Signal(dict)
-    sigRegionSelectionChanged = QtCore.Signal(dict)
+    sigMarkerSelectionChanged = QtCore.Signal(object)
+    sigRegionSelectionChanged = QtCore.Signal(object)
 
     def __init__(self,
                  selection_bounds: Optional[Sequence[Tuple[Union[None, float], Union[None, float]]]] = None,
