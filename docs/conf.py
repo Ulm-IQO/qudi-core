@@ -96,6 +96,11 @@ autodoc_default_options = {
     # Other options as needed
 }
 
+intersphinx_mapping = {
+    'iqo': ('https://qudi-iqo-modules.readthedocs.io/en/george/index.html', None),
+}
+
+
 # napoleon_numpy_docstring = True
 # napoleon_google_docstring = False
 # napoleon_include_init_with_doc = True

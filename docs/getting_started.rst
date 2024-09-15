@@ -46,15 +46,15 @@ logic from needing to “speak” the language of each specific device. -
 
 An example for an addon repository that providess several measurement
 toolchains is the
-`qudi-iqo-modules <https://github.com/Ulm-IQO/qudi-iqo-modules>`__
+:ref:`qudi-iqo-modules <iqo>`
 package (developed by the Institute for Quantum Optics of Ulm
 University). Installing it is a great and simple way to play around with
 qudi, as it comes with dummy hardware modules that run even without
 connecting real instrumentation hardware.
 
 After a fresh installation of qudi-iqo-modules, make sure that you load
-the ``default.cfg`` as described in the `iqo-modules installation
-guide <https://github.com/Ulm-IQO/qudi-iqo-modules/blob/main/docs/installation_guide.md>`__.
+the ``default.cfg`` as described in the :ref:`iqo-modules installation
+guide <iqo>`.
 Qudi should then run with only dummy hardware modules configured after a
 restart. That means you can load any toolchain you like by clicking on
 the respective GUI module name in the main window without breaking
@@ -97,8 +97,8 @@ Choose a qudi addon repository to work in
 
 | In that case, you will need to go even deeper in the code. There are
   two alternative ways of approaching qudi development: 1. You can
-  `install
-  qudi-iqo-modules <https://github.com/Ulm-IQO/qudi-iqo-modules/blob/main/docs/installation_guide.md>`__
+  :ref:`install
+  qudi-iqo-modules <iqo>`
   in dev mode (mind ``python -m pip install -e .`` in the instruction)
   and change or add modules there locally at your liking.
 | If you need to share changes with others online, it might be advisable
