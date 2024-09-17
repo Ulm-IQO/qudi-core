@@ -163,8 +163,10 @@ class QudiIPythonKernel(IPythonKernel):
         # Fixme: Also tried to fix the crazy fomatting scheme of IPython this way. Clashes badly
         #  with rpyc otherwise.
         self.shell.Completer.use_jedi = False
-        self.shell.Completer.evaluation = 'limited'
-        self.config.PlainTextFormatter.pprint = False
+        self.shell.Completer.evaluation = 'unsafe'
+        self.shell.Completer.debug = True
+        #self.config.IPCompleter.use_jedi = False
+        #self.config.PlainTextFormatter.pprint = False
         # self.config.BaseFormatter.enabled = False
         # # lure out first warning and ignore
         # with warnings.catch_warnings():
