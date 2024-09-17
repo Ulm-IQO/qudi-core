@@ -7,6 +7,7 @@ None
 
 ### Bugfixes
 - Fixed a bug where qudi would deadlock when starting a GUI module via the ipython terminal
+- Fixed a bug where autocompletion in qtconsole was no longer possible for rpyc version 6.0.0
 
 ### New Features
 None
