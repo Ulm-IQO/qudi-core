@@ -162,7 +162,8 @@ class QudiIPythonKernel(IPythonKernel):
         #  Jupyter/IPython offer absolutely no documentation on anything not super shallow.
         # Fixme: Also tried to fix the crazy fomatting scheme of IPython this way. Clashes badly
         #  with rpyc otherwise.
-        self.config.IPCompleter.use_jedi = False
+        self.shell.Completer.use_jedi = False
+        self.shell.Completer.evaluation = 'limited'
         self.config.PlainTextFormatter.pprint = False
         # self.config.BaseFormatter.enabled = False
         # # lure out first warning and ignore
