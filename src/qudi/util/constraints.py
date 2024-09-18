@@ -364,8 +364,8 @@ class DiscreteScalarConstraint(ScalarConstraint):
                 "Parameters value_set, bounds and increment are None. Please specify either value_set or bounds and increment."
             )
 
-        super().__init__(default, bounds, increment, enforce_int, checker)
         self._precision = precision
+        super().__init__(default, bounds, increment, enforce_int, checker)
 
         if not self.is_valid(self._default):
             raise ValueError(f"invalid default value ({self._default}) encountered")
