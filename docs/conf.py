@@ -27,7 +27,8 @@ extensions = [
     'sphinx.ext.autosummary',
     'sphinx.ext.viewcode',
     'sphinx.ext.intersphinx',
-    'sphinx.ext.doctest', 
+    'sphinx.ext.doctest',
+    "sphinx_design", 
     'sphinx.ext.coverage'
 ]
 intersphinx_mapping = {

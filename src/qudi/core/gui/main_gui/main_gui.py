@@ -48,12 +48,18 @@ class QudiMainGui(GuiBase):
     _show_error_popups = StatusVar(name='show_error_popups', default=True)
 
     def __init__(self, *args, **kwargs):
-        """Create an instance of the module.
-
-        @param object manager:
-        @param str name:
-        @param dict config:
         """
+    Create an instance of the module.
+
+    Parameters
+    ----------
+    manager : object
+        The manager instance.
+    name : str
+        The name of the module.
+    config : dict
+        The configuration for the module.
+    """
         super().__init__(*args, **kwargs)
         self.error_dialog = None
         self.mw = None
@@ -255,10 +261,13 @@ class QudiMainGui(GuiBase):
 
     def handle_log_record(self, entry):
         """
-        Show an error popup if the log entry is error level and above.
+    Show an error popup if the log entry is error level and above.
 
-        @param logging.LogRecord entry: log record as returned from logging module
-        """
+    Parameters
+    ----------
+    entry : logging.LogRecord
+        Log record as returned from the logging module.
+    """
         if entry.levelname in ('error', 'critical'):
             self.error_dialog.new_error(entry)
         return
