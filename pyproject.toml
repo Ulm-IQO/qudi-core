@@ -25,30 +25,23 @@ keywords = [
 license = { text = "LGPLv3" }
 classifiers = [
     'Development Status :: 5 - Production/Stable',
-
     'Environment :: Win32 (MS Windows)',
     'Environment :: X11 Applications',
     'Environment :: MacOS X',
-
     'Intended Audience :: Developers',
     'Intended Audience :: Science/Research',
     'Intended Audience :: End Users/Desktop',
-
     'License :: OSI Approved :: GNU Lesser General Public License v3 (LGPLv3)',
-
     'Natural Language :: English',
-
     'Operating System :: Microsoft :: Windows :: Windows 8',
     'Operating System :: Microsoft :: Windows :: Windows 8.1',
     'Operating System :: Microsoft :: Windows :: Windows 10',
     'Operating System :: MacOS :: MacOS X',
     'Operating System :: Unix',
     'Operating System :: POSIX :: Linux',
-
     'Programming Language :: Python :: 3.8',
     'Programming Language :: Python :: 3.9',
     'Programming Language :: Python :: 3.10',
-
     'Topic :: Scientific/Engineering',
     'Topic :: Software Development :: Libraries :: Application Frameworks',
     'Topic :: Software Development :: User Interfaces',
@@ -80,8 +73,6 @@ exclude = ["qudi.artwork"]
 [tool.setuptools.package-dir]
 "" = "src"
 
-
-
 [tool.setuptools.package-data]
 "qudi" = [
     "artwork/icons/*",
@@ -93,15 +84,15 @@ exclude = ["qudi.artwork"]
     "artwork/logo/*"
 ]
 
-
 [project.optional-dependencies]
 dev-docs = [
     "Sphinx==7.2.6",
     "numpydoc==1.6.0",
-    "pydata_sphinx_theme==0.15.4"
+    "pydata_sphinx_theme==0.15.4",
+    "sphinx-design==0.6.1"  # Added sphinx-design here
 ]
 
-dev-lint-format = ["ruff==0.2.1",]
+dev-lint-format = ["ruff==0.2.1"]
 
 dev-test = [
     "pytest==8.0.1",
@@ -115,7 +106,6 @@ qudi-config-editor = 'qudi.tools.config_editor.config_editor:main'
 qudi-uninstall-kernel = 'qudi.core.qudikernel:uninstall_kernel'
 qudi-install-kernel = 'qudi.core.qudikernel:install_kernel'
 
-
 [tool.ruff]
 select = ["D102", "D103", "D105"]
 
@@ -124,6 +114,3 @@ quote-style = "single"
 
 [tool.ruff.lint.flake8-quotes]
 docstring-quotes = "double"
-
-
-# "pydata_sphinx_theme==0.15.4"
