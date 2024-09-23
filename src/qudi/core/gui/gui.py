@@ -41,7 +41,8 @@ class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
     """
 
     def __init__(self):
-        """Tray icon constructor.
+        """
+        Tray icon constructor.
         Adds all the appropriate menus and actions.
         """
         super().__init__()
@@ -78,12 +79,27 @@ class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
         This method is called when the tray icon is left-clicked.
         It opens a menu at the position of the left click.
 
-        @param reason: reason that caused the activation
+        Parameters
+        ----------
+        reason :
+            Reason that caused the activation.
         """
         if reason == self.Trigger:
             self.left_menu.exec_(QtGui.QCursor.pos())
 
     def add_action(self, label, callback, icon=None):
+        """
+        Add an action to the system tray.
+
+        Parameters
+        ----------
+        label : str
+            The label of the action.
+        callback : function
+            The callback function to be executed when the action is triggered.
+        icon : QIcon, optional
+            The icon to display for the action. If None, a default icon will be used.
+        """
         if label in self._actions:
             raise ValueError(f'Action "{label}" already exists in system tray.')
 
@@ -99,6 +115,14 @@ class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
         self._actions[label] = action
 
     def remove_action(self, label):
+        """
+        Remove an action from the system tray.
+
+        Parameters
+        ----------
+        label : str
+            The label of the action to remove.
+        """
         action = self._actions.pop(label, None)
         if action is not None:
             action.triggered.disconnect()
@@ -159,6 +183,14 @@ class Gui(QtCore.QObject):
 
     @classmethod
     def instance(cls):
+        """
+        Get the singleton instance of Gui.
+
+        Returns
+        -------
+        Gui
+            The singleton instance of the Gui class.
+        """
         if cls._instance is None:
             return None
         return cls._instance()
@@ -172,30 +204,32 @@ class Gui(QtCore.QObject):
 
     @staticmethod
     def _configure_pyqtgraph(use_opengl=False):
-        # Configure pyqtgraph (if present)
+        """
+        Configure pyqtgraph settings.
+
+        Parameters
+        ----------
+        use_opengl : bool, optional
+            If True, enable OpenGL usage in pyqtgraph. Default is False.
+        """
         if pg is not None:
-            # test setting background of pyqtgraph
             testwidget = QtWidgets.QWidget()
             testwidget.ensurePolished()
             bgcolor = testwidget.palette().color(QtGui.QPalette.Normal, testwidget.backgroundRole())
             # set manually the background color in hex code according to our color scheme:
             pg.setConfigOption('background', bgcolor)
-            # experimental opengl usage
             pg.setConfigOption('useOpenGL', use_opengl)
 
     @staticmethod
     def set_theme(theme):
         """
-        Set icon theme for qudi app.
+        Set the icon theme for the Qudi application.
 
-        @param str theme: qudi theme name
+        Parameters
+        ----------
+        theme : str
+            The name of the theme to use.
         """
-        # Make icons work on non-X11 platforms, set custom theme
-        # if not sys.platform.startswith('linux') and not sys.platform.startswith('freebsd'):
-        #
-        # To enable the use of custom action icons, for now the above if statement has been
-        # removed and the QT theme is being set to our artwork/icons folder for
-        # all OSs.
         themepaths = QtGui.QIcon.themeSearchPaths()
         themepaths.append(os.path.join(get_artwork_dir(), 'icons'))
         QtGui.QIcon.setThemeSearchPaths(themepaths)
@@ -204,9 +238,12 @@ class Gui(QtCore.QObject):
     @staticmethod
     def set_style_sheet(stylesheet_path):
         """
-        Set qss style sheet for application.
+        Set the QSS stylesheet for the application.
 
-        @param str stylesheet_path: path to style sheet file
+        Parameters
+        ----------
+        stylesheet_path : str
+            Path to the stylesheet file.
         """
         try:
             if not os.path.exists(stylesheet_path):
@@ -241,6 +278,7 @@ class Gui(QtCore.QObject):
         QtWidgets.QApplication.instance().closeAllWindows()
 
     def activate_main_gui(self):
+        """Activate and show the main GUI module."""
         if QtCore.QThread.currentThread() is not self.thread():
             QtCore.QMetaObject.invokeMethod(self,
                                             'activate_main_gui',
@@ -258,6 +296,7 @@ class Gui(QtCore.QObject):
         QtWidgets.QApplication.instance().processEvents()
 
     def deactivate_main_gui(self):
+        """Deactivate the main GUI module."""
         if QtCore.QThread.currentThread() is not self.thread():
             QtCore.QMetaObject.invokeMethod(self,
                                             'deactivate_main_gui',
@@ -282,7 +321,9 @@ class Gui(QtCore.QObject):
 
     def close_system_tray_icon(self):
         """
-        Kill and delete system tray icon. Tray icon will be lost until Gui.__init__ is called again.
+        Remove the system tray icon.
+
+        Tray icon will be lost until Gui.__init__ is called again.
         """
         self.hide_system_tray_icon()
         self.system_tray_icon.quitAction.triggered.disconnect()
@@ -292,13 +333,18 @@ class Gui(QtCore.QObject):
 
     def system_tray_notification_bubble(self, title, message, time=None, icon=None):
         """
-        Helper method to invoke balloon messages in the system tray by calling
-        QSystemTrayIcon.showMessage.
+        Show a notification balloon message from the system tray icon.
 
-        @param str title: The notification title of the balloon
-        @param str message: The message to be shown in the balloon
-        @param float time: optional, The lingering time of the balloon in seconds
-        @param QIcon icon: optional, an icon to be used in the balloon. "None" will use OS default.
+        Parameters
+        ----------
+        title : str
+            The notification title of the balloon.
+        message : str
+            The message to be shown in the balloon.
+        time : float, optional
+            The display time of the balloon in seconds. Default is None.
+        icon : QIcon, optional
+            An icon to be used in the balloon. Default is None, which will use the OS default.
         """
         if icon is None:
             icon = QtGui.QIcon()
@@ -307,7 +353,18 @@ class Gui(QtCore.QObject):
         self.system_tray_icon.showMessage(title, message, icon, int(round(time * 1000)))
 
     def prompt_shutdown(self, modules_locked=True):
-        """ Display a dialog, asking the user to confirm shutdown.
+        """
+        Display a dialog asking the user to confirm shutdown.
+
+        Parameters
+        ----------
+        modules_locked : bool, optional
+            If True, informs the user that modules are locked. Default is True.
+
+        Returns
+        -------
+        bool
+            True if the user confirms shutdown, otherwise False.
         """
         if modules_locked:
             msg = 'Some qudi modules are locked right now.\n' \
@@ -323,7 +380,18 @@ class Gui(QtCore.QObject):
         return result == QtWidgets.QMessageBox.Yes
 
     def prompt_restart(self, modules_locked=True):
-        """ Display a dialog, asking the user to confirm restart.
+        """
+        Display a dialog asking the user to confirm restart.
+
+        Parameters
+        ----------
+        modules_locked : bool, optional
+            If True, informs the user that modules are locked. Default is True.
+
+        Returns
+        -------
+        bool
+            True if the user confirms restart, otherwise False.
         """
         if modules_locked:
             msg = 'Some qudi modules are locked right now.\n' \
@@ -341,10 +409,14 @@ class Gui(QtCore.QObject):
     @QtCore.Slot(str, str)
     def pop_up_message(self, title, message):
         """
-        Slot prompting a dialog window with a message and an OK button to dismiss it.
+        Display a pop-up dialog window with a message and an OK button.
 
-        @param str title: The window title of the dialog
-        @param str message: The message to be shown in the dialog window
+        Parameters
+        ----------
+        title : str
+            The window title of the dialog.
+        message : str
+            The message to be shown in the dialog window.
         """
         if not isinstance(title, str):
             logger.error('pop-up message title must be str type')
@@ -361,12 +433,18 @@ class Gui(QtCore.QObject):
     @QtCore.Slot(str, str, object, object)
     def balloon_message(self, title, message, time=None, icon=None):
         """
-        Slot prompting a balloon notification from the system tray icon.
+        Display a balloon notification from the system tray icon.
 
-        @param str title: The notification title of the balloon
-        @param str message: The message to be shown in the balloon
-        @param float time: optional, The lingering time of the balloon in seconds
-        @param QIcon icon: optional, an icon to be used in the balloon. "None" will use OS default.
+        Parameters
+        ----------
+        title : str
+            The notification title of the balloon.
+        message : str
+            The message to be shown in the balloon.
+        time : float, optional
+            The lingering time of the balloon in seconds.
+        icon : QIcon, optional
+            An icon to be used in the balloon. Default is None, which will use OS default.
         """
         if not self.system_tray_icon.supportsMessages():
             logger.warning('{0}:\n{1}'.format(title, message))
@@ -379,6 +457,18 @@ class Gui(QtCore.QObject):
 
     @QtCore.Slot(str, str, str)
     def _tray_module_action_changed(self, base, module_name, state):
+        """
+        Update the system tray icon with actions based on the module state.
+
+        Parameters
+        ----------
+        base : str
+            The base module type (e.g., 'gui').
+        module_name : str
+            The name of the module.
+        state : str
+            The state of the module (e.g., 'deactivated').
+        """
         if self.system_tray_icon and base == 'gui':
             if state == 'deactivated':
                 self.system_tray_icon.remove_action(module_name)
@@ -389,3 +479,4 @@ class Gui(QtCore.QObject):
                 except KeyError:
                     return
                 self.system_tray_icon.add_action(module_name, module_inst.show)
+

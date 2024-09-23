@@ -4,8 +4,9 @@ Core
 .. autosummary::
     :caption: Qudi Core
     :toctree: _autosummary
-    :template: custom-module-template.rst
+    
     :recursive:
+    :nosignatures:
     
 
 

@@ -27,11 +27,9 @@ extensions = [
     'sphinx.ext.autosummary',
     'sphinx.ext.viewcode',
     'sphinx.ext.intersphinx',
-<<<<<<< HEAD
-=======
-    'sphinx.ext.doctest', 
+    'sphinx.ext.doctest',
+    "sphinx_design", 
     'sphinx.ext.coverage'
->>>>>>> d6ba3df2 (Fixing hyperlinks)
 ]
 intersphinx_mapping = {
     'PySide2': ('https://doc.qt.io/qtforpython-5', None),  # This is broken, some bug with PySide2 (and PySide6). See https://bugreports.qt.io/browse/PYSIDE-2215

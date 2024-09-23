@@ -1,3 +1,5 @@
+.. _creating_releases:
+
 How to create a new qudi-core release
 =====================================
 
