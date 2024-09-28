@@ -16,18 +16,29 @@
 .*.swp
 .DS_store
 
-# Local config directories
-/*.egg-info
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
 
-# Simulated Subversion default ignores end here
-# The contents of the svn:ignore property on the branch root.
-/crash.log
-/tempLog.txt
-/.idea
-/thirdparty
-/documentation/generated
-/documentation/images
-/Data
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
 
 # log files
 *.log
@@ -80,8 +91,16 @@ cover/
 
 # Sphinx documentation
 docs/_build/
+<<<<<<< HEAD
+<<<<<<< HEAD
 docs/_autosummary/
 docs/_static/
+=======
+>>>>>>> 26647177 (Added rtd config and edited files for myst syntax warnings. RTD site should work now, need to improve formatting and layout.)
+=======
+docs/_autosummary/
+docs/_static/
+>>>>>>> 25ee7046 (Got autosummary working with a custom template. There are numerous warnings during the build due to syntax etc but at least the docs render locally. Added several `__init__.py` files to enable autosummary to recurse into submodules. Also some modules were run upon import which broke the build so added `if __name__ == "__main__"` where necessary. For some reason, the widgets submodule actually causes a segfault during the sphinx build which is amazing. I removed the blank `__init__.py` to avoid sphinx recursing into that submodule so the docs can build at least.)
 
 # Jupyter Notebook
 .ipynb_checkpoints
@@ -107,9 +126,12 @@ venv.bak/
 .mypy_cache/
 .dmypy.json
 dmypy.json
+<<<<<<< HEAD
 
 # ruff
 .ruff_cache/
 
 # vscode settings
 .vscode/
+=======
+>>>>>>> 26647177 (Added rtd config and edited files for myst syntax warnings. RTD site should work now, need to improve formatting and layout.)

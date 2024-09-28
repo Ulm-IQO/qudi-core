@@ -26,7 +26,7 @@ There are also two additional supported ways to run qudi:
    This is especially helpful when you have qudi installed in development mode and want to run qudi 
    from within an IDE like e.g. PyCharm.
 
-### Command Line Arguments
+## Command Line Arguments
 The above mentioned commands takes several optional command line arguments to pass to qudi upon 
 startup:
 
