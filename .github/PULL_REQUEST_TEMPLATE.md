@@ -27,7 +27,7 @@
 <!--- If you're unsure about any of these, ask. -->
 <!--- You can also create this PR and afterwards check the boxes by clicking on them. -->
 - [ ] My code follows the code style of this project.
-- [ ] I have documented my changes in `/docs/changelog.md`.
+- [ ] I have documented my changes in `/docs/changelog.rst`.
 - [ ] My change requires additional/updated documentation.
 - [ ] I have updated the documentation accordingly.
 - [ ] I have added/updated the config example for any module docstrings as necessary.
