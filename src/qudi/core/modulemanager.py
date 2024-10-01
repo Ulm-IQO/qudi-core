@@ -507,6 +507,15 @@ class ManagedModule(QtCore.QObject):
             if not self.is_loaded:
                 self._load()
 
+            if self.is_remote:
+                self.__poll_timer = QtCore.QTimer(self)
+                self.__poll_timer.setInterval(int(round(self.__state_poll_interval * 1000)))
+                self.__poll_timer.setSingleShot(True)
+                self.__poll_timer.timeout.connect(self._poll_module_state)
+                self.__poll_timer.start()
+            else:
+                self._instance.module_state.sigStateChanged.connect(self._state_change_callback)
+
             # Return early if already active
             if self.is_active:
                 # If it is a GUI module, show it again.
@@ -569,15 +578,6 @@ class ManagedModule(QtCore.QObject):
                 except:
                     pass
                 raise RuntimeError(f'Failed to activate {self.module_base} module "{self.name}"!')
-
-            if self.is_remote:
-                self.__poll_timer = QtCore.QTimer(self)
-                self.__poll_timer.setInterval(int(round(self.__state_poll_interval * 1000)))
-                self.__poll_timer.setSingleShot(True)
-                self.__poll_timer.timeout.connect(self._poll_module_state)
-                self.__poll_timer.start()
-            else:
-                self._instance.module_state.sigStateChanged.connect(self._state_change_callback)
 
     @QtCore.Slot()
     def _poll_module_state(self):
