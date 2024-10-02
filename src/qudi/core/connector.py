@@ -85,8 +85,7 @@ class Connector:
     def connect(self, target: Any) -> None:
         """ Check if target is connectible by this connector and connect.
         """
-        bases = {cls.__name__ for cls in target.__class__.mro()}
-        if self.interface not in bases:
+        if self.interface not in target._meta['mro']:
             raise RuntimeError(
                 f'Module "{target}" connected to connector "{self.name}" does not implement '
                 f'interface "{self.interface}".'
