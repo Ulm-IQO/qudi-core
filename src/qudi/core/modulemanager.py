@@ -560,11 +560,18 @@ class ManagedModule(QtCore.QObject):
                                                         QtCore.Qt.BlockingQueuedConnection)
                         thread_manager.quit_thread(thread_name)
                         thread_manager.join_thread(thread_name)
+                        self._disconnect()
+                        self._disable_state_updated()
+
             else:
                 try:
                     self._instance.module_state.activate()
-                except fysom.Canceled:
-                    pass
+                except Exception as e:
+                    raise RuntimeError(f'Failed to activate {self.module_base} module "{self.name}"!') from e
+                finally:  # cleanup if activation was not successful
+                    if not self.is_active:
+                        self._disconnect()
+                        self._disable_state_updated()
 
             self.__last_state = self.state
             self.sigStateChanged.emit(self._base, self._name, self.__last_state)
@@ -575,6 +582,7 @@ class ManagedModule(QtCore.QObject):
             if not self.is_active:
                 try:
                     self._disconnect()
+                    self._disable_state_updated()
                 except:
                     pass
                 raise RuntimeError(f'Failed to activate {self.module_base} module "{self.name}"!')
@@ -624,14 +632,7 @@ class ManagedModule(QtCore.QObject):
                     )
                 module.deactivate()
 
-            # Disable state updated
-            try:
-                self.__poll_timer.stop()
-                self.__poll_timer.timeout.disconnect()
-            except AttributeError:
-                self._instance.module_state.sigStateChanged.disconnect(self._state_change_callback)
-            finally:
-                self.__poll_timer = None
+            self._disable_state_updated()
 
             # Actual deactivation of this module
             if self._instance.is_module_threaded:
@@ -763,3 +764,12 @@ class ManagedModule(QtCore.QObject):
     def _disconnect(self):
         with self._lock:
             self._instance.disconnect_modules()
+
+    def _disable_state_updated(self):
+        try:
+            self.__poll_timer.stop()
+            self.__poll_timer.timeout.disconnect()
+        except AttributeError:
+            self._instance.module_state.sigStateChanged.disconnect(self._state_change_callback)
+        finally:
+            self.__poll_timer = None
