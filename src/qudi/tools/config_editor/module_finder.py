@@ -102,8 +102,7 @@ class QudiModules:
 
     def _modules_for_connector(self, connector: Connector) -> List[str]:
         interface = connector.interface
-        bases = {mod: {c.__name__ for c in cls.mro()} for mod, cls in self._qudi_modules.items()}
-        return list(mod for mod, base_names in bases.items() if interface in base_names)
+        return list(mod for mod, cls in self._qudi_modules.items() if issubclass(cls, interface))
 
     @property
     def available_modules(self) -> List[str]:

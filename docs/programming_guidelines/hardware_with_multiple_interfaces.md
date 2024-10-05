@@ -103,7 +103,7 @@ And this is where the ominous meta object `qudi.util.overload.OverloadedAttribut
 ## How to overload an interface attribute
 The meta object `OverloadedAttribute` enables you to flag any attribute 
 (descriptor object, variable, method/function etc.) as an overloaded attribute giving the 
-possibility to register multiple implementations for the attribute under unique `str` keys.
+possibility to register multiple implementations of the attribute for each unique interface.
 
 Let's look at an example on how this can be used in a hardware module based on the example classes 
 presented in the previous section:
@@ -135,15 +135,15 @@ class MyHardwareModule(DataReaderInterface, DataOutputInterface):
     start = OverloadedAttribute()
 
     # Register multiple implementations for "start" via convenient decorator
-    # The key words under which the implementations are registered must be the corresponding 
-    # interface class names.
+    # The key under which the implementations are registered must be the corresponding 
+    # interface classes.
     # Make sure to use "start" as attribute name for all implementations.
-    @start.overload('DataReaderInterface')
+    @start.overload(DataReaderInterface)
     def start(self):
         # Start the data reader
         print('Data reader started through "DataReaderInterface" interface method')
     
-    @start.overload('DataOutputInterface')
+    @start.overload(DataOutputInterface)
     def start(self):
         # Start the data output
         print('Data output started through "DataOutputInterface" interface method')
@@ -151,14 +151,14 @@ class MyHardwareModule(DataReaderInterface, DataOutputInterface):
     # You can do the same for properties. Just make sure to apply the @property decorator first.
     constraints = OverloadedAttribute()
     
-    @constraints.overload('DataReaderInterface')
+    @constraints.overload(DataReaderInterface)
     @property
     def constraints(self):
         # Return data reader constraints
         print('Data reader constraints requested through "DataReaderInterface" interface.')
         return dict()
 
-    @constraints.overload('DataOutputInterface')
+    @constraints.overload(DataOutputInterface)
     @property
     def constraints(self):
         # Return data output constraints
@@ -170,18 +170,24 @@ As already mentioned, `set_data` and `get_data` do not need special treatment.
 
 Through the `OverloadedAttribute` object and decorators used here, the two implementations for 
 `start` will both be registered to the attribute `start`; each one associated to a different 
-interface class name ('DataReaderInterface' or 'DataOutputInterface').
+interface class (`DataReaderInterface` or `DataOutputInterface`).
 Same goes for the property `constraints`.
 
-The string given in the `overload` decorator is used as a keyword to address which implementation 
-to use:
+The type given in the `overload` decorator is converted to a full import path string and used as a 
+keyword to address which implementation to use:
 ```python
+# get full identifier key for each interface class
+reader_interface_key = f'{DataReaderInterface.__module__}.{DataReaderInterface.__qualname__}'
+output_interface_key = f'{DataOutputInterface.__module__}.{DataOutputInterface.__qualname__}'
+# In our example the above strings would translate into:
+# reader_interface_key = 'qudi.interface.data_reader.DataReaderInterface'
+# output_interface_key = 'qudi.interface.data_output.DataOutputInterface'
 # Call different implementations for "start"
-<MyHardwareModule>.start['DataReaderInterface']()
-<MyHardwareModule>.start['DataOutputInterface']()
+<MyHardwareModule>.start[reader_interface_key]()
+<MyHardwareModule>.start[output_interface_key]()
 # Get different implementations for "constraints" property
-<MyHardwareModule>.constraints['DataReaderInterface']
-<MyHardwareModule>.constraints['DataOutputInterface']
+<MyHardwareModule>.constraints[reader_interface_key]
+<MyHardwareModule>.constraints[output_interface_key]
 ```
 
 So when accessing overloaded attributes of a hardware class directly, you can select which 
@@ -198,8 +204,8 @@ Now you might think this new way of addressing overloaded attributes will not wo
 logic modules due to the changed attribute access syntax.
 
 In order to work around this issue the `qudi.core.connector.Connector` object is your best friend. 
-During instantiation of a `Connector` object the logic module passes the interface type or class 
-name as parameter. As such the `Connector` instance can provide a hardware module proxy object when 
+During instantiation of a `Connector` object the logic module passes the interface type as 
+parameter. As such the `Connector` instance can provide a hardware module proxy object when 
 called to hide the overload mechanics of interface methods from the calling logic module. 
 This is enabled by `qudi.util.overload.OverloadProxy`.
 
@@ -210,14 +216,17 @@ A call to each different `start` implementation would look like:
 ```python
 from qudi.core.connector import Connector
 from qudi.core.module import LogicBase
+from qudi.interface.data_reader import DataReaderInterface
+from qudi.interface.data_output import DataOutputInterface
+
 
 class MyLogicModule(LogicBase):
     """ Fictional logic module illustrating the use of the Connector object with overloaded 
     interface methods.
     """
     # Instantiate connectors    
-    _data_reader = Connector(name='data_reader', interface='DataReaderInterface')
-    _data_output = Connector(name='data_output', interface='DataOutputInterface')
+    _data_reader = Connector(name='data_reader', interface=DataReaderInterface)
+    _data_output = Connector(name='data_output', interface=DataOutputInterface)
 
     # Declare other class-level stuff
     ...
@@ -227,8 +236,8 @@ class MyLogicModule(LogicBase):
         
     # example method with calls to hardware module(s)
     def do_stuff(self):
-        self._data_reader().start()  # Will call "start" implementation for "DataReaderInterface"
-        self._data_output().start()  # Will call "start" implementation for "DataOutputInterface"
+        self._data_reader.start()  # Will call "start" implementation for DataReaderInterface
+        self._data_output.start()  # Will call "start" implementation for DataOutputInterface
 ```
 
 As you can see through the use of the `Connector` object, the logic does not need to know if two 
@@ -239,8 +248,9 @@ The qudi meta object `OverloadedAttribute` as well as `OverloadProxy` can in fac
 general way and not only with qudi hardware interfaces.
 
 It can overload any attribute type (descriptor objects, callables, staticmethods, classmethods, 
-etc.) in the class body with any non-empty `str` keywords. You do not need qudi module base/meta 
-classes for the overload mechanism to work, which allows you to use it with any Python3 class.
+etc.) in the class body with any non-empty `str` or `type` key. 
+You do not need qudi module base/meta classes for the overload mechanism to work, which allows 
+you to use it with any Python3 class. 
 The same is true for hiding the overloading semantics using `OverloadProxy`.
 
 ---

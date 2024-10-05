@@ -12,6 +12,8 @@ module base type representation.
 class descriptors. Renamed `is_module_threaded` to `module_threaded`.
 - Turned `ConfigOption`, `StatusVar` and `Connector` into descriptors, eliminating the need to call 
 or explicitly construct them
+- `Connector` meta attribute now needs to be initialized with the actual interface type instead of 
+a name string. This requires changing all qudi modules that have not already done this before.
 - Combined meta object, id, logging, appdata and abc functionality in new general purpose mixin 
 class `QudiQObjectMixin` that can be inherited in conjunction with any `QObject` or `QWidget`
 (sub-)class. This new mixin is used as base class for `qudi.core.module.Base` among others.

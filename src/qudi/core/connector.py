@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Connector object to establish connections between qudi modules.
+Connector object to establish connections between qudi objects.
 
 Copyright (c) 2021, the qudi developers. See the AUTHORS.md file at the top-level directory of this
 distribution and on <https://github.com/Ulm-IQO/qudi-core/>
@@ -21,7 +21,7 @@ If not, see <https://www.gnu.org/licenses/>.
 
 __all__ = ['Connector', 'QudiConnectionError']
 
-from typing import Any, Type, Union
+from typing import Union
 from qudi.util.overload import OverloadProxy
 
 
@@ -30,20 +30,17 @@ class QudiConnectionError(RuntimeError):
 
 
 class Connector:
-    """ A connector used to connect qudi modules with each other.
-    """
+    """ A connector used to connect qudi objects with each other """
 
-    def __init__(self, interface: Union[str, Type], name: str = None, optional: bool = False):
+    def __init__(self, interface: type, name: str = None, optional: bool = False):
         """
         @param str interface: name of the interface class to connect to
         @param str name: optional, name of the connector in qudi config. Will set attribute name if
                          omitted.
         @param bool optional: optional, flag indicating if the connection is mandatory (False)
         """
-        if not isinstance(interface, (str, type)):
-            raise TypeError(
-                'Parameter "interface" must be an interface class or the class name as str'
-            )
+        if not isinstance(interface, type):
+            raise TypeError('Parameter "interface" must be an interface class')
         if name is not None:
             if not isinstance(name, str):
                 raise TypeError('Parameter "name" must be str type or None')
@@ -52,7 +49,7 @@ class Connector:
         if not isinstance(optional, bool):
             raise TypeError('Parameter "optional" must be bool type')
         super().__init__()
-        self.interface = interface if isinstance(interface, str) else interface.__name__
+        self.interface = interface
         self.name = name
         self.optional = optional
         self.attr_name = None
@@ -68,9 +65,11 @@ class Connector:
         except KeyError:
             if self.optional:
                 return None
-            raise QudiConnectionError(
-                f'Connector "{self.name}" (interface "{self.interface}") is not connected.'
-            ) from None
+            else:
+                interface = f'{self.interface.__module__}.{self.interface.__qualname__}'
+                raise QudiConnectionError(
+                    f'Connector "{self.name}" (interface "{interface}") is not connected.'
+                ) from None
         except AttributeError:
             return self
 
@@ -81,28 +80,33 @@ class Connector:
         raise AttributeError('Connector attribute can not be overwritten')
 
     def __repr__(self):
-        return f'{self.__module__}.Connector("{self.interface}", "{self.name}", {self.optional})'
+        connector = f'{self.__class__.__module__}.{self.__class__.__qualname__}'
+        interface = f'{self.interface.__module__}.{self.interface.__qualname__}'
+        return f'{connector}({interface}, "{self.name}", {self.optional})'
 
-    def connect(self, instance: object, target: Any) -> None:
+    def connect(self, instance: object, target: object) -> None:
         """ Check if target is connectible by this connector and connect. """
-        cls = instance.__class__
         if self.is_connected(instance):
             raise QudiConnectionError(
-                f'Connector "{self.name}" at "{cls.__module__}.{cls.__name__}.{self.attr_name}" '
-                f'already connected to a target'
+                f'Connector "{self.name}" on "{instance.__class__.__module__}.'
+                f'{instance.__class__.__qualname__}.{self.attr_name}" already connected to a target'
             )
-        if target is None:
+        elif target is None:
             if not self.optional:
-                raise QudiConnectionError(f'No target given for mandatory connector "{self.name}" '
-                                          f'at "{cls.__module__}.{cls.__name__}.{self.attr_name}"')
-            return
-        bases = {cls.__name__ for cls in target.__class__.mro()}
-        if self.interface not in bases and target.__class__.__name__ != 'RemoteProxy':
+                raise QudiConnectionError(
+                    f'No target given for mandatory connector "{self.name}" on '
+                    f'"{instance.__class__.__module__}.{instance.__class__.__qualname__}.'
+                    f'{self.attr_name}"'
+                )
+        elif not isinstance(target, self.interface):
             raise QudiConnectionError(
-                f'Target "{target}" is no subclass of "{self.interface}" required by connector '
-                f'"{self.name}" at "{cls.__module__}.{cls.__name__}.{self.attr_name}"'
+                f'Connector target "{target}" is no instance of "{self.interface.__module__}.'
+                f'{self.interface.__qualname__}" required by connector "{self.name}" on '
+                f'"{instance.__class__.__module__}.{instance.__class__.__qualname__}.'
+                f'{self.attr_name}"'
             )
-        instance.__dict__[self.attr_name] = OverloadProxy(target, self.interface)
+        else:
+            instance.__dict__[self.attr_name] = OverloadProxy(target, self.interface)
 
     def disconnect(self, instance: object) -> None:
         """ Disconnect connector. """
