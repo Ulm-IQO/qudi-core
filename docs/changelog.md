@@ -39,6 +39,8 @@ singleton
 cause the affected descriptor to be initialized to its default value and no longer prevent the 
 module from activating. `Connector` behaves similar if it is optional.
 - Fixed a bug where qudi would deadlock when starting a GUI module via the ipython terminal
+- Fixed a bug with the `qtconsole` package no longer being part of `jupyter`. It is now listed 
+explicitly in the dependencies.
 
 ### New Features
 - New context manager `qudi.util.mutex.acquire_timeout` to facilitate (Recursive)Mutex/(R)Lock 
@@ -64,6 +66,7 @@ modules at once.
 `qudi.util.paths.get_module_appdata_path`
 - Improved performance reading and mutating `qudi.util.models.DictTableModel` and 
 `qudi.util.models.ListTableModel`
+- Removed `setup.py` and moved fully to `pyproject.toml` instead
 
 
 ## Version 1.5.1

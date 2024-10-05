@@ -1,6 +1,94 @@
 [build-system]
 requires = [
-    "setuptools>=42",
+    "setuptools>=61.0",
+    "setuptools-scm>=8.0",
     "wheel"
 ]
 build-backend = "setuptools.build_meta"
+
+[project]
+name = "qudi-core"
+dynamic = ["version"]
+description = "A modular measurement application framework"
+readme = "README.md"
+keywords = [
+    "qudi",
+    "diamond",
+    "quantum",
+    "confocal",
+    "automation",
+    "experiment",
+    "measurement",
+    "framework",
+    "lab",
+    "laboratory",
+    "instrumentation",
+    "instrument",
+    "modular",
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+
+    "Environment :: Win32 (MS Windows)",
+    "Environment :: X11 Applications",
+    "Environment :: MacOS X",
+
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "Intended Audience :: End Users/Desktop",
+
+    "License :: OSI Approved :: GNU Lesser General Public License v3 (LGPLv3)",
+
+    "Natural Language :: English",
+
+    "Operating System :: Microsoft :: Windows :: Windows 8",
+    "Operating System :: Microsoft :: Windows :: Windows 8.1",
+    "Operating System :: Microsoft :: Windows :: Windows 10",
+    "Operating System :: Microsoft :: Windows :: Windows 11",
+    "Operating System :: MacOS :: MacOS X",
+    "Operating System :: Unix",
+    "Operating System :: POSIX :: Linux",
+
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+
+    "Topic :: Scientific/Engineering",
+    "Topic :: Software Development :: Libraries :: Application Frameworks",
+    "Topic :: Software Development :: User Interfaces",
+]
+requires-python = ">=3.8, <3.11"
+dependencies = [
+    "cycler>=0.10.0",
+    "entrypoints>=0.3",
+    "fysom>=2.1.6",
+    "GitPython>=3.1.24",
+    "jupyter>=1.0.0",
+    "jupytext>=1.13.0",
+    "lmfit>=1.0.3",
+    "matplotlib>=3.4.3",
+    "numpy>=1.21.3, < 2",
+    "pyqtgraph>=0.13.0",
+    "PySide2==5.15.2.1",
+    "rpyc>=5.0.1, <6",
+    "ruamel.yaml>=0.17.16",
+    "scipy>=1.7.1",
+    "jsonschema>=4.2.1",
+    "qtconsole>=5.5.0",
+]
+
+[project.scripts]
+qudi = "qudi.runnable:main"
+qudi-config-editor = "qudi.tools.config_editor.config_editor:main"
+qudi-uninstall-kernel = "qudi.core.qudikernel:uninstall_kernel"
+qudi-install-kernel = "qudi.core.qudikernel:install_kernel"
+
+[project.urls]
+Homepage = "https://github.com/Ulm-IQO/qudi-core"
+Documentation = "https://ulm-iqo.github.io/qudi-core/"
+Repository = "https://github.com/Ulm-IQO/qudi-core.git"
+"Bug Tracker" = "https://github.com/Ulm-IQO/qudi-core/issues"
+Changelog = "https://github.com/Ulm-IQO/qudi-core/blob/main/docs/changelog.md"
+
+[tool.setuptools.dynamic]
+version = {file = "VERSION"}
