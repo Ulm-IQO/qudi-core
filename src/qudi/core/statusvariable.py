@@ -35,10 +35,16 @@ class StatusVar:
     def __init__(self, name: Optional[str] = None, default: Optional[Any] = None, *,
                  constructor: Optional[Callable] = None, representer: Optional[Callable] = None):
         """
-        @param name: identifier of the status variable when stored
-        @param default: default value for the status variable when a saved version is not present
-        @param constructor: constructor function for variable; use for type checks or conversion
-        @param representer: representer function for status variable; use for saving conversion
+        Parameters
+        ----------
+        name : str
+            Identifier of the status variable when stored.
+        default : Any
+            Default value for the status variable when a saved version is not present.
+        constructor : callable
+            Constructor function for the variable; use for type checks or conversion.
+        representer : callable
+            Representer function for the status variable; use for saving conversion.
         """
         self.name = name
         self.default = default
@@ -62,7 +68,10 @@ class StatusVar:
     def copy(self, **kwargs):
         """ Create a new instance of StatusVar with copied and updated values.
 
-        @param kwargs: Additional or overridden parameters for the constructor of this class
+        Parameters
+        ----------
+        **kwargs : dict
+            Additional or overridden parameters for the constructor of this class.
         """
         newargs = {'name': self.name,
                    'default': copy.deepcopy(self.default),
@@ -74,8 +83,15 @@ class StatusVar:
     def constructor(self, func: Callable) -> Callable:
         """ This is the decorator for declaring constructor function for this StatusVar.
 
-        @param func: constructor function for this StatusVar
-        @return: return the original function so this can be used as a decorator
+        Parameters
+        ----------
+        func : callable
+            Constructor function for this StatusVar.
+
+        Returns
+        -------
+        callable
+            The original function so this can be used as a decorator.
         """
         self.constructor_function = self._assert_func_signature(func)
         return func
@@ -83,15 +99,22 @@ class StatusVar:
     def representer(self, func: Callable) -> Callable:
         """ This is the decorator for declaring a representer function for this StatusVar.
 
-        @param func: representer function for this StatusVar
-        @return: return the original function so this can be used as a decorator
+        Parameters
+        ----------
+        func : callable
+            Representer function for this StatusVar.
+
+        Returns
+        -------
+        callable
+            The original function so this can be used as a decorator.
         """
         self.representer_function = self._assert_func_signature(func)
         return func
 
     @staticmethod
     def _assert_func_signature(func: Callable) -> Callable:
-        assert callable(func), 'StatusVar constructor/representer must be callable'
+        assert callable(func), "StatusVar constructor/representer must be callable"
         params = tuple(inspect.signature(func).parameters)
         assert 0 < len(params) < 3, 'StatusVar constructor/representer must be function with ' \
                                     '1 (static) or 2 (bound method) parameters.'

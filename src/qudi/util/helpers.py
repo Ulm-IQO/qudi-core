@@ -37,11 +37,21 @@ def iter_modules_recursive(paths: Union[str, Iterable[str]],
     for each directory.
 
     Additional modifications include:
-    - Directories starting with "_" or "." are ignored (also including their sub-directories)
-    - Python modules starting with a double-underscore ("__") are excluded in the result
+    - Directories starting with "_" or "." are ignored (including their sub-directories).
+    - Python modules starting with a double-underscore ("__") are excluded from the result.
 
-    @param iterable paths: Iterable of root directories to start the search for modules
-    @param str prefix: optional, prefix to prepend to all module names.
+    Parameters
+    ----------
+    paths : iterable
+        Iterable of root directories to start the search for modules.
+    prefix : str, optional
+        Prefix to prepend to all module names.
+
+    Returns
+    -------
+    iterable
+        Concatenated return values of pkgutil.iter_modules() for all directories in the tree.
+
     """
     if isinstance(paths, str):
         paths = [paths]
@@ -69,11 +79,19 @@ def iter_modules_recursive(paths: Union[str, Iterable[str]],
 
 def natural_sort(iterable: Iterable[Any]) -> List[Any]:
     """
-    Sort an iterable of str in an intuitive, natural way (human/natural sort).
-    Use this to sort alphanumeric strings containing integers.
+    Sort an iterable of strings in an intuitive, natural way (human/natural sort).
+    This is useful for sorting alphanumeric strings that contain integers.
 
-    @param str[] iterable: Iterable with str items to sort
-    @return list: sorted list of strings
+    Parameters
+    ----------
+    iterable : list of str
+        Iterable with string items to sort.
+
+    Returns
+    -------
+    list
+        Sorted list of strings.
+
     """
     def conv(s):
         return int(s) if s.isdigit() else s
@@ -151,16 +169,25 @@ def in_range(value: _RealNumber, lower_limit: _RealNumber,
 
 def csv_2_list(csv_string: str, str_2_val: Optional[Callable[[str], Any]] = None) -> List[Any]:
     """
-    Parse a list literal (with or without square brackets) given as string containing
-    comma-separated int or float values to a python list.
-    (blanks before and after commas are handled)
+    Parse a list literal (with or without square brackets) given as a string containing
+    comma-separated int or float values to a Python list.
+    
+    Blanks before and after commas are handled.
 
-    @param str csv_string: scalar number literals as strings separated by a single comma and any number
-                       of blanks. (brackets are ignored)
-                       Example: '[1e-6,2.5e6, 42]' or '1e-6, 2e-6,   42'
-    @param function str_2_val: optional, function to use for casting substrings into single values.
-    @return list: list of float values. If optional str_2_val is given, type is invoked by this
-                  function.
+    Parameters
+    ----------
+    csv_string : str
+        Scalar number literals as strings separated by a single comma and any number
+        of blanks. Brackets are ignored.
+        Example: '[1e-6,2.5e6, 42]' or '1e-6, 2e-6,   42'.
+    str_2_val : function, optional
+        Function to use for casting substrings into single values.
+
+    Returns
+    -------
+    list
+        List of float values. If `str_2_val` is provided, type is invoked by this function.
+
     """
     if not isinstance(csv_string, str):
         raise TypeError('string_2_list accepts only str type input.')

@@ -69,9 +69,15 @@ class ThreadManager(QtCore.QAbstractListModel):
     def get_new_thread(self, name):
         """ Create and return a new QThread with objectName <name>
 
-        @param str name: unique name of thread
+        Parameters
+        ----------
+        name : str
+            Unique name of the thread.
 
-        @return QThread: new thread, none if failed
+        Returns
+        -------
+        QThread
+            New thread, or None if creation failed.
         """
         with self._lock:
             logger.debug('Creating thread: "{0}".'.format(name))
@@ -86,7 +92,10 @@ class ThreadManager(QtCore.QAbstractListModel):
     def register_thread(self, thread):
         """ Add QThread to ThreadManager.
 
-        @param QtCore.QThread thread: thread to register with unique objectName
+        Parameters
+        ----------
+        thread : QtCore.QThread
+            Thread to register with a unique objectName.
         """
         with self._lock:
             name = thread.objectName()
@@ -109,7 +118,10 @@ class ThreadManager(QtCore.QAbstractListModel):
     def unregister_thread(self, name):
         """ Remove thread from ThreadManager.
 
-        @param str name: unique thread name
+        Parameters
+        ----------
+        name : str
+            Unique thread name.
         """
         with self._lock:
             if isinstance(name, QtCore.QThread):
@@ -129,7 +141,10 @@ class ThreadManager(QtCore.QAbstractListModel):
     def quit_thread(self, name):
         """ Stop event loop of QThread.
 
-        @param str name: unique thread name
+        Parameters
+        ----------
+        name : str
+            Unique thread name.
         """
         with self._lock:
             if isinstance(name, QtCore.QThread):
@@ -146,8 +161,12 @@ class ThreadManager(QtCore.QAbstractListModel):
     def join_thread(self, name, time=None):
         """ Wait for stop of QThread event loop.
 
-        @param str name: unique thread name
-        @param int time: timeout for waiting in msec
+        Parameters
+        ----------
+        name : str
+            Unique thread name.
+        time : int
+            Timeout for waiting in milliseconds.
         """
         with self._lock:
             if isinstance(name, QtCore.QThread):
@@ -177,8 +196,15 @@ class ThreadManager(QtCore.QAbstractListModel):
     def get_thread_by_name(self, name):
         """ Get registered QThread instance by its objectName
 
-        @param str name: objectName of the QThread to return
-        @return QThread: The registered thread object
+        Parameters
+        ----------
+        name : str
+            Object name of the QThread to return.
+
+        Returns
+        -------
+        QThread
+            The registered thread object.
         """
         with self._lock:
             try:
@@ -189,36 +215,51 @@ class ThreadManager(QtCore.QAbstractListModel):
 
     # QAbstractListModel interface methods follow below
     def rowCount(self, parent=None, *args, **kwargs):
-        """
-        Gives the number of threads registered.
+        """Gives the number of threads registered.
 
-        @return int: number of threads
+        Returns
+        -------
+        int
+            Number of threads.
         """
         with self._lock:
             return len(self._threads)
 
     def headerData(self, section, orientation, role=QtCore.Qt.DisplayRole):
-        """
-        Data for the list view header.
+        """Data for the list view header.
 
-        @param int section: column/row index to get header data for
-        @param QtCore.Qt.Orientation orientation: orientation of header (horizontal or vertical)
-        @param QtCore.ItemDataRole role: data access role
+        Parameters
+        ----------
+        section : int
+            Column/row index to get header data for.
+        orientation : QtCore.Qt.Orientation
+            Orientation of header (horizontal or vertical).
+        role : QtCore.ItemDataRole
+            Data access role.
 
-        @return str: header data for given column/row and role
+        Returns
+        -------
+        str
+            Header data for the given column/row and role.
         """
         if role == QtCore.Qt.DisplayRole and orientation == QtCore.Qt.Horizontal and section == 0:
             return 'Thread Name'
         return None
 
     def data(self, index, role):
-        """
-        Get data from model for a given cell. Data can have a role that affects display.
+        """Get data from model for a given cell. Data can have a role that affects display.
 
-        @param QtCore.QModelIndex index: cell for which data is requested
-        @param QtCore.Qt.ItemDataRole role: data access role of request
+        Parameters
+        ----------
+        index : QtCore.QModelIndex
+            Cell for which data is requested.
+        role : QtCore.Qt.ItemDataRole
+            Data access role of the request.
 
-        @return QVariant: data for given cell and role
+        Returns
+        -------
+        QVariant
+            Data for the given cell and role.
         """
         with self._lock:
             row = index.row()
@@ -230,8 +271,14 @@ class ThreadManager(QtCore.QAbstractListModel):
     def flags(self, index):
         """ Determines what can be done with entry cells in the table view.
 
-          @param QModelIndex index: cell fo which the flags are requested
+        Parameters
+        ----------
+        index : QModelIndex
+            Cell for which the flags are requested.
 
-          @return Qt.ItemFlags: actins allowed fotr this cell
+        Returns
+        -------
+        Qt.ItemFlags
+            Actions allowed for this cell.
         """
         return QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable

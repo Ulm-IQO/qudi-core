@@ -47,31 +47,35 @@ class Converter:
     """
     def widget_to_model(self, data):
         """
-        Converts data in the format given by the widget and converts it
-        to the model data format.
+        Converts data from the format given by the widget to the model data format.
 
-        Parameter:
-        ==========
-        data: object data to be converted
+        Parameters
+        ----------
+        data : object
+            Data to be converted.
 
-        Returns:
-        ========
-        out: object converted data
+        Returns
+        -------
+        object
+            Converted data.
+
         """
         return data
 
     def model_to_widget(self, data):
         """
-        Converts data in the format given by the model and converts it
-        to the widget data format.
+        Converts data from the model format to the widget data format.
 
-        Parameter:
-        ==========
-        data: object data to be converted
+        Parameters
+        ----------
+        data : object
+            Data to be converted from the model format to the widget format.
 
-        Returns:
-        ========
-        out: object converted data
+        Returns
+        -------
+        object
+            Converted data in the widget format.
+
         """
         return data
 

@@ -159,11 +159,22 @@ class DictTableModel(QtCore.QAbstractTableModel):
                 self.__setitem__(key, value)
 
     def pop(self, *args):
-        """ Remove key from dictionary.
+        """
+        Remove a key from a dictionary and return its value.
 
-        @param args: dict key to remove, optional default return value
+        Parameters
+        ----------
+        *args : tuple
+            The arguments should include:
+            - key : The key to remove from the dictionary.
+            - default : optional
+                The value to return if the key is not found in the dictionary.
 
-        @return value: value removed from dict
+        Returns
+        -------
+        value
+            The value associated with the removed key. If the key is not found and a default 
+            value is provided, the default value is returned. Otherwise, a `KeyError` is raised.
         """
         with self._lock:
             if args[0] in self._storage:
@@ -176,11 +187,22 @@ class DictTableModel(QtCore.QAbstractTableModel):
                 return args[1]
 
     def get(self, *args):
-        """ Get value for key from dictionary.
+        """
+        Get the value associated with a key from a dictionary.
 
-        @param args: value for key, optional default return value
+        Parameters
+        ----------
+        *args : tuple
+            The arguments should include:
+            - key : The key to look up in the dictionary.
+            - default : optional
+                The value to return if the key is not found in the dictionary.
 
-        @return value: value for key from dict
+        Returns
+        -------
+        value
+            The value associated with the key in the dictionary. If the key is not found 
+            and a default value is provided, the default value is returned.
         """
         with self._lock:
             return self._storage.get(*args)
@@ -280,10 +302,16 @@ class ListTableModel(QtCore.QAbstractTableModel):
             return item in self._storage
 
     def insert(self, n, data):
-        """ Insert a row into table.
+        """
+        Insert a row into a table before the nth element.
 
-        @param int n: insert before nth element
-        @param data: row to insert
+        Parameters
+        ----------
+        n : int
+            Index before which the row should be inserted.
+        data : object
+            Row to insert into the table.
+
         """
         with self._lock:
             if 0 <= n <= len(self._storage):
@@ -294,9 +322,14 @@ class ListTableModel(QtCore.QAbstractTableModel):
                 raise IndexError
 
     def append(self, data):
-        """ Append row to table.
-            
-        @param data: row to append
+        """
+        Append a row to a table.
+
+        Parameters
+        ----------
+        data : object
+            Row to append to the table.
+
         """
         with self._lock:
             n = len(self._storage)
@@ -305,11 +338,19 @@ class ListTableModel(QtCore.QAbstractTableModel):
             self.endInsertRows()
 
     def pop(self, n):
-        """ Remove nth row from table.
+        """
+        Remove the nth row from a table.
 
-        @param int n: index of row to remove
+        Parameters
+        ----------
+        n : int
+            Index of the row to remove.
 
-        @return data: removed row
+        Returns
+        -------
+        object
+            Removed row.
+
         """
         with self._lock:
             if 0 <= n < len(self._storage):

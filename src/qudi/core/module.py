@@ -73,10 +73,12 @@ class ModuleStateMachine(Fysom, QtCore.QObject):
         return self.current
 
     def on_change_state(self, e: Any) -> None:
-        """
-        Fysom callback for all state transitions.
+        """Fysom callback for all state transitions.
 
-        @param object e: Fysom event object passed through all state transition callbacks
+        Parameters
+        ----------
+        e : object
+            Fysom event object passed through all state transition callbacks.
         """
         self.sigStateChanged.emit(e)
 
@@ -127,10 +129,16 @@ class Base(QtCore.QObject, metaclass=ModuleMeta):
         """ Initialise Base instance. Set up its state machine and initialize ConfigOption meta
         attributes from given config.
 
-        @param object self: the object being initialised
-        @param str name: unique name for this module instance
-        @param dict configuration: parameters from the configuration file
-        @param dict callbacks: dict specifying functions to be run on state machine transitions
+        Parameters
+        ----------
+        self : object
+            The object being initialized.
+        name : str
+            Unique name for this module instance.
+        configuration : dict
+            Parameters from the configuration file.
+        callbacks : dict
+            Dictionary specifying functions to be run on state machine transitions.
         """
         super().__init__(**kwargs)
 

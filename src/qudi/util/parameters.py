@@ -2,16 +2,31 @@
 """
 This file contains utility methods to annotate arguments for which the user can potentially edit
 values via GUI. These arguments are boiled down to simple builtin types that can be represented by
-a GUI editor:
-                            int: qudi.util.widgets.scientific_spinbox.ScienSpinBox
-                          float: qudi.util.widgets.scientific_spinbox.ScienDSpinbox
-                            str: PySide2.QtWidgets.QLineEdit
-                        complex: qudi.util.widgets.literal_lineedit.ComplexLineEdit
-                            set: qudi.util.widgets.literal_lineedit.SetLineEdit
-                           dict: qudi.util.widgets.literal_lineedit.DictLineEdit
-                           list: qudi.util.widgets.literal_lineedit.ListLineEdit
-                          tuple: qudi.util.widgets.literal_lineedit.TupleLineEdit
+a GUI editor.
 
+Parameters
+----------
+:int: :class:`~qudi.util.widgets.scientific_spinbox.ScienSpinBox`
+    An integer type represented by a scientific spinbox widget.
+:float: :class:`~qudi.util.widgets.scientific_spinbox.ScienDSpinbox`
+    A floating-point type represented by a double precision scientific spinbox widget.
+:str: :class:`~PySide2.QtWidgets.QLineEdit`
+    A string type represented by a QLineEdit widget.
+:complex: :class:`~qudi.util.widgets.literal_lineedit.ComplexLineEdit`
+    A complex number type represented by a custom ComplexLineEdit widget.
+:set: :class:`~qudi.util.widgets.literal_lineedit.SetLineEdit`
+    A set type represented by a custom SetLineEdit widget.
+:dict: :class:`~qudi.util.widgets.literal_lineedit.DictLineEdit`
+    A dictionary type represented by a custom DictLineEdit widget.
+:list: :class:`~qudi.util.widgets.literal_lineedit.ListLineEdit`
+    A list type represented by a custom ListLineEdit widget.
+:tuple: :class:`~qudi.util.widgets.literal_lineedit.TupleLineEdit`
+    A tuple type represented by a custom TupleLineEdit widget.
+:FilePath: :class:`~PySide2.QtWidgets.QLineEdit`
+    A type for file paths represented by a QLineEdit widget.
+
+Notes
+-----
 Here defined are also custom generic types that can be used like any other type from
 the typing module.
 Arguments annotated with these types are represented with the following widgets:

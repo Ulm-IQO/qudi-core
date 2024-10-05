@@ -33,11 +33,22 @@ def multiple_poissonian(x, mus, amplitudes):
     """ Mathematical definition of the sum of multiple scaled Poissonian distributions without any
     bias.
 
-    WARNING: iterable parameters "mus", and "amplitudes" must have same length.
+    WARNING: Iterable parameters "mus" and "amplitudes" must have the same length.
 
-    @param float x: The independent variable to calculate Poissonian
-    @param iterable mus: Iterable containing center positions for all Poissonians
-    @param iterable amplitudes: Iterable containing amplitudes for all Poissonians
+    Parameters
+    ----------
+    x : float
+        The independent variable to calculate the Poissonian.
+    mus : iterable
+        Iterable containing center positions (means) for all Poissonians.
+    amplitudes : iterable
+        Iterable containing amplitudes for all Poissonians.
+
+    Returns
+    -------
+    float
+        The result given x for the sum of scaled Poissonian distributions.
+
     """
     assert len(mus) == len(amplitudes)
 

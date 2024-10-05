@@ -111,9 +111,13 @@ class ErrorDialog(QtWidgets.QDialog):
 
     @QtCore.Slot(object)
     def new_error(self, data):
-        """ Show a new error log entry.
+        """
+        Show a new error log entry.
 
-        @param logging.LogRecord data: log record as returned from logging module
+        Parameters
+        ----------
+        data : logging.LogRecord
+            Log record as returned from the logging module.
         """
         with self._thread_lock:
             self._error_queue.append(data)
@@ -146,9 +150,12 @@ class ErrorDialog(QtWidgets.QDialog):
 
     @property
     def enabled(self):
-        """ Property holding the enabled flag for this error message popup
+        """Property holding the enabled flag for this error message popup.
 
-        @return bool: Flag indicating enabled (True) or disabled (False) error message popups
+        Returns
+        -------
+        bool
+            Flag indicating whether error message popups are enabled (`True`) or disabled (`False`).
         """
         with self._thread_lock:
             return not self.disable_checkbox.isChecked()

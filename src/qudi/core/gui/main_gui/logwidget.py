@@ -33,19 +33,29 @@ class LogFilterProxy(QtCore.QSortFilterProxyModel):
         """
         Create the LogFilterProxy.
 
-        @param QObject parent: parent object of filter
+        Parameters
+        ----------
+        parent : QObject
+            Parent object of the filter.
         """
         super().__init__(parent)
         self._show_levels = frozenset({'debug', 'info', 'warning', 'error', 'critical'})
 
     def filterAcceptsRow(self, source_row, source_parent):
         """
-        Determine whether row (log entry) should be shown.
+        Determine whether a row (log entry) should be shown.
 
-        @param QModelIndex source_row: the row in the source model that we need to filter
-        @param QModelIndex source_parent: parent model index
+        Parameters
+        ----------
+        source_row : QModelIndex
+            The row in the source model that needs to be filtered.
+        source_parent : QModelIndex
+            The parent model index.
 
-        @return bool: True if row (log entry) should be shown, False otherwise
+        Returns
+        -------
+        bool
+            `True` if the row (log entry) should be shown, `False` otherwise.
         """
         model = self.sourceModel()
         level = model.data(model.index(source_row, 1), QtCore.Qt.DisplayRole)
@@ -57,7 +67,10 @@ class LogFilterProxy(QtCore.QSortFilterProxyModel):
         """
         Set which types of messages are shown through the filter.
 
-        @param set(str) levels: Set of all levels that should be shown
+        Parameters
+        ----------
+        levels : set of str
+            Set of all message levels that should be shown.
         """
         self._show_levels = frozenset(levels)
         self.invalidateFilter()
@@ -67,14 +80,23 @@ class SelectableTextDelegate(QtWidgets.QStyledItemDelegate):
     """A subclass of QStyledItemDelegate to display a text editor for copying text fragments.
     """
     def createEditor(self, parent, option, index):
-        """Overwrite method from base class QStyledItemDelegate to show a read-only QLabel widget.
-        This is necessary to disable editing by the user but still be able to mark and copy text.
+        """
+        Overwrite method from base class QStyledItemDelegate to show a read-only QLabel widget.
+        This is necessary to disable editing by the user but still allow text to be marked and copied.
 
-        @param QObject parent: The parent object for the editor to be created
-        @param QStyleOptionViewItem option: Display options for the editor widget
-        @param QModelIndex index: Data model index
+        Parameters
+        ----------
+        parent : QObject
+            The parent object for the editor to be created.
+        option : QStyleOptionViewItem
+            Display options for the editor widget.
+        index : QModelIndex
+            Data model index.
 
-        @return QLabel: QLabel instance
+        Returns
+        -------
+        QLabel
+            Instance of QLabel.
         """
         editor = QtWidgets.QLabel(parent)
         editor.setTextInteractionFlags(QtCore.Qt.TextSelectableByMouse)
@@ -83,10 +105,14 @@ class SelectableTextDelegate(QtWidgets.QStyledItemDelegate):
 
     def setEditorData(self, editor, index):
         """
-        Overwrite method from base class QStyledItemDelegate to fill the QLineEdit widget with data.
+        Overwrite method from the base class QStyledItemDelegate to fill the QLineEdit widget with data.
 
-        @param QLineEdit editor: Editor widget to be populated with data
-        @param QModelIndex index: Data model index
+        Parameters
+        ----------
+        editor : QLineEdit
+            Editor widget to be populated with data.
+        index : QModelIndex
+            Data model index.
         """
         data = index.data(QtCore.Qt.EditRole)
         editor.setText(f' {data}')
@@ -149,8 +175,12 @@ class LogWidget(QtWidgets.QSplitter):
         """
         Creates the log widget.
 
-        @param QObject parent: Qt parent object for log widget
-        @param Manager manager: Manager instance this widget belongs to
+        Parameters
+        ----------
+        parent : QObject
+            Qt parent object for the log widget.
+        manager : Manager
+            Manager instance this widget belongs to.
         """
         super().__init__(QtCore.Qt.Horizontal, parent, **kwargs)
 
@@ -196,10 +226,15 @@ class LogWidget(QtWidgets.QSplitter):
 
     @QtCore.Slot(object, int)
     def update_filter_state(self, item, column):
-        """Update log view from filter widget check states and synchronize check box states.
+        """
+        Update the log view based on the filter widget check states and synchronize check box states.
 
-        @param int item: Item number
-        @param int column: Column number
+        Parameters
+        ----------
+        item : int
+            Item number.
+        column : int
+            Column number.
         """
         # check all / uncheck all state
         show_all_item = self.filter_treewidget.topLevelItem(0)

@@ -38,9 +38,19 @@ class CircleLoadingIndicator(QtWidgets.QWidget):
     def __init__(self, *args, cycle_time=1.2, indicator_length=960, indicator_width_ratio=0.2,
                  **kwargs):
         """
-        @param float cycle_time: The animation time in seconds for a full cycle
-        @param int indicator_length: Length of the indicator arc in 1/16th of a degree
-        @param float indicator_width_ratio: Ratio of the indicator arc width WRT widget size
+        Parameters
+        ----------
+        cycle_time : float
+            The animation time in seconds for a full cycle.
+        indicator_length : int
+            Length of the indicator arc in 1/16th of a degree.
+        indicator_width_ratio : float
+            Ratio of the indicator arc width with respect to the widget size.
+
+        Returns
+        -------
+        None
+            (or specify the return type and description if the function returns something)
         """
         assert cycle_time > 0, 'cycle_time must be larger than 0'
         assert 0 < indicator_length < 5760, 'indicator_length must be >0 and <5760'

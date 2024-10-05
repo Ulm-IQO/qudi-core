@@ -37,9 +37,12 @@ class ParentPollerUnix(Thread):
     """
 
     def __init__(self, quit_function=None):
-        """ Create the parentpoller.
+        """Create the parent poller.
 
-            @param callable quitfunction: function to run before exiting
+        Parameters
+        ----------
+        quitfunction : callable
+            Function to run before exiting.
         """
         if quit_function is None:
             pass
@@ -78,14 +81,17 @@ class ParentPollerWindows(Thread):
     def __init__(self, parent_handle, quit_function=None):
         """ Create the parent poller.
 
-        @param callable quit_function: Function to call for shutdown if parent process is dead.
-        @param int parent_handle: The program will terminate immediately when this handle is
-                                  signaled.
+        Parameters
+        ----------
+        quit_function : callable
+            Function to call for shutdown if the parent process is dead.
+        parent_handle : int
+            The program will terminate immediately when this handle is signaled.
         """
         if quit_function is None:
             pass
         elif not callable(quit_function):
-            raise TypeError('argument quit_function must be a callable.')
+            raise TypeError("argument quit_function must be a callable.")
         super().__init__()
         self.daemon = True
         self.quit_function = quit_function

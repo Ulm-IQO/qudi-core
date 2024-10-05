@@ -31,12 +31,17 @@ except ImportError:
 
 
 def get_unit_prefix_dict():
-    """
-    Return the dictionary, which assigns the prefix of a unit to its proper order of magnitude.
+    """Return the dictionary, which assigns the prefix of a unit to its proper order of magnitude.
 
-    @return dict: keys are string prefix and values are magnitude values.
-    """
+    Parameters
+    ----------
+    None
 
+    Returns
+    -------
+    dict 
+        keys are string prefix and values are magnitude values.
+    """
     unit_prefix_dict = {
         'y': 1e-24,
         'z': 1e-21,
@@ -115,7 +120,8 @@ class ScaledFloat(float):
 
         Parameters
         ----------
-        fmt : str format string
+        fmt : str 
+            format string
         """
         autoscale = False
         if len(fmt) >= 2:
@@ -143,36 +149,42 @@ class ScaledFloat(float):
 def create_formatted_output(param_dict, num_sig_digits=5):
     """ Display a parameter set nicely in SI units.
 
-    @param dict param_dict: dictionary with entries being again dictionaries
-                       with two needed keywords 'value' and 'unit' and one
-                       optional keyword 'error'. Add the proper items to the
-                       specified keywords.
-                       Note, that if no error is specified, no proper
-                       rounding (and therefore displaying) can be
-                       guaranteed.
+    Parameters
+    ----------
+    param_dict : dict
+        Dictionary with entries being dictionaries with two needed keywords 'value' and 'unit' and one
+        optional keyword 'error'. Add the proper items to the specified keywords.
+        Note that if no error is specified, no proper rounding (and therefore displaying) can be
+        guaranteed.
+    num_sig_digits : int, optional
+        The number of significant digits will be taken if the rounding procedure was not
+        successful at all. Default is 5.
 
-    @param int num_sig_digits: optional, the number of significant digits will
-                               be taken, if the rounding procedure was not
-                               successful at all. That will ensure at least that
-                               not all the digits are displayed.
-                               According to that the error will be displayed.
-
-    @return str: a string, which is nicely formatted.
-
-    Note: The absolute tolerance to a zero is set to 1e-18.
+    Returns
+    -------
+    str
+        A nicely formatted string.
+        
+    Notes
+    -----
+    The absolute tolerance to a zero is set to 1e-18.
+        
+    Examples
+    --------
 
     Example of a param dict:
-        param_dict = {'Rabi frequency': {'value':123.43,   'error': 0.321,  'unit': 'Hz'},
-                      'ODMR contrast':  {'value':2.563423, 'error': 0.523,  'unit': '%'},
-                      'Fidelity':       {'value':0.783,    'error': 0.2222, 'unit': ''}}
-
-        If you want to access on the value of the Fidelity, then you can do
-        that via:
-            param_dict['Fidelity']['value']
-        or on the error of the ODMR contrast:
-            param_dict['ODMR contrast']['error']
-
-
+    
+    param_dict = {'Rabi frequency': {'value': 123.43, 'error': 0.321, 'unit': 'Hz'},
+                  'ODMR contrast':  {'value': 2.563423, 'error': 0.523, 'unit': '%'},
+                  'Fidelity':       {'value': 0.783, 'error': 0.2222, 'unit': ''}}
+    
+    If you want to access the value of the Fidelity, then you can do that via:
+    
+    >>> param_dict['Fidelity']['value']
+    
+    or on the error of the ODMR contrast:
+    
+    >>> param_dict['ODMR contrast']['error']
     """
     if fn is None:
         raise RuntimeError('Function "create_formatted_output" requires pyqtgraph.')
@@ -224,59 +236,75 @@ def create_formatted_output(param_dict, num_sig_digits=5):
 def round_value_to_error(value, error):
     """ The scientifically correct way of rounding a value according to an error.
 
-    @param float or int value: the measurement value
-    @param float or int error: the error for that measurement value
+    Parameters
+    ----------
+    value : float or int 
+        the measurement value
+    error : float or int
+        the error for that measurement value
 
-    @return tuple(float, float, int):
-                float value: the rounded value according to the error
-                float error: the rounded error
-                int rounding_digit: the digit, to which the rounding
-                                    procedure was performed. Note a positive
-                                    number indicates the position of the
-                                    digit right from the comma, zero means
-                                    the first digit left from the comma and
-                                    negative numbers are the digits left
-                                    from the comma. That is a convention
-                                    which is used in the native round method
-                                    and the method numpy.round.
+    Returns
+    -------
+    tuple
+        A tuple containing the following elements:
+        
+        float
+            The rounded value according to the error.
+        float
+            The rounded error.
+        int
+            The digit to which the rounding procedure was performed. A positive
+            number indicates the position of the digit right from the comma, zero means
+            the first digit left from the comma, and negative numbers are the digits left
+            from the comma. This follows the convention used in the native `round` method
+            and `numpy.round`.
 
-    Note1: the input type of value or error will not be changed! If float is
-           the input, float will be the output, same applies to integer.
-
-    Note2: This method is not returning strings, since each display method
-           might want to display the rounded values in a different way.
-           (in exponential representation, in a different magnitude, ect.).
-
-    Note3: This function can handle an invalid error, i.e. if the error is
-           zero, NAN or infinite. The absolute tolerance to detect a number as
-           zero is set to 1e-18.
+    Notes
+    -----
+    - The input type of `value` or `error` will not be changed. If `float` is the input, `float` will be the output; the same applies to `integer`.
+    - This method does not return strings, as each display method might want to display the rounded values in a different way (in exponential representation, in a different magnitude, etc.).
+    - This function can handle an invalid error, i.e., if the error is zero, NaN, or infinite. The absolute tolerance to detect a number as zero is set to 1e-18.
 
     Procedure explanation:
-    The scientific way of displaying a measurement result in the presents of
-    an error is applied here. It is the following procedure:
-        Take the first leading non-zero number in the error value and check,
-        whether the number is a digit within 3 to 9. Then the rounding value
-        is the specified digit. Otherwise, if first leading digit is 1 or 2
-        then the next right digit is the rounding value.
-        The error is rounded according to that digit and the same applies
-        for the value.
+    The scientific way of displaying a measurement result in the presence of an error is applied here. It follows this procedure:
+    Take the first leading non-zero number in the error value and check whether the number is a digit within 3 to 9. If so, the rounding value
+    is the specified digit. Otherwise, if the first leading digit is 1 or 2, then the next right digit is the rounding value.
+    The error is rounded according to that digit, and the same applies to the value.
+
+    Examples
+    --------
 
     Example 1:
-        x_meas = 2.05650234, delta_x = 0.0634
-            => x =  2.06 +- 0.06,   (output: (2.06, 0.06, 2)    )
+
+    >>> x_meas = 2.05650234
+    >>> delta_x = 0.0634
+    >>> result = some_function(x_meas, delta_x)
+    >>> print(result)
+    (2.06, 0.06, 2)
 
     Example 2:
-        x_meas = 0.34545, delta_x = 0.19145
-            => x = 0.35 +- 0.19     (output: (0.35, 0.19, 2)    )
+
+    >>> x_meas = 0.34545
+    >>> delta_x = 0.19145
+    >>> result = some_function(x_meas, delta_x)
+    >>> print(result)
+    (0.35, 0.19, 2)
 
     Example 3:
-        x_meas = 239579.23, delta_x = 1289.234
-            => x = 239600 +- 1300   (output: (239600.0, 1300.0, -2) )
+
+    >>> x_meas = 239579.23
+    >>> delta_x = 1289.234
+    >>> result = some_function(x_meas, delta_x)
+    >>> print(result)
+    (239600.0, 1300.0, -2)
 
     Example 4:
-        x_meas = 961453, delta_x = 3789
-            => x = 961000 +- 4000   (output: (961000, 4000, -3) )
 
+    >>> x_meas = 961453
+    >>> delta_x = 3789
+    >>> result = some_function(x_meas, delta_x)
+    >>> print(result)
+    (961000, 4000, -3)
     """
 
     atol = 1e-18    # absolute tolerance for the detection of zero.
@@ -319,11 +347,15 @@ def get_relevant_digit(entry):
     """ By using log10, abs and int operations, the proper relevant digit is
         obtained.
 
-    @param float entry:
-
-    @return: int, the leading relevant exponent
+    Parameters
+    ----------
+    entry : float
+        
+    Returns
+    -------
+    int
+        the leading relevant exponent
     """
-
     # the log10 can only be calculated of a positive number.
     entry = np.abs(entry)
 
@@ -342,12 +374,23 @@ def get_relevant_digit(entry):
 def get_si_norm(entry):
     """ A rather different way to display the value in SI notation.
 
-    @param float entry: the float number from which normalization factor should
-                        be obtained.
+    Parameters
+    ----------
+    entry : float 
+        the float number from which normalization factor should
+        be obtained.
+        
 
-    @return: norm_val, normalization
-            float norm_val: the value in a normalized representation.
-            float normalization: the factor with which to divide the number.
+    Returns
+    -------
+    tuple
+        A tuple containing:
+        
+        norm_val : float
+            The value in a normalized representation.
+        
+        normalization : float
+            The factor by which to divide the number.
     """
     val = get_relevant_digit(entry)
     fact = int(val / 3)

@@ -45,10 +45,17 @@ class _SharedModulesModel(DictTableModel):
     def data(self, index, role):
         """ Get data from model for a given cell. Data can have a role that affects display.
 
-        @param QModelIndex index: cell for which data is requested
-        @param ItemDataRole role: role for which data is requested
+        Parameters
+        ----------
+        index : QModelIndex
+            Cell for which data is requested.
+        role : ItemDataRole
+            Role for which data is requested.
 
-        @return QVariant: data for given cell and role
+        Returns
+        -------
+        QVariant
+            Data for the given cell and role.
         """
         data = super().data(index, role)
         if data is None:
@@ -98,9 +105,15 @@ class RemoteModulesService(rpyc.Service):
     def exposed_get_module_instance(self, name, activate=False):
         """ Return reference to a module in the shared module list.
 
-        @param str name: unique module name
+        Parameters
+        ----------
+        name : str
+            Unique module name.
 
-        @return object: reference to the module
+        Returns
+        -------
+        object
+            Reference to the module.
         """
         with self._thread_lock:
             try:
@@ -120,7 +133,10 @@ class RemoteModulesService(rpyc.Service):
     def exposed_get_available_module_names(self):
         """ Returns the currently shared module names independent of the current module state.
 
-        @return tuple: Names of the currently shared modules
+        Returns
+        -------
+        tuple
+            Names of the currently shared modules.
         """
         with self._thread_lock:
             return tuple(self.shared_modules)
@@ -129,7 +145,10 @@ class RemoteModulesService(rpyc.Service):
         """ Returns the currently shared module names for all modules that have been loaded
         (instantiated).
 
-        @return tuple: Names of the currently shared and loaded modules
+        Returns
+        -------
+        tuple
+            Names of the currently shared and loaded modules.
         """
         with self._thread_lock:
             all_modules = {name: ref() for name, ref in self.shared_modules.items()}
@@ -139,7 +158,10 @@ class RemoteModulesService(rpyc.Service):
     def exposed_get_active_module_names(self):
         """ Returns the currently shared module names for all modules that are active.
 
-        @return tuple: Names of the currently shared active modules
+        Returns
+        -------
+        tuple
+            Names of the currently shared active modules.
         """
         with self._thread_lock:
             all_modules = {name: ref() for name, ref in self.shared_modules.items()}
@@ -201,7 +223,10 @@ class QudiNamespaceService(rpyc.Service):
         """ Returns the instances of the currently active modules as well as a reference to the
         qudi application itself.
 
-        @return dict: Names (keys) and object references (values)
+        Returns
+        -------
+        dict
+            Names (keys) and object references (values).
         """
         if self._force_remote_calls_by_value:
             mods = {name: ModuleRpycProxy(mod.instance) for name, mod in

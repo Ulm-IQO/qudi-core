@@ -44,20 +44,28 @@ from qudi.util.helpers import is_string, is_integer, is_float, is_complex, is_nu
 
 
 class ImageFormat(Enum):
-    """ Image format to use for saving data thumbnails.
-    """
-    PNG = '.png'
-    PDF = '.pdf'
+    """Image format to use for saving data thumbnails."""
+
+    PNG = ".png"
+    PDF = ".pdf"
 
 
 def get_timestamp_filename(timestamp, nametag=None):
-    """ Returns a qudi standard filename used for saving measurement data to file.
-    Not including any file extension.
+    """
+    Returns a qudi standard filename used for saving measurement data to a file,
+    not including any file extension.
 
-    @param datetime.datetime timestamp: Timestamp used to create the filename from
-    @param str nametag: optional, additional string to include in the file name
+    Parameters
+    ----------
+    timestamp : datetime.datetime
+        Timestamp used to create the filename from.
+    nametag : str, optional
+        Additional string to include in the filename.
 
-    @return str: Generated file name without file extension
+    Returns
+    -------
+    str
+        Generated filename without file extension.
     """
     # Start of the filename contains the timestamp, i.e. "20210130-1130-59"
     datetime_str = timestamp.strftime('%Y%m%d-%H%M-%S')
@@ -285,7 +293,10 @@ def create_dir_for_file(file_path):
     """ Helper method to create the directory (recursively) for a given file path.
     Will NOT raise an error if the directory already exists.
 
-    @param str file_path: File path to create the directory for
+    Parameters
+    ----------
+    file_path : str
+        File path to create the directory for.
     """
     os.makedirs(os.path.dirname(file_path), exist_ok=True)
 
@@ -308,12 +319,17 @@ class DataStorageBase(metaclass=ABCMeta):
     def __init__(self, *, root_dir=None, include_global_metadata=True,
                  image_format=ImageFormat.PNG):
         """
-        @param str root_dir: optional, root-directory for this storage instance to work in
-        @param bool include_global_metadata: optional, flag indicating saving of global metadata
-        @param ImageFormat image_format: optional, image file format Enum for saving thumbnails
+        Parameters
+        ----------
+        root_dir : str, optional
+            Root directory for this storage instance to work in.
+        include_global_metadata : bool, optional
+            Flag indicating whether to save global metadata.
+        image_format : ImageFormat, optional
+            Image file format Enum for saving thumbnails.
         """
         if not isinstance(image_format, ImageFormat):
-            raise TypeError('image_format must be ImageFormat Enum')
+            raise TypeError("image_format must be ImageFormat Enum")
 
         self.root_dir = root_dir  # ToDo: Maybe some sanity checking for correct path syntax?
         self.include_global_metadata = bool(include_global_metadata)
@@ -324,10 +340,17 @@ class DataStorageBase(metaclass=ABCMeta):
         It is recommended to use the same file_path as the corresponding data file (if applicable)
         and exclude the file extension (will be added according to image format).
 
-        @param matplotlib.figure.Figure mpl_figure: The matplotlib figure object to save as image
-        @param str file_path: full file path to use without file extension
+        Parameters
+        ----------
+        mpl_figure : matplotlib.figure.Figure
+            The matplotlib figure object to save as an image.
+        file_path : str
+            Full file path to use without the file extension.
 
-        @return str: Full absolute path of the saved image
+        Returns
+        -------
+        str
+            Full absolute path of the saved image.
         """
         file_path += self.image_format.value
 
@@ -347,9 +370,17 @@ class DataStorageBase(metaclass=ABCMeta):
         """ Helper method to return a dict containing provided local_metadata as well as global
         metadata depending on include_global_metadata flag.
 
-        @param dict local_metadata: Metadata to include in addition to global metadata
+        Parameters
+        ----------
+        local_metadata : dict
+            Metadata to include in addition to global metadata.
+        include_global_metadata : bool, optional
+            Flag indicating whether to include global metadata.
 
-        @return dict: New dict containing local_metadata and global metadata
+        Returns
+        -------
+        dict
+            New dictionary containing local metadata and global metadata.
         """
         metadata = self.get_global_metadata() if self.include_global_metadata else dict()
         if local_metadata is not None:
@@ -362,26 +393,52 @@ class DataStorageBase(metaclass=ABCMeta):
         entire measurement as a whole along with experiment metadata (to include e.g. in the file
         header). The user can either specify an explicit filename or a generic one will be created.
         If optional nametag and/or timestamp is provided, this will be used to create the generic
-        filename (only if filename parameter is omitted).
+        filename (only if the filename parameter is omitted).
 
-        @param numpy.ndarray data: data array to be saved (must be 1D or 2D for text files)
-        @param str notes: optional, string that is included in the metadata "as-is" without a key
-        @param dict metadata: optional, named metadata to be saved in the data header / metadata
-        @param str nametag: optional, nametag to include in the generic filename
-        @param datetime.datetime timestamp: optional, timestamp to construct a generic filename from
+        Parameters
+        ----------
+        data : numpy.ndarray
+            Data array to be saved (must be 1D or 2D for text files).
+        notes : str, optional
+            String that is included in the metadata "as-is" without a key.
+        metadata : dict, optional
+            Named metadata to be saved in the data header / metadata.
+        nametag : str, optional
+            Nametag to include in the generic filename.
+        timestamp : datetime.datetime, optional
+            Timestamp to construct a generic filename from.
+        filename : str, optional
+            Explicit filename to use for saving the data.
 
-        @return (str, datetime.datetime, tuple): Full file path, timestamp used, saved data shape
+        Returns
+        -------
+        tuple
+            Full file path (str), timestamp used (datetime.datetime), saved data shape (tuple).
         """
-        pass
+
+    pass
 
     @abstractmethod
     def load_data(self, *args, **kwargs):
         """ This method must be implemented in a subclass. It should provide the facility to load a
         saved data set including the metadata/experiment parameters and column headers
-        (if possible). Many storage classes can even implement this method as staticmethod (better).
-        For file based storage objects, the only parameter should be file_path (if possible).
+        (if possible). Many storage classes can even implement this method as a static method.
 
-        @return np.ndarray, dict, dict: Data as numpy array, user metadata, general header data
+        For file-based storage objects, the only parameter should be file_path.
+
+        Parameters
+        ----------
+        file_path : str
+            Path to the file to be loaded.
+
+        Returns
+        -------
+        np.ndarray
+            Data as a numpy array.
+        dict
+            User metadata.
+        dict
+            General header data.
         """
         pass
 
@@ -507,17 +564,28 @@ class TextDataStorage(DataStorageBase):
 
     def new_file(self, *, timestamp=None, metadata=None, notes=None, nametag=None,
                  column_headers=None, column_dtypes=None, filename=None):
-        """ Create a new data file on disk and write header string to it. Will overwrite old files
+        """
+        Create a new data file on disk and write header string to it. Will overwrite old files
         silently if they have the same path.
 
-        @param dict metadata: optional, named metadata values to be saved in the data header
-        @param str notes: optional, string that is included in the file header "as-is"
-        @param str nametag: optional, nametag to include in the generic filename
-        @param datetime.datetime timestamp: optional, timestamp to use. Will create one if missing.
-        @param str filename: optional, custom filename to use (nametag, timestamp and configured
-                             file_extension will not be included for file naming)
+        Parameters
+        ----------
+        metadata : dict, optional
+            Named metadata values to be saved in the data header.
+        notes : str, optional
+            String that is included in the file header "as-is".
+        nametag : str, optional
+            Nametag to include in the generic filename.
+        timestamp : datetime.datetime, optional
+            Timestamp to use. Will create one if missing.
+        filename : str, optional
+            Custom filename to use (nametag, timestamp, and configured file_extension will not be
+            included for file naming).
 
-        @return (str, datetime.datetime): Full file path, timestamp used
+        Returns
+        -------
+        tuple
+            Full file path (str), timestamp used (datetime.datetime).
         """
         # Create timestamp if missing
         if timestamp is None:
@@ -543,10 +611,20 @@ class TextDataStorage(DataStorageBase):
     def append_file(self, data, file_path):
         """ Append single or multiple rows to an existing data file.
 
-        @param numpy.ndarray data: data array to be appended (1D: single row, 2D: multiple rows)
-        @param str file_path: file path to append to
+        Parameters
+        ----------
+        data : numpy.ndarray
+            Data array to be appended.
+            For 1D arrays, it represents a single row.
+            For 2D arrays, it represents multiple rows.
+        file_path : str
+            File path to append to.
 
-        @return (int, int): Number of rows written, Number of columns written
+        Returns
+        -------
+        tuple
+            Number of rows written (int).
+            Number of columns written (int).
         """
         if not os.path.isfile(file_path):
             raise FileNotFoundError(f'File to append data to not found: "{file_path}"\n'
@@ -743,9 +821,13 @@ class NpyDataStorage(DataStorageBase):
         for this data set. The filename of the text file will be the same as for the binary file
         appended by "_metadata".
 
-        For more information see: qudi.util.datastorage.DataStorageBase.save_data
+        For more information, see :meth:`~qudi.util.datastorage.DataStorageBase.save_data`.
 
-        @param str|list column_headers: optional, data column header strings or single string
+        Parameters
+        ----------
+        column_headers : str or list, optional
+            Data column header strings or a single string.
+
         """
         if timestamp is None:
             timestamp = datetime.now()
@@ -776,9 +858,14 @@ class NpyDataStorage(DataStorageBase):
 
     @staticmethod
     def load_data(file_path):
-        """ See: DataStorageBase.load_data()
+        """
+        See :meth:`~DataStorageBase.load_data` for more information.
 
-        @param str file_path: path to file to load data from
+        Parameters
+        ----------
+        file_path : str
+            Path to the file to load data from.
+
         """
         # Load numpy array
         data = np.load(file_path, allow_pickle=False, fix_imports=False)

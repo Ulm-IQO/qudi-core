@@ -97,7 +97,10 @@ class ModuleScript(QtCore.QObject, metaclass=QudiObjectMeta):
         """ Returns a logger object.
         DO NOT OVERRIDE IN SUBCLASS!
 
-        @return Logger: Logger object for this script class
+        Returns
+        -------
+        Logger
+            Logger object for this script class.
         """
         return self.__logger
 
@@ -152,7 +155,10 @@ class ModuleScript(QtCore.QObject, metaclass=QudiObjectMeta):
 
         Arguments are passed directly to _run() method.
 
-        @return object: Result of the script method
+        Returns
+        -------
+        object
+            Result of the script method.
         """
         self.args = args
         self.kwargs = kwargs
