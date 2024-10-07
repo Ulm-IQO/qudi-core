@@ -25,7 +25,59 @@ from typing import Optional, Union, Tuple
 
 from qudi.util.paths import get_artwork_dir
 from qudi.core.module import ModuleState, ModuleBase
-from qudi.core.modulemanager import ManagedModule
+from qudi.core.modulemanager import ModuleManager
+
+
+class ModuleListModel(QtCore.QAbstractListModel):
+    """ List model for all configured qudi modules with a certain ModuleBase filter """
+    def __init__(self,
+                 base: ModuleBase,
+                 module_manager: ModuleManager,
+                 parent: Optional[QtCore.QObject] = None):
+        super().__init__(parent=parent)
+        self._base = base
+        self._module_manager = module_manager
+        self._index_to_name = [name for name in self._module_manager.module_names if
+                               self._module_manager.module_base(name) == base]
+        self._name_to_index = {name: idx for idx, name in enumerate(self._index_to_name)}
+        # Handle data updates from module manager
+        self._module_manager.sigStateChanged.connect(self._state_updated)
+        self._module_manager.sigHasAppdataChanged.connect(self._state_updated)
+
+    def rowCount(self, parent: Optional[QtCore.QModelIndex] = None) -> int:
+        """ Returns the number of stored items (rows) """
+        return len(self._index_to_name)
+
+    def flags(self, index: Optional[QtCore.QModelIndex] = None) -> QtCore.Qt.ItemFlags:
+        """ Determines what can be done with the given indexed cell """
+        return QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable
+
+    def data(self,
+             index: QtCore.QModelIndex,
+             role: Optional[QtCore.Qt.ItemDataRole] = QtCore.Qt.DisplayRole
+             ) -> Union[None, Tuple[str, ModuleState, bool]]:
+        """ Get data from model for a given cell. Data can have a role that affects display. """
+        if index.isValid() and role == QtCore.Qt.DisplayRole:
+            name = self._index_to_name[index.row()]
+            state = self._module_manager.module_state(name)
+            has_appdata = self._module_manager.has_appdata(name)
+            return name, state, has_appdata
+        return None
+
+    def headerData(self,
+                   section: int,
+                   orientation: QtCore.Qt.Orientation,
+                   role: Optional[QtCore.Qt.ItemDataRole] = QtCore.Qt.DisplayRole
+                   ) -> Union[None, str]:
+        """ Data for the table view headers """
+        if (orientation == QtCore.Qt.Horizontal) and (role == QtCore.Qt.DisplayRole):
+            return 'State'
+        return None
+
+    def _state_updated(self, base: ModuleBase, name: str, _: Union[ModuleState, bool]) -> None:
+        if base == self._base:
+            index = self.index(self._name_to_index[name], 0)
+            self.dataChanged.emit(index, index)
 
 
 class ModuleFrameWidget(QtWidgets.QWidget):
@@ -87,7 +139,7 @@ class ModuleFrameWidget(QtWidgets.QWidget):
 
     def set_module_data(self, name: str, state: ModuleState, has_appdata: bool) -> None:
         self._module_name = name
-        if state.deactivated:
+        if state == ModuleState.DEACTIVATED:
             self.activate_button.setText(f'Activate {self._module_name}')
             self.cleanup_button.setEnabled(has_appdata)
             self.deactivate_button.setEnabled(False)
@@ -116,33 +168,6 @@ class ModuleFrameWidget(QtWidgets.QWidget):
     @QtCore.Slot()
     def reload_clicked(self):
         self.sigReloadClicked.emit(self._module_name)
-
-
-class ModuleListProxyModel(QtCore.QSortFilterProxyModel):
-    """ Model proxy that filters out all modules of a certain ModuleBase type and collapses the
-    table model to a list of modules
-    """
-    def __init__(self, filter_base: ModuleBase, parent: Optional[QtCore.QObject] = None):
-        super().__init__(parent=parent)
-        self._filter_base = ModuleBase(filter_base)
-
-    def columnCount(self, parent: Optional[QtCore.QModelIndex] = None) -> int:
-        return 1
-
-    def filterAcceptsRow(self, source_row: int, source_parent: QtCore.QModelIndex) -> bool:
-        return self.sourceModel().index(source_row, 0, source_parent).data() == self._filter_base
-
-    def data(self,
-             index: QtCore.QModelIndex,
-             role: Optional[QtCore.Qt.ItemDataRole] = QtCore.Qt.DisplayRole
-             ) -> Union[None, Tuple[str, ModuleState, bool], ManagedModule]:
-        if index.isValid():
-            source_index = self.mapToSource(index)
-            module = source_index.data(QtCore.Qt.UserRole)
-            if role == QtCore.Qt.DisplayRole:
-                return module.name, module.state, module.has_appdata
-            elif role == QtCore.Qt.UserRole:
-                return module
 
 
 class ModuleListItemDelegate(QtWidgets.QStyledItemDelegate):
@@ -224,22 +249,26 @@ class ModuleWidget(QtWidgets.QTabWidget):
     sigCleanupModule = QtCore.Signal(str)
     sigReloadModule = QtCore.Signal(str)
 
-    def __init__(self, *args, module_manager: 'ModuleManager', **kwargs):
+    def __init__(self, *args, module_manager: ModuleManager, **kwargs):
         super().__init__(*args, **kwargs)
         self.setSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
         self.list_views = {'gui'     : ModuleListView(),
                            'logic'   : ModuleListView(),
                            'hardware': ModuleListView()}
-        self.proxy_models = {'gui'     : ModuleListProxyModel(filter_base=ModuleBase.GUI),
-                             'logic'   : ModuleListProxyModel(filter_base=ModuleBase.LOGIC),
-                             'hardware': ModuleListProxyModel(filter_base=ModuleBase.HARDWARE)}
+        self.data_models = {'gui'     : ModuleListModel(base=ModuleBase.GUI,
+                                                        module_manager=module_manager,
+                                                        parent=self),
+                            'logic'   : ModuleListModel(base=ModuleBase.LOGIC,
+                                                        module_manager=module_manager,
+                                                        parent=self),
+                            'hardware': ModuleListModel(base=ModuleBase.HARDWARE,
+                                                        module_manager=module_manager,
+                                                        parent=self)}
         self.addTab(self.list_views['gui'], 'GUI')
         self.addTab(self.list_views['logic'], 'Logic')
         self.addTab(self.list_views['hardware'], 'Hardware')
         for base, view in self.list_views.items():
-            proxy_model = self.proxy_models[base]
-            proxy_model.setSourceModel(module_manager)
-            view.setModel(proxy_model)
+            view.setModel(self.data_models[base])
             delegate = view.itemDelegate()
             delegate.sigActivateClicked.connect(self.sigActivateModule)
             delegate.sigDeactivateClicked.connect(self.sigDeactivateModule)

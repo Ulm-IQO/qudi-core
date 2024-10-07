@@ -33,6 +33,18 @@ for both GUI and headless mode. Also removed the corresponding member methods fr
 `qudi.core.module.Base` class. If you need to use it, import it from the new module.
 - Moved `qudi.core.application.SystemTrayIcon` to `qudi.core.trayicon.QudiTrayIcon` and made it a 
 singleton
+- All qudi modules are now configured and imported upon `Qudi.__init__` and not as before during
+`Qudi.run`. This means qudi modules are imported and the `ModuleManager` is fully configured before
+the `Qt` event loop starts.
+- Qudi configuration is now considered static after loading during `Qudi.__init__` and all
+modification during runtime results in undefined behaviour.
+- The ensemble of modules handled by `ModuleManager` is considered static as well and all methods
+used to mutate this collection have been removed.
+- `qudi.util.paths.get_default_data_dir` will now return the path set by qudi global configuration
+options `default_data_dir` and `daily_data_dirs` instead of a static path. If no `Qudi` instance
+has been created, the previous default path is still returned. If you just want the data root
+directory without daily subdirectories (if configured) use `qudi.util.paths.get_default_data_root`
+instead.
 
 ### Bugfixes
 - Python module reload during runtime is now only performed if explicitly requested by the user

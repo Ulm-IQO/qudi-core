@@ -27,6 +27,7 @@ from qudi.gui.main_gui.aboutqudidialog import AboutQudiDialog
 from qudi.gui.main_gui.settingsdialog import SettingsDialog
 from qudi.gui.main_gui.modulewidget import ModuleWidget
 from qudi.gui.main_gui.configwidget import ConfigQTreeWidget
+from qudi.core.modulemanager import ModuleManager
 from qudi.util.paths import get_artwork_dir
 from qudi.util.widgets.advanced_dockwidget import AdvancedDockWidget
 from qtconsole.rich_jupyter_widget import RichJupyterWidget
@@ -36,7 +37,7 @@ class QudiMainWindow(QtWidgets.QMainWindow):
     """
     Main Window definition for the manager GUI.
     """
-    def __init__(self, module_manager: 'ModuleManager', parent=None, debug_mode=False, **kwargs):
+    def __init__(self, module_manager: ModuleManager, parent=None, debug_mode=False, **kwargs):
         super().__init__(parent, **kwargs)
         self.setWindowTitle('qudi: Manager')
         screen_size = QtWidgets.QApplication.instance().primaryScreen().availableSize()
@@ -204,7 +205,7 @@ class QudiMainWindow(QtWidgets.QMainWindow):
         self.log_dockwidget = AdvancedDockWidget('Log')
         self.log_dockwidget.setWidget(self.log_widget)
         self.log_dockwidget.setAllowedAreas(QtCore.Qt.BottomDockWidgetArea)
-        self.remote_widget = RemoteWidget()
+        self.remote_widget = RemoteWidget(module_manager=module_manager)
         self.remote_dockwidget = AdvancedDockWidget('Remote modules')
         self.remote_dockwidget.setWidget(self.remote_widget)
         self.remote_dockwidget.setAllowedAreas(QtCore.Qt.BottomDockWidgetArea)

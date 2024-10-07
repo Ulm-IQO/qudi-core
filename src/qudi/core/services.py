@@ -23,10 +23,8 @@ __all__ = ['RemoteModulesService', 'LocalNamespaceService']
 
 import rpyc
 from logging import Logger
-from PySide2 import QtCore
-from typing import Optional, Union, List, Dict, Any, Iterable, Set
+from typing import Optional, Union, List, Dict, Any
 
-from qudi.util.mutex import Mutex
 from qudi.util.proxy import CachedObjectRpycByValueProxy
 from qudi.core.logger import get_logger
 from qudi.core.module import Base, ModuleState, ModuleBase
@@ -34,18 +32,6 @@ from qudi.core.modulemanager import ModuleManager
 
 
 _logger = get_logger(__name__)
-
-
-class _SharedModuleTableProxyModel(QtCore.QSortFilterProxyModel):
-    """ Model proxy to filter ManagedModules according to their "allow_remote" flag. """
-    def filterAcceptsRow(self, source_row: int, source_parent: QtCore.QModelIndex) -> bool:
-        return self.sourceModel().index(source_row, 4, source_parent).data()
-
-
-class _LocalModuleTableProxyModel(QtCore.QSortFilterProxyModel):
-    """ Model proxy to filter ManagedModules according to their "allow_remote" flag. """
-    def filterAcceptsRow(self, source_row: int, source_parent: QtCore.QModelIndex) -> bool:
-        return self.sourceModel().index(source_row, 0, source_parent).data() != ModuleBase.GUI
 
 
 class RemoteModulesService(rpyc.Service):
@@ -58,27 +44,13 @@ class RemoteModulesService(rpyc.Service):
                  force_remote_calls_by_value: Optional[bool] = False,
                  **kwargs):
         super().__init__(*args, **kwargs)
-        self._thread_lock = Mutex()
         self._force_remote_calls_by_value = force_remote_calls_by_value
         self._module_manager = module_manager
-        self._module_cache: Set[str] = set()
-        self.shared_modules = _SharedModuleTableProxyModel()
-        self.shared_modules.setSourceModel(self._module_manager)
-        self.shared_modules.modelReset.connect(self._refresh_module_cache)
-        self.shared_modules.rowsInserted.connect(self._refresh_module_cache)
-        self.shared_modules.rowsRemoved.connect(self._refresh_module_cache)
-        self._refresh_module_cache()
-
-    @QtCore.Slot()
-    def _refresh_module_cache(self) -> None:
-        with self._thread_lock:
-            self._module_cache = {
-                self.shared_modules.index(row, 1).data() for row in
-                range(self.shared_modules.rowCount())
-            }
+        self.__shared_module_names = {name for name in self._module_manager.module_names if
+                                      self._module_manager.allow_remote(name)}
 
     def _check_module_name(self, name: str) -> None:
-        if name not in self._module_cache:
+        if name not in self.__shared_module_names:
             raise ValueError(f'Client requested module "{name}" that is not shared')
 
     def on_connect(self, conn):
@@ -95,23 +67,24 @@ class RemoteModulesService(rpyc.Service):
 
     def exposed_get_module_instance(self, name: str,) -> Union[CachedObjectRpycByValueProxy, Base]:
         """ Return reference to a module in the shared module list """
-        with self._thread_lock:
-            self._check_module_name(name)
-            instance = self._module_manager.get_module_instance(name)
-            if self._force_remote_calls_by_value:
-                return CachedObjectRpycByValueProxy(instance)
-            return instance
+        self._check_module_name(name)
+        instance = self._module_manager.get_module_instance(name)
+        if self._force_remote_calls_by_value:
+            instance = CachedObjectRpycByValueProxy(instance)
+        return instance
 
     def exposed_get_module_state(self, name: str) -> ModuleState:
         """ Return current ModuleState of the given module """
-        with self._thread_lock:
-            self._check_module_name(name)
-            return self._module_manager.get_module_state(name)
+        self._check_module_name(name)
+        return self._module_manager.get_module_state(name)
+
+    def exposed_module_has_appdata(self, name: str) -> bool:
+        self._check_module_name(name)
+        return self._module_manager.has_appdata(name)
 
     def exposed_get_available_module_names(self) -> List[str]:
         """ Returns the currently shared module names """
-        with self._thread_lock:
-            return list(self._module_cache)
+        return list(self.__shared_module_names)
 
 
 class LocalNamespaceService(rpyc.Service):
@@ -126,50 +99,8 @@ class LocalNamespaceService(rpyc.Service):
                  force_remote_calls_by_value: Optional[bool] = False,
                  **kwargs):
         super().__init__(*args, **kwargs)
-        self._thread_lock = Mutex()
         self._qudi = qudi
         self._force_remote_calls_by_value = force_remote_calls_by_value
-        self._module_cache: Dict[str, Union[Base, CachedObjectRpycByValueProxy]] = dict()
-
-        self.namespace_modules = _LocalModuleTableProxyModel()
-        self.namespace_modules.setSourceModel(self._qudi.module_manager)
-        self.namespace_modules.modelReset.connect(self._refresh_module_cache)
-        self.namespace_modules.rowsInserted.connect(self._refresh_module_cache)
-        self.namespace_modules.rowsRemoved.connect(self._refresh_module_cache)
-        self.namespace_modules.dataChanged.connect(self._module_state_changed)
-        self._refresh_module_cache()
-
-    @QtCore.Slot()
-    def _refresh_module_cache(self) -> None:
-        with self._thread_lock:
-            modules = [
-                self.namespace_modules.index(row, 0).data(QtCore.Qt.UserRole) for row in
-                range(self.namespace_modules.rowCount())
-            ]
-            if self._force_remote_calls_by_value:
-                self._module_cache = {mod.name: CachedObjectRpycByValueProxy(mod.instance) for mod
-                                      in modules if mod.state.activated}
-            else:
-                self._module_cache = {mod.name: mod.instance for mod in modules if
-                                      mod.state.activated}
-
-    def _module_state_changed(self,
-                              top_left: QtCore.QModelIndex,
-                              bottom_right: QtCore.QModelIndex,
-                              roles: Iterable[QtCore.Qt.ItemDataRole]) -> None:
-        if (top_left.column() <= 2) and (bottom_right.column() >= 2):
-            with self._thread_lock:
-                for row in range(top_left.row(), bottom_right.row() + 1):
-                    module = top_left.model().index(row, 0).data(QtCore.Qt.UserRole)
-                    if module.state.deactivated:
-                        self._module_cache.pop(module.name, None)
-                    else:
-                        if self._force_remote_calls_by_value:
-                            self._module_cache[module.name] = CachedObjectRpycByValueProxy(
-                                module.instance
-                            )
-                        else:
-                            self._module_cache[module.name] = module.instance
 
     def on_connect(self, conn):
         """ runs when a connection is created """
@@ -185,10 +116,14 @@ class LocalNamespaceService(rpyc.Service):
         """ Returns the instances of the currently active modules as well as a reference to the
         qudi application itself.
         """
-        with self._thread_lock:
-            mods = self._module_cache.copy()
-            mods['qudi'] = self._qudi
-            return mods
+        mods = self._qudi.module_manager.get_active_module_instances()
+        if self._force_remote_calls_by_value:
+            mods = {name: CachedObjectRpycByValueProxy(mod) for name, mod in mods.items() if
+                    mod.module_base != ModuleBase.GUI}
+        else:
+            mods = {name: mod for name, mod in mods.items() if mod.module_base != ModuleBase.GUI}
+        mods['qudi'] = self._qudi
+        return mods
 
     def exposed_get_logger(self, name: str) -> Logger:
         """ Returns a logger object for remote processes to log into the qudi logging facility """

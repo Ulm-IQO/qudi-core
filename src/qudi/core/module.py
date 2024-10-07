@@ -19,34 +19,23 @@ You should have received a copy of the GNU Lesser General Public License along w
 If not, see <https://www.gnu.org/licenses/>.
 """
 
-__all__ = ['module_url', 'ModuleStateError', 'ModuleBase', 'ModuleState', 'ModuleStateMachine',
-           'Base', 'LogicBase', 'GuiBase']
+__all__ = ['module_url', 'validate_module_base', 'import_module_type', 'module_thread_name',
+           'ModuleStateError', 'ModuleBase', 'ModuleState', 'ModuleStateMachine', 'Base',
+           'HardwareBase', 'LogicBase', 'GuiBase']
 
 import os
 import warnings
+import importlib
 from abc import abstractmethod
 from enum import Enum
 from uuid import uuid4, UUID
 from PySide2 import QtCore, QtWidgets
-from typing import Any, Mapping, Optional, Union, Dict, Final, MutableMapping, final
+from typing import Any, Mapping, Optional, Type, Dict, Final, MutableMapping, final
 
 from qudi.core.object import QudiQObjectMixin
-from qudi.core.logger import get_logger
 from qudi.core.statusvariable import StatusVar
-from qudi.core.config import Configuration
 from qudi.util.helpers import current_is_native_thread
-from qudi.util.paths import get_daily_directory, get_default_data_dir
-
-
-def module_url(module: str, class_name: str, name: str) -> str:
-    """ The unique URL of a qudi module. It is composed of 3 parts:
-    - Containing Python module URL, e.g. "qudi.logic.my_logic_module"
-    - Class name within the Python module, e.g. "MyLogicModule"
-    - Unique module name as defined in the user configuration, e.g. "userlogic"
-    So the complete URL spells "<module>.<class name>::<config name>", e.g.
-    "qudi.logic.my_logic_module.MyLogicModule::userlogic"
-    """
-    return f'{module}.{class_name}::{name}'
+from qudi.util.paths import get_default_data_dir
 
 
 class ModuleStateError(RuntimeError):
@@ -300,7 +289,6 @@ class Base(QudiQObjectMixin, QtCore.QObject):
 
     def __init__(self,
                  name: str,
-                 configuration: Configuration,
                  options: Optional[Mapping[str, Any]] = None,
                  connections: Optional[MutableMapping[str, Any]] = None):
         """ Initialize Base instance. Set up its state machine, initializes ConfigOption meta
@@ -318,14 +306,6 @@ class Base(QudiQObjectMixin, QtCore.QObject):
             nametag=name,
             uuid=uuid
         )
-
-        # global config and default data dir parameters
-        self._configuration = configuration
-        default_data_root = configuration['default_data_dir']
-        if default_data_root is None:
-            default_data_root = get_default_data_dir()
-        self.__default_data_root = os.path.expanduser(default_data_root)
-        self.__daily_data_dirs = configuration['daily_data_dirs']
         # Add additional module info
         self.__module_url = mod_url
         # Initialize module state
@@ -363,11 +343,7 @@ class Base(QudiQObjectMixin, QtCore.QObject):
         Module implementations can overwrite this property with a custom path but should only do so
         with a very good reason.
         """
-        if self.__daily_data_dirs:
-            root_dir = get_daily_directory(root=self.__default_data_root)
-        else:
-            root_dir = self.__default_data_root
-        return os.path.join(root_dir, self.nametag)
+        return os.path.join(get_default_data_dir(), self.nametag)
 
     @abstractmethod
     def on_activate(self) -> None:
@@ -378,6 +354,9 @@ class Base(QudiQObjectMixin, QtCore.QObject):
     def on_deactivate(self) -> None:
         """ Method called when module is deactivated. Must be implemented by actual qudi module. """
         raise NotImplementedError('Please implement and specify the deactivation method.')
+
+
+HardwareBase = Base
 
 
 class LogicBase(Base):
@@ -426,3 +405,60 @@ class GuiBase(Base):
             except:
                 self.log.exception('Unable to restore window state:')
         return False
+
+
+def module_url(module: str, class_name: str, name: str) -> str:
+    """ The unique URL of a qudi module. It is composed of 3 parts:
+    - Containing Python module URL, e.g. "qudi.logic.my_logic_module"
+    - Class name within the Python module, e.g. "MyLogicModule"
+    - Unique module name as defined in the user configuration, e.g. "userlogic"
+    So the complete URL spells "<module>.<class name>::<config name>", e.g.
+    "qudi.logic.my_logic_module.MyLogicModule::userlogic"
+    """
+    return f'{module}.{class_name}::{name}'
+
+
+def module_thread_name(name: str, base: ModuleBase) -> str:
+    """ Generic name of the thread associated with a threaded qudi module (logic or hardware) """
+    return f'mod-{base.value}-{name}'
+
+
+def validate_module_base(module: type, base: ModuleBase) -> None:
+    """ Validate if a certain type is a valid qudi module of given ModuleBase """
+    if base == ModuleBase.GUI:
+        required_base = GuiBase
+    elif base == ModuleBase.LOGIC:
+        required_base = LogicBase
+    elif base == ModuleBase.HARDWARE:
+        required_base = HardwareBase
+    else:
+        required_base = Base
+    if not issubclass(module, required_base):
+        raise TypeError(
+            f'Type "{module.__module__}.{module.__qualname__}" is no valid qudi {base.value} '
+            f'module subclass of "{required_base.__module__}.{required_base.__qualname__}"'
+        )
+
+
+def import_module_type(module: str,
+                       cls: str,
+                       base: ModuleBase,
+                       reload: Optional[bool] = False) -> Type[Base]:
+    """ ToDo: Document """
+    # Import module
+    try:
+        mod = importlib.import_module(module)
+        if reload:
+            mod = importlib.reload(mod)
+    except ImportError:
+        raise
+    except Exception as err:
+        raise ImportError(f'Unable to import module "{module}"') from err
+
+    # Get class from module and validate
+    try:
+        typ = getattr(mod, cls)
+    except AttributeError:
+        raise ImportError(f'No class "{cls}" found in module "{module}"') from None
+    validate_module_base(module=typ, base=base)
+    return typ

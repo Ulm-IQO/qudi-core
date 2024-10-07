@@ -73,7 +73,7 @@ class QudiMainGui(GuiBase):
             self.mw.about_qudi_dialog.version_label.setText('version {0}'.format(version))
             self.mw.version_label.setText(
                 '<a style=\"color: cyan;\"> version {0} </a>  configured from {1}'
-                ''.format(version, self._configuration.file_path))
+                ''.format(version, self._qudi_main.configuration.file_path))
         else:
             self.mw.about_qudi_dialog.version_label.setText(
                 '<a href=\"https://github.com/Ulm-IQO/qudi/commit/{0}\" style=\"color: cyan;\"> {0}'
@@ -81,7 +81,7 @@ class QudiMainGui(GuiBase):
             self.mw.version_label.setText(
                 '<a href=\"https://github.com/Ulm-IQO/qudi/commit/{0}\" style=\"color: cyan;\"> {0}'
                 ' </a>, on branch {1}, configured from {2}'
-                ''.format(version[0], version[1], self._configuration.file_path))
+                ''.format(version[0], version[1], self._qudi_main.configuration.file_path))
 
         self._connect_signals()
         self.keep_settings()
@@ -121,8 +121,6 @@ class QudiMainGui(GuiBase):
             qudi_main.module_manager.clear_all_appdata
         )
         self.mw.action_view_default.triggered.connect(self.reset_default_layout)
-        # Connect signals from manager
-        self._configuration.sigConfigChanged.connect(self.update_config_widget)
         # Settings dialog
         self.mw.settings_dialog.accepted.connect(self.apply_settings)
         self.mw.settings_dialog.rejected.connect(self.keep_settings)
@@ -138,7 +136,6 @@ class QudiMainGui(GuiBase):
         )
 
     def _disconnect_signals(self) -> None:
-        qudi_main = self._qudi_main
         # Disconnect the main windows actions
         self.mw.action_quit.triggered.disconnect()
         self.mw.action_load_configuration.triggered.disconnect()
@@ -148,8 +145,6 @@ class QudiMainGui(GuiBase):
         self.mw.action_deactivate_all_modules.triggered.disconnect()
         self.mw.action_clear_all_appdata.triggered.disconnect()
         self.mw.action_view_default.triggered.disconnect()
-        # Disconnect signals from manager
-        self._configuration.sigConfigChanged.disconnect(self.update_config_widget)
         # Settings dialog
         self.mw.settings_dialog.accepted.disconnect()
         self.mw.settings_dialog.rejected.disconnect()
@@ -174,9 +169,6 @@ class QudiMainGui(GuiBase):
             port = remote_server.server.port
             self.mw.remote_widget.setVisible(True)
             self.mw.remote_widget.server_label.setText(f'Server URL: rpyc://{host}:{port}/')
-            self.mw.remote_widget.shared_module_listview.setModel(
-                remote_server.service.shared_modules
-            )
 
     def show(self) -> None:
         """ Show the window and bring it to the top """
@@ -305,7 +297,7 @@ class QudiMainGui(GuiBase):
     def update_config_widget(self, config: Optional[Configuration] = None) -> None:
         """ Clear and refill the tree widget showing the configuration """
         if config is None:
-            config = self._configuration
+            config = self._qudi_main.configuration
         self.mw.config_widget.set_config(config.config_map)
 
     def get_qudi_version(self) -> str:
@@ -347,7 +339,7 @@ class QudiMainGui(GuiBase):
             )
             if reply == QtWidgets.QMessageBox.Cancel:
                 return
-            self._configuration.set_default_path(filename)
+            self._qudi_main.configuration.set_default_path(filename)
             if reply == QtWidgets.QMessageBox.Yes:
                 self._qudi_main.restart()
 

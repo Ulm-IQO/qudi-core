@@ -18,8 +18,8 @@ If not, see <https://www.gnu.org/licenses/>.
 """
 
 __all__ = ['get_appdata_dir', 'get_default_config_dir', 'get_default_log_dir',
-           'get_default_data_dir', 'get_daily_directory', 'get_home_dir', 'get_main_dir',
-           'get_userdata_dir', 'get_artwork_dir']
+           'get_default_data_root', 'get_default_data_dir','get_daily_directory', 'get_home_dir',
+           'get_main_dir', 'get_userdata_dir', 'get_artwork_dir', 'set_default_data_dir']
 
 import datetime
 import os
@@ -114,21 +114,50 @@ def get_default_log_dir(create_missing: Optional[bool] = False) -> str:
     return path
 
 
-def get_default_data_dir(create_missing: Optional[bool] = False) -> str:
-    """ Get the system specific application fallback data root directory.
-    Does NOT consider qudi configuration.
+# FIXME: This needs to be properly done for linux systems
+__default_data_root: str = os.path.join(get_userdata_dir(create_missing=True), 'Data')
+__use_daily_data_dirs: bool = True
+
+
+def set_default_data_dir(root: Optional[str] = None,
+                         use_daily_dirs: Optional[bool] = None) -> None:
+    """ Globally sets the default data root directory and the use of daily subdirectories, e.g. by
+    qudi configuration.
+    Influences the return values of get_default_data_root and get_default_data_dir.
+    """
+    global __default_data_root
+    global __use_daily_data_dirs
+    if root is not None:
+        __default_data_root = os.path.expanduser(root)
+    if use_daily_dirs is not None:
+        __use_daily_data_dirs = use_daily_dirs
+
+
+def get_default_data_root(create_missing: Optional[bool] = False) -> str:
+    """ Get the system specific user space data root directory.
 
     @return str: path to default data root directory
     """
-    # FIXME: This needs to be properly done for linux systems
-    path = os.path.join(get_userdata_dir(create_missing), 'Data')
+    path = __default_data_root
     # Create path if desired.
     if create_missing and not os.path.exists(path):
         os.mkdir(path)
     return path
 
 
-def get_daily_directory(timestamp: Optional[datetime.datetime] = None, root: Optional[str] = None,
+def get_default_data_dir(create_missing: Optional[bool] = False) -> str:
+    """ Get the system specific user space data root directory with optional daily subdirectory.
+
+    @return str: path to daily default data directory
+    """
+    path = get_default_data_root(create_missing)
+    if __use_daily_data_dirs:
+        path = get_daily_directory(root=path, create_missing=create_missing)
+    return path
+
+
+def get_daily_directory(timestamp: Optional[datetime.datetime] = None,
+                        root: Optional[str] = None,
                         create_missing: Optional[bool] = False) -> str:
     """ Returns a path tree according to the timestamp given.
 

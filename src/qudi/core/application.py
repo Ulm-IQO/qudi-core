@@ -30,11 +30,11 @@ import faulthandler
 from functools import partial
 from logging import DEBUG, INFO, Logger
 from PySide2 import QtCore, QtWidgets, QtGui
-from typing import Optional, Union, Dict, Callable, Tuple, Iterable, List
+from typing import Optional, Union, List, Sequence
 
 from qudi.core.logger import init_rotating_file_handler, init_record_model_handler, clear_handlers
 from qudi.core.logger import get_logger, set_log_level
-from qudi.util.paths import get_default_log_dir, get_artwork_dir
+from qudi.util.paths import get_default_log_dir, set_default_data_dir
 from qudi.util.mutex import Mutex
 from qudi.util.colordefs import QudiMatplotlibStyle
 from qudi.core.config import Configuration, ValidationError, YAMLError
@@ -91,6 +91,32 @@ class Qudi(QtCore.QObject):
     _is_running: bool
     _shutting_down: bool
 
+    @staticmethod
+    def _remove_extensions_from_path(extensions: Sequence[str]) -> None:
+        """ Clean up previously configured expansion paths from sys.path """
+        for ext_path in extensions:
+            try:
+                sys.path.remove(ext_path)
+            except ValueError:
+                pass
+
+    @staticmethod
+    def _add_extensions_to_path(extensions: Sequence[str]) -> List[str]:
+        """ Add extension paths to beginning of sys.path if not already present """
+        insert_index = 1
+        added_extensions = list()
+        for ext_path in reversed(extensions):
+            if ext_path not in sys.path:
+                sys.path.insert(insert_index, ext_path)
+                added_extensions.append(ext_path)
+        return added_extensions
+
+    @classmethod
+    def instance(cls):
+        if cls._instance is None:
+            return None
+        return cls._instance()
+
     def __new__(cls, *args, **kwargs):
         if cls._instance is None or cls._instance() is None:
             obj = super().__new__(cls, *args, **kwargs)
@@ -133,6 +159,9 @@ class Qudi(QtCore.QObject):
         self.log = get_logger(__class__.__name__)  # "qudi.Qudi" in custom logger
         sys.excepthook = self._qudi_excepthook
 
+        # Setup environment variables
+        setup_environment()
+
         # Load configuration from disc if possible
         self.configuration = Configuration()
         try:
@@ -142,10 +171,26 @@ class Qudi(QtCore.QObject):
         except (ValidationError, YAMLError):
             self.log.exception('Invalid qudi configuration file specified. '
                                'Falling back to default config.')
+        if self.configuration.file_path is None:
+            print('> Default configuration loaded')
+            self.log.info('Default configuration loaded')
+        else:
+            print(f'> Configuration loaded from "{self.configuration.file_path}"...')
+            self.log.info(f'Configuration loaded from "{self.configuration.file_path}"...')
+
+        # Add extensions to PATH
+        if self.configuration['extension_paths']:
+            self._configured_extension_paths = self._add_extensions_to_path(
+                self.configuration['extension_paths']
+            )
+
+        # Set default data directory globally
+        set_default_data_dir(root=self.configuration['default_data_dir'],
+                             use_daily_dirs=self.configuration['daily_data_dirs'])
 
         # initialize thread manager and module manager
         self.thread_manager = ThreadManager(parent=self)
-        self.module_manager = ModuleManager(qudi_main=self, parent=self)
+        self.module_manager = ModuleManager(config=self.configuration, parent=self)
 
         # initialize remote modules server if needed
         remote_server_config = self.configuration['remote_modules_server']
@@ -177,9 +222,11 @@ class Qudi(QtCore.QObject):
         self.watchdog = None
         self.tray_icon = None
 
-        self._configured_extension_paths = list()
         self._is_running = False
         self._shutting_down = False
+
+        print('> Qudi configuration complete!')
+        self.log.info('Qudi configuration complete!')
 
     def _qudi_excepthook(self, ex_type, ex_value, ex_traceback):
         """ Handler function to be used as sys.excepthook. Should forward all unhandled exceptions
@@ -215,67 +262,9 @@ class Qudi(QtCore.QObject):
         # Log exception with qudi log handler
         logger.error(msg, exc_info=(ex_type, ex_value, ex_traceback))
 
-    @classmethod
-    def instance(cls):
-        if cls._instance is None:
-            return None
-        return cls._instance()
-
     @property
     def is_running(self) -> bool:
         return self._is_running
-
-    def _remove_extensions_from_path(self) -> None:
-        # Clean up previously configured expansion paths
-        for ext_path in self._configured_extension_paths:
-            try:
-                sys.path.remove(ext_path)
-            except ValueError:
-                pass
-
-    def _add_extensions_to_path(self) -> None:
-        extensions = self.configuration['extension_paths']
-        # Add qudi extension paths to sys.path
-        insert_index = 1
-        for ext_path in reversed(extensions):
-            sys.path.insert(insert_index, ext_path)
-        self._configured_extension_paths = extensions
-
-    def _configure_qudi_modules(self) -> None:
-        """
-        """
-        if self.configuration.file_path is None:
-            print('> Applying default configuration...')
-            self.log.info('Applying default configuration...')
-        else:
-            print(f'> Applying configuration from "{self.configuration.file_path}"...')
-            self.log.info(f'Applying configuration from "{self.configuration.file_path}"...')
-
-        # Clear all qudi modules
-        self.module_manager.clear()
-
-        # Configure extension paths
-        self._remove_extensions_from_path()
-        self._add_extensions_to_path()
-
-        # Configure qudi modules
-        main_gui_cfg = self.configuration['main_gui']
-        if main_gui_cfg is not None:
-            self.module_manager.set_main_gui(main_gui_cfg)
-        for base in ModuleBase:
-            # Create ManagedModule instance by adding each module to ModuleManager
-            for module_name, module_cfg in self.configuration[base.value].items():
-                try:
-                    self.module_manager.add_module(name=module_name,
-                                                   base=base,
-                                                   configuration=module_cfg)
-                except:
-                    self.module_manager.remove_module(module_name, ignore_missing=True)
-                    self.log.exception(f'Unable to create ManagedModule instance for {base} '
-                                       f'module "{module_name}"')
-
-        print('> Qudi configuration complete!')
-        self.log.info('Qudi configuration complete!')
 
     def _start_gui(self) -> None:
         app = QtWidgets.QApplication.instance()
@@ -296,9 +285,8 @@ class Qudi(QtCore.QObject):
         else:
             self.tray_icon = QudiTrayIcon(quit_callback=self.quit,
                                           restart_callback=self.restart)
-        for row in range(self.module_manager.rowCount()):
-            if self.module_manager.index(row, 0).data() == ModuleBase.GUI:
-                name = self.module_manager.index(row, 1).data()
+        for name in self.module_manager.module_names:
+            if self.module_manager.module_base(name) == ModuleBase.GUI:
                 self.tray_icon.add_module_action(
                     name=name,
                     callback=partial(self.module_manager.activate_module, name)
@@ -344,8 +332,6 @@ class Qudi(QtCore.QObject):
             self.log.info(startup_info)
             print(f'> {startup_info}')
 
-            setup_environment()
-
             # Set default Qt locale to "C" in order to avoid surprises with number formats and
             # other things
             # QtCore.QLocale.setDefault(QtCore.QLocale('en_US'))
@@ -376,9 +362,6 @@ class Qudi(QtCore.QObject):
 
             # Install app watchdog
             self.watchdog = AppWatchdog(self.interrupt_quit)
-
-            # Apply module configuration
-            self._configure_qudi_modules()
 
             # Start module servers
             if self.remote_modules_server is not None:
@@ -416,8 +399,8 @@ class Qudi(QtCore.QObject):
             self._shutting_down = True
             if prompt:
                 locked_modules = False
-                for row in range(self.module_manager.rowCount()):
-                    if self.module_manager.index(row, 2).data().locked:
+                for name in self.module_manager.module_names:
+                    if self.module_manager.module_state(name) == ModuleState.LOCKED:
                         locked_modules = True
                         break
 
@@ -455,7 +438,7 @@ class Qudi(QtCore.QObject):
             QtCore.QCoreApplication.instance().processEvents()
             self.log.info('Deactivating modules...')
             print('> Deactivating modules...')
-            self.module_manager.clear()
+            self.module_manager.deactivate_all_modules()
             QtCore.QCoreApplication.instance().processEvents()
             if not self.no_gui:
                 self._stop_gui()
