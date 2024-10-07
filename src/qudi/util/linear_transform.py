@@ -316,7 +316,7 @@ def compute_rotation_matrix_to_plane(v0: np.ndarray, v1: np.ndarray, v2: np.ndar
 
     """
     if len(v0) != 3 or len(v1) != 3 or len(v2) != 3:
-        raise ValueError("The support vectors should have a length of 3.")
+        raise ValueError('The support vectors should have a length of 3.')
     s0 = v1 - v0
     s1 = v2 - v0
     ez = np.asarray(ez)

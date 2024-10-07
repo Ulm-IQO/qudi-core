@@ -46,8 +46,8 @@ from qudi.util.helpers import is_string, is_integer, is_float, is_complex, is_nu
 class ImageFormat(Enum):
     """Image format to use for saving data thumbnails."""
 
-    PNG = ".png"
-    PDF = ".pdf"
+    PNG = '.png'
+    PDF = '.pdf'
 
 
 def get_timestamp_filename(timestamp, nametag=None):
@@ -416,7 +416,7 @@ class DataStorageBase(metaclass=ABCMeta):
             Full file path (str), timestamp used (datetime.datetime), saved data shape (tuple).
         """
 
-    pass
+        pass
 
     @abstractmethod
     def load_data(self, *args, **kwargs):

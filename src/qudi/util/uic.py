@@ -51,18 +51,14 @@ def loadUi(file_path, base_widget):
 
     Parameters
     ----------
-    str :
-        file_path: The full path to the .ui-file to load
-    object :
-        base_widget: Instance of the base widget represented by the .ui-file
-    file_path :
-        
-    base_widget :
-        
+    file_path : str
+        The full path to the .ui-file to load
+    base_widget : object
+        Instance of the base widget represented by the .ui-file
 
     Returns
     -------
-
+    None
     """
     # This step is a workaround because Qt Designer will only specify relative paths which is very
     # error prone if the user changes the cwd (e.g. os.chdir)
@@ -121,16 +117,13 @@ def _convert_ui_to_absolute_paths(file_path):
 
     Parameters
     ----------
-    str :
-        file_path: The path to the .ui file to convert
-    file_path :
-        
+    file_path : str
+        The path to the .ui file to convert
 
     Returns
     -------
-    type
-        str|NoneType: Converted file content of the .ui file, None if conversion is not needed
-
+    str | None
+        Converted file content of the .ui file, None if conversion is not needed
     """
     path_prefix = get_artwork_dir()
     with open(file_path, 'r') as file:

@@ -39,9 +39,8 @@ class Mutex(_QMutex):
     * Context management (enter/exit)
     """
 
-    def acquire(
-        self, blocking: Optional[bool] = True, timeout: Optional[_RealNumber] = -1
-    ) -> bool:
+    def acquire(self, blocking: Optional[bool] = True, timeout: Optional[_RealNumber] =
+-1) -> bool:
         """
         Mimics threading.Lock.acquire() to allow this class as a drop-in replacement.
 

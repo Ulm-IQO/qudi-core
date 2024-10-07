@@ -114,7 +114,7 @@ class StatusVar:
 
     @staticmethod
     def _assert_func_signature(func: Callable) -> Callable:
-        assert callable(func), "StatusVar constructor/representer must be callable"
+        assert callable(func), 'StatusVar constructor/representer must be callable'
         params = tuple(inspect.signature(func).parameters)
         assert 0 < len(params) < 3, 'StatusVar constructor/representer must be function with ' \
                                     '1 (static) or 2 (bound method) parameters.'
