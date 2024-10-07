@@ -314,7 +314,7 @@ class Base(QtCore.QObject, metaclass=ModuleMeta):
             self.log.exception('Exception during deactivation:')
         finally:
             # save status variables even if deactivation failed
-            self._dump_status_variables()
+            self.dump_status_variables()
         return True
 
     def _load_status_variables(self) -> None:
@@ -340,12 +340,13 @@ class Base(QtCore.QObject, metaclass=ModuleMeta):
         except:
             self.log.exception('Error while settings status variables:')
 
-    def _dump_status_variables(self) -> None:
+    def dump_status_variables(self) -> None:
         """ Dump status variables to app data directory on disc.
 
         This method can also be used to manually dump status variables independent of the automatic
         dump during module deactivation.
         """
+        self.log.debug(f"Dumping status variables of module {self.module_name}")
         file_path = get_module_app_data_path(self.__class__.__name__,
                                              self.module_base,
                                              self.module_name)

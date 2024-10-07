@@ -75,6 +75,16 @@ class QudiMainWindow(QtWidgets.QMainWindow):
             QtGui.QIcon(os.path.join(icon_path, 'dialog-warning')))
         self.action_load_all_modules.setText('Load all modules')
         self.action_load_all_modules.setToolTip('Load all available modules found in configuration')
+
+        # Dump status variables action
+        self.action_dump_status_variables = QtWidgets.QAction()
+        self.action_dump_status_variables.setIcon(
+            QtGui.QIcon(os.path.join(icon_path, "document-save"))
+        )
+        self.action_dump_status_variables.setText("Save all Status Variables")
+        self.action_dump_status_variables.setToolTip(
+            "Save Status Variables of all active modules"
+        )
         # quit action
         self.action_quit = QtWidgets.QAction()
         self.action_quit.setIcon(QtGui.QIcon(os.path.join(icon_path, 'application-exit')))
@@ -135,6 +145,7 @@ class QudiMainWindow(QtWidgets.QMainWindow):
         self.toolbar.addAction(self.action_reload_qudi)
         self.toolbar.addSeparator()
         self.toolbar.addAction(self.action_load_all_modules)
+        self.toolbar.addAction(self.action_dump_status_variables)
         self.addToolBar(self.toolbar)
 
         # Create menu bar
@@ -146,6 +157,7 @@ class QudiMainWindow(QtWidgets.QMainWindow):
         menu.addAction(self.action_reload_qudi)
         menu.addSeparator()
         menu.addAction(self.action_load_all_modules)
+        menu.addAction(self.action_dump_status_variables)
         menu.addSeparator()
         menu.addAction(self.action_settings)
         menu.addSeparator()

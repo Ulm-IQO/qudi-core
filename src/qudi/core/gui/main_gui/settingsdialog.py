@@ -20,6 +20,7 @@ If not, see <https://www.gnu.org/licenses/>.
 """
 
 from PySide2 import QtCore, QtWidgets
+from qudi.util.widgets.scientific_spinbox import ScienSpinBox
 
 
 class SettingsDialog(QtWidgets.QDialog):
@@ -56,11 +57,38 @@ class SettingsDialog(QtWidgets.QDialog):
         layout.addWidget(label, 1, 0)
         layout.addWidget(self.show_error_popups_checkbox, 1, 1)
 
+        label = QtWidgets.QLabel("Automatic StatusVar saving")
+        label.setObjectName("autoStatusVarSavingLabel")
+        label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+        self.checkbox_automatic_status_variable_dumping = QtWidgets.QCheckBox()
+        self.checkbox_automatic_status_variable_dumping.setChecked(False)
+        self.checkbox_automatic_status_variable_dumping.setToolTip(
+            "Activate / Deactivate automatic dumping of status variables"
+        )
+        layout.addWidget(label, 2, 0)
+        layout.addWidget(self.checkbox_automatic_status_variable_dumping, 2, 1)
+
+        label = QtWidgets.QLabel("Automatic StatusVar saving interval")
+        label.setObjectName("autoStatusVarSavingIntervalLabel")
+        label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+        self.dump_status_variables_interval_spinbox = ScienSpinBox()
+        self.dump_status_variables_interval_spinbox.setToolTip(
+            "Time interval for automatic dumping of status variables"
+        )
+        self.dump_status_variables_interval_spinbox.setSuffix("min")
+        self.dump_status_variables_interval_spinbox.setMinimum(1)
+        self.dump_status_variables_interval_spinbox.setMaximum(1440)
+        self.dump_status_variables_interval_spinbox.setMinimumSize(QtCore.QSize(80, 0))
+        self.dump_status_variables_interval_spinbox.setValue(1)
+        self.dump_status_variables_interval_spinbox.setEnabled(False)
+        layout.addWidget(label, 3, 0)
+        layout.addWidget(self.dump_status_variables_interval_spinbox, 3, 1)
+
         buttonbox = QtWidgets.QDialogButtonBox(QtWidgets.QDialogButtonBox.Ok
                                                | QtWidgets.QDialogButtonBox.Cancel
                                                | QtWidgets.QDialogButtonBox.Apply)
         buttonbox.setOrientation(QtCore.Qt.Horizontal)
-        layout.addWidget(buttonbox, 2, 0, 1, 2)
+        layout.addWidget(buttonbox, 4, 0, 1, 2)
 
         # Add internal signals
         buttonbox.accepted.connect(self.accept)
