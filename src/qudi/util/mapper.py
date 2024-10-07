@@ -2,21 +2,21 @@
 """
 This file contains the Qudi mapper module.
 
-Copyright (c) 2021, the qudi developers. See the AUTHORS.md file at the top-level directory of this
-distribution and on <https://github.com/Ulm-IQO/qudi-core/>
-
-This file is part of qudi.
-
-Qudi is free software: you can redistribute it and/or modify it under the terms of
-the GNU Lesser General Public License as published by the Free Software Foundation,
-either version 3 of the License, or (at your option) any later version.
-
-Qudi is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
-without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-See the GNU Lesser General Public License for more details.
-
-You should have received a copy of the GNU Lesser General Public License along with qudi.
-If not, see <https://www.gnu.org/licenses/>.
+.. Copyright (c) 2021, the qudi developers. See the AUTHORS.md file at the top-level directory of this
+.. distribution and on <https://github.com/Ulm-IQO/qudi-core/>
+..
+.. This file is part of qudi.
+..
+.. Qudi is free software: you can redistribute it and/or modify it under the terms of
+.. the GNU Lesser General Public License as published by the Free Software Foundation,
+.. either version 3 of the License, or (at your option) any later version.
+..
+.. Qudi is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+.. without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+.. See the GNU Lesser General Public License for more details.
+..
+.. You should have received a copy of the GNU Lesser General Public License along with qudi.
+.. If not, see <https://www.gnu.org/licenses/>.
 """
 
 __all__ = ['Converter', 'Mapper']
@@ -47,31 +47,35 @@ class Converter:
     """
     def widget_to_model(self, data):
         """
-        Converts data in the format given by the widget and converts it
-        to the model data format.
+        Converts data from the format given by the widget to the model data format.
 
-        Parameter:
-        ==========
-        data: object data to be converted
+        Parameters
+        ----------
+        data : object
+            Data to be converted.
 
-        Returns:
-        ========
-        out: object converted data
+        Returns
+        -------
+        object
+            Converted data.
+
         """
         return data
 
     def model_to_widget(self, data):
         """
-        Converts data in the format given by the model and converts it
-        to the widget data format.
+        Converts data from the model format to the widget data format.
 
-        Parameter:
-        ==========
-        data: object data to be converted
+        Parameters
+        ----------
+        data : object
+            Data to be converted from the model format to the widget format.
 
-        Returns:
-        ========
-        out: object converted data
+        Returns
+        -------
+        object
+            Converted data in the widget format.
+
         """
         return data
 

@@ -2,23 +2,21 @@
 """
 Parent poller mechanism from IPython.
 
-Copyright (c) 2015, IPython Development Team
-
-Copyright (c) 2021, the qudi developers. See the AUTHORS.md file at the top-level directory of this
-distribution and on <https://github.com/Ulm-IQO/qudi-core/>
-
-This file is part of qudi.
-
-Qudi is free software: you can redistribute it and/or modify it under the terms of
-the GNU Lesser General Public License as published by the Free Software Foundation,
-either version 3 of the License, or (at your option) any later version.
-
-Qudi is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
-without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-See the GNU Lesser General Public License for more details.
-
-You should have received a copy of the GNU Lesser General Public License along with qudi.
-If not, see <https://www.gnu.org/licenses/>.
+.. Copyright (c) 2021, the qudi developers. See the AUTHORS.md file at the top-level directory of this
+.. distribution and on <https://github.com/Ulm-IQO/qudi-core/>
+..
+.. This file is part of qudi.
+..
+.. Qudi is free software: you can redistribute it and/or modify it under the terms of
+.. the GNU Lesser General Public License as published by the Free Software Foundation,
+.. either version 3 of the License, or (at your option) any later version.
+..
+.. Qudi is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+.. without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+.. See the GNU Lesser General Public License for more details.
+..
+.. You should have received a copy of the GNU Lesser General Public License along with qudi.
+.. If not, see <https://www.gnu.org/licenses/>.
 """
 
 __all__ = ['ParentPollerUnix', 'ParentPollerWindows']
@@ -39,9 +37,12 @@ class ParentPollerUnix(Thread):
     """
 
     def __init__(self, quit_function=None):
-        """ Create the parentpoller.
+        """Create the parent poller.
 
-            @param callable quitfunction: function to run before exiting
+        Parameters
+        ----------
+        quitfunction : callable
+            Function to run before exiting.
         """
         if quit_function is None:
             pass
@@ -80,9 +81,12 @@ class ParentPollerWindows(Thread):
     def __init__(self, parent_handle, quit_function=None):
         """ Create the parent poller.
 
-        @param callable quit_function: Function to call for shutdown if parent process is dead.
-        @param int parent_handle: The program will terminate immediately when this handle is
-                                  signaled.
+        Parameters
+        ----------
+        quit_function : callable
+            Function to call for shutdown if the parent process is dead.
+        parent_handle : int
+            The program will terminate immediately when this handle is signaled.
         """
         if quit_function is None:
             pass

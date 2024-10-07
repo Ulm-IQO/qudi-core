@@ -2,21 +2,21 @@
 """
 This module provides functionality for linear transformations of cartesian coordinate systems.
 
-Copyright (c) 2022, the qudi developers. See the AUTHORS.md file at the top-level directory of this
-distribution and on <https://github.com/Ulm-IQO/qudi-iqo-modules/>
-
-This file is part of qudi.
-
-Qudi is free software: you can redistribute it and/or modify it under the terms of
-the GNU Lesser General Public License as published by the Free Software Foundation,
-either version 3 of the License, or (at your option) any later version.
-
-Qudi is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
-without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-See the GNU Lesser General Public License for more details.
-
-You should have received a copy of the GNU Lesser General Public License along with qudi.
-If not, see <https://www.gnu.org/licenses/>.
+.. Copyright (c) 2022, the qudi developers. See the AUTHORS.md file at the top-level directory of this
+.. distribution and on <https://github.com/Ulm-IQO/qudi-iqo-modules/>
+..
+.. This file is part of qudi.
+..
+.. Qudi is free software: you can redistribute it and/or modify it under the terms of
+.. the GNU Lesser General Public License as published by the Free Software Foundation,
+.. either version 3 of the License, or (at your option) any later version.
+..
+.. Qudi is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+.. without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+.. See the GNU Lesser General Public License for more details.
+..
+.. You should have received a copy of the GNU Lesser General Public License along with qudi.
+.. If not, see <https://www.gnu.org/licenses/>.
 """
 
 __all__ = ['LinearTransformation', 'LinearTransformation3D', 'LinearTransformation2D']
@@ -246,8 +246,16 @@ def find_changing_axes(points: np.ndarray) -> np.ndarray:
     """
     From a set of column vectors, find the axes which do not have the same coordinate for all vectors.
 
-    :param points: each row is a vector
-    :return: array of the indices of the changing axes
+    Parameters
+    ----------
+    points : numpy.ndarray
+        Each row represents a vector.
+
+    Returns
+    -------
+    numpy.ndarray
+        Array of the indices of the changing axes.
+
     """
     num_axes = len(points[0])
     axes_changing_p = np.zeros(num_axes, dtype=np.bool_)
@@ -263,26 +271,49 @@ def find_changing_axes(points: np.ndarray) -> np.ndarray:
 
 def compute_reduced_vectors(points: np.ndarray) -> np.ndarray:
     """
-    From a set of column vectors, keep only the columns (= axes) that are not constant coordinates for all vectors.
+    From a set of column vectors, keep only the columns (axes) that are not constant coordinates
+    for all vectors.
 
-    :param points: each row is a vector
-    :return: reduced array
+    Parameters
+    ----------
+    points : numpy.ndarray
+        Each row represents a vector.
+
+    Returns
+    -------
+    numpy.ndarray
+        Reduced array containing only the non-constant axes.
+
     """
     axes_changing_p = find_changing_axes(points)
     return points[:, axes_changing_p]
 
 def compute_rotation_matrix_to_plane(v0: np.ndarray, v1: np.ndarray, v2: np.ndarray, ez=[0,0,1]) -> np.ndarray:
     """
-    Find the rotation matrix that transforms a plane given by 3 support vectors onto the z plane.
-    This rotation will be around the origin of the coordinate system.
-    Optionally, define the target plane by it's normal vector.
+    Find the rotation matrix that transforms a plane given by three support vectors onto the z plane.
+    This rotation is around the origin of the coordinate system.
+    Optionally, define the target plane by its normal vector.
+
+    Parameters
+    ----------
+    v0 : numpy.ndarray
+        Support vector 0.
+    v1 : numpy.ndarray
+        Support vector 1.
+    v2 : numpy.ndarray
+        Support vector 2.
+    ez : numpy.ndarray, optional
+        Normal vector defining the target plane. By default, this is the z plane.
+
+    Returns
+    -------
+    numpy.ndarray
+        3x3 rotation matrix.
+
+    Notes
+    -----
     See the math here: https://en.wikipedia.org/wiki/Rodrigues'_rotation_formula
 
-    :param v0: Support vector 0
-    :param v1: Support vector 1
-    :param v2: Support vector 2
-    :param ez: Normal vector defining the target plane. By default this is the z plane.
-    :return: 3x3 rotation matrix
     """
     if len(v0) != 3 or len(v1) != 3 or len(v2) != 3:
         raise ValueError('The support vectors should have a length of 3.')

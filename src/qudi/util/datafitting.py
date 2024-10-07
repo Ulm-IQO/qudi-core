@@ -3,21 +3,21 @@
 """
 ToDo: Document
 
-Copyright (c) 2021, the qudi developers. See the AUTHORS.md file at the top-level directory of this
-distribution and on <https://github.com/Ulm-IQO/qudi-core/>
-
-This file is part of qudi.
-
-Qudi is free software: you can redistribute it and/or modify it under the terms of
-the GNU Lesser General Public License as published by the Free Software Foundation,
-either version 3 of the License, or (at your option) any later version.
-
-Qudi is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
-without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-See the GNU Lesser General Public License for more details.
-
-You should have received a copy of the GNU Lesser General Public License along with qudi.
-If not, see <https://www.gnu.org/licenses/>.
+.. Copyright (c) 2021, the qudi developers. See the AUTHORS.md file at the top-level directory of this
+.. distribution and on <https://github.com/Ulm-IQO/qudi-core/>
+..
+.. This file is part of qudi.
+..
+.. Qudi is free software: you can redistribute it and/or modify it under the terms of
+.. the GNU Lesser General Public License as published by the Free Software Foundation,
+.. either version 3 of the License, or (at your option) any later version.
+..
+.. Qudi is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+.. without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+.. See the GNU Lesser General Public License for more details.
+..
+.. You should have received a copy of the GNU Lesser General Public License along with qudi.
+.. If not, see <https://www.gnu.org/licenses/>.
 """
 
 __all__ = ('is_fit_model', 'get_all_fit_models', 'FitConfiguration', 'FitConfigurationsModel',
@@ -250,10 +250,14 @@ class FitConfigurationsModel(QtCore.QAbstractListModel):
         return False
 
     def dump_configs(self):
-        """ Returns all currently held fit configurations as dicts representations containing only
-        data types that can be dumped as YAML in qudi app status.
+        """
+        Returns all currently held fit configurations as dictionary representations containing only
+        data types that can be dumped as YAML in the Qudi app status.
 
-        @return list: List of fit config dict representations.
+        Returns
+        -------
+        list of dict
+            List of fit configuration dictionary representations.
         """
         return [cfg.to_dict() for cfg in self._fit_configurations]
 
@@ -261,9 +265,14 @@ class FitConfigurationsModel(QtCore.QAbstractListModel):
         """ Initializes/overwrites all currently held fit configurations by a given iterable of dict
         representations (see also: FitConfigurationsModel.dump_configs).
 
-        Calling this method will reset the list model.
+        This method will reset the list model.
 
-        @param iterable configs: Iterable of FitConfiguration dict representations
+        Parameters
+        ----------
+        configs : iterable
+            Iterable of FitConfiguration dictionary representations.
+            See also: FitConfigurationsModel.dump_configs.
+
         """
         config_objects = list()
         for cfg in configs:

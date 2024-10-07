@@ -3,21 +3,21 @@
 """
 This file contains models of Lorentzian fitting routines for qudi based on the lmfit package.
 
-Copyright (c) 2021, the qudi developers. See the AUTHORS.md file at the top-level directory of this
-distribution and on <https://github.com/Ulm-IQO/qudi-core/>
-
-This file is part of qudi.
-
-Qudi is free software: you can redistribute it and/or modify it under the terms of
-the GNU Lesser General Public License as published by the Free Software Foundation,
-either version 3 of the License, or (at your option) any later version.
-
-Qudi is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
-without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-See the GNU Lesser General Public License for more details.
-
-You should have received a copy of the GNU Lesser General Public License along with qudi.
-If not, see <https://www.gnu.org/licenses/>.
+.. Copyright (c) 2021, the qudi developers. See the AUTHORS.md file at the top-level directory of this
+.. distribution and on <https://github.com/Ulm-IQO/qudi-core/>
+..
+.. This file is part of qudi.
+..
+.. Qudi is free software: you can redistribute it and/or modify it under the terms of
+.. the GNU Lesser General Public License as published by the Free Software Foundation,
+.. either version 3 of the License, or (at your option) any later version.
+..
+.. Qudi is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+.. without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+.. See the GNU Lesser General Public License for more details.
+..
+.. You should have received a copy of the GNU Lesser General Public License along with qudi.
+.. If not, see <https://www.gnu.org/licenses/>.
 """
 
 __all__ = ['ComplexLorentzian', 'DoubleLorentzian', 'Lorentzian', 'LorentzianLinear',
@@ -35,12 +35,24 @@ def multiple_lorentzian(x, centers, sigmas, amplitudes):
     """ Mathematical definition of the sum of multiple (physical) Lorentzian functions without any
     bias.
 
-    WARNING: iterable parameters "centers", "sigmas" and "amplitudes" must have same length.
+    WARNING: Iterable parameters "centers", "sigmas", and "amplitudes" must have the same length.
 
-    @param float x: The independent variable to calculate lorentz(x)
-    @param iterable centers: Iterable containing center positions for all lorentzians
-    @param iterable sigmas: Iterable containing sigmas for all lorentzians
-    @param iterable amplitudes: Iterable containing amplitudes for all lorentzians
+    Parameters
+    ----------
+    x : float
+        The independent variable to calculate lorentz(x).
+    centers : iterable
+        Iterable containing center positions for all Lorentzians.
+    sigmas : iterable
+        Iterable containing width parameters (half-width at half-maximum) for all Lorentzians.
+    amplitudes : iterable
+        Iterable containing amplitudes for all Lorentzians.
+
+    Returns
+    -------
+    float
+        The result given x for lorentz(x).
+
     """
     assert len(centers) == len(sigmas) == len(amplitudes)
     return sum(amp * sig ** 2 / ((x - c) ** 2 + sig ** 2) for c, sig, amp in

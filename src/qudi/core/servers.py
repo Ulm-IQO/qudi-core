@@ -2,21 +2,21 @@
 """
 This file contains the Qudi tools for remote module sharing via rpyc server.
 
-Copyright (c) 2021, the qudi developers. See the AUTHORS.md file at the top-level directory of this
-distribution and on <https://github.com/Ulm-IQO/qudi-core/>
-
-This file is part of qudi.
-
-Qudi is free software: you can redistribute it and/or modify it under the terms of
-the GNU Lesser General Public License as published by the Free Software Foundation,
-either version 3 of the License, or (at your option) any later version.
-
-Qudi is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
-without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-See the GNU Lesser General Public License for more details.
-
-You should have received a copy of the GNU Lesser General Public License along with qudi.
-If not, see <https://www.gnu.org/licenses/>.
+.. Copyright (c) 2021, the qudi developers. See the AUTHORS.md file at the top-level directory of this
+.. distribution and on <https://github.com/Ulm-IQO/qudi-core/>
+..
+.. This file is part of qudi.
+..
+.. Qudi is free software: you can redistribute it and/or modify it under the terms of
+.. the GNU Lesser General Public License as published by the Free Software Foundation,
+.. either version 3 of the License, or (at your option) any later version.
+..
+.. Qudi is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+.. without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+.. See the GNU Lesser General Public License for more details.
+..
+.. You should have received a copy of the GNU Lesser General Public License along with qudi.
+.. If not, see <https://www.gnu.org/licenses/>.
 """
 
 __all__ = ('get_remote_module_instance', 'BaseServer', 'RemoteModulesServer', 'QudiNamespaceServer')
@@ -38,12 +38,21 @@ logger = get_logger(__name__)
 def get_remote_module_instance(remote_url, certfile=None, keyfile=None, protocol_config=None):
     """ Helper method to retrieve a remote module instance via rpyc from a qudi RemoteModuleServer.
 
-    @param str remote_url: The URL of the remote qudi module
-    @param str certfile: Certificate file path for the request
-    @param str keyfile: Key file path for the request
-    @param dict protocol_config: optional, configuration options for rpyc.ssl_connect
+    Parameters
+    ----------
+    remote_url : str
+        The URL of the remote qudi module.
+    certfile : str
+        Certificate file path for the request.
+    keyfile : str
+        Key file path for the request.
+    protocol_config : dict, optional
+        Configuration options for rpyc.ssl_connect.
 
-    @return object: The requested qudi module instance (None if request failed)
+    Returns
+    -------
+    object or None
+        The requested qudi module instance. Returns None if the request failed.
     """
     parsed = urlparse(remote_url)
     if protocol_config is None:
@@ -149,7 +158,10 @@ class BaseServer(QtCore.QObject):
                  keyfile=None, protocol_config=None, ssl_version=None, cert_reqs=None,
                  ciphers=None, parent=None):
         """
-        @param int port: port the RPyC server should listen to
+        Parameters
+        ----------
+        port : int
+            Port number the RPyC server should listen to.
         """
         super().__init__(parent=parent)
 
@@ -253,10 +265,20 @@ class QudiNamespaceServer(BaseServer):
 
     def __init__(self, qudi, name, port, force_remote_calls_by_value=False, parent=None):
         """
-        @param qudi.Qudi qudi: The governing qudi main application instance
-        @param str name: Server name (used as name for the associated QThread)
-        @param int port: port the RPyC server should listen to
-        @param PySide2.QtCore.QObject parent: optional, parent Qt QObject
+        Parameters
+        ----------
+        qudi : qudi.Qudi
+            The governing qudi main application instance.
+        name : str
+            Server name (used as name for the associated QThread).
+        port : int
+            Port number the RPyC server should listen to.
+        parent : PySide2.QtCore.QObject, optional
+            Parent Qt QObject.
+
+        Returns
+        -------
+        None
         """
         service_instance = QudiNamespaceService(
             qudi=qudi,

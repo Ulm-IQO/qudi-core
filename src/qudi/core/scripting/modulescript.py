@@ -1,24 +1,24 @@
 # -*- coding: utf-8 -*-
 
 """
-This file contains a basic script class to run with qudi module dependencies as well as various
-helper classes to run and manage these scripts.
-
-Copyright (c) 2021, the qudi developers. See the AUTHORS.md file at the top-level directory of this
-distribution and on <https://github.com/Ulm-IQO/qudi-core/>
-
-This file is part of qudi.
-
-Qudi is free software: you can redistribute it and/or modify it under the terms of
-the GNU Lesser General Public License as published by the Free Software Foundation,
-either version 3 of the License, or (at your option) any later version.
-
-Qudi is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
-without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-See the GNU Lesser General Public License for more details.
-
-You should have received a copy of the GNU Lesser General Public License along with qudi.
-If not, see <https://www.gnu.org/licenses/>.
+.. This file contains a basic script class to run with qudi module dependencies as well as various
+.. helper classes to run and manage these scripts.
+.. 
+.. Copyright (c) 2021, the qudi developers. See the AUTHORS.md file at the top-level directory of this
+.. distribution and on <https://github.com/Ulm-IQO/qudi-core/>
+.. 
+.. This file is part of qudi.
+.. 
+.. Qudi is free software: you can redistribute it and/or modify it under the terms of
+.. the GNU Lesser General Public License as published by the Free Software Foundation,
+.. either version 3 of the License, or (at your option) any later version.
+.. 
+.. Qudi is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+.. without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+.. See the GNU Lesser General Public License for more details.
+.. 
+.. You should have received a copy of the GNU Lesser General Public License along with qudi.
+.. If not, see <https://www.gnu.org/licenses/>.
 """
 
 __all__ = ['import_module_script', 'ModuleScript', 'ModuleScriptsDictTableModel',
@@ -97,7 +97,10 @@ class ModuleScript(QtCore.QObject, metaclass=QudiObjectMeta):
         """ Returns a logger object.
         DO NOT OVERRIDE IN SUBCLASS!
 
-        @return Logger: Logger object for this script class
+        Returns
+        -------
+        Logger
+            Logger object for this script class.
         """
         return self.__logger
 
@@ -152,7 +155,10 @@ class ModuleScript(QtCore.QObject, metaclass=QudiObjectMeta):
 
         Arguments are passed directly to _run() method.
 
-        @return object: Result of the script method
+        Returns
+        -------
+        object
+            Result of the script method.
         """
         self.args = args
         self.kwargs = kwargs

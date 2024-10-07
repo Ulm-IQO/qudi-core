@@ -2,21 +2,21 @@
 """
 Connector object to establish connections between qudi modules.
 
-Copyright (c) 2021, the qudi developers. See the AUTHORS.md file at the top-level directory of this
-distribution and on <https://github.com/Ulm-IQO/qudi-core/>
-
-This file is part of qudi.
-
-Qudi is free software: you can redistribute it and/or modify it under the terms of
-the GNU Lesser General Public License as published by the Free Software Foundation,
-either version 3 of the License, or (at your option) any later version.
-
-Qudi is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
-without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-See the GNU Lesser General Public License for more details.
-
-You should have received a copy of the GNU Lesser General Public License along with qudi.
-If not, see <https://www.gnu.org/licenses/>.
+.. Copyright (c) 2021, the qudi developers. See the AUTHORS.md file at the top-level directory of this
+.. distribution and on <https://github.com/Ulm-IQO/qudi-core/>
+..
+.. This file is part of qudi.
+..
+.. Qudi is free software: you can redistribute it and/or modify it under the terms of
+.. the GNU Lesser General Public License as published by the Free Software Foundation,
+.. either version 3 of the License, or (at your option) any later version.
+..
+.. Qudi is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+.. without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+.. See the GNU Lesser General Public License for more details.
+..
+.. You should have received a copy of the GNU Lesser General Public License along with qudi.
+.. If not, see <https://www.gnu.org/licenses/>.
 """
 
 __all__ = ['Connector']
@@ -30,12 +30,26 @@ class Connector:
     """ A connector used to connect qudi modules with each other.
     """
 
-    def __init__(self, interface: Union[str, Type], name: str = None, optional: bool = False):
-        """
-        @param str interface: name of the interface class to connect to
-        @param str name: optional, name of the connector in qudi config. Will set attribute name if
-                         omitted.
-        @param bool optional: optional, flag indicating if the connection is mandatory (False)
+    def __init__(
+        self, interface: Union[str, Type], name: str = None, optional: bool = False
+    ):
+        """Initialize a Connector instance.
+
+        Parameters
+        ----------
+        interface : Union[str, Type]
+            Name of the interface class to connect to or the interface class itself.
+        name : str, optional
+            Name of the connector in qudi config. Will set attribute name if omitted.
+        optional : bool, optional
+            Flag indicating if the connection is mandatory (False by default).
+
+        Raises
+        ------
+        AssertionError
+            If `interface` is not a string or a type.
+            If `name` is not `None` or a non-empty string.
+            If `optional` is not a boolean.
         """
         assert isinstance(interface, (str, type)), \
             'Parameter "interface" must be an interface class or the class name as str.'
@@ -78,7 +92,12 @@ class Connector:
     def is_connected(self) -> bool:
         """ Read-only property to check if the Connector instance is connected to a target module.
 
-        @return bool: Connection status flag (True: connected, False: disconnected)
+        Returns
+        -------
+        bool
+            Connection status flag.
+            - True: Connected
+            - False: Disconnected
         """
         return self._obj_proxy is not None
 

@@ -3,21 +3,21 @@
 """
 This file contains custom QWidgets to show (animated) loading indicators.
 
-Copyright (c) 2021, the qudi developers. See the AUTHORS.md file at the top-level directory of this
-distribution and on <https://github.com/Ulm-IQO/qudi-core/>
-
-This file is part of qudi.
-
-Qudi is free software: you can redistribute it and/or modify it under the terms of
-the GNU Lesser General Public License as published by the Free Software Foundation,
-either version 3 of the License, or (at your option) any later version.
-
-Qudi is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
-without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-See the GNU Lesser General Public License for more details.
-
-You should have received a copy of the GNU Lesser General Public License along with qudi.
-If not, see <https://www.gnu.org/licenses/>.
+.. Copyright (c) 2021, the qudi developers. See the AUTHORS.md file at the top-level directory of this
+.. distribution and on <https://github.com/Ulm-IQO/qudi-core/>
+..
+.. This file is part of qudi.
+..
+.. Qudi is free software: you can redistribute it and/or modify it under the terms of
+.. the GNU Lesser General Public License as published by the Free Software Foundation,
+.. either version 3 of the License, or (at your option) any later version.
+..
+.. Qudi is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+.. without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+.. See the GNU Lesser General Public License for more details.
+..
+.. You should have received a copy of the GNU Lesser General Public License along with qudi.
+.. If not, see <https://www.gnu.org/licenses/>.
 """
 
 from PySide2 import QtWidgets, QtCore, QtGui
@@ -38,9 +38,19 @@ class CircleLoadingIndicator(QtWidgets.QWidget):
     def __init__(self, *args, cycle_time=1.2, indicator_length=960, indicator_width_ratio=0.2,
                  **kwargs):
         """
-        @param float cycle_time: The animation time in seconds for a full cycle
-        @param int indicator_length: Length of the indicator arc in 1/16th of a degree
-        @param float indicator_width_ratio: Ratio of the indicator arc width WRT widget size
+        Parameters
+        ----------
+        cycle_time : float
+            The animation time in seconds for a full cycle.
+        indicator_length : int
+            Length of the indicator arc in 1/16th of a degree.
+        indicator_width_ratio : float
+            Ratio of the indicator arc width with respect to the widget size.
+
+        Returns
+        -------
+        None
+            (or specify the return type and description if the function returns something)
         """
         assert cycle_time > 0, 'cycle_time must be larger than 0'
         assert 0 < indicator_length < 5760, 'indicator_length must be >0 and <5760'

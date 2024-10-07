@@ -2,21 +2,21 @@
 """
 This file contains the Qudi error dialog class.
 
-Copyright (c) 2021, the qudi developers. See the AUTHORS.md file at the top-level directory of this
-distribution and on <https://github.com/Ulm-IQO/qudi-core/>
-
-This file is part of qudi.
-
-Qudi is free software: you can redistribute it and/or modify it under the terms of
-the GNU Lesser General Public License as published by the Free Software Foundation,
-either version 3 of the License, or (at your option) any later version.
-
-Qudi is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
-without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-See the GNU Lesser General Public License for more details.
-
-You should have received a copy of the GNU Lesser General Public License along with qudi.
-If not, see <https://www.gnu.org/licenses/>.
+.. Copyright (c) 2021, the qudi developers. See the AUTHORS.md file at the top-level directory of this
+.. distribution and on <https://github.com/Ulm-IQO/qudi-core/>
+..
+.. This file is part of qudi.
+..
+.. Qudi is free software: you can redistribute it and/or modify it under the terms of
+.. the GNU Lesser General Public License as published by the Free Software Foundation,
+.. either version 3 of the License, or (at your option) any later version.
+..
+.. Qudi is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+.. without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+.. See the GNU Lesser General Public License for more details.
+..
+.. You should have received a copy of the GNU Lesser General Public License along with qudi.
+.. If not, see <https://www.gnu.org/licenses/>.
 """
 
 import traceback
@@ -111,9 +111,13 @@ class ErrorDialog(QtWidgets.QDialog):
 
     @QtCore.Slot(object)
     def new_error(self, data):
-        """ Show a new error log entry.
+        """
+        Show a new error log entry.
 
-        @param logging.LogRecord data: log record as returned from logging module
+        Parameters
+        ----------
+        data : logging.LogRecord
+            Log record as returned from the logging module.
         """
         with self._thread_lock:
             self._error_queue.append(data)
@@ -146,9 +150,12 @@ class ErrorDialog(QtWidgets.QDialog):
 
     @property
     def enabled(self):
-        """ Property holding the enabled flag for this error message popup
+        """Property holding the enabled flag for this error message popup.
 
-        @return bool: Flag indicating enabled (True) or disabled (False) error message popups
+        Returns
+        -------
+        bool
+            Flag indicating whether error message popups are enabled (`True`) or disabled (`False`).
         """
         with self._thread_lock:
             return not self.disable_checkbox.isChecked()
