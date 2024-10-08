@@ -25,6 +25,7 @@ import ssl
 import rpyc
 from PySide2 import QtCore
 from rpyc.utils.authenticators import SSLAuthenticator
+from rpyc.utils.helpers import classpartial
 from typing import Optional, Mapping, Any
 
 from qudi.util.mutex import Mutex

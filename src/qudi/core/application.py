@@ -44,6 +44,7 @@ from qudi.core.modulemanager import ModuleManager
 from qudi.core.threadmanager import ThreadManager
 from qudi.core.gui import configure_pyqtgraph, initialize_app_icon, set_theme, set_stylesheet
 from qudi.core.gui import close_windows
+from qudi.core.services import RemoteModulesService
 from qudi.core.servers import RemoteModulesServer, QudiNamespaceServer
 from qudi.core.trayicon import QudiTrayIcon
 from qudi.core.message import prompt_restart, prompt_shutdown
@@ -195,6 +196,7 @@ class Qudi(QtCore.QObject):
         # initialize remote modules server if needed
         remote_server_config = self.configuration['remote_modules_server']
         if remote_server_config:
+            RemoteModulesService.init_shared_modules(self.module_manager)
             self.remote_modules_server = RemoteModulesServer(
                 parent=self,
                 module_manager=self.module_manager,

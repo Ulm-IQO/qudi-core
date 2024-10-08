@@ -21,6 +21,7 @@ If not, see <https://www.gnu.org/licenses/>.
 
 __all__ = ['Connector', 'QudiConnectionError']
 
+import importlib
 from typing import Union
 from qudi.util.overload import OverloadProxy
 
@@ -98,7 +99,7 @@ class Connector:
                     f'"{instance.__class__.__module__}.{instance.__class__.__qualname__}.'
                     f'{self.attr_name}"'
                 )
-        elif not isinstance(target, self.interface):
+        elif not self._target_complies_with_interface(target):
             raise QudiConnectionError(
                 f'Connector target "{target}" is no instance of "{self.interface.__module__}.'
                 f'{self.interface.__qualname__}" required by connector "{self.name}" on '
@@ -121,3 +122,14 @@ class Connector:
             return instance.__dict__[self.attr_name] is not None
         except (KeyError, AttributeError):
             return False
+
+    def _target_complies_with_interface(self, target) -> bool:
+        target_qualname = type(target).__qualname__
+        if not target_qualname.startswith('qudi.'):
+            target_qualname = f'{type(target).__module__}.{target_qualname}'
+        module_url, class_name = target_qualname.rsplit('.', 1)
+        mod = importlib.import_module(module_url)
+        target_cls = getattr(mod, class_name)
+        return issubclass(target_cls, self.interface)
+
+

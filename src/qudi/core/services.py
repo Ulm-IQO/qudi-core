@@ -2,8 +2,8 @@
 """
 This file contains the qudi tools for remote module sharing via rpyc server.
 
-Copyright (c) 2021, the qudi developers. See the AUTHORS.md file at the top-level directory of this
-distribution and on <https://github.com/Ulm-IQO/qudi-core/>
+Copyright (c) 2021-2024, the qudi developers. See the AUTHORS.md file at the top-level directory of
+this distribution and on <https://github.com/Ulm-IQO/qudi-core/>
 
 This file is part of qudi.
 
@@ -26,6 +26,7 @@ from logging import Logger
 from typing import Optional, Union, List, Dict, Any
 
 from qudi.util.proxy import CachedObjectRpycByValueProxy
+from qudi.util.mutex import Mutex
 from qudi.core.logger import get_logger
 from qudi.core.module import Base, ModuleState, ModuleBase
 from qudi.core.modulemanager import ModuleManager
@@ -38,6 +39,31 @@ class RemoteModulesService(rpyc.Service):
     """ An RPyC service that has a shared modules table model """
     ALIASES = ['RemoteModules']
 
+    _lock = Mutex()
+    __shared_module_count: Dict[str, int] = dict()
+
+    @classmethod
+    def init_shared_modules(cls, module_manager: ModuleManager) -> None:
+        with cls._lock:
+            cls.__shared_module_count = {name: 0 for name in module_manager.module_names if
+                                         module_manager.allow_remote(name)}
+
+    @classmethod
+    def __increase_module_count(cls, name: str) -> int:
+        cls.__shared_module_count[name] += 1
+        return cls.__shared_module_count[name]
+
+    @classmethod
+    def __decrease_module_count(cls, name: str) -> int:
+        new_count = max(0, cls.__shared_module_count[name] - 1)
+        cls.__shared_module_count[name] = new_count
+        return new_count
+
+    @classmethod
+    def __reset_module_count(cls, name: str) -> int:
+        cls.__shared_module_count[name] = 0
+        return 0
+
     def __init__(self,
                  *args,
                  module_manager: ModuleManager,
@@ -46,37 +72,77 @@ class RemoteModulesService(rpyc.Service):
         super().__init__(*args, **kwargs)
         self._force_remote_calls_by_value = force_remote_calls_by_value
         self._module_manager = module_manager
-        self.__shared_module_names = {name for name in self._module_manager.module_names if
-                                      self._module_manager.allow_remote(name)}
+        self.__shared_modules = set()
+
+    def __del__(self):
+        self.__cleanup_shared_modules()
 
     def _check_module_name(self, name: str) -> None:
-        if name not in self.__shared_module_names:
+        if name not in self.__shared_module_count:
             raise ValueError(f'Client requested module "{name}" that is not shared')
+
+    def __cleanup_shared_modules(self) -> None:
+        with self._lock:
+            for name in self.__shared_modules:
+                self.__decrease_module_count(name)
+        self.__shared_modules.clear()
 
     def on_connect(self, conn):
         """ code that runs when a connection is created
         """
         host, port = conn._config['endpoints'][1]
-        _logger.info(f'Client connected to remote modules service from [{host}]:{port:d}')
+        address = f'{host}:{port:d}'
+        self.__shared_modules = set()
+        _logger.info(f'Client connected to remote modules service from {address}')
 
     def on_disconnect(self, conn):
         """ code that runs when the connection is closing
         """
         host, port = conn._config['endpoints'][1]
-        _logger.info(f'Client [{host}]:{port:d} disconnected from remote modules service')
+        address = f'{host}:{port:d}'
+        self.__cleanup_shared_modules()
+        _logger.info(f'Client {address} disconnected from remote modules service')
 
-    def exposed_get_module_instance(self, name: str,) -> Union[CachedObjectRpycByValueProxy, Base]:
+    def exposed_get_module_instance(self, name: str) -> Union[CachedObjectRpycByValueProxy, Base]:
         """ Return reference to a module in the shared module list """
         self._check_module_name(name)
-        instance = self._module_manager.get_module_instance(name)
-        if self._force_remote_calls_by_value:
-            instance = CachedObjectRpycByValueProxy(instance)
+        with self._lock:
+            instance = self._module_manager.get_module_instance(name)
+            if self._force_remote_calls_by_value:
+                instance = CachedObjectRpycByValueProxy(instance)
+            if name not in self.__shared_modules:
+                self.__shared_modules.add(name)
+                self.__increase_module_count(name)
         return instance
+
+    def exposed_try_deactivate_module(self, name: str) -> int:
+        """ Tries to deactivate module from remote client. Only succeeds if no other local module
+        or remote client is connected to it.
+        Returns the number of remaining instances connected to a local module or remote client.
+        A return value >0 indicates that the module remains active on the server side.
+        """
+        self._check_module_name(name)
+        with self._lock:
+            self.__shared_modules.discard(name)
+            if self._module_manager.module_state(name) == ModuleState.DEACTIVATED:
+                count = self.__reset_module_count(name)
+            else:
+                count = self.__decrease_module_count(name)
+                if count == 0 and len(self._module_manager.active_dependent_modules(name)) == 0:
+                    self._module_manager.deactivate_module(name)
+                else:
+                    count += 1
+        return count
 
     def exposed_get_module_state(self, name: str) -> ModuleState:
         """ Return current ModuleState of the given module """
         self._check_module_name(name)
-        return self._module_manager.get_module_state(name)
+        with self._lock:
+            state = self._module_manager.module_state(name)
+            if state == ModuleState.DEACTIVATED:
+                self.__shared_modules.discard(name)
+                self.__reset_module_count(name)
+        return state
 
     def exposed_module_has_appdata(self, name: str) -> bool:
         self._check_module_name(name)
@@ -84,7 +150,7 @@ class RemoteModulesService(rpyc.Service):
 
     def exposed_get_available_module_names(self) -> List[str]:
         """ Returns the currently shared module names """
-        return list(self.__shared_module_names)
+        return list(self.__shared_module_count)
 
 
 class LocalNamespaceService(rpyc.Service):
@@ -105,12 +171,12 @@ class LocalNamespaceService(rpyc.Service):
     def on_connect(self, conn):
         """ runs when a connection is created """
         host, port = conn._config['endpoints'][1]
-        _logger.info(f'Client connected to local module service from [{host}]:{port:d}')
+        _logger.info(f'Client connected to local module service from {host}:{port:d}')
 
     def on_disconnect(self, conn):
         """ runs when the connection is closing """
         host, port = conn._config['endpoints'][1]
-        _logger.info(f'Client [{host}]:{port:d} disconnected from local module service')
+        _logger.info(f'Client {host}:{port:d} disconnected from local module service')
 
     def exposed_get_namespace_dict(self) -> Dict[str, Any]:
         """ Returns the instances of the currently active modules as well as a reference to the

@@ -358,7 +358,11 @@ class RemoteManagedModule(ManagedModule):
         if self._connection is None:
             instance = None
         else:
-            instance = self._connection.root.get_module_instance(self._native_name)
+            try:
+                instance = self._connection.root.get_module_instance(self._native_name)
+            except EOFError:
+                self.__kill_connection()
+                instance = None
         return instance
 
     def clear_appdata(self) -> None:
@@ -401,15 +405,27 @@ class RemoteManagedModule(ManagedModule):
 
     def deactivate(self) -> None:
         if self._connection is None:
-            self.check_module_state()
+            self._update_state(ModuleState.DEACTIVATED)
         else:
-            _logger.info(f'Disconnecting remote module "{self.name}" at "{self.url}" ...')
+            _logger.info(f'Deactivating remote module "{self.name}" at "{self.url}" ...')
             try:
-                self._connection.close()
+                active_count = self._connection.root.try_deactivate_module(self._native_name)
+            except EOFError:
+                # If the connection has already been closed by the remote server
+                pass
+            else:
+                if active_count > 0:
+                    _logger.warning(f'Remote module at "{self.url}" continues running because '
+                                    f'{active_count:d} modules are still using it')
+                else:
+                    _logger.info(
+                        f'Remote module "{self.name}" at "{self.url}" successfully deactivated'
+                    )
             finally:
-                self._connection = None
-                self.check_module_state()
-            _logger.info(f'Remote module "{self.name}" at "{self.url}" successfully disconnected.')
+                try:
+                    self.__kill_connection()
+                finally:
+                    self._update_state(ModuleState.DEACTIVATED)
 
     def reload(self, conn_targets: Mapping[str, Base]) -> None:
         if self._connection is not None:
@@ -421,11 +437,22 @@ class RemoteManagedModule(ManagedModule):
         if self._connection is None:
             self._update_state(ModuleState.DEACTIVATED)
         else:
-            state = ModuleState(self._connection.root.get_module_state(self._native_name).value)
+            try:
+                state = ModuleState(self._connection.root.get_module_state(self._native_name).value)
+            except EOFError:
+                # If the connection has already been closed by the remote server
+                state = ModuleState.DEACTIVATED
             if state == ModuleState.DEACTIVATED:
-                self.deactivate()
-            else:
-                self._update_state(state)
+                self.__kill_connection()
+            self._update_state(state)
+
+    def __kill_connection(self) -> None:
+        try:
+            self._connection.close()
+        except:
+            pass
+        self._connection = None
+        _logger.info(f'Remote module "{self.name}" at "{self.url}" disconnected')
 
 
 class ModuleManager(QtCore.QObject):
@@ -586,9 +613,8 @@ class ModuleManager(QtCore.QObject):
             if module.state != ModuleState.DEACTIVATED:
                 self.__modules_pending_deactivation.add(name)
                 try:
-                    for dep_name, dep_module in self._modules.items():
-                        if name in dep_module.required_modules:
-                            self._deactivate_module(dep_name)
+                    for dep_name in self._active_dependent_modules(name):
+                        self._deactivate_module(dep_name)
                     module.deactivate()
                 finally:
                     self.__modules_pending_deactivation.remove(name)
@@ -599,6 +625,14 @@ class ModuleManager(QtCore.QObject):
                 self._get_module_by_name(name).reload()
         else:
             self.__sigReloadModule.emit(name)
+
+    def active_dependent_modules(self, name: str) -> List[str]:
+        with self._lock:
+            return self._active_dependent_modules(name)
+
+    def _active_dependent_modules(self, name: str) -> List[str]:
+        return [mod_name for mod_name, mod in self._modules.items() if
+                (name in mod.required_modules and mod.state != ModuleState.DEACTIVATED)]
 
     def clear_module_appdata(self, name: str) -> None:
         with self._lock:
@@ -648,7 +682,10 @@ class ModuleManager(QtCore.QObject):
         if current_is_main_thread():
             with self._lock:
                 for name in self._modules:
-                    self._deactivate_module(name=name)
+                    try:
+                        self._deactivate_module(name=name)
+                    except:
+                        _logger.exception('Error while deactivating module')
         else:
             call_slot_from_native_thread(self, 'deactivate_all_modules', True)
 

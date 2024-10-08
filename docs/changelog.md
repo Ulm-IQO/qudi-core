@@ -45,34 +45,46 @@ options `default_data_dir` and `daily_data_dirs` instead of a static path. If no
 has been created, the previous default path is still returned. If you just want the data root
 directory without daily subdirectories (if configured) use `qudi.util.paths.get_default_data_root`
 instead.
+- `Connector` meta object will now check interface compliance upon connection with a target by
+importing the target class by name and checking with `issubclass`. This works with
+`rpyc.core.netref` proxies (remote modules) as well as with local modules.
+This results in a hard requirement of the remote qudi environment and local qudi environment to
+have the same qudi namespace packages installed.
 
 ### Bugfixes
 - Python module reload during runtime is now only performed if explicitly requested by the user
 - Fixed a `scipy` warning about the deprecated `scipy.ndimage.filters` namespace
-- Exceptions during initialization and construction of `ConfigOption` and `StatusVar` will now 
-cause the affected descriptor to be initialized to its default value and no longer prevent the 
+- Exceptions during initialization and construction of `ConfigOption` and `StatusVar` will now
+cause the affected descriptor to be initialized to its default value and no longer prevent the
 module from activating. `Connector` behaves similar if it is optional.
 - Fixed a bug where qudi would deadlock when starting a GUI module via the ipython terminal
-- Fixed a bug with the `qtconsole` package no longer being part of `jupyter`. It is now listed 
+- Fixed a bug with the `qtconsole` package no longer being part of `jupyter`. It is now listed
 explicitly in the dependencies.
+- Remote modules should work now with `rpyc==5.3.1` as well as `rpyc>=6.0.0`
+- Fixed `EOFError` messages in remote clients occurring upon client shutdown if host
+server has shut down first. This sometimes even prevented remote clients to shut down altogether.
 
 ### New Features
-- New context manager `qudi.util.mutex.acquire_timeout` to facilitate (Recursive)Mutex/(R)Lock 
+- New context manager `qudi.util.mutex.acquire_timeout` to facilitate (Recursive)Mutex/(R)Lock
 acquisition with a timeout
-- Added helper methods `call_slot_from_native_thread`, `current_is_native_thread` and 
+- Added helper methods `call_slot_from_native_thread`, `current_is_native_thread` and
 `current_is_main_thread` to `qudi.util.helpers` for easy handling of `QObject` thread affinity
-- Added `qudi.util.yaml.YamlFileHandler` helper object to easily dump/load/clear/check a qudi 
+- Added `qudi.util.yaml.YamlFileHandler` helper object to easily dump/load/clear/check a qudi
 status file
-- Global config option `default_data_dir` accepts strings with a leading `~` character to be 
+- Global config option `default_data_dir` accepts strings with a leading `~` character to be
 expanded into the current users home directory
-- A main GUI that does not show up in the `ModuleManager` model can be configured in the global 
-configuration section (`main_gui` keyword). The default is the known manager GUI. If you set this 
-config option to `None`, no main GUI will be opened on startup. Configured startup modules work the 
+- A main GUI that does not show up in the `ModuleManager` model can be configured in the global
+configuration section (`main_gui` keyword). The default is the known manager GUI. If you set this
+config option to `None`, no main GUI will be opened on startup. Configured startup modules work the
 same as before.
-- Added a "clear all AppData" action to the main GUI menus that deletes the AppData files of all 
+- Added a "clear all AppData" action to the main GUI menus that deletes the AppData files of all
 configured modules at once.
-- Added a "deactivate all modules" action to the main GUI menus that deactivates all configured 
+- Added a "deactivate all modules" action to the main GUI menus that deactivates all configured
 modules at once.
+- Remote module server will now keep track of shared module instance count. This is used to
+dynamically react to remote module deactivation calls by only deactivating if no module (remote or
+local) is using the respective module. The module will not deactivate on the host otherwise and a
+warning will be logged on the remote client.
 
 ### Other
 - Deprecated calling `qudi.core.module.Base.module_state` property and `Connector` meta attributes.

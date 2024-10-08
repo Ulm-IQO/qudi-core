@@ -27,6 +27,9 @@ import sys
 from typing import Optional
 
 
+# ToDo: Make use of QtCore.QStandardPaths for better cross-platform support
+
+
 def get_main_dir() -> str:
     """ Returns the absolute path to the directory of the main software.
 
