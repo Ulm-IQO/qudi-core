@@ -60,7 +60,7 @@ module from activating. `Connector` behaves similar if it is optional.
 - Fixed a bug where qudi would deadlock when starting a GUI module via the ipython terminal
 - Fixed a bug with the `qtconsole` package no longer being part of `jupyter`. It is now listed
 explicitly in the dependencies.
-- Remote modules should work now with `rpyc==5.3.1` as well as `rpyc>=6.0.0`
+- Remote modules should work now with `rpyc>=6.0.0`
 - Fixed `EOFError` messages in remote clients occurring upon client shutdown if host
 server has shut down first. This sometimes even prevented remote clients to shut down altogether.
 
