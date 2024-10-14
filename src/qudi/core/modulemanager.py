@@ -237,6 +237,13 @@ class ModuleManager(QtCore.QObject):
                                f'Can not clear module app status.')
             return self._modules[module_name].clear_module_app_data()
 
+    def dump_module_status_var(self, module_name):
+        with self._lock:
+            if module_name not in self._modules:
+                raise KeyError(f'No module named "{module_name}" found in managed qudi modules. '
+                               f'Can not save module status variables.')
+            return self._modules[module_name]._instance.dump_status_variables()
+
     def has_app_data(self, module_name):
         with self._lock:
             if module_name not in self._modules:

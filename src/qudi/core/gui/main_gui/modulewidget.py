@@ -33,6 +33,8 @@ class ModuleFrameWidget(QtWidgets.QWidget):
     sigDeactivateClicked = QtCore.Signal(str)
     sigReloadClicked = QtCore.Signal(str)
     sigCleanupClicked = QtCore.Signal(str)
+    sigDumpStatusVarClicked = QtCore.Signal(str)
+
 
     def __init__(self, *args, module_name=None, **kwargs):
         super().__init__(*args, **kwargs)
@@ -44,12 +46,15 @@ class ModuleFrameWidget(QtWidgets.QWidget):
         self.deactivate_button.setObjectName('deactivateButton')
         self.reload_button = QtWidgets.QToolButton()
         self.reload_button.setObjectName('reloadButton')
+        self.dump_status_var_button = QtWidgets.QToolButton()
+        self.dump_status_var_button.setObjectName('dumpStatusVarButton')
 
         # Set icons for QToolButtons
         icon_path = os.path.join(get_artwork_dir(), 'icons')
         self.cleanup_button.setIcon(QtGui.QIcon(os.path.join(icon_path, 'edit-clear')))
         self.deactivate_button.setIcon(QtGui.QIcon(os.path.join(icon_path, 'edit-delete')))
         self.reload_button.setIcon(QtGui.QIcon(os.path.join(icon_path, 'view-refresh')))
+        self.dump_status_var_button.setIcon(QtGui.QIcon(os.path.join(icon_path, 'document-save')))
 
         # Create activation pushbutton
         self.activate_button = QtWidgets.QPushButton('load/activate <module_name>')
@@ -69,6 +74,7 @@ class ModuleFrameWidget(QtWidgets.QWidget):
         self.reload_button.setToolTip('Reload module')
         self.activate_button.setToolTip('Load this module and all its dependencies')
         self.status_label.setToolTip('Displays module status information')
+        self.dump_status_var_button.setToolTip('Save status variables')
 
         # Combine all widgets in a layout and set as main layout
         layout = QtWidgets.QGridLayout()
@@ -76,6 +82,7 @@ class ModuleFrameWidget(QtWidgets.QWidget):
         layout.addWidget(self.reload_button, 0, 1)
         layout.addWidget(self.deactivate_button, 0, 2)
         layout.addWidget(self.cleanup_button, 0, 3)
+        layout.addWidget(self.dump_status_var_button, 0, 4)
         layout.addWidget(self.status_label, 1, 0, 1, 4)
         self.setLayout(layout)
 
@@ -87,6 +94,7 @@ class ModuleFrameWidget(QtWidgets.QWidget):
         self.deactivate_button.clicked.connect(self.deactivate_clicked)
         self.reload_button.clicked.connect(self.reload_clicked)
         self.cleanup_button.clicked.connect(self.cleanup_clicked)
+        self.dump_status_var_button.clicked.connect(self.dump_status_var_clicked)
         return
 
     def set_module_name(self, name):
@@ -100,6 +108,7 @@ class ModuleFrameWidget(QtWidgets.QWidget):
             self.cleanup_button.setEnabled(True)
             self.deactivate_button.setEnabled(False)
             self.reload_button.setEnabled(False)
+            self.dump_status_var_button.setEnabled(False)
             if self.activate_button.isChecked():
                 self.activate_button.setChecked(False)
         elif state == 'deactivated':
@@ -107,6 +116,7 @@ class ModuleFrameWidget(QtWidgets.QWidget):
             self.cleanup_button.setEnabled(True)
             self.deactivate_button.setEnabled(False)
             self.reload_button.setEnabled(True)
+            self.dump_status_var_button.setEnabled(False)
             if self.activate_button.isChecked():
                 self.activate_button.setChecked(False)
         else:
@@ -114,6 +124,7 @@ class ModuleFrameWidget(QtWidgets.QWidget):
             self.cleanup_button.setEnabled(False)
             self.deactivate_button.setEnabled(True)
             self.reload_button.setEnabled(True)
+            self.dump_status_var_button.setEnabled(True)
             if not self.activate_button.isChecked():
                 self.activate_button.setChecked(True)
         self.status_label.setText('Module is {0}'.format(state))
@@ -132,6 +143,10 @@ class ModuleFrameWidget(QtWidgets.QWidget):
     @QtCore.Slot()
     def cleanup_clicked(self):
         self.sigCleanupClicked.emit(self._module_name)
+
+    @QtCore.Slot()
+    def dump_status_var_clicked(self):
+        self.sigDumpStatusVarClicked.emit(self._module_name)
 
     @QtCore.Slot()
     def reload_clicked(self):
@@ -229,6 +244,7 @@ class ModuleListItemDelegate(QtWidgets.QStyledItemDelegate):
     sigDeactivateClicked = QtCore.Signal(str)
     sigReloadClicked = QtCore.Signal(str)
     sigCleanupClicked = QtCore.Signal(str)
+    sigDumpStatusVarClicked = QtCore.Signal(str)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -243,6 +259,7 @@ class ModuleListItemDelegate(QtWidgets.QStyledItemDelegate):
         widget.sigDeactivateClicked.connect(self.sigDeactivateClicked)
         widget.sigReloadClicked.connect(self.sigReloadClicked)
         widget.sigCleanupClicked.connect(self.sigCleanupClicked)
+        widget.sigDumpStatusVarClicked.connect(self.sigDumpStatusVarClicked)
         return widget
 
     def setEditorData(self, editor, index):
@@ -307,6 +324,7 @@ class ModuleWidget(QtWidgets.QTabWidget):
     sigActivateModule = QtCore.Signal(str)
     sigDeactivateModule = QtCore.Signal(str)
     sigCleanupModule = QtCore.Signal(str)
+    sigDumpStatusVarModule = QtCore.Signal(str)
     sigReloadModule = QtCore.Signal(str)
 
     def __init__(self, *args, **kwargs):
@@ -328,6 +346,7 @@ class ModuleWidget(QtWidgets.QTabWidget):
             delegate.sigDeactivateClicked.connect(self.sigDeactivateModule)
             delegate.sigReloadClicked.connect(self.sigReloadModule)
             delegate.sigCleanupClicked.connect(self.sigCleanupModule)
+            delegate.sigDumpStatusVarClicked.connect(self.sigDumpStatusVarModule)
 
     @QtCore.Slot(dict)
     def update_modules(self, modules_dict):

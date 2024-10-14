@@ -180,6 +180,8 @@ class QudiMainGui(GuiBase):
             qudi_main.module_manager.deactivate_module)
         self.mw.module_widget.sigCleanupModule.connect(
             qudi_main.module_manager.clear_module_app_data)
+        self.mw.module_widget.sigDumpStatusVarModule.connect(
+            qudi_main.module_manager.dump_module_status_var)
 
     def _disconnect_signals(self):
         qudi_main = self._qudi_main
@@ -208,6 +210,7 @@ class QudiMainGui(GuiBase):
         self.mw.module_widget.sigReloadModule.disconnect()
         self.mw.module_widget.sigDeactivateModule.disconnect()
         self.mw.module_widget.sigCleanupModule.disconnect()
+        self.mw.module_widget.sigDumpStatusVarModule.disconnect()
 
         get_signal_handler().sigRecordLogged.disconnect(self.handle_log_record)
 
