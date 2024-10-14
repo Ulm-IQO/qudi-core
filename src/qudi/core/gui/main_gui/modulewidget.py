@@ -23,6 +23,7 @@ import os
 from PySide2 import QtCore, QtGui, QtWidgets
 from qudi.util.paths import get_artwork_dir
 from qudi.util.mutex import Mutex
+from qudi.util.widgets.scientific_spinbox import ScienSpinBox
 
 
 class ModuleFrameWidget(QtWidgets.QWidget):
@@ -151,6 +152,87 @@ class ModuleFrameWidget(QtWidgets.QWidget):
     @QtCore.Slot()
     def reload_clicked(self):
         self.sigReloadClicked.emit(self._module_name)
+
+
+class ModuleStatusVariableFrameWidget(QtWidgets.QWidget):
+    """
+    Custom module status variable QWidget for the Qudi main GUI
+    """
+    sigAutoDumpStatusVarToggle = QtCore.Signal(bool)
+    sigAutoDumpStatusVarEditFinished = QtCore.Signal(int)
+
+
+    def __init__(self, *args, module_name=None, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        # Create QtWidgets
+        self.label = QtWidgets.QLabel()
+        self.label.setObjectName('label')
+        self.label.setMinimumWidth(200)
+        self.label.setSizePolicy(QtWidgets.QSizePolicy.MinimumExpanding,
+                                           QtWidgets.QSizePolicy.Fixed)
+        self.toggle_checkbox = QtWidgets.QCheckBox()
+        self.toggle_checkbox.setObjectName('toggleCheckbox')
+        self.interval_spinbox = ScienSpinBox()
+        self.interval_spinbox.setObjectName('intervalSpinbox')
+        self.interval_spinbox.setSuffix("min")
+        self.interval_spinbox.setMinimum(1)
+        self.interval_spinbox.setMaximum(1440)
+        self.interval_spinbox.setMinimumSize(QtCore.QSize(80, 0))
+        self.interval_spinbox.setValue(1)
+
+        # Set tooltips
+        self.label.setToolTip("Name of the module")
+        self.toggle_checkbox.setToolTip("Enable / Disable automatic status variable saving")
+        self.interval_spinbox.setToolTip("Automatic status variable saving interval time")
+
+        # Combine all widgets in a layout and set as main layout
+        layout = QtWidgets.QGridLayout()
+        layout.addWidget(self.label, 0, 0)
+        layout.addWidget(self.toggle_checkbox, 0, 1)
+        layout.addWidget(self.interval_spinbox, 0, 2)
+        self.setLayout(layout)
+
+        self._module_name = ''
+        if module_name:
+            self.set_module_name(module_name)
+
+        self.toggle_checkbox.stateChanged.connect(self.checkbox_state_change)
+        self.interval_spinbox.editingFinished.connect(self.editing_finished)
+        return
+
+    def set_module_name(self, name):
+        if name:
+            self.label.setText('Load {0}'.format(name))
+            self._module_name = name
+
+    def set_module_state(self, state):
+        if state == 'not loaded':
+            self.label.setEnabled(False)
+            self.toggle_checkbox.setEnabled(False)
+            self.interval_spinbox.setEnabled(False)
+        elif state == 'deactivated':
+            self.label.setEnabled(False)
+            self.toggle_checkbox.setEnabled(False)
+            self.interval_spinbox.setEnabled(False)
+        else:
+            self.label.setEnabled(True)
+            self.toggle_checkbox.setEnabled(True)
+            self.interval_spinbox.setEnabled(False)
+            if self.toggle_checkbox.isChecked():
+                self.interval_spinbox.setEnabled(True)
+
+    def set_module_app_data(self, exists):
+        pass
+
+    @QtCore.Slot(bool)
+    def checkbox_state_change(self, toggle: bool):
+        self.sigAutoDumpStatusVarToggle.emit(toggle)
+        self.interval_spinbox.setEnabled(toggle)
+
+    @QtCore.Slot(int)
+    def editing_finished(self, interval: int):
+        self.sigAutoDumpStatusVarEditFinished.emit(interval)
 
 
 class ModuleListModel(QtCore.QAbstractListModel):
@@ -289,6 +371,30 @@ class ModuleListItemDelegate(QtWidgets.QStyledItemDelegate):
         painter.restore()
 
 
+class ModuleStatusVariablesListItemDelegate(ModuleListItemDelegate):
+    sigAutoDumpStatusVarToggle = QtCore.Signal(bool)
+    sigAutoDumpStatusVarEditFinished = QtCore.Signal(int)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.render_widget = ModuleStatusVariableFrameWidget()
+
+    def createEditor(self, parent, option, index):
+        widget = ModuleStatusVariableFrameWidget(parent=parent)
+        # Found no other way to pefectly match editor and rendered item view (using paint())
+        widget.setContentsMargins(2, 2, 2, 2)
+        widget.sigAutoDumpStatusVarToggle.connect(self.state_change)
+        widget.sigAutoDumpStatusVarEditFinished.connect(self.editing_finished)
+        return widget
+
+    @QtCore.Slot(bool)
+    def state_change(self, toggle: bool):
+        self.sigAutoDumpStatusVarToggle.emit(toggle)
+
+    @QtCore.Slot(int)
+    def editing_finished(self, interval: int):
+        self.sigAutoDumpStatusVarEditFinished.emit(interval)
+
+
 class ModuleListView(QtWidgets.QListView):
     """
     """
@@ -365,3 +471,68 @@ class ModuleWidget(QtWidgets.QTabWidget):
     @QtCore.Slot(str, str, bool)
     def update_module_app_data(self, base, name, exists):
         self.list_models[base].change_app_data(name, exists)
+
+class ModuleStatusVariablesListView(ModuleListView):
+    """
+    """
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.setMouseTracking(True)
+        delegate = ModuleStatusVariablesListItemDelegate()
+        self.setItemDelegate(delegate)
+        self.setMinimumWidth(delegate.sizeHint().width())
+        self.setUniformItemSizes(True)
+        self.setContentsMargins(0, 0, 0, 0)
+        self.setSpacing(1)
+        self.previous_index = QtCore.QModelIndex()
+
+
+class ModuleStatusVariablesWidget(QtWidgets.QTabWidget):
+    """
+    """
+    sigAutoDumpStatusVarToggle = QtCore.Signal(bool)
+    sigAutoDumpStatusVarEditFinished = QtCore.Signal(int)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.setSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
+        self.list_models = {'gui'     : ModuleListModel(),
+                            'logic'   : ModuleListModel(),
+                            'hardware': ModuleListModel()}
+        self.list_views = {'gui'     : ModuleStatusVariablesListView(),
+                           'logic'   : ModuleStatusVariablesListView(),
+                           'hardware': ModuleStatusVariablesListView()}
+        self.addTab(self.list_views['gui'], 'GUI')
+        self.addTab(self.list_views['logic'], 'Logic')
+        self.addTab(self.list_views['hardware'], 'Hardware')
+        for base, view in self.list_views.items():
+            view.setModel(self.list_models[base])
+            delegate = view.itemDelegate()
+            delegate.sigAutoDumpStatusVarEditFinished.connect(self.state_change)
+            delegate.sigAutoDumpStatusVarToggle.connect(self.editing_finished)
+
+    @QtCore.Slot(dict)
+    def update_modules(self, modules_dict):
+        for base, model in self.list_models.items():
+            model.reset_modules(
+                {name: mod.state for name, mod in modules_dict.items() if mod.module_base == base},
+                {name: mod.has_app_data for name, mod in modules_dict.items() if
+                 mod.module_base == base}
+            )
+        return
+
+    @QtCore.Slot(str, str, str)
+    def update_module_state(self, base, name, state):
+        self.list_models[base].change_module_state(name, state)
+
+    @QtCore.Slot(str, str, bool)
+    def update_module_app_data(self, base, name, exists):
+        self.list_models[base].change_app_data(name, exists)
+
+    @QtCore.Slot(bool)
+    def state_change(self, toggle: bool):
+        self.sigAutoDumpStatusVarToggle.emit(toggle)
+
+    @QtCore.Slot(int)
+    def editing_finished(self, interval: int):
+        self.sigAutoDumpStatusVarEditFinished.emit(interval)

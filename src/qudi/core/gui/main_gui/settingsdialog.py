@@ -20,7 +20,7 @@ If not, see <https://www.gnu.org/licenses/>.
 """
 
 from PySide2 import QtCore, QtWidgets
-from qudi.core.gui.main_gui.modulewidget import ModuleWidget
+from qudi.core.gui.main_gui.modulewidget import ModuleStatusVariablesWidget
 from qudi.util.widgets.scientific_spinbox import ScienSpinBox
 
 
@@ -90,7 +90,7 @@ class SettingsDialog(QtWidgets.QDialog):
         groupbox_layout = QtWidgets.QGridLayout()
         groupbox_layout.setRowStretch(1, 1)
         groupbox.setLayout(groupbox_layout)
-        self.module_widget = ModuleWidget()
+        self.module_widget = ModuleStatusVariablesWidget()
         self.module_widget.setObjectName('moduleTabWidgetStatus')
         groupbox_layout.addWidget(self.module_widget, 0, 0)
         layout.addWidget(groupbox, 4, 0, 1, 2)
