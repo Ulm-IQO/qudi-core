@@ -112,6 +112,9 @@ class Base(QtCore.QObject, metaclass=ModuleMeta):
     """
     _threaded = False
 
+    _dump_status_variables_interval: float = StatusVar(name='dump_status_variables_interval', default=60.0)
+    _dump_status_variables_automation_toggle: bool = StatusVar(name='dump_status_variables_automation_toggle', default=False)
+
     # FIXME: This __new__ implementation has the sole purpose to circumvent a known PySide2(6) bug.
     #  See https://bugreports.qt.io/browse/PYSIDE-1434 for more details.
     def __new__(cls, *args, **kwargs):
@@ -293,11 +296,90 @@ class Base(QtCore.QObject, metaclass=ModuleMeta):
         """
         return self._threaded
 
+    @property
+    def dump_status_variables_interval(self) -> float:
+        """
+        Property for the timer interval of the automatic status variable saving in s.
+
+        @return float: timer interval in s
+        """
+        return self._dump_status_variables_interval
+
+    @dump_status_variables_interval.setter
+    def dump_status_variables_interval(self, interval: int):
+        """
+        Setter method for the timer used to automatically dump status variables.
+
+        @param float interval: interval of the timer in s > 0
+        """
+        if interval <= 0:
+            raise ValueError(f"Requested automatic timer {interval=} <= 0. Please choose an interval > 0.")
+        self._dump_status_variables_interval = interval
+        self.log.info(
+            f"Setting automated status variable saving timer interval to {interval} s."
+        )
+        if self._dump_status_variables_automation_toggle:
+            self.toggle_automatically_dump_status_variables()
+
+    @property
+    def dump_status_variables_automation_toggle(self) -> bool:
+        """
+        Property for whether periodic status variables dumping is enabled.
+
+        @return bool
+        """
+        return self._dump_status_variables_automation_toggle
+
+    @dump_status_variables_automation_toggle.setter
+    def dump_status_variables_automation_toggle(self, toggle: bool) -> None:
+        """
+        Setter method for property for whether periodic status variables dumping is enabled.
+
+        @param bool toggle
+        """
+        self._dump_status_variables_automation_toggle = toggle
+        self.toggle_automatically_dump_status_variables()
+
+    @QtCore.Slot()
+    def toggle_automatically_dump_status_variables(self) -> None:
+        if QtCore.QThread.currentThread() != self.thread():
+            QtCore.QMetaObject.invokeMethod(self,
+                                            'toggle_automatically_dump_status_variables',
+                                            QtCore.Qt.BlockingQueuedConnection)
+            return
+        if not self._dump_status_variables_automation_toggle:
+            self._automated_status_variable_dumping_timer.stop()
+            self.log.info("Stopped automatic status variable dumping timer")
+            return
+        self._automated_status_variable_dumping_timer.setInterval(int(self._dump_status_variables_interval * 1e3))
+        self._automated_status_variable_dumping_timer.start()
+        self.log.info(f"Started automatic status variable dumping timer with interval of {self._dump_status_variables_interval} s")
+
+    def _automaticically_dump_status_variables_loop(self):
+        self.log.debug(f"Automatic status variable dumping loop")
+        if not self._dump_status_variables_automation_toggle:
+            return
+        self.dump_status_variables()
+        self._automated_status_variable_dumping_timer.start()
+
+    def _init_automatic_status_variable_dumping(self):
+        self._automated_status_variable_dumping_timer = QtCore.QTimer()
+        self._automated_status_variable_dumping_timer.setSingleShot(True)
+        self._automated_status_variable_dumping_timer.timeout.connect(self._automaticically_dump_status_variables_loop)
+
+    def _deactivate_automatically_dump_status_variables(self):
+        try:
+            self._automated_status_variable_dumping_timer.timeout.disconnect()
+        except RuntimeError:
+            pass
+
     def __activation_callback(self, event=None) -> bool:
         """ Restore status variables before activation and invoke on_activate method.
         """
         try:
             self._load_status_variables()
+            self._init_automatic_status_variable_dumping()
+            self.dump_status_variables_automation_toggle = copy.deepcopy(self._dump_status_variables_automation_toggle)
             self.on_activate()
         except:
             self.log.exception('Exception during activation:')
@@ -315,6 +397,7 @@ class Base(QtCore.QObject, metaclass=ModuleMeta):
         finally:
             # save status variables even if deactivation failed
             self.dump_status_variables()
+            self._deactivate_automatically_dump_status_variables()
         return True
 
     def _load_status_variables(self) -> None:
