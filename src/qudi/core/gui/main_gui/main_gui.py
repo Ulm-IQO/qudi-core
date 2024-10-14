@@ -353,15 +353,18 @@ class QudiMainGui(GuiBase):
         if modules is None:
             modules = self._qudi_main.module_manager
         self.mw.module_widget.update_modules(modules)
+        self.mw.settings_dialog.module_widget.update_modules(modules)
 
     @QtCore.Slot(str, str, str)
     def update_module_state(self, base, name, state):
         self.mw.module_widget.update_module_state(base, name, state)
+        self.mw.settings_dialog.module_widget.update_module_state(base, name, state)
         return
 
     @QtCore.Slot(str, str, bool)
     def update_module_app_data(self, base, name, exists):
         self.mw.module_widget.update_module_app_data(base, name, exists)
+        self.mw.settings_dialog.module_widget.update_module_app_data(base, name, exists)
 
     def get_qudi_version(self):
         """ Try to determine the software version in case the program is in a git repository.
