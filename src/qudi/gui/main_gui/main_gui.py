@@ -137,6 +137,9 @@ class QudiMainGui(GuiBase):
         self.mw.module_widget.sigCleanupModule.connect(
             qudi_main.module_manager.clear_module_appdata
         )
+        self.mw.module_widget.sigDumpModuleAppData.connect(
+            qudi_main.module_manager.dump_module_appdata
+        )
 
     def _disconnect_signals(self) -> None:
         # Disconnect the main windows actions
@@ -157,6 +160,7 @@ class QudiMainGui(GuiBase):
         self.mw.module_widget.sigReloadModule.disconnect()
         self.mw.module_widget.sigDeactivateModule.disconnect()
         self.mw.module_widget.sigCleanupModule.disconnect()
+        self.mw.module_widget.sigDumpModuleAppData.disconnect()
 
         get_signal_handler().sigRecordLogged.disconnect(self.handle_log_record)
 
