@@ -273,7 +273,7 @@ class ModuleManager(QtCore.QObject):
         """
         Method that dumps the status variables of all active modules.
         """
-        logger.debug(f"Dumping status variables")
+        logger.debug(f"Dumping status variables of all modules")
         with self._lock:
             for _, module in self.modules.items():
                 if module.is_active:
