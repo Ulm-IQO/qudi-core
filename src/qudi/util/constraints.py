@@ -349,7 +349,12 @@ class DiscreteScalarConstraint(ScalarConstraint):
         bounds = (min(self._value_set), max(self._value_set))
         self._precision = precision
 
-        super().__init__(default=default, bounds=bounds, enforce_int=enforce_int, checker=checker)
+        super().__init__(
+            default=default,
+            bounds=bounds,
+            enforce_int=enforce_int,
+            checker=checker,
+        )
 
         if not self.is_valid(self._default):
             raise ValueError(f"invalid default value ({self._default}) encountered")
