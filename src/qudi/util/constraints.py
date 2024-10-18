@@ -339,33 +339,17 @@ class DiscreteScalarConstraint(ScalarConstraint):
     def __init__(
         self,
         default: Union[int, float],
-        value_set: Optional[Set[Union[int, float]]] = None,
-        bounds: Optional[Tuple[Union[int, float], Union[int, float]]] = None,
-        increment: Optional[Union[int, float]] = None,
+        value_set: Set[Union[int, float]],
         enforce_int: Optional[bool] = False,
         checker: Optional[Callable[[Union[int, float]], bool]] = None,
         precision: Optional[float] = None,
     ) -> None:
         """ """
-        if value_set is not None:
-            self._value_set = value_set
-            if bounds is not None:
-                raise ValueError(
-                    "Parameters value_set and bounds are both set simultaneously. Don't specify bounds as they are calculated from min and max value of value_set."
-                )
-            bounds = (min(self._value_set), max(self._value_set))
-
-        elif bounds is not None and increment is not None:
-            bounds = sorted(bounds)
-            self._value_set = set(np.arange(bounds[0], bounds[1], increment))
-
-        else:
-            raise ValueError(
-                "Parameters value_set, bounds and increment are None. Please specify either value_set or bounds and increment."
-            )
-
+        self._value_set = value_set
+        bounds = (min(self._value_set), max(self._value_set))
         self._precision = precision
-        super().__init__(default, bounds, increment, enforce_int, checker)
+
+        super().__init__(default=default, bounds=bounds, enforce_int=enforce_int, checker=checker)
 
         if not self.is_valid(self._default):
             raise ValueError(f"invalid default value ({self._default}) encountered")
