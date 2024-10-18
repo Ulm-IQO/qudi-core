@@ -33,7 +33,7 @@ except ImportError:
     InvalidGitRepositoryError = RuntimeError
 
 from qudi.core.statusvariable import StatusVar
-from qudi.core.threadmanager import ThreadManager
+from qudi.core.threadmanager import ThreadManager, ThreadManagerListModel
 from qudi.util.paths import get_main_dir, get_default_config_dir
 from qudi.gui.main_gui.errordialog import ErrorDialog
 from qudi.gui.main_gui.mainwindow import QudiMainWindow
@@ -51,6 +51,7 @@ class QudiMainGui(GuiBase):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.error_dialog = None
+        self.thread_model = None
         self.mw = None
         self._has_console = False  # Flag indicating if an IPython console is available
         self._qudi_main = Qudi.instance()
@@ -89,7 +90,9 @@ class QudiMainGui(GuiBase):
         # IPython console widget
         self.start_jupyter_widget()
         # Configure thread widget
-        self.mw.threads_widget.setModel(ThreadManager.instance())
+        self.thread_model = ThreadManagerListModel(thread_manager=ThreadManager.instance(),
+                                                   parent=self)
+        self.mw.threads_widget.setModel(self.thread_model)
         # Configure remotemodules widget
         self._init_remote_modules_widget()
         self.reset_default_layout()

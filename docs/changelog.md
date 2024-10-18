@@ -3,9 +3,8 @@
 ## Pre-Release
 
 ### Breaking Changes
-- Got rid of the `fysom` package for qudi module state machines. This increases complexity and 
-readability for these very easy state machines and concentrates state transition procedure in the 
-FSM itself.
+- Got rid of the `fysom` package for qudi module state machines. This increases readability for 
+these very easy state machines and concentrates state transition procedure in the FSM itself.
 - Intoduced new enum types `ModuleState` and `ModuleBase` in `qudi.core.module` for state and 
 module base type representation.
 - Changed `qudi.core.module.Base` properties `is_module_threaded` and `module_base` to read-only 
@@ -50,6 +49,10 @@ importing the target class by name and checking with `issubclass`. This works wi
 `rpyc.core.netref` proxies (remote modules) as well as with local modules.
 This results in a hard requirement of the remote qudi environment and local qudi environment to
 have the same qudi namespace packages installed.
+- Reloading modules will now simply deactivate them and re-activate them if they have been active 
+before. Reloading will no longer invalidate the import cache and reload the module from file so 
+that code changes are applied during runtime. This has been causing too many problems in the past 
+since most users and even developers are not aware about the many caveats that come with it.
 
 ### Bugfixes
 - Python module reload during runtime is now only performed if explicitly requested by the user
@@ -63,6 +66,8 @@ explicitly in the dependencies.
 - Remote modules should work now with `rpyc>=6.0.0`
 - Fixed `EOFError` messages in remote clients occurring upon client shutdown if host
 server has shut down first. This sometimes even prevented remote clients to shut down altogether.
+- Improved thread safety of the `ThreadManager` which should get rid of bugs related to rapid 
+module activation/deactivation cycles.
 
 ### New Features
 - New context manager `qudi.util.mutex.acquire_timeout` to facilitate (Recursive)Mutex/(R)Lock

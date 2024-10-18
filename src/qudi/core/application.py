@@ -445,10 +445,6 @@ class Qudi(QtCore.QObject):
             if not self.no_gui:
                 self._stop_gui()
                 QtCore.QCoreApplication.instance().processEvents()
-            self.log.info('Stopping remaining threads...')
-            print('> Stopping remaining threads...')
-            self.thread_manager.quit_all_threads()
-            QtCore.QCoreApplication.instance().processEvents()
             clear_handlers()
             # FIXME: Suppress ResourceWarning from jupyter_client package upon garbage collection.
             #  This is just sloppy implementation from jupyter and not critical.

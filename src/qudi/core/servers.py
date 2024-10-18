@@ -179,7 +179,7 @@ class BaseServer(QtCore.QObject):
                 finally:
                     thread_manager = self._thread_manager
                     thread_manager.quit_thread(self._name)
-                    thread_manager.join_thread(self._name, time=5)
+                    thread_manager.join_thread(self._name, timeout=5)
 
 
 class RemoteModulesServer(BaseServer):

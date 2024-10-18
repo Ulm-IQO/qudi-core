@@ -98,16 +98,6 @@ class ManagedModule(ABCQObjectMixin, QtCore.QObject):
     def deactivate(self) -> None:
         raise NotImplementedError
 
-    @abstractmethod
-    def reload(self, conn_targets: Mapping[str, Base]) -> None:
-        raise NotImplementedError
-
-    def check_module_state(self) -> None:
-        """ Override in subclass to allow external polling of "state" and "has_appdata" from the
-        module instance
-        """
-        pass
-
     @property
     @final
     def state(self) -> ModuleState:
@@ -274,23 +264,6 @@ class LocalManagedModule(ManagedModule):
                 self._update_appdata(self._appdata_handler.exists)
             _logger.info(f'Module "{self.url}" successfully deactivated')
 
-    def reload(self, conn_targets: Mapping[str, Base]) -> None:
-        # Remember activation state and restore it afterward
-        was_active = self._instance is not None
-        if was_active:
-            self.deactivate()
-
-        # Re-import module class
-        self._module_class = import_module_type(module=self._module_url,
-                                                cls=self._class_name,
-                                                base=self.base,
-                                                reload=True)
-        _logger.info(f'Module "{self.url}" reloaded successfully')
-
-        # Re-activate if needed
-        if was_active:
-            self.activate(conn_targets)
-
     def _instantiate_module(self, required_targets: Mapping[str, Base]) -> Base:
         """ Try to instantiate the imported qudi module class """
         try:
@@ -371,6 +344,7 @@ class RemoteManagedModule(ManagedModule):
     def activate(self, conn_targets: Mapping[str, Base]) -> None:
         if self._connection is None:
             _logger.info(f'Activating remote module "{self.name}" at "{self.url}" ...')
+            state = ModuleState.DEACTIVATED
             try:
                 try:
                     self._connection = connect_to_remote_module_server(host=self._host,
@@ -386,22 +360,25 @@ class RemoteManagedModule(ManagedModule):
                     ) from err
                 try:
                     self._connection.root.get_module_instance(self._native_name)
+                    state = ModuleState(
+                        self._connection.root.get_module_state(self._native_name).value
+                    )
                 except Exception as err:
-                    try:
-                        self._connection.close()
-                    except:
-                        pass
                     raise ModuleStateError(
                         f'Unable to activate remote module "{self.name}" at "{self.url}"'
                     ) from err
+                if state == ModuleState.DEACTIVATED:
+                    raise ModuleStateError(
+                        f'Unable to activate remote module "{self.name}" at "{self.url}"'
+                    )
+                _logger.info(
+                    f'Remote module "{self.name}" at "{self.url}" successfully activated'
+                )
             except:
-                self._connection = None
+                self.__kill_connection()
                 raise
             finally:
-                self.check_module_state()
-            _logger.info(f'Remote module "{self.name}" at "{self.url}" successfully activated')
-        else:
-            self.check_module_state()
+                self._update_state(state)
 
     def deactivate(self) -> None:
         if self._connection is None:
@@ -427,13 +404,10 @@ class RemoteManagedModule(ManagedModule):
                 finally:
                     self._update_state(ModuleState.DEACTIVATED)
 
-    def reload(self, conn_targets: Mapping[str, Base]) -> None:
-        if self._connection is not None:
-            self.deactivate()
-            _logger.info(f'Reconnecting to remote module "{self.name}" at "{self.url}"')
-            self.activate(conn_targets)
-
-    def check_module_state(self) -> None:
+    def check_module_state(self) -> bool:
+        """ Updates the remote module state from the server. Returns a flag indicating if the
+        module has been deactivated from server side.
+        """
         if self._connection is None:
             self._update_state(ModuleState.DEACTIVATED)
         else:
@@ -442,9 +416,12 @@ class RemoteManagedModule(ManagedModule):
             except EOFError:
                 # If the connection has already been closed by the remote server
                 state = ModuleState.DEACTIVATED
-            if state == ModuleState.DEACTIVATED:
-                self.__kill_connection()
-            self._update_state(state)
+            deactivated_by_host = state == ModuleState.DEACTIVATED
+            if deactivated_by_host:
+                _logger.warning(f'Remote module at "{self.url}" has been deactivated by host')
+            else:
+                self._update_state(state)
+            return deactivated_by_host
 
     def __kill_connection(self) -> None:
         try:
@@ -494,12 +471,6 @@ class ModuleManager(QtCore.QObject):
         self._modules: Dict[str, ManagedModule] = dict()
         self.__modules_pending_deactivation = set()
         self.__modules_pending_activation = set()
-        # Remote module state watchdog
-        self._remote_watchdog_timer = QtCore.QTimer(self)
-        self._remote_watchdog_timer.setInterval(self._WATCHDOG_INTERVAL)
-        self._remote_watchdog_timer.setSingleShot(True)
-        self._remote_watchdog_timer.timeout.connect(self._remote_watchdog,
-                                                    QtCore.Qt.QueuedConnection)
         # Apply module configuration
         for module_base in ModuleBase:
             for module_name, module_config in config.get(module_base.value, dict()).items():
@@ -524,6 +495,13 @@ class ModuleManager(QtCore.QObject):
         self.__sigDeactivateModule.connect(self.deactivate_module,
                                            QtCore.Qt.BlockingQueuedConnection)
         self.__sigReloadModule.connect(self.reload_module, QtCore.Qt.BlockingQueuedConnection)
+        # Create remote modules watchdog
+        self._remote_watchdog_timer = QtCore.QTimer(self)
+        self._remote_watchdog_timer.setInterval(self._WATCHDOG_INTERVAL)
+        self._remote_watchdog_timer.setSingleShot(True)
+        self._remote_watchdog_timer.timeout.connect(self._remote_watchdog,
+                                                    QtCore.Qt.QueuedConnection)
+        self.__watchdog_start_pending = True
 
     @property
     def has_main_gui(self) -> bool:
@@ -594,6 +572,8 @@ class ModuleManager(QtCore.QObject):
                 module.activate(conn_targets)
             finally:
                 self.__modules_pending_activation.remove(name)
+            if self.__watchdog_start_pending and isinstance(module, RemoteManagedModule):
+                self._remote_watchdog_timer.start()
 
     def deactivate_module(self, name: str) -> None:
         if name not in self.__modules_pending_deactivation:
@@ -622,7 +602,10 @@ class ModuleManager(QtCore.QObject):
     def reload_module(self, name: str) -> None:
         if current_is_main_thread():
             with self._lock:
-                self._get_module_by_name(name).reload()
+                activate = self.module_state(name) != ModuleState.DEACTIVATED
+                self._deactivate_module(name)
+                if activate:
+                    self._activate_module(name)
         else:
             self.__sigReloadModule.emit(name)
 
@@ -702,8 +685,11 @@ class ModuleManager(QtCore.QObject):
 
     def _remote_watchdog(self) -> None:
         with self._lock:
-            for module in self._modules.values():
-                module.check_module_state()
+            for name, module in self._modules.items():
+                if isinstance(module, RemoteManagedModule):
+                    if module.check_module_state():
+                        # Deactivate remote module if server has unexpectedly deactivated it
+                        self._deactivate_module(name)
             self._remote_watchdog_timer.start()
 
     def __init_module(self,
