@@ -421,12 +421,12 @@ class DiscreteScalarConstraint(ScalarConstraint):
         checker: Optional[Callable[[Union[int, float]], bool]] = None,
     ) -> None:
         # sort tuple for efficient checking
+        if enforce_int:
+            allowed_values = (int(val) for val in allowed_values)
         self._allowed_values = tuple(sorted(set(allowed_values)))
         self._precision = None if (precision is None or precision == 0) else abs(precision)
         if len(self._allowed_values) == 0:
             raise ValueError('Must provide at least one allowed value')
-        if not all(isinstance(val, int) for val in self._allowed_values):
-            raise TypeError('Allowed values must be int type for `enforce_int == True`')
         super().__init__(
             default=default,
             bounds=(min(self._allowed_values), max(self._allowed_values)),
