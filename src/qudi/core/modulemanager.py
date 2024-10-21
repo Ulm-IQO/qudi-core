@@ -33,7 +33,7 @@ from qudi.util.helpers import call_slot_from_native_thread, current_is_main_thre
 from qudi.util.mutex import Mutex
 from qudi.util.network import connect_to_remote_module_server
 from qudi.core.logger import get_logger
-from qudi.core.object import ABCQObjectMixin
+from qudi.core.object import ABCQObjectMixin, QudiObjectFileHandler
 from qudi.core.module import Base
 from qudi.core.module import ModuleStateError, ModuleState, ModuleBase
 from qudi.core.threadmanager import ThreadManager
@@ -43,6 +43,8 @@ from qudi.core.config.validator import ValidationError, validate_module_name
 
 
 _logger = get_logger(__name__)
+
+_NO_VALUE = object()
 
 
 class ManagedModule(ABCQObjectMixin, QtCore.QObject):
@@ -176,8 +178,10 @@ class LocalManagedModule(ManagedModule):
             else:
                 self._module_url = f'qudi.{self.base.value}.{self._module_url}'
         self._url = module_url(self._module_url, self._class_name, self.name)
-        self._options = config.get('options', dict())
-        self._connections = config.get('connect', dict())
+        self._appdata_dump_interval = config['appdata_dump_interval']
+        self._appdata_dump_override = False
+        self._options = config['options']
+        self._connections = config['connect']
 
         # Import qudi module class
         self._module_class = import_module_type(module=self._module_url,
@@ -186,7 +190,8 @@ class LocalManagedModule(ManagedModule):
                                                 reload=False)
         self._instance: Union[None, Base] = None
         # Initialize appdata file handler
-        self._appdata_handler = self._module_class.appdata_handler(self.name)
+        self._appdata_handler = QudiObjectFileHandler(cls_name=self._module_class.__name__,
+                                                      nametag=self.name)
 
         self._update_appdata(self._appdata_handler.exists)
         self._update_state(ModuleState.DEACTIVATED)
@@ -203,9 +208,16 @@ class LocalManagedModule(ManagedModule):
     def is_threaded(self) -> bool:
         return self._module_class.module_threaded
 
+    @property
+    def appdata_dump_interval(self) -> Union[None, int, float]:
+        return self._appdata_dump_interval
+
     def clear_appdata(self) -> None:
-        self._appdata_handler.clear()
-        self._update_appdata(self._appdata_handler.exists)
+        if self._instance is None:
+            self._appdata_handler.clear()
+            self._update_appdata(self._appdata_handler.exists)
+        else:
+            self._instance.appdata.clear()
 
     def activate(self, conn_targets: Mapping[str, Base]) -> None:
         # Do nothing if already active (except showing the GUI again)
@@ -228,12 +240,17 @@ class LocalManagedModule(ManagedModule):
             except Exception:
                 self._instance = None
                 self._update_state(ModuleState.DEACTIVATED)
+                self._update_appdata(self._appdata_handler.exists)
                 raise
             else:
-                self._instance.module_state.sigStateChanged.connect(self._update_state)
+                self._instance.module_state.sigStateChanged.connect(self._update_state,
+                                                                    QtCore.Qt.QueuedConnection)
+                self._instance.appdata.sigAppDataChanged.connect(self._update_appdata,
+                                                                 QtCore.Qt.QueuedConnection)
                 self._update_state(self._instance.module_state.current)
-            finally:
-                self._update_appdata(self._appdata_handler.exists)
+                self._update_appdata(self._instance.appdata.exists)
+                if self._appdata_dump_interval and not self._appdata_dump_override:
+                    self._instance.appdata.start_periodic_dump(self._appdata_dump_interval)
             _logger.info(f'Module "{self.url}" successfully activated.')
         else:
             if self.base == ModuleBase.GUI:
@@ -249,6 +266,8 @@ class LocalManagedModule(ManagedModule):
             try:
                 try:
                     self._instance.module_state.sigStateChanged.disconnect()
+                    self._instance.appdata.sigAppDataChanged.disconnect()
+                    self._instance.appdata.stop_periodic_dump()
                 except:
                     pass
                 if self.is_threaded:
@@ -263,6 +282,20 @@ class LocalManagedModule(ManagedModule):
                 self._update_state(ModuleState.DEACTIVATED)
                 self._update_appdata(self._appdata_handler.exists)
             _logger.info(f'Module "{self.url}" successfully deactivated')
+
+    def override_periodic_appdata_dump(
+            self,
+            deactivate: Optional[bool] = None,
+            interval: Optional[Union[None, int, float]] = _NO_VALUE
+    ) -> None:
+        if deactivate is not None:
+            self._appdata_dump_override = deactivate
+        if interval is not _NO_VALUE:
+            self._appdata_dump_interval = None if (interval is None or interval <= 0) else interval
+        if self._instance is not None:
+            self._instance.appdata.stop_periodic_dump()
+            if not self._appdata_dump_override and self._appdata_dump_interval:
+                self._instance.appdata.start_periodic_dump(self._appdata_dump_interval)
 
     def _instantiate_module(self, required_targets: Mapping[str, Base]) -> Base:
         """ Try to instantiate the imported qudi module class """
@@ -676,6 +709,16 @@ class ModuleManager(QtCore.QObject):
         with self._lock:
             for module in self._modules.values():
                 module.clear_appdata()
+
+    def override_periodic_appdata_dump(
+            self,
+            deactivate: Optional[bool] = None,
+            interval: Optional[Union[None, int, float]] = _NO_VALUE
+    ) -> None:
+        with self._lock:
+            for module in self._modules.values():
+                if isinstance(module, LocalManagedModule):
+                    module.override_periodic_appdata_dump(deactivate, interval)
 
     def _get_module(self, name: str) -> ManagedModule:
         try:

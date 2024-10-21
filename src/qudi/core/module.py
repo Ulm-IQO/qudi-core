@@ -30,7 +30,7 @@ from abc import abstractmethod
 from enum import Enum
 from uuid import uuid4, UUID
 from PySide2 import QtCore, QtWidgets
-from typing import Any, Mapping, Optional, Type, Dict, Final, MutableMapping, final
+from typing import Any, Mapping, Optional, Type, Dict, Final, MutableMapping, final, Union
 
 from qudi.core.object import QudiQObjectMixin
 from qudi.core.statusvariable import StatusVar
@@ -114,6 +114,20 @@ class _ModuleBaseDescriptor:
         raise AttributeError('Read-Only')
 
 
+class ModulePeriodicAppDataDumper(QtCore.QObject):
+    """Helper object facilitating periodic dumping of status variables for qudi modules."""
+    def __init__(self, qudi_object: QtCore.QObject, interval: Union[int, float]):
+        if not isinstance(qudi_object, QudiQObjectMixin):
+            raise TypeError(
+                f'qudi_object must be subclass of '
+                f'{QudiQObjectMixin.__module__}.{QudiQObjectMixin.__qualname__}'
+            )
+        super().__init__(parent=qudi_object)
+        self._timer = QtCore.QTimer(self)
+        self._timer.setInterval(int(round(1000 * interval)))
+        self._timer.timeout.connect()
+
+
 class ModuleStateMachine(QtCore.QObject):
     """ QObject providing FSM state control handling activation, deactivation, locking and
     unlocking of qudi modules.
@@ -188,7 +202,7 @@ class ModuleStateMachine(QtCore.QObject):
         try:
             if self.deactivated:
                 try:
-                    self._module_instance.load_status_variables()
+                    self._module_instance.appdata.load()
                     self._module_instance.on_activate()
                 except Exception as err:
                     raise ModuleStateError('Exception during module activation') from err
@@ -219,7 +233,7 @@ class ModuleStateMachine(QtCore.QObject):
                         self._module_instance.on_deactivate()
                     finally:
                         # save status variables even if deactivation failed
-                        self._module_instance.dump_status_variables()
+                        self._module_instance.appdata.dump()
                 except Exception as err:
                     raise ModuleStateError('Exception during module deactivation') from err
             else:
@@ -283,7 +297,6 @@ class Base(QudiQObjectMixin, QtCore.QObject):
 
     module_threaded: bool = _ThreadedDescriptor()
     module_base: ModuleBase = _ModuleBaseDescriptor()
-    module_state: ModuleStateMachine
 
     __url_uuid_map: Final[Dict[str, UUID]] = dict()  # Same module url will result in same UUID
 
@@ -309,7 +322,7 @@ class Base(QudiQObjectMixin, QtCore.QObject):
         # Add additional module info
         self.__module_url = mod_url
         # Initialize module state
-        self.module_state = ModuleStateMachine(module_instance=self)
+        self.__module_state = ModuleStateMachine(module_instance=self)
         self.__warned = False
 
     @property
@@ -336,6 +349,11 @@ class Base(QudiQObjectMixin, QtCore.QObject):
             )
             self.__warned = True
         return self.uuid
+
+    @property
+    def module_state(self) -> ModuleStateMachine:
+        """The module state machine. Can be used to retrieve current state and change state."""
+        return self.__module_state
 
     @property
     def module_default_data_dir(self) -> str:

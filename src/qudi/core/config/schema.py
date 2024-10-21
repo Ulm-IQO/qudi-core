@@ -190,6 +190,11 @@ def local_module_config_schema() -> Dict[str, Any]:
                 'type': 'boolean',
                 'default': False
             },
+            'appdata_dump_interval': {
+                'type': ['null', 'number'],
+                'minimum': 0,
+                'default': None
+            },
             'connect': {
                 'type': 'object',
                 'additionalProperties': {

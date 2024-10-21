@@ -19,14 +19,15 @@ You should have received a copy of the GNU Lesser General Public License along w
 If not, see <https://www.gnu.org/licenses/>.
 """
 
-__all__ = ['ABCQObjectMixin', 'QudiQObjectMixin', 'QudiQObjectFileHandlerFactory']
+__all__ = ['ABCQObjectMixin', 'QudiQObjectMixin', 'QudiObjectFileHandler']
 
 import os
 import copy
 import logging
 from uuid import uuid4, UUID
-from typing import MutableMapping, Mapping, Optional, Any, final, Union, Dict
-from PySide2.QtCore import Slot, QCoreApplication
+from typing import MutableMapping, Mapping, Optional, Any, final, Sequence, Union
+from PySide2 import QtCore
+from PySide2.QtWinExtras import QtWin
 
 from qudi.core import StatusVar
 from qudi.core.logger import get_logger
@@ -36,53 +37,142 @@ from qudi.util.helpers import call_slot_from_native_thread, current_is_native_th
 from qudi.util.paths import get_appdata_dir
 
 
-class QudiQObjectFileHandlerFactory:
-    """ YamlFileHandler factory for QudiQObjectMixin """
+class QudiObjectFileHandler(YamlFileHandler):
+    """Specialization of YamlFileHandler for QudiQObjectMixin types AppData"""
+    def __init__(self, cls_name: str, nametag: str):
+        super().__init__(
+            file_path=os.path.join(get_appdata_dir(), f'status-{cls_name}-{nametag}.yml')
+        )
 
-    def __init__(self, class_name: str) -> None:
-        super().__init__()
-        self.class_name: str = class_name
 
-    def __call__(self, nametag: str) -> YamlFileHandler:
-        if nametag:
-            filename = f'status-{self.class_name}-{nametag}.cfg'
+class QudiObjectAppDataHandler(QtCore.QObject):
+    """Handles dumping, loading and deletion of StatusVar meta attributes in QudiQObjectMixin"""
+
+    sigAppDataChanged = QtCore.Signal(bool)  # exists
+    _sigStartPeriodicDump = QtCore.Signal(object)  # interval
+
+    def __init__(self, instance: 'QudiQObjectMixin', status_vars: Sequence[StatusVar]):
+        super().__init__(parent=instance)
+        self._status_vars = status_vars
+        self._instance = instance
+        self._file_handler = QudiObjectFileHandler(cls_name=self._instance.__class__.__name__,
+                                                   nametag=self._instance.nametag)
+        self._periodic_dumper = QudiObjectPeriodicAppDataDumper(handler=self)
+        self._sigStartPeriodicDump.connect(self.start_periodic_dump,
+                                           QtCore.Qt.BlockingQueuedConnection)
+
+    @property
+    def exists(self) -> bool:
+        """Indicates if an AppData file exists on disc."""
+        return self._file_handler.exists
+
+    @QtCore.Slot()
+    def dump(self) -> None:
+        """Dumps current values of StatusVar meta-attributes to a file in AppData.
+        Ignores variables that fail to dump either due to exceptions in the respective StatusVar
+        representer or any other reason.
+        """
+        if current_is_native_thread(self):
+            appdata = dict()
+            for status_variable in self._status_vars:
+                try:
+                    appdata[status_variable.name] = status_variable.represent(self._instance)
+                except:
+                    self._instance.log.exception(
+                        f'Error while representing status variable "{status_variable.name}". '
+                        f'This variable will not be saved.'
+                    )
+            try:
+                self._file_handler.dump(appdata)
+                self.sigAppDataChanged.emit(True)
+            except:
+                self.log.exception('Error dumping status variables to file. Status not saved.')
         else:
-            filename = f'status-{self.class_name}.cfg'
-        return YamlFileHandler(os.path.join(get_appdata_dir(), filename))
+            call_slot_from_native_thread(self, 'dump', blocking=True)
 
-
-class _QudiQObjectAppDataDescriptor:
-    """ Descriptor object for AppData handlers of QudiObject classes """
-
-    def __get__(self, instance, owner=None) -> Union[QudiQObjectFileHandlerFactory, YamlFileHandler]:
-        if owner is None:
-            owner = type(instance)
-        if instance is None:
-            return QudiQObjectFileHandlerFactory(owner.__name__)
+    @QtCore.Slot()
+    def load(self) -> None:
+        """Loads status variables from file (if present) and tries to initialize the instance
+        meta-attributes with them. If a variable is not found in AppData or fails to initialize,
+        the default initialization is used instead.
+        """
+        if current_is_native_thread(self):
+            appdata = self._file_handler.load(ignore_missing=True)
+            for status_variable in self._status_vars:
+                try:
+                    if status_variable.name in appdata:
+                        value = appdata[status_variable.name]
+                        try:
+                            status_variable.construct(self._instance, value)
+                        except:
+                            self.log.exception(
+                                f'Error while constructing status variable "{status_variable.name}"'
+                                f' from stored value "{value}". Falling back to default value.'
+                            )
+                            status_variable.construct(self._instance)
+                    else:
+                        status_variable.construct(self._instance)
+                except Exception as err:
+                    raise RuntimeError(
+                        f'Default initialization of status variable "{status_variable.name}" failed'
+                    ) from err
         else:
-            return QudiQObjectFileHandlerFactory(owner.__name__)(instance.nametag)
+            call_slot_from_native_thread(self, 'load', blocking=True)
 
-    def __delete__(self, instance):
-        raise AttributeError('Can not delete')
+    @QtCore.Slot()
+    def clear(self) -> None:
+        """Clears status variables file (if present)."""
+        if current_is_native_thread(self):
+            if self._file_handler.exists:
+                self._file_handler.clear()
+                self.sigAppDataChanged.emit(False)
+        else:
+            call_slot_from_native_thread(self, 'clear', blocking=True)
 
-    def __set__(self, instance, value):
-        raise AttributeError('Read-Only')
+    @QtCore.Slot(object)
+    def start_periodic_dump(self, interval: Union[int, float]) -> None:
+        if current_is_native_thread(self):
+            self._periodic_dumper.start(interval)
+        else:
+            self._sigStartPeriodicDump.emit(interval)
+
+    @QtCore.Slot()
+    def stop_periodic_dump(self):
+        if current_is_native_thread(self):
+            self._periodic_dumper.stop()
+        else:
+            call_slot_from_native_thread(self, 'stop_periodic_dump', blocking=True)
 
 
-class _ThreadedDescriptor:
-    """ Read-only class descriptor representing the owners private class attribute <_threaded> value
-    """
-    def __get__(self, instance, owner) -> bool:
-        try:
-            return owner._threaded
-        except AttributeError:
-            return type(instance)._threaded
+class QudiObjectPeriodicAppDataDumper(QtCore.QObject):
+    """Helper object to facilitate periodic dumping of AppData in qudi QObjects"""
+    def __init__(self, handler: QudiObjectAppDataHandler):
+        super().__init__(parent=handler)
+        self._handler = handler
+        self._stop_requested = True
+        self._timer = QtCore.QTimer(parent=self)
+        self._timer.setSingleShot(True)
+        self._timer.timeout.connect(self._dump_callback, QtCore.Qt.QueuedConnection)
 
-    def __delete__(self, instance):
-        raise AttributeError('Can not delete')
+    @QtCore.Slot(object)
+    def start(self, interval: Union[int, float]) -> None:
+        if interval <= 0:
+            raise ValueError('Dump interval in seconds must be > 0')
+        if self._stop_requested and not self._timer.isActive():
+            self._stop_requested = False
+            self._timer.setInterval(int(round(1000 * interval)))
+            self._timer.start()
 
-    def __set__(self, instance, value):
-        raise AttributeError('Read-Only')
+    @QtCore.Slot()
+    def stop(self) -> None:
+        self._stop_requested = True
+        self._timer.stop()
+
+    def _dump_callback(self) -> None:
+        if not self._stop_requested:
+            self._handler.dump()
+            print('dumped automatically:', self._handler._instance.nametag)
+            self._timer.start()
 
 
 class ABCQObjectMixin(metaclass=ABCQObjectMeta):
@@ -104,8 +194,6 @@ class QudiQObjectMixin(ABCQObjectMixin, metaclass=QudiQObjectMeta):
 
     Use with QObject types only and make sure this mixin comes before QObject in mro!
     """
-
-    appdata_handler = _QudiQObjectAppDataDescriptor()
 
     def __init__(self,
                  *args,
@@ -129,6 +217,12 @@ class QudiQObjectMixin(ABCQObjectMixin, metaclass=QudiQObjectMeta):
         # Initialize ConfigOption and Connector meta-attributes (descriptors)
         self.__init_config_options(dict() if options is None else options)
         self.__init_connectors(dict() if connections is None else connections)
+        # Initialize AppData handler
+        self.__appdata_handler = QudiObjectAppDataHandler(
+            instance=self,
+            status_vars=list(self._meta['status_variables'].values())
+        )
+
 
     def __eq__(self, other):
         if isinstance(other, QudiQObjectMixin):
@@ -175,83 +269,8 @@ class QudiQObjectMixin(ABCQObjectMixin, metaclass=QudiQObjectMeta):
         """ Read-only property returning the nametag for this object instance """
         return self.__nametag
 
-    @Slot()
+    @property
     @final
-    def move_to_main_thread(self) -> None:
-        """ Method that will move this module into the main thread """
-        if current_is_native_thread(self):
-            self.moveToThread(QCoreApplication.instance().thread())
-        else:
-            call_slot_from_native_thread(self, 'move_to_main_thread', blocking=True)
-
-    @final
-    def dump_status_variables(self) -> None:
-        """ Dumps current values of StatusVar meta-attributes to a file in AppData that is unique
-        for each combination of this objects type and the given appdata_nametag.
-        Ignores variables that fail to dump either due to exceptions in the respective StatusVar
-        representer or any other reason.
-        """
-        appdata = dict()
-        for attr_name, status_variable in self._meta['status_variables'].items():
-            try:
-                appdata[status_variable.name] = status_variable.represent(self)
-            except:
-                self.log.exception(
-                    f'Error while representing status variable "{status_variable.name}" from '
-                    f'attribute "{attr_name}". This variable will not be saved.'
-                )
-        self.__dump_appdata(appdata)
-
-    @final
-    def load_status_variables(self) -> None:
-        """ Loads status variables from file (if present) and tries to initialize the instance
-        meta-attributes with them. If a variable is not found in AppData or fails to initialize,
-        the default initialization is used instead.
-        """
-        appdata = self.__load_appdata()
-        for attr_name, status_variable in self._meta['status_variables'].items():
-            try:
-                self.__construct_status_variable(status_variable, appdata)
-            except Exception as err:
-                raise RuntimeError(
-                    f'Default initialization of status variable "{status_variable.name}" as '
-                    f'attribute "{attr_name}" failed'
-                ) from err
-
-    def __dump_appdata(self, data: Mapping[str, Any]) -> None:
-        try:
-            self.appdata_handler.dump(data)
-        except:
-            object_descr = f' for "{self.nametag}"' if self.nametag else ''
-            self.log.exception(
-                f'Error dumping status variables to file{object_descr}. Status not saved.'
-            )
-
-    def __load_appdata(self) -> Dict[str, Any]:
-        try:
-            data = self.appdata_handler.load(ignore_missing=True)
-        except:
-            data = dict()
-            object_descr = f' for "{self.nametag}"' if self.nametag else ''
-            self.log.exception(
-                f'Error loading status variables from disk{object_descr}. '
-                f'Falling back to default values.'
-            )
-        return data
-
-    def __construct_status_variable(self,
-                                    status_variable: StatusVar,
-                                    appdata: MutableMapping[str, Any]) -> None:
-        if status_variable.name in appdata:
-            value = appdata.pop(status_variable.name)
-            try:
-                status_variable.construct(self, value)
-            except:
-                self.log.exception(
-                    f'Error while constructing status variable "{status_variable.name}" from '
-                    f'stored value "{value}". Falling back to default value.'
-                )
-            else:
-                status_variable.construct(self)
-        else:
-            status_variable.construct(self)
+    def appdata(self) -> QudiObjectAppDataHandler:
+        """Handler for AppData of this object"""
+        return self.__appdata_handler

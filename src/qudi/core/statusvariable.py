@@ -23,7 +23,6 @@ If not, see <https://www.gnu.org/licenses/>.
 __all__ = ['StatusVar']
 
 
-from inspect import signature
 from typing import Callable, Any, Optional, Union
 from qudi.util.descriptors import DefaultAttribute
 
@@ -69,16 +68,16 @@ class StatusVar(DefaultAttribute):
 
     def construct(self, instance: object, value: Optional[Any] = _NO_VALUE) -> None:
         if value is self._NO_VALUE:
-            value = self.__get__(instance, instance.__class__)
+            value = super().__get__(instance, instance.__class__)
         if self._constructor is not None:
             if isinstance(self._constructor, str):
                 value = getattr(instance, self._constructor)(value)
             else:
                 value = self._constructor(value)
-        self.__set__(instance, value)
+        super().__set__(instance, value)
 
     def represent(self, instance: object) -> Any:
-        value = self.__get__(instance, instance.__class__)
+        value = super().__get__(instance, instance.__class__)
         if self._representer is not None:
             if isinstance(self._representer, str):
                 value = getattr(instance, self._representer)(value)
