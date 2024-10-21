@@ -90,6 +90,10 @@ modules at once.
 dynamically react to remote module deactivation calls by only deactivating if no module (remote or
 local) is using the respective module. The module will not deactivate on the host otherwise and a
 warning will be logged on the remote client.
+- Added "Clear all AppData" and "Dump all AppData" actions to the main GUI menus that manually dump
+or clear all module appdata at once.
+- Added "Dump AppData" button to each module in manager/main GUI to manually force an AppData dump
+of the respective module.
 
 ### Other
 - Deprecated calling `qudi.core.module.Base.module_state` property and `Connector` meta attributes.
