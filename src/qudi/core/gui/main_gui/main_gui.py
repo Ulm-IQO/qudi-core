@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-""" This module contains the
+"""This module contains the
 
 Copyright (c) 2021, the qudi developers. See the AUTHORS.md file at the top-level directory of this
 distribution and on <https://github.com/Ulm-IQO/qudi-core/>
@@ -48,6 +48,9 @@ class QudiMainGui(GuiBase):
     # status vars
     _console_font_size = StatusVar(name='console_font_size', default=10)
     _show_error_popups = StatusVar(name='show_error_popups', default=True)
+
+    signal_update_automatic_status_var_checkstate = QtCore.Signal(bool)
+    signal_update_automatic_status_var_interval = QtCore.Signal(int)
 
     def __init__(self, *args, **kwargs):
         """Create an instance of the module.
@@ -105,6 +108,7 @@ class QudiMainGui(GuiBase):
         self._init_remote_modules_widget()
 
         self.reset_default_layout()
+
         self.show()
 
     def on_deactivate(self):
@@ -126,6 +130,10 @@ class QudiMainGui(GuiBase):
         self.mw.action_open_configuration_editor.triggered.connect(self.new_configuration)
         self.mw.action_load_all_modules.triggered.connect(
             qudi_main.module_manager.start_all_modules)
+        self.mw.action_dump_status_variables.triggered.connect(
+            qudi_main.module_manager.dump_status_variables, QtCore.Qt.QueuedConnection
+        )
+
         self.mw.action_view_default.triggered.connect(self.reset_default_layout)
         # Connect signals from manager
         qudi_main.configuration.sigConfigChanged.connect(self.update_config_widget)
@@ -143,6 +151,8 @@ class QudiMainGui(GuiBase):
             qudi_main.module_manager.deactivate_module)
         self.mw.module_widget.sigCleanupModule.connect(
             qudi_main.module_manager.clear_module_app_data)
+        self.mw.module_widget.sigDumpStatusVarModule.connect(
+            qudi_main.module_manager.dump_module_status_var)
 
     def _disconnect_signals(self):
         qudi_main = self._qudi_main
@@ -152,6 +162,7 @@ class QudiMainGui(GuiBase):
         self.mw.action_reload_qudi.triggered.disconnect()
         self.mw.action_open_configuration_editor.triggered.disconnect()
         self.mw.action_load_all_modules.triggered.disconnect()
+        self.mw.action_dump_status_variables.triggered.disconnect()
         self.mw.action_view_default.triggered.disconnect()
         # Disconnect signals from manager
         qudi_main.configuration.sigConfigChanged.disconnect(self.update_config_widget)
@@ -167,6 +178,7 @@ class QudiMainGui(GuiBase):
         self.mw.module_widget.sigReloadModule.disconnect()
         self.mw.module_widget.sigDeactivateModule.disconnect()
         self.mw.module_widget.sigCleanupModule.disconnect()
+        self.mw.module_widget.sigDumpStatusVarModule.disconnect()
 
         get_signal_handler().sigRecordLogged.disconnect(self.handle_log_record)
 
@@ -218,6 +230,7 @@ class QudiMainGui(GuiBase):
 
         self.mw.action_view_console.setChecked(self._has_console)
         self.mw.action_view_console.setVisible(self._has_console)
+
         return
 
     def handle_log_record(self, entry):
@@ -340,15 +353,18 @@ class QudiMainGui(GuiBase):
         if modules is None:
             modules = self._qudi_main.module_manager
         self.mw.module_widget.update_modules(modules)
+        self.mw.settings_dialog.module_widget.update_modules(modules)
 
     @QtCore.Slot(str, str, str)
     def update_module_state(self, base, name, state):
         self.mw.module_widget.update_module_state(base, name, state)
+        self.mw.settings_dialog.module_widget.update_module_state(base, name, state)
         return
 
     @QtCore.Slot(str, str, bool)
     def update_module_app_data(self, base, name, exists):
         self.mw.module_widget.update_module_app_data(base, name, exists)
+        self.mw.settings_dialog.module_widget.update_module_app_data(base, name, exists)
 
     def get_qudi_version(self):
         """ Try to determine the software version in case the program is in a git repository.

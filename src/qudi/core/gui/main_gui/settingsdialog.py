@@ -20,6 +20,8 @@ If not, see <https://www.gnu.org/licenses/>.
 """
 
 from PySide2 import QtCore, QtWidgets
+from qudi.core.gui.main_gui.modulewidget import ModuleStatusVariablesWidget
+from qudi.util.widgets.scientific_spinbox import ScienSpinBox
 
 
 class SettingsDialog(QtWidgets.QDialog):
@@ -56,11 +58,22 @@ class SettingsDialog(QtWidgets.QDialog):
         layout.addWidget(label, 1, 0)
         layout.addWidget(self.show_error_popups_checkbox, 1, 1)
 
+        # Automatic status variable saving settings
+        groupbox = QtWidgets.QGroupBox("Automatic Status Variable Saving")
+        groupbox_layout = QtWidgets.QGridLayout()
+        groupbox_layout.setRowStretch(1, 1)
+        groupbox.setLayout(groupbox_layout)
+        self.module_widget = ModuleStatusVariablesWidget()
+        self.module_widget.setObjectName('moduleTabWidgetStatus')
+        groupbox_layout.addWidget(self.module_widget, 0, 0)
+        layout.addWidget(groupbox, 2, 0, 1, 2)
+
         buttonbox = QtWidgets.QDialogButtonBox(QtWidgets.QDialogButtonBox.Ok
                                                | QtWidgets.QDialogButtonBox.Cancel
                                                | QtWidgets.QDialogButtonBox.Apply)
         buttonbox.setOrientation(QtCore.Qt.Horizontal)
-        layout.addWidget(buttonbox, 2, 0, 1, 2)
+        layout.addWidget(buttonbox, 5, 0, 1, 2)
+
 
         # Add internal signals
         buttonbox.accepted.connect(self.accept)

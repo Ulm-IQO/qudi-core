@@ -25,7 +25,7 @@ import copy
 import weakref
 import fysom
 
-from typing import FrozenSet, Iterable
+from typing import FrozenSet
 from functools import partial
 from PySide2 import QtCore
 
@@ -46,6 +46,7 @@ class ModuleManager(QtCore.QObject):
     sigModuleStateChanged = QtCore.Signal(str, str, str)
     sigModuleAppDataChanged = QtCore.Signal(str, str, bool)
     sigManagedModulesChanged = QtCore.Signal(dict)
+    automated_status_variable_dumping_timer = QtCore.QTimer()
 
     def __new__(cls, *args, **kwargs):
         with cls._lock:
@@ -62,6 +63,7 @@ class ModuleManager(QtCore.QObject):
         super().__init__(*args, **kwargs)
         self._qudi_main_ref = weakref.ref(qudi_main, self._qudi_main_ref_dead_callback)
         self._modules = dict()
+        self._automated_status_variable_dumping_timer_interval = 60
 
     @classmethod
     def instance(cls):
@@ -235,6 +237,13 @@ class ModuleManager(QtCore.QObject):
                                f'Can not clear module app status.')
             return self._modules[module_name].clear_module_app_data()
 
+    def dump_module_status_var(self, module_name):
+        with self._lock:
+            if module_name not in self._modules:
+                raise KeyError(f'No module named "{module_name}" found in managed qudi modules. '
+                               f'Can not save module status variables.')
+            return self._modules[module_name]._instance.dump_status_variables()
+
     def has_app_data(self, module_name):
         with self._lock:
             if module_name not in self._modules:
@@ -259,6 +268,16 @@ class ModuleManager(QtCore.QObject):
         logger.error('Qudi main reference no longer valid. This should never happen. Tearing down '
                      'ModuleManager.')
         self.clear()
+
+    def dump_status_variables(self):
+        """
+        Method that dumps the status variables of all active modules.
+        """
+        logger.debug(f"Dumping status variables of all modules")
+        with self._lock:
+            for _, module in self.modules.items():
+                if module.is_active:
+                    module.instance.dump_status_variables()
 
     @QtCore.Slot()
     def _activate_module_slot(self):
@@ -301,7 +320,7 @@ class ManagedModule(QtCore.QObject):
 
         self._qudi_main_ref = qudi_main_ref  # Weak reference to qudi main instance
         self._name = name  # Each qudi module needs a unique string identifier
-        self._base = base  # Remember qudi module base
+        self._base = base  # Remember qudi module base name ('gui', 'logic', 'hardware')
         self._instance = None  # Store the module instance later on
 
         cfg = copy.deepcopy(configuration)

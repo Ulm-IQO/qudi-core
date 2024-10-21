@@ -29,7 +29,8 @@ None
 - Fixed syntax error in `qudi.util.fit_models.lorentzian.LorentzianLinear` fit model
 
 ### New Features
-None
+- Added "Dump all status variables" button to manually dump status variables without restarting qudi
+- Added settings to configure automatic dumping of status variables during qudi runtime
 
 ### Other
 - Improved documentation [`getting_started.md`](getting_started.md)
