@@ -219,6 +219,10 @@ class LocalManagedModule(ManagedModule):
         else:
             self._instance.appdata.clear()
 
+    def dump_appdata(self) -> None:
+        if self._instance is not None:
+            self._instance.appdata.dump()
+
     def activate(self, conn_targets: Mapping[str, Base]) -> None:
         # Do nothing if already active (except showing the GUI again)
         if self._instance is None:
@@ -654,6 +658,12 @@ class ModuleManager(QtCore.QObject):
         with self._lock:
             self._get_module(name).clear_appdata()
 
+    def dump_module_appdata(self, name: str) -> None:
+        with self._lock:
+            module = self._get_module(name)
+            if isinstance(module, LocalManagedModule):
+                module.dump_appdata()
+
     def has_appdata(self, name: str) -> bool:
         return self._get_module(name).has_appdata
 
@@ -709,6 +719,12 @@ class ModuleManager(QtCore.QObject):
         with self._lock:
             for module in self._modules.values():
                 module.clear_appdata()
+
+    def dump_all_appdata(self) -> None:
+        with self._lock:
+            for module in self._modules.values():
+                if isinstance(module, LocalManagedModule):
+                    module.dump_appdata()
 
     def override_periodic_appdata_dump(
             self,

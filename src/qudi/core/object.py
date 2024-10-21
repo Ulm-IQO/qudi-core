@@ -171,7 +171,6 @@ class QudiObjectPeriodicAppDataDumper(QtCore.QObject):
     def _dump_callback(self) -> None:
         if not self._stop_requested:
             self._handler.dump()
-            print('dumped automatically:', self._handler._instance.nametag)
             self._timer.start()
 
 
