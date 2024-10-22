@@ -77,6 +77,13 @@ dependencies = [
     "qtconsole>=5.5.0",
 ]
 
+[project.optional-dependencies]
+dev-lint-format = ["ruff==0.7.0",]
+
+[tool.ruff]
+quote-style = "single"
+line-length = 120
+
 [project.scripts]
 qudi = "qudi.runnable:main"
 qudi-config-editor = "qudi.tools.config_editor.config_editor:main"
