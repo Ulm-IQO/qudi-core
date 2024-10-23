@@ -84,6 +84,16 @@ dev-lint-format = ["ruff==0.7.0",]
 quote-style = "single"
 line-length = 120
 
+[tool.ruff.lint]
+select = "ALL"
+ignore = [
+    "ERA001",  # Commented-out code
+    "SLF001",  # Private member accessed
+    "N803",  # Argument name should be lowercase
+    "N806",  # Variable in function should be lowercase
+    "C901",  # Init method too complex
+]
+
 [project.scripts]
 qudi = "qudi.runnable:main"
 qudi-config-editor = "qudi.tools.config_editor.config_editor:main"
