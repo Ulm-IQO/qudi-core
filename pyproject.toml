@@ -81,11 +81,13 @@ dependencies = [
 dev-lint-format = ["ruff==0.7.0",]
 
 [tool.ruff]
-quote-style = "single"
 line-length = 120
 
+[tool.ruff.format]
+quote-style = "single"
+skip-magic-trailing-comma = true
+
 [tool.ruff.lint]
-select = "ALL"
 ignore = [
     "ERA001",  # Commented-out code
     "SLF001",  # Private member accessed
