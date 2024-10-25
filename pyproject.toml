@@ -84,7 +84,7 @@ dev-lint-format = ["ruff==0.7.0",]
 line-length = 120
 
 [tool.ruff.format]
-quote-style = "single"
+quote-style = "preserve"
 skip-magic-trailing-comma = true
 
 [tool.ruff.lint]
