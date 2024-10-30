@@ -10,7 +10,7 @@ module base type representation.
 - Changed `qudi.core.module.Base` properties `is_module_threaded` and `module_base` to read-only 
 class descriptors. Renamed `is_module_threaded` to `module_threaded`.
 - Turned `ConfigOption`, `StatusVar` and `Connector` into descriptors, eliminating the need to call 
-or explicitly construct them
+or explicitly construct them in the qudi modules
 - `Connector` meta attribute now needs to be initialized with the actual interface type instead of 
 a name string. This requires changing all qudi modules that have not already done this before.
 - Combined meta object, id, logging, appdata and abc functionality in new general purpose mixin 
@@ -22,9 +22,9 @@ object proxy found in the new module `qudi.util.proxy`.
 - Adjusted `ModuleManager` according to the meta object changes in `qudi.core.module`. Now there is 
 no more distinction between `loaded` and `activated` module state. Module `__init__` is called upon 
 activation and it is destroyed upon deactivation.
-- `qudi.core.modulemanager.ModuleManager` is now a subclass of `QtCore.QAbstractTableModel` and 
-serves as singular central data source for all managed qudi modules and their status. The main GUI 
-and module servers (remote and local) have been adjusted accordingly.
+- `qudi.core.modulemanager.ModuleManager` now serves as singular central data source for all 
+managed qudi modules and their status. The main GUI and module servers (remote and local) have been
+adjusted accordingly.
 - GUI modules can no longer be shared by the remote module and local namespace servers.
 - Refactored `qudi.core.gui` into a set of static functions
 - moved all popup and balloon message prompt functions into new `qudi.core.message` module. Works 
@@ -55,7 +55,6 @@ that code changes are applied during runtime. This has been causing too many pro
 since most users and even developers are not aware about the many caveats that come with it.
 
 ### Bugfixes
-- Python module reload during runtime is now only performed if explicitly requested by the user
 - Fixed a `scipy` warning about the deprecated `scipy.ndimage.filters` namespace
 - Exceptions during initialization and construction of `ConfigOption` and `StatusVar` will now
 cause the affected descriptor to be initialized to its default value and no longer prevent the

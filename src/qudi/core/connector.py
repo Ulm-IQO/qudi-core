@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 """
-Connector object to establish connections between qudi objects.
+Connector descriptor used to establish connections between qudi objects.
 
-Copyright (c) 2021, the qudi developers. See the AUTHORS.md file at the top-level directory of this
-distribution and on <https://github.com/Ulm-IQO/qudi-core/>
+Copyright (c) 2021-2024, the qudi developers. See the AUTHORS.md file at the top-level directory of
+this distribution and on <https://github.com/Ulm-IQO/qudi-core/>.
 
 This file is part of qudi.
 
@@ -27,19 +27,28 @@ from qudi.util.overload import OverloadProxy
 
 
 class QudiConnectionError(RuntimeError):
+    """Error type related to qudi Connector meta attribute functionality."""
     pass
 
 
 class Connector:
-    """ A connector used to connect qudi objects with each other """
+    """
+    Descriptor object used to connect qudi objects with each other.
+
+    Parameters
+    ----------
+    interface : type
+        Interface type to enforce for this connector. The connection target will be checked to be
+        an instance of this interface.
+    name : str, optional
+        Customizable connector name that will be used to reference it in the qudi module
+        configuration (defaults to attribute name).
+    optional : bool, optional
+        If this flag is set to `True`, the connector will not raise an exception if no target is
+        connected to it (defaults to `False`).
+    """
 
     def __init__(self, interface: type, name: str = None, optional: bool = False):
-        """
-        @param str interface: name of the interface class to connect to
-        @param str name: optional, name of the connector in qudi config. Will set attribute name if
-                         omitted.
-        @param bool optional: optional, flag indicating if the connection is mandatory (False)
-        """
         if not isinstance(interface, type):
             raise TypeError('Parameter "interface" must be an interface class')
         if name is not None:
@@ -56,11 +65,21 @@ class Connector:
         self.attr_name = None
 
     def __set_name__(self, owner, name):
+        """Set attribute name as `name` if none has been given during `__init__`."""
         if self.name is None:
             self.name = name
         self.attr_name = name
 
     def __get__(self, instance, owner) -> Union[None, OverloadProxy, 'Connector']:
+        """
+        If called on a class, will return this descriptor instance itself. If called on an instance,
+        will return the connection target (or `None` if optional and not connected).
+
+        Raises
+        ------
+        QudiConnectionError
+            If the connector is not optional but no target is connected.
+        """
         try:
             return instance.__dict__[self.attr_name]
         except KeyError:
@@ -86,7 +105,23 @@ class Connector:
         return f'{connector}({interface}, "{self.name}", {self.optional})'
 
     def connect(self, instance: object, target: object) -> None:
-        """ Check if target is connectible by this connector and connect. """
+        """
+        Connect the target qudi object instance to the object instance owning this connector and
+        check if it is an instance of the specified interface
+
+        Parameters
+        ----------
+        instance : object
+            The qudi object instance owning this connector, i.e. the instance to act on.
+        target : object, optional
+            Qudi object instance to connect to this connector as target.
+
+        Raises
+        ------
+        QudiConnectionError
+            If the target can not be connected (already connected, wrong interface, is `None` but
+            not optional).
+        """
         if self.is_connected(instance):
             raise QudiConnectionError(
                 f'Connector "{self.name}" on "{instance.__class__.__module__}.'
@@ -110,14 +145,35 @@ class Connector:
             instance.__dict__[self.attr_name] = OverloadProxy(target, self.interface)
 
     def disconnect(self, instance: object) -> None:
-        """ Disconnect connector. """
+        """
+        Disconnect the connector target from the object instance owning this connector. Ignored if
+        not connected in the first place.
+
+        Parameters
+        ----------
+        instance : object
+            The qudi object instance owning this connector, i.e. the instance to act on.
+        """
         try:
             del instance.__dict__[self.attr_name]
         except (KeyError, AttributeError):
             pass
 
     def is_connected(self, instance: object) -> bool:
-        """ Checks if the given module instance has this Connector connected to a target module. """
+        """
+        Checks if the given module instance has this connector connected to a target object
+        instance.
+
+        Parameters
+        ----------
+        instance : object
+            The qudi object instance owning this connector, i.e. the instance to act on.
+
+        Returns
+        -------
+        bool
+            `True` if a target instance has been connected, `False` otherwise.
+        """
         try:
             return instance.__dict__[self.attr_name] is not None
         except (KeyError, AttributeError):
@@ -131,5 +187,3 @@ class Connector:
         mod = importlib.import_module(module_url)
         target_cls = getattr(mod, class_name)
         return issubclass(target_cls, self.interface)
-
-

@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 """
-This file contains qudi tray icon handling.
+Contains the qudi application tray icon.
 
 Copyright (c) 2024, the qudi developers. See the AUTHORS.md file at the top-level directory of this
-distribution and on <https://github.com/Ulm-IQO/qudi-core/>
+distribution and on <https://github.com/Ulm-IQO/qudi-core/>.
 
 This file is part of qudi.
 
@@ -31,11 +31,34 @@ from qudi.util.mutex import Mutex
 
 
 class QudiTrayIcon(QtWidgets.QSystemTrayIcon):
-    """ QSystemTrayIcon singleton for graphical qudi application """
+    """
+    QtWidgets.QSystemTrayIcon singleton for the qudi application.
+    The singleton instance can be obtained during runtime via call to `QudiTrayIcon.instance()`.
+
+    Parameters
+    ----------
+    quit_callback : function
+        Callback function to call if the user shuts down qudi from the system tray.
+    restart_callback : function
+        Callback function to call if the user restarts qudi from the system tray.
+    main_gui_callback : function, optional
+        Callback function to call if the user activates the main GUI from the system tray (defaults
+        to `None`).
+    parent : QtCore.QObject, optional
+        Parent QtCore.QObject instance (defaults to `None`).
+    """
 
     _instance: Union[None, weakref.ref] = None  # Only instance will be stored here as weakref
     _lock = Mutex()
     _module_actions: Dict[str, QtWidgets.QAction]
+
+    @classmethod
+    def instance(cls) -> Union['QudiTrayIcon', None]:
+        """Returns the only instance (singleton) of this class."""
+        with cls._lock:
+            if cls._instance is None:
+                return None
+            return cls._instance()
 
     def __new__(cls, *args, **kwargs):
         with cls._lock:
@@ -53,7 +76,6 @@ class QudiTrayIcon(QtWidgets.QSystemTrayIcon):
                  restart_callback: Callable[[], None],
                  main_gui_callback: Optional[Callable[[], None]] = None,
                  parent: Optional[QtCore.QObject] = None):
-        """ Tray icon constructor. Adds all the appropriate menus and actions. """
         super().__init__(icon=QtWidgets.QApplication.instance().windowIcon(), parent=parent)
 
         self.right_click_menu = QtWidgets.QMenu('Menu')
@@ -86,13 +108,6 @@ class QudiTrayIcon(QtWidgets.QSystemTrayIcon):
         self.setContextMenu(self.right_click_menu)
         self.activated.connect(self._handle_activation)
 
-    @classmethod
-    def instance(cls) -> Union['QudiTrayIcon', None]:
-        with cls._lock:
-            if cls._instance is None:
-                return None
-            return cls._instance()
-
     def add_module_action(self, name: str, callback: Callable[[], None]) -> None:
         with self._lock:
             if name in self._module_actions:
@@ -116,8 +131,9 @@ class QudiTrayIcon(QtWidgets.QSystemTrayIcon):
 
     @QtCore.Slot(QtWidgets.QSystemTrayIcon.ActivationReason)
     def _handle_activation(self, reason: QtWidgets.QSystemTrayIcon.ActivationReason) -> None:
-        """ This method is called when the tray icon is left-clicked. It opens a menu at the
-        position of the click.
+        """
+        This method is called when the tray icon is left-clicked. It opens a menu at the position
+        of the click.
         """
         if reason == self.Trigger:
             self.left_click_menu.exec_(QtGui.QCursor.pos())

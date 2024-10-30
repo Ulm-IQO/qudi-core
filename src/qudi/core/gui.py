@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 """
-This file contains the Qudi console app class.
+Contains utility functions to configure the GUI environment of qudi.
 
 Copyright (c) 2024, the qudi developers. See the AUTHORS.md file at the top-level directory of this
-distribution and on <https://github.com/Ulm-IQO/qudi-core/>
+distribution and on <https://github.com/Ulm-IQO/qudi-core/>.
 
 This file is part of qudi.
 
@@ -31,7 +31,14 @@ from qudi.util.paths import get_artwork_dir
 
 
 def set_theme(theme: Optional[str] = 'qudiTheme') -> None:
-    """ Set icon theme for qudi app """
+    """
+    Sets icon theme for qudi.
+
+    Parameters
+    ----------
+    theme : str, optional
+        Icons subdirectory name to use (defaults to "qudiTheme").
+    """
     # Make icons work on non-X11 platforms, set custom theme
     # if not sys.platform.startswith('linux') and not sys.platform.startswith('freebsd'):
     #
@@ -45,7 +52,15 @@ def set_theme(theme: Optional[str] = 'qudiTheme') -> None:
 
 
 def set_stylesheet(stylesheet_path: Optional[str] = 'qdark.qss') -> None:
-    """ Set qss style sheet for application """
+    """
+    Sets qss stylesheet for qudi.
+
+    Parameters
+    ----------
+    stylesheet_path : str, optional
+        Full file path to Qt-compatible css stylesheet to use. If only a filename is given, search
+        for it in the default stylesheet path (default is "qdark.qss").
+    """
     if not os.path.exists(stylesheet_path):
         stylesheet_path = os.path.join(get_artwork_dir(), 'styles', stylesheet_path)
 
@@ -71,19 +86,33 @@ def set_stylesheet(stylesheet_path: Optional[str] = 'qdark.qss') -> None:
 
 
 def close_windows() -> None:
-    """ Close all application windows """
+    """Closes all Qt application windows."""
     QtWidgets.QApplication.instance().closeAllWindows()
 
 
 def initialize_app_icon(icon: Optional[QtGui.QIcon] = None) -> None:
-    """ Set up the Qudi application icon """
+    """
+    Sets up the qudi app icon.
+
+    Parameters
+    ----------
+    icon : QtGui.QIcon, optional
+        This icon will be used as main application icon (default uses standard qudi icon).
+    """
     if icon is None:
         icon = QtGui.QIcon(os.path.join(get_artwork_dir(), 'logo', 'logo-qudi.svg'))
     QtWidgets.QApplication.instance().setWindowIcon(icon)
 
 
 def configure_pyqtgraph(use_opengl: Optional[bool] = False) -> None:
-    """ Configure pyqtgraph (if present) """
+    """
+    Adjust global pyqtgraph configuration if this package is installed.
+
+    Parameters
+    ----------
+    use_opengl : bool, optional
+        Whether to enable OpenGL support in pyqtgraph or not (defaults to `False`).
+    """
     try:
         import pyqtgraph
     except ImportError:

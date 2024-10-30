@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 """
-This file contains the Qudi module base class.
+Contains base classes for all qudi module implementations (gui, logic, hardware) as well as some
+related utility functions.
 
-Copyright (c) 2021, the qudi developers. See the AUTHORS.md file at the top-level directory of this
-distribution and on <https://github.com/Ulm-IQO/qudi-core/>
+Copyright (c) 2021-2024, the qudi developers. See the AUTHORS.md file at the top-level directory of
+this distribution and on <https://github.com/Ulm-IQO/qudi-core/>.
 
 This file is part of qudi.
 
@@ -30,20 +31,21 @@ from abc import abstractmethod
 from enum import Enum
 from uuid import uuid4, UUID
 from PySide2 import QtCore, QtWidgets
-from typing import Any, Mapping, Optional, Type, Dict, Final, MutableMapping, final, Union
+from typing import Any, Mapping, Optional, Type, Dict, Final, MutableMapping, final
 
-from qudi.core.object import QudiQObjectMixin
+from qudi.core.object import QudiQObject
 from qudi.core.statusvariable import StatusVar
 from qudi.util.helpers import current_is_native_thread
 from qudi.util.paths import get_default_data_dir
 
 
 class ModuleStateError(RuntimeError):
+    """Error type related to qudi module state transitions"""
     pass
 
 
 class ModuleState(Enum):
-    """ Qudi modules state enum with name strings as values and convenient state checking properties
+    """Qudi modules state enum with name strings as values and convenient state checking properties.
     """
     DEACTIVATED = 'deactivated'
     IDLE = 'idle'
@@ -67,14 +69,15 @@ class ModuleState(Enum):
 
 
 class ModuleBase(Enum):
-    """ Qudi modules base type enum with name strings as values """
+    """Qudi modules base type enum with name strings as values"""
     HARDWARE = 'hardware'
     LOGIC = 'logic'
     GUI = 'gui'
 
 
 class _ThreadedDescriptor:
-    """ Read-only class descriptor representing the owners private class attribute <_threaded> value
+    """Read-only class descriptor representing the value of the owners private class attribute
+    "_threaded".
     """
     def __get__(self, instance, owner=None) -> bool:
         if owner is None:
@@ -90,7 +93,7 @@ class _ThreadedDescriptor:
 
 
 class _ModuleBaseDescriptor:
-    """ Read-only class descriptor representing the owners qudi module base type enum """
+    """Read-only class descriptor representing the owners qudi module base type enum"""
     def __get__(self, instance, owner=None) -> ModuleBase:
         if owner is None:
             owner = type(instance)
@@ -114,25 +117,10 @@ class _ModuleBaseDescriptor:
         raise AttributeError('Read-Only')
 
 
-class ModulePeriodicAppDataDumper(QtCore.QObject):
-    """Helper object facilitating periodic dumping of status variables for qudi modules."""
-    def __init__(self, qudi_object: QtCore.QObject, interval: Union[int, float]):
-        if not isinstance(qudi_object, QudiQObjectMixin):
-            raise TypeError(
-                f'qudi_object must be subclass of '
-                f'{QudiQObjectMixin.__module__}.{QudiQObjectMixin.__qualname__}'
-            )
-        super().__init__(parent=qudi_object)
-        self._timer = QtCore.QTimer(self)
-        self._timer.setInterval(int(round(1000 * interval)))
-        self._timer.timeout.connect()
-
-
 class ModuleStateMachine(QtCore.QObject):
-    """ QObject providing FSM state control handling activation, deactivation, locking and
+    """QObject providing FSM state control handling activation, deactivation, locking and
     unlocking of qudi modules.
-    State transitions must only ever be triggered from the native thread of the respective module
-    (the parent qudi module).
+    State transitions must only ever be triggered from the native thread of the owning module.
 
                                      ------<------
                                      |           ^
@@ -141,6 +129,11 @@ class ModuleStateMachine(QtCore.QObject):
                       ^              |           |
                       |              v           v
                       -------<-------------<------
+
+    Parameters
+    ----------
+    module_instance : qudi.core.module.Base
+        Parent qudi module instance.
     """
     sigStateChanged = QtCore.Signal(ModuleState)  # new ModuleState
 
@@ -152,7 +145,7 @@ class ModuleStateMachine(QtCore.QObject):
 
     @property
     def current(self) -> ModuleState:
-        """ Read-only property representing the current ModuleState enum """
+        """Read-only property representing the current module state"""
         return self._current_state
 
     @property
@@ -172,7 +165,15 @@ class ModuleStateMachine(QtCore.QObject):
         return self.current.locked
 
     def __call__(self) -> str:
-        """ For backwards compatibility """
+        """
+        For backwards compatibility only.
+
+        .. deprecated:: 2.0.0
+            Being able to call `ModuleStateMachine` to get a string representation of `ModuleState`
+            enum will be removed in the future. Please compare (`==`) `ModuleStateMachine` directly
+            with `ModuleState` or use `ModuleStateMachine.current.value` if you must have the string
+            representation.
+        """
         if not self.__warned:
             warnings.warn(
                 'Being able to call ModuleStateMachine to get a string representation of the '
@@ -186,7 +187,7 @@ class ModuleStateMachine(QtCore.QObject):
         return self.current.value
 
     def __eq__(self, other) -> bool:
-        """ Enables comparison with ModuleState Enum and other ModuleStateControl instances.
+        """Enables comparison with `ModuleState` enum and other `ModuleStateMachine` instances.
         Compare enum values directly to avoid problems with multiprocessing.
         """
         if isinstance(other, ModuleState):
@@ -197,7 +198,16 @@ class ModuleStateMachine(QtCore.QObject):
 
     @QtCore.Slot()
     def activate(self) -> None:
-        """ Restore status variables first and invoke on_activate method afterward """
+        """
+        Callback for qudi module activation. Load AppData from disk first and invoke `on_activate`
+        method afterward.
+        Must only ever be called from native module thread.
+
+        Raises
+        ------
+        ModuleStateError
+            If anything goes wrong during activation.
+        """
         self._check_caller_thread()
         try:
             if self.deactivated:
@@ -222,8 +232,16 @@ class ModuleStateMachine(QtCore.QObject):
 
     @QtCore.Slot()
     def deactivate(self) -> None:
-        """ Invoke on_deactivate method first and dump status variables afterward.
+        """
+        Callback for qudi module deactivation. Invoke `on_deactivate` method first and dump AppData
+        to disk afterward.
         State transition will always happen, even if an exception is raised.
+        Must only ever be called from native module thread.
+
+        Raises
+        ------
+        ModuleStateError
+            If anything goes wrong during deactivation.
         """
         self._check_caller_thread()
         try:
@@ -248,7 +266,14 @@ class ModuleStateMachine(QtCore.QObject):
 
     @QtCore.Slot()
     def lock(self) -> None:
-        """ Sets the state to "locked"/"busy" """
+        """
+        Callback for qudi module state transition from `ModuleState.IDLE` to `ModuleState.LOCKED`.
+
+        Raises
+        ------
+        ModuleStateError
+            If anything goes wrong during state transition.
+        """
         try:
             if self.idle:
                 self._current_state = ModuleState.LOCKED
@@ -262,6 +287,14 @@ class ModuleStateMachine(QtCore.QObject):
 
     @QtCore.Slot()
     def unlock(self) -> None:
+        """
+        Callback for qudi module state transition from `ModuleState.LOCKED` to `ModuleState.IDLE`.
+
+        Raises
+        ------
+        ModuleStateError
+            If anything goes wrong during state transition.
+        """
         try:
             if self.locked:
                 self._current_state = ModuleState.IDLE
@@ -282,16 +315,28 @@ class ModuleStateMachine(QtCore.QObject):
                                    'the modules native thread')
 
 
-class Base(QudiQObjectMixin, QtCore.QObject):
-    """ Base class for all loadable modules. Hardware interface classes must inherit this
-    (or hardware modules that do not inherit an interface).
+class Base(QudiQObject):
+    """
+    Base class for all qudi modules.
+    Hardware interfaces and hardware modules not implementing an interface must inherit this.
 
     Does not run its own Qt event loop by default. In the rare case a hardware module needs its
-    own event loop, overwrite and set the class attribute "_threaded = True" in the hardware
-    implementation class.
+    own event loop, overwrite and set the class attribute `_threaded = True` in the class
+    implementation.
 
     Each module name will be assigned a UUID which will remain the same for multiple instantiations
     with the same module name.
+
+    Parameters
+    ----------
+    name : str
+        Human-readable, unique and non-empty module name string.
+    options : dict, optional
+        name-value pairs to initialize ConfigOption meta attributes with. Must provide at least as
+        many items as there are mandatory ConfigOption attributes in the qudi module.
+    connections : dict, optional
+        name-value pairs to initialize Connector meta attributes with. Must provide at least as
+        many items as there are mandatory Connector attributes in the qudi module.
     """
     _threaded: bool = False
 
@@ -304,9 +349,6 @@ class Base(QudiQObjectMixin, QtCore.QObject):
                  name: str,
                  options: Optional[Mapping[str, Any]] = None,
                  connections: Optional[MutableMapping[str, Any]] = None):
-        """ Initialize Base instance. Set up its state machine, initializes ConfigOption meta
-        attributes from given config and connects activated module dependencies.
-        """
         mod_url = module_url(self.__class__.__module__, self.__class__.__name__, name)
         try:
             uuid = self.__url_uuid_map[mod_url]
@@ -328,18 +370,18 @@ class Base(QudiQObjectMixin, QtCore.QObject):
     @property
     @final
     def module_url(self) -> str:
-        """ The unique URL of this qudi module. It is composed of 3 parts:
-        - Containing Python module URL, e.g. "qudi.logic.my_logic_module"
-        - Class name within the Python module, e.g. "MyLogicModule"
-        - Unique module name as defined in the user configuration, e.g. "userlogic"
-        So the complete URL spells "<module>.<class name>::<config name>", e.g.
-        "qudi.logic.my_logic_module.MyLogicModule::userlogic"
-        """
+        """Unique URL of this qudi module, e.g. `qudi.logic.my_logic.MyLogicModule::userlogic`"""
         return self.__module_url
 
     @property
     def module_uuid(self) -> UUID:
-        """ Backwards compatibility. To be removed. """
+        """
+        Backwards compatibility only.
+
+        .. deprecated:: 2.0.0
+            `Base.module_uuid` is deprecated and will be removed in the future. Please use
+            `Base.uuid` instead.
+        """
         if not self.__warned:
             warnings.warn(
                 'Base.module_uuid is deprecated and will be removed in the future. '
@@ -357,36 +399,47 @@ class Base(QudiQObjectMixin, QtCore.QObject):
 
     @property
     def module_default_data_dir(self) -> str:
-        """ Read-only property returning the generic default directory in which to save data.
-        Module implementations can overwrite this property with a custom path but should only do so
-        with a very good reason.
+        """
+        Generic default directory in which to save user data for this qudi module.
+        Module implementations can overwrite this with a custom path but should only do so with a
+        very good reason.
         """
         return os.path.join(get_default_data_dir(), self.nametag)
 
     @abstractmethod
     def on_activate(self) -> None:
-        """ Method called when module is activated. Must be implemented by actual qudi module. """
+        """
+        Method called when module is activated. Must be implemented by actual qudi module subclass.
+        """
         raise NotImplementedError('Please implement and specify the activation method.')
 
     @abstractmethod
     def on_deactivate(self) -> None:
-        """ Method called when module is deactivated. Must be implemented by actual qudi module. """
+        """
+        Method called when module is deactivated. Must be implemented by actual qudi module
+        subclass.
+        """
         raise NotImplementedError('Please implement and specify the deactivation method.')
 
 
-HardwareBase = Base
+HardwareBase = Base  # More verbose naming
 
 
 class LogicBase(Base):
-    """ Base class for all qudi logic modules. Logic module implementations must inherit this.
-    Runs its own thread with a Qt event loop, so setting "_threaded = False" is NOT allowed.
+    """
+    Base class for all qudi logic modules. Logic module implementations must inherit this.
+    Runs its own thread with a Qt event loop, so setting `_threaded = False` is NOT permitted.
     """
     _threaded: Final[bool] = True
 
 
 class GuiBase(Base):
-    """ This is the base class for all qudi GUI modules. GUI modules always run in the main Qt
-    event loop, so setting "_threaded = True" is NOT allowed.
+    """
+    Base class for all qudi GUI modules.
+    GUI modules always run in the main Qt event loop, so setting `_threaded = True` is NOT
+    permitted.
+
+    ToDo: Enforce standardized QMainWindow handle in module implementations instead of `show`
     """
     _threaded: Final[bool] = False
 
@@ -426,23 +479,66 @@ class GuiBase(Base):
 
 
 def module_url(module: str, class_name: str, name: str) -> str:
-    """ The unique URL of a qudi module. It is composed of 3 parts:
-    - Containing Python module URL, e.g. "qudi.logic.my_logic_module"
-    - Class name within the Python module, e.g. "MyLogicModule"
-    - Unique module name as defined in the user configuration, e.g. "userlogic"
-    So the complete URL spells "<module>.<class name>::<config name>", e.g.
-    "qudi.logic.my_logic_module.MyLogicModule::userlogic"
+    """
+    Unique URL of a qudi module. It is composed of 3 parts:
+      - Containing Python module URL, e.g. "qudi.logic.my_logic"
+      - Class name within the Python module, e.g. "MyLogicModule"
+      - Unique module name as defined in the user configuration, e.g. "userlogic123"
+    So the complete URL spells "<module>.<class name>::<config name>",
+    e.g. `qudi.logic.my_logic.MyLogicModule::userlogic123`.
+
+    Parameters
+    ----------
+    module : str
+        Import url of the containing python module, e.g. `qudi.logic.my_logic`.
+    class_name : str
+        Name of the module class, e.g. `MyLogicModule`
+    name : str
+        Unique module name usually defined by qudi configuration, e.g. `userlogic123`
+
+    Returns
+    -------
+    str
+        Full qudi module URL string, e.g. `qudi.logic.my_logic.MyLogicModule::userlogic123`
     """
     return f'{module}.{class_name}::{name}'
 
 
 def module_thread_name(name: str, base: ModuleBase) -> str:
-    """ Generic name of the thread associated with a threaded qudi module (logic or hardware) """
+    """
+    Generic name of the thread associated with a qudi module (logic or hardware).
+
+    Parameters
+    ----------
+    name : str
+        Unique module name usually defined by qudi configuration, e.g. `userlogic123`
+    base : qudi.core.module.ModuleBase
+        Qudi module base type enum.
+
+    Returns
+    -------
+    str
+        Qudi module thread name, e.g. `mod-logic-userlogic123`
+    """
     return f'mod-{base.value}-{name}'
 
 
 def validate_module_base(module: type, base: ModuleBase) -> None:
-    """ Validate if a certain type is a valid qudi module of given ModuleBase """
+    """
+    Validate if a certain type is a valid qudi module class of given `ModuleBase`.
+
+    Parameters
+    ----------
+    module : type
+        Type/Class to check for valid qudi module parent class specified by `ModuleBase`.
+    base : qudi.core.module.ModuleBase
+        Qudi module base type enum to check against.
+
+    Raises
+    ------
+    TypeError
+        If the checked type is no valid qudi module subclass identified by given `ModuleBase`.
+    """
     if base == ModuleBase.GUI:
         required_base = GuiBase
     elif base == ModuleBase.LOGIC:
@@ -462,7 +558,28 @@ def import_module_type(module: str,
                        cls: str,
                        base: ModuleBase,
                        reload: Optional[bool] = False) -> Type[Base]:
-    """ ToDo: Document """
+    """
+    Helper function to imports a qudi module type by name and module strings. Performs type check
+    based on given `ModuleBase` enum.
+
+    Parameters
+    ----------
+    module : str
+        Import url of the containing python module, e.g. `qudi.logic.my_logic`.
+    cls : str
+        Name of the module class, e.g. `MyLogicModule`.
+    base : qudi.core.module.ModuleBase
+        Qudi module base type enum to check against.
+    reload : bool, optional
+        If `True` this flag will force a reload of the python module from disk (defaults to
+        `False`). Should generally not be used without a VERY good reason.
+
+    Raises
+    ------
+    ImportError
+        If the imported type is no valid qudi module subclass identified by given `ModuleBase` or
+        anything else goes wrong during import.
+    """
     # Import module
     try:
         mod = importlib.import_module(module)

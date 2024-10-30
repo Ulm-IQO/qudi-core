@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 """
-This file contains functions to send messages to qudi users.
+Contains functions to send messages prompts to qudi users.
 
 Copyright (c) 2024, the qudi developers. See the AUTHORS.md file at the top-level directory of this
-distribution and on <https://github.com/Ulm-IQO/qudi-core/>
+distribution and on <https://github.com/Ulm-IQO/qudi-core/>.
 
 This file is part of qudi.
 
@@ -30,12 +30,19 @@ from qudi.core.trayicon import QudiTrayIcon
 
 def popup_message(title: str,
                   message: str,
-                  parent: Optional[QtWidgets.QMainWindow] = None) -> None:
-    """ Helper function prompting a dialog window with a message and an OK button to dismiss it.
+                  parent: Optional[QtWidgets.QWidget] = None) -> None:
+    """
+    Helper function prompting a dialog window with a message and an OK button to dismiss it.
+    If qudi runs headless, send message to logger instead.
 
-    @param str title: The window title of the dialog
-    @param str message: The message to be shown in the dialog window
-    @param QMainWindow parent: The parent main window to make this pop-up modal to
+    Parameters
+    ----------
+    title : str
+        Title of the popup message.
+    message : str
+        Popup message text body.
+    parent : QtWidgets.QWidget, optional
+        Parent QtWidgets.QWidget instance for modal dialog (defaults to `None`).
     """
     if QtWidgets.QApplication.instance() is None:
         get_logger('popup-message').info(f'{title}:\n{message}')
@@ -45,30 +52,51 @@ def popup_message(title: str,
 
 def balloon_message(title: str,
                     message: str,
-                    time: Optional[float] = None,
+                    time: Optional[float] = 10.,
                     icon: Optional[QtGui.QIcon] = None) -> None:
-    """ Helper method to invoke balloon messages in the system tray by calling
-    QSystemTrayIcon.showMessage().
+    """
+    Helper function to invoke balloon messages in the system tray.
+    If no tray icon has been initialized or the system does not support it, send message to logger
+    instead.
 
-    @param str title: The notification title of the balloon
-    @param str message: The message to be shown in the balloon
-    @param float time: optional, The lingering time of the balloon in seconds
-    @param QIcon icon: optional, an icon to be used in the balloon. "None" will use OS default.
+    Parameters
+    ----------
+    title : str
+        Title of the balloon message.
+    message : str
+        Balloon message text body.
+    time : float, optional
+        Lingering time in seconds for the balloon message (defaults to 10 seconds).
+    icon : QtGui.QIcon, optional
+        This icon will be used in the balloon message if supported (defaults to OS default).
     """
     tray = QudiTrayIcon.instance()
     if (tray is not None) and tray.supportsMessages():
         if icon is None:
             icon = QtGui.QIcon()
-        if time is None:
-            time = 10
         tray.showMessage(title, message, icon, int(round(time * 1000)))
     else:
         get_logger('balloon-message').info(f'{title}:\n{message}')
 
 
 def prompt_shutdown(modules_locked: Optional[bool] = False,
-                    parent: Optional[QtWidgets.QMainWindow] = None) -> bool:
-    """ Display a dialog, asking the user to confirm shutdown """
+                    parent: Optional[QtWidgets.QWidget] = None) -> bool:
+    """
+    Display a dialog asking the user to confirm shutdown.
+
+    Parameters
+    ----------
+    modules_locked : bool, optional
+        If `True` some modules may be terminated in an unsafe way and the user is informed
+        (defaults to `False`).
+    parent : QtWidgets.QWidget, optional
+        Parent QtWidgets.QWidget instance for modal dialog (defaults to `None`).
+
+    Returns
+    -------
+    bool
+        Flag indicating if the user accepts the shutdown (`True`) or not (`False`).
+    """
     if modules_locked:
         msg = 'Some qudi modules are locked right now.\n' \
               'Do you really want to quit and force modules to deactivate?'
@@ -90,8 +118,23 @@ def prompt_shutdown(modules_locked: Optional[bool] = False,
 
 
 def prompt_restart(modules_locked: Optional[bool] = False,
-                   parent: Optional[QtWidgets.QMainWindow] = None) -> bool:
-    """ Display a dialog, asking the user to confirm restart """
+                   parent: Optional[QtWidgets.QWidget] = None) -> bool:
+    """
+    Display a dialog asking the user to confirm restart.
+
+    Parameters
+    ----------
+    modules_locked : bool, optional
+        If `True` some modules may be terminated in an unsafe way and the user is informed
+        (defaults to `False`).
+    parent : QtWidgets.QWidget, optional
+        Parent QtWidgets.QWidget instance for modal dialog (defaults to `None`).
+
+    Returns
+    -------
+    bool
+        Flag indicating if the user accepts the restart (`True`) or not (`False`).
+    """
     if modules_locked:
         msg = 'Some qudi modules are locked right now.\n' \
               'Do you really want to restart and force modules to deactivate?'

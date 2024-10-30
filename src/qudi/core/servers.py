@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 """
-This file contains the Qudi tools for remote module sharing via rpyc server.
+Contains server runnables to interact with qudi modules across process boundaries.
 
-Copyright (c) 2021, the qudi developers. See the AUTHORS.md file at the top-level directory of this
-distribution and on <https://github.com/Ulm-IQO/qudi-core/>
+Copyright (c) 2021-2024, the qudi developers. See the AUTHORS.md file at the top-level directory of
+this distribution and on <https://github.com/Ulm-IQO/qudi-core/>.
 
 This file is part of qudi.
 
@@ -25,7 +25,6 @@ import ssl
 import rpyc
 from PySide2 import QtCore
 from rpyc.utils.authenticators import SSLAuthenticator
-from rpyc.utils.helpers import classpartial
 from typing import Optional, Mapping, Any
 
 from qudi.util.mutex import Mutex
@@ -39,12 +38,41 @@ _logger = get_logger(__name__)
 
 
 class _ServerRunnable(QtCore.QObject):
-    """ QObject containing the actual long-running code to execute in a separate thread for qudi
-    RPyC servers.
     """
+    QObject containing the actual long-running code to execute in a separate thread for qudi RPyC
+    servers.
 
-    def __init__(self, service, host, port, certfile=None, keyfile=None, protocol_config=None,
-                 ssl_version=None, cert_reqs=None, ciphers=None):
+    Parameters
+    ----------
+    service : rpyc.Service
+        RPyC service instance to provide clients.
+    host : str
+        Host name to use for this server.
+    port : int
+        Port number to bind the server to.
+    certfile : str, optional
+        Path to certificate file to use for SSL encrypted connections (not used by default).
+    keyfile : str, optional
+        Path to key file to use for SSL encrypted connections (not used by default).
+    protocol_config : dict, optional
+        RPyC protocol configuration (defaults to unsafe "allow-all" config).
+    ssl_version : ssl._SSLMethod
+        SSL encryption method (defaults to `ssl.PROTOCOL_TLSv1_2`).
+    cert_reqs : ssl.VerifyMode
+        SSL verification requirements (defaults to ssl.CERT_REQUIRED).
+    ciphers : str
+        SSL ciphers (defaults to `EECDH+AESGCM:EDH+AESGCM:AES256+EECDH:AES256+EDH`).
+    """
+    def __init__(self,
+                 service,
+                 host,
+                 port,
+                 certfile=None,
+                 keyfile=None,
+                 protocol_config=None,
+                 ssl_version=None,
+                 cert_reqs=None,
+                 ciphers=None):
         super().__init__()
 
         self.service = service
@@ -67,9 +95,8 @@ class _ServerRunnable(QtCore.QObject):
         self.ciphers = 'EECDH+AESGCM:EDH+AESGCM:AES256+EECDH:AES256+EDH' if ciphers is None else ciphers
 
     @QtCore.Slot()
-    def run(self):
-        """ Start the RPyC server
-        """
+    def run(self) -> None:
+        """Runs the RPyC server."""
         if self.certfile is not None and self.keyfile is not None:
             authenticator = SSLAuthenticator(certfile=self.certfile,
                                              keyfile=self.keyfile,
@@ -96,9 +123,8 @@ class _ServerRunnable(QtCore.QObject):
             self.server = None
 
     @QtCore.Slot()
-    def stop(self):
-        """ Stop the RPyC server
-        """
+    def stop(self) -> None:
+        """Stops the RPyC server."""
         if self.server is not None:
             try:
                 self.server.close()
@@ -112,11 +138,40 @@ class _ServerRunnable(QtCore.QObject):
 
 
 class BaseServer(QtCore.QObject):
-    """ Contains a threaded RPyC server providing given service.
-    USE SSL AUTHENTICATION WHEN LISTENING ON ANYTHING ELSE THAN "localhost"/127.0.0.1.
-    Actual RPyC server runs in a QThread.
     """
+    Threaded RPyC server providing given service running in a QThread.
 
+    Warnings
+    --------
+    Use SSL authentication when listening on anything else than "localhost" or "127.0.0.1".
+
+    Parameters
+    ----------
+    thread_manager : qudi.core.thread_manager.ThreadManager
+        Qudi thread manager singleton instance.
+    service_instance : rpyc.Service
+        RPyC service instance to provide clients.
+    name : str
+        Server and thread name.
+    host : str
+        Host name to use for this server.
+    port : int
+        Port number to bind the server to.
+    certfile : str, optional
+        Path to certificate file to use for SSL encrypted connections (not used by default).
+    keyfile : str, optional
+        Path to key file to use for SSL encrypted connections (not used by default).
+    protocol_config : dict, optional
+        RPyC protocol configuration (defaults to unsafe "allow-all" config).
+    ssl_version : ssl._SSLMethod
+        SSL encryption method (defaults to `ssl.PROTOCOL_TLSv1_2`).
+    cert_reqs : ssl.VerifyMode
+        SSL verification requirements (defaults to ssl.CERT_REQUIRED).
+    ciphers : str
+        SSL ciphers (defaults to `EECDH+AESGCM:EDH+AESGCM:AES256+EECDH:AES256+EDH`).
+    parent : QtCore.QObject, optional
+        Parent QObject passed on to QtCore.QObject.__init__ (defaults to None).
+    """
     def __init__(self,
                  thread_manager: ThreadManager,
                  service_instance: rpyc.Service,
@@ -183,7 +238,24 @@ class BaseServer(QtCore.QObject):
 
 
 class RemoteModulesServer(BaseServer):
-    """ BaseServer specialization that automatically creates the RemoteModulesService instance """
+    """
+    BaseServer specialization that automatically creates the RemoteModulesService instance.
+
+    Warnings
+    --------
+    Use SSL authentication when listening on anything else than "localhost" or "127.0.0.1".
+
+    Parameters
+    ----------
+    module_manager : qudi.core.module_manager.ModuleManager
+        Qudi module manager singleton instance.
+    force_remote_calls_by_value : bool, optional
+        If `True` each qudi module instance will be wrapped by
+        `qudi.util.proxy.CachedObjectRpycByValueProxy` to force serialization of most call
+        arguments and return values.
+    **kwargs
+        Additional keyword arguments will be passed to `BaseServer.__init__`.
+    """
     def __init__(self,
                  module_manager: ModuleManager,
                  force_remote_calls_by_value: Optional[bool] = False,
@@ -196,10 +268,26 @@ class RemoteModulesServer(BaseServer):
 
 
 class QudiNamespaceServer(BaseServer):
-    """ Contains a RPyC server that serves all activated qudi modules as well as a reference to the
-    running qudi instance locally without encryption.
-    You can specify the port but the host will always be "localhost"/127.0.0.1
+    """
+    RPyC server that serves all activated qudi modules as well as a reference to the running qudi
+    instance locally without encryption.
+    You can specify the port but the host will always be "localhost"/"127.0.0.1".
     See RemoteModulesServer if you want to expose qudi modules to non-local clients.
+
+    Parameters
+    ----------
+    name : str
+        Server and thread name.
+    port : int
+        Port number to bind the server to.
+    qudi : qudi.core.application.Qudi
+        Qudi application singleton instance.
+    force_remote_calls_by_value : bool, optional
+        If `True` each qudi module instance will be wrapped by
+        `qudi.util.proxy.CachedObjectRpycByValueProxy` to force serialization of most call
+        arguments and return values.
+    parent : QtCore.QObject, optional
+        Parent QObject passed on to QtCore.QObject.__init__ (defaults to None).
     """
     def __init__(self,
                  name: str,

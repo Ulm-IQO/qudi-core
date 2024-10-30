@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 """
-This file contains the Qudi thread manager singleton class.
+Contains the qudi thread manager singleton as well as a Qt list model to represent the thread names
+registered in the thread manager.
 
 Copyright (c) 2021-2024, the qudi developers. See the AUTHORS.md file at the top-level directory
-of this distribution and on <https://github.com/Ulm-IQO/qudi-core/>
+of this distribution and on <https://github.com/Ulm-IQO/qudi-core/>.
 
 This file is part of qudi.
 
@@ -33,9 +34,17 @@ logger = get_logger(__name__)
 
 
 class ThreadManager(QtCore.QObject):
-    """This class keeps track of all the QThreads that are needed somewhere.
-    Using this class is thread-safe.
     """
+    Singleton to keep track of all the QThreads that are needed in a qudi process.
+    Public methods and attributes can be considered thread-safe.
+    The singleton instance can be obtained during runtime via call to `ThreadManager.instance()`.
+
+    Parameters
+    ----------
+    parent : QtCore.QObject, optional
+        Parent QObject passed on to QtCore.QObject.__init__ (defaults to None).
+    """
+
     _instance = None
     _join_lock = RecursiveMutex()
     _main_lock = Mutex()
@@ -69,6 +78,7 @@ class ThreadManager(QtCore.QObject):
 
     @classmethod
     def instance(cls) -> Union[None, 'ThreadManager']:
+        """Returns the only instance (singleton) of this class."""
         try:
             inst = cls._instance()
         except TypeError:
@@ -254,7 +264,16 @@ class ThreadManager(QtCore.QObject):
 
 
 class ThreadManagerListModel(QtCore.QAbstractListModel):
-    """QAbstractListModel to use with the ThreadManager singleton"""
+    """
+    QAbstractListModel implementation to use with the ThreadManager singleton.
+
+    Parameters
+    ----------
+    thread_manager : ThreadManager
+        The thread manager singleton to use as data source.
+    parent : QtCore.QObject, optional
+        Parent QObject passed on to QtCore.QObject.__init__ (defaults to None).
+    """
 
     def __init__(self, thread_manager: ThreadManager, parent: Optional[QtCore.QObject] = None):
         super().__init__(parent=parent)
@@ -266,36 +285,14 @@ class ThreadManagerListModel(QtCore.QAbstractListModel):
                                                            QtCore.Qt.QueuedConnection)
 
     def rowCount(self, parent=None, *args, **kwargs):
-        """
-        Gives the number of threads registered.
-
-        @return int: number of threads
-        """
         return len(self._thread_names)
 
     def headerData(self, section, orientation, role=QtCore.Qt.DisplayRole):
-        """
-        Data for the list view header.
-
-        @param int section: column/row index to get header data for
-        @param QtCore.Qt.Orientation orientation: orientation of header (horizontal or vertical)
-        @param QtCore.ItemDataRole role: data access role
-
-        @return str: header data for given column/row and role
-        """
         if role == QtCore.Qt.DisplayRole and orientation == QtCore.Qt.Horizontal and section == 0:
             return 'Thread Name'
         return None
 
     def data(self, index, role):
-        """
-        Get data from model for a given cell. Data can have a role that affects display.
-
-        @param QtCore.QModelIndex index: cell for which data is requested
-        @param QtCore.Qt.ItemDataRole role: data access role of request
-
-        @return QVariant: data for given cell and role
-        """
         if index.isValid() and role == QtCore.Qt.DisplayRole and index.column() == 0:
             try:
                 return self._thread_names[index.row()]
@@ -304,12 +301,6 @@ class ThreadManagerListModel(QtCore.QAbstractListModel):
         return None
 
     def flags(self, index):
-        """ Determines what can be done with entry cells in the table view.
-
-          @param QModelIndex index: cell fo which the flags are requested
-
-          @return Qt.ItemFlags: actins allowed fotr this cell
-        """
         return QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable
 
     def _thread_registered(self, name: str) -> None:

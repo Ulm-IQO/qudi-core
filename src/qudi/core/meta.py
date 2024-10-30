@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 """
-Definition of various metaclasses
+Definition of metaclasses for qudi objects.
 
-Copyright (c) 2021, the qudi developers. See the AUTHORS.md file at the top-level directory of this
-distribution and on <https://github.com/Ulm-IQO/qudi-core/>
+Copyright (c) 2021-2024, the qudi developers. See the AUTHORS.md file at the top-level directory of
+this distribution and on <https://github.com/Ulm-IQO/qudi-core/>.
 
 This file is part of qudi.
 
@@ -33,7 +33,7 @@ QObjectMeta = type(QObject)
 
 
 class ABCQObjectMeta(ABCMeta, QObjectMeta):
-    """ Metaclass for abstract QObject subclasses """
+    """Metaclass for abstract (ABC) QObject classes."""
     def __new__(mcs, name, bases, attributes):
         cls = super(ABCQObjectMeta, mcs).__new__(mcs, name, bases, attributes)
         # Compute set of abstract method names
@@ -51,10 +51,10 @@ class ABCQObjectMeta(ABCMeta, QObjectMeta):
 
 
 class QudiQObjectMeta(ABCQObjectMeta):
-    """ General purpose metaclass for abstract QObject subclasses that include qudi meta attributes
-    (Connector, StatusVar, ConfigOption).
-    Collects all meta attributes in new "_meta" class variable for easier access.
-    Also collects QtCore.Signal attribute names for easier maintenance and access.
+    """
+    General purpose metaclass for abstract (ABC) QObject classes that include qudi meta attribute
+    descriptors, i.e. Connector, StatusVar and ConfigOption.
+    Collects all meta attribute descriptors in new `_meta` class variable for easier access.
     """
     def __new__(mcs, name, bases, attributes):
         cls = super().__new__(mcs, name, bases, attributes)
