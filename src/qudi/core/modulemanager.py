@@ -592,7 +592,6 @@ class ManagedModule(QtCore.QObject):
     def _poll_module_state(self):
         with self._lock:
             state = self.state
-            logger.debug(state)
             if state != self.__last_state:
                 self.__last_state = state
                 self.sigStateChanged.emit(self._base, self._name, state)
