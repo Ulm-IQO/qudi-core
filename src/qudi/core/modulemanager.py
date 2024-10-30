@@ -575,7 +575,7 @@ class ManagedModule(QtCore.QObject):
                         self._disable_state_updated()
 
             self.__last_state = self.state
-            self.sigStateChanged.emit(self._base, self._name, self.__last_state)
+
             self.sigAppDataChanged.emit(self._base, self._name, self.has_app_data)
 
             # Raise exception if by some reason no exception propagated to here and the activation
