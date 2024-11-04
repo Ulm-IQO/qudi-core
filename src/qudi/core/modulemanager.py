@@ -575,7 +575,7 @@ class ManagedModule(QtCore.QObject):
                         self._disable_state_updated()
 
             self.__last_state = self.state
-            self.sigStateChanged.emit(self._base, self._name, self.__last_state)
+
             self.sigAppDataChanged.emit(self._base, self._name, self.has_app_data)
 
             # Raise exception if by some reason no exception propagated to here and the activation
@@ -592,7 +592,6 @@ class ManagedModule(QtCore.QObject):
     def _poll_module_state(self):
         with self._lock:
             state = self.state
-            logger.debug(state)
             if state != self.__last_state:
                 self.__last_state = state
                 self.sigStateChanged.emit(self._base, self._name, state)
