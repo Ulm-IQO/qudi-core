@@ -507,6 +507,14 @@ class ManagedModule(QtCore.QObject):
             if not self.is_loaded:
                 self._load()
 
+            if self.is_remote and self.__poll_timer is None:
+                self.__poll_timer = QtCore.QTimer(self)
+                logger.debug(f"creating new timer {self.__poll_timer}")
+                self.__poll_timer.setInterval(int(round(self.__state_poll_interval * 1000)))
+                self.__poll_timer.setSingleShot(True)
+                self.__poll_timer.timeout.connect(self._poll_module_state)
+                self.__poll_timer.start()
+
             # Return early if already active
             if self.is_active:
                 # If it is a GUI module, show it again.
@@ -517,9 +525,11 @@ class ManagedModule(QtCore.QObject):
             if self.is_remote:
                 logger.info(f'Activating remote {self.module_base} module "{self.remote_url}"')
             else:
+                # this is a local module and not already active
                 logger.info(
                     f'Activating {self.module_base} module "{self.module_name}.{self.class_name}"'
                 )
+                self._instance.module_state.sigStateChanged.connect(self._state_change_callback)
 
             # Recursive activation of required modules
             for module_ref in self.required_modules:
@@ -551,14 +561,21 @@ class ManagedModule(QtCore.QObject):
                                                         QtCore.Qt.BlockingQueuedConnection)
                         thread_manager.quit_thread(thread_name)
                         thread_manager.join_thread(thread_name)
+                        self._disconnect()
+                        self._disable_state_updated()
+
             else:
                 try:
                     self._instance.module_state.activate()
-                except fysom.Canceled:
-                    pass
+                except Exception as e:
+                    raise RuntimeError(f'Failed to activate {self.module_base} module "{self.name}"!') from e
+                finally:  # cleanup if activation was not successful
+                    if not self.is_active:
+                        self._disconnect()
+                        self._disable_state_updated()
 
             self.__last_state = self.state
-            self.sigStateChanged.emit(self._base, self._name, self.__last_state)
+
             self.sigAppDataChanged.emit(self._base, self._name, self.has_app_data)
 
             # Raise exception if by some reason no exception propagated to here and the activation
@@ -566,18 +583,10 @@ class ManagedModule(QtCore.QObject):
             if not self.is_active:
                 try:
                     self._disconnect()
+                    self._disable_state_updated()
                 except:
                     pass
                 raise RuntimeError(f'Failed to activate {self.module_base} module "{self.name}"!')
-
-            if self.is_remote:
-                self.__poll_timer = QtCore.QTimer(self)
-                self.__poll_timer.setInterval(int(round(self.__state_poll_interval * 1000)))
-                self.__poll_timer.setSingleShot(True)
-                self.__poll_timer.timeout.connect(self._poll_module_state)
-                self.__poll_timer.start()
-            else:
-                self._instance.module_state.sigStateChanged.connect(self._state_change_callback)
 
     @QtCore.Slot()
     def _poll_module_state(self):
@@ -624,14 +633,7 @@ class ManagedModule(QtCore.QObject):
                     )
                 module.deactivate()
 
-            # Disable state updated
-            try:
-                self.__poll_timer.stop()
-                self.__poll_timer.timeout.disconnect()
-            except AttributeError:
-                self._instance.module_state.sigStateChanged.disconnect(self._state_change_callback)
-            finally:
-                self.__poll_timer = None
+            self._disable_state_updated()
 
             # Actual deactivation of this module
             if self._instance.is_module_threaded:
@@ -763,3 +765,12 @@ class ManagedModule(QtCore.QObject):
     def _disconnect(self):
         with self._lock:
             self._instance.disconnect_modules()
+
+    def _disable_state_updated(self):
+        try:
+            self.__poll_timer.stop()
+            self.__poll_timer.timeout.disconnect()
+        except AttributeError:
+            self._instance.module_state.sigStateChanged.disconnect(self._state_change_callback)
+        finally:
+            self.__poll_timer = None
