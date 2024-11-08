@@ -9,6 +9,7 @@ None
 - Fixed a bug where qudi would deadlock when starting a GUI module via the ipython terminal
 - Fixed a bug with the `qtconsole` package no longer being part of `jupyter`. It is now listed 
 explicitly in the dependencies.
+- Fixed SystemTrayIcon error when activating GUI modules
 
 ### New Features
 None
@@ -29,7 +30,8 @@ None
 - Fixed syntax error in `qudi.util.fit_models.lorentzian.LorentzianLinear` fit model
 
 ### New Features
-None
+- Introduced `DiscreteScalarConstraint` that expands the functionality of `ScalarConstraint` to check whether a value 
+is in a set of discrete values
 
 ### Other
 - Improved documentation [`getting_started.md`](getting_started.md)
