@@ -2,36 +2,36 @@
 """
 This module contains color scales and definitions for qudi as well as a custom matplotlib style.
 
-.. Shamelessly stolen from https://bids.github.io/colormap/
-.. New matplotlib colormaps by Nathaniel J. Smith, Stefan van der Walt,
-.. and (in the case of viridis) Eric Firing.
-.. 
-.. This file and the colormaps in it are released under the CC0 license /
-.. public domain dedication. We would appreciate credit if you use or
-.. redistribute these colormaps, but do not impose any legal restrictions.
-.. 
-.. To the extent possible under law, the persons who associated CC0 with
-.. mpl-colormaps have waived all copyright and related or neighboring rights
-.. to mpl-colormaps.
-.. 
-.. You should have received a copy of the CC0 legalcode along with this
-.. work.  If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
-.. 
-.. Copyright (c) 2021, the qudi developers. See the AUTHORS.md file at the top-level directory of this
-.. distribution and on <https://github.com/Ulm-IQO/qudi-core/>
-..
-.. This file is part of qudi.
-..
-.. Qudi is free software: you can redistribute it and/or modify it under the terms of
-.. the GNU Lesser General Public License as published by the Free Software Foundation,
-.. either version 3 of the License, or (at your option) any later version.
-..
-.. Qudi is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
-.. without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-.. See the GNU Lesser General Public License for more details.
-..
-.. You should have received a copy of the GNU Lesser General Public License along with qudi.
-.. If not, see <https://www.gnu.org/licenses/>.
+Shamelessly stolen from https://bids.github.io/colormap/
+New matplotlib colormaps by Nathaniel J. Smith, Stefan van der Walt,
+and (in the case of viridis) Eric Firing.
+
+This file and the colormaps in it are released under the CC0 license /
+public domain dedication. We would appreciate credit if you use or
+redistribute these colormaps, but do not impose any legal restrictions.
+
+To the extent possible under law, the persons who associated CC0 with
+mpl-colormaps have waived all copyright and related or neighboring rights
+to mpl-colormaps.
+
+You should have received a copy of the CC0 legalcode along with this
+work.  If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
+
+Copyright (c) 2021, the qudi developers. See the AUTHORS.md file at the top-level directory of this
+distribution and on <https://github.com/Ulm-IQO/qudi-core/>
+
+This file is part of qudi.
+
+Qudi is free software: you can redistribute it and/or modify it under the terms of
+the GNU Lesser General Public License as published by the Free Software Foundation,
+either version 3 of the License, or (at your option) any later version.
+
+Qudi is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+See the GNU Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public License along with qudi.
+If not, see <https://www.gnu.org/licenses/>.
 """
 
 __all__ = ['ColorScale', 'ColorScaleRainbow', 'ColorScaleMagma', 'ColorScaleInferno',
