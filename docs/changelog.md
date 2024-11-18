@@ -9,6 +9,7 @@ None
 - Fixed a bug where qudi would deadlock when starting a GUI module via the ipython terminal
 - Fixed a bug with the `qtconsole` package no longer being part of `jupyter`. It is now listed 
 explicitly in the dependencies.
+- Fixed SystemTrayIcon error when activating GUI modules
 
 ### New Features
 None
