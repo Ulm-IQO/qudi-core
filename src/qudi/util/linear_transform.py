@@ -28,7 +28,7 @@ from qudi.util.helpers import is_integer
 from qudi.util.math import normalize
 
 class LinearTransformation:
-    """ Linear transformation for N-dimensional cartesian coordinates """
+    """Linear transformation for N-dimensional cartesian coordinates."""
 
     def __init__(self,
                  matrix: Optional[Sequence[Sequence[float]]] = None,
@@ -58,7 +58,7 @@ class LinearTransformation:
                  nodes: Union[Sequence[float], Sequence[Sequence[float]]],
                  invert: Optional[bool] = False
                  ) -> np.ndarray:
-        """ Transforms any single node (vector) or sequence of nodes according to the
+        """Transforms any single node (vector) or sequence of nodes according to the
         preconfigured matrix.
         Tries to perform the inverse transform if the optional argument invert is True.
         """
@@ -75,27 +75,27 @@ class LinearTransformation:
 
     @property
     def matrix(self) -> np.ndarray:
-        """ Returns a copy of the currently configured homogenous transformation matrix
-        (including translation)
+        """Returns a copy of the currently configured homogenous transformation matrix
+        (including translation).
         """
         return self._matrix.copy()
 
     @property
     def inverse(self) -> np.ndarray:
-        """ Returns a copy of the inverse of the currently configured homogenous transformation
-        matrix
+        """Returns a copy of the inverse of the currently configured homogenous transformation
+        matrix.
         """
         return np.linalg.inv(self._matrix)
 
     @property
     def dimensions(self) -> int:
-        """ Returns the number of dimensions of the coordinate system to transform.
-        The homogenous transformation matrix is a square matrix with (dimensions + 1) rows/columns
+        """Returns the number of dimensions of the coordinate system to transform.
+        The homogenous transformation matrix is a square matrix with (dimensions + 1) rows/columns.
         """
         return self._matrix.shape[0] - 1
 
     def add_transform(self, matrix: Sequence[Sequence[float]]) -> None:
-        """ Multiply a given homogenous transformation matrix (including translation) onto the
+        """Multiply a given homogenous transformation matrix (including translation) onto the
         current trasnformation matrix.
         """
         matrix = np.asarray(matrix, dtype=float)
@@ -107,7 +107,7 @@ class LinearTransformation:
         self._matrix = np.matmul(matrix, self._matrix)
 
     def translate(self, *args: float) -> None:
-        """ Adds a translation to the transformation. Must provide a displacement argument for
+        """Adds a translation to the transformation. Must provide a displacement argument for
         each dimension.
         """
         dim = self.dimensions
@@ -119,7 +119,7 @@ class LinearTransformation:
         self.add_transform(translate_matrix)
 
     def scale(self, *args: float) -> None:
-        """ Adds scaling to the transformation. Must provide a scale factor argument for each
+        """Adds scaling to the transformation. Must provide a scale factor argument for each
         dimension.
         """
         diagonal = np.ones(self._matrix.shape[0], dtype=float)
@@ -134,7 +134,7 @@ class LinearTransformation:
         self.add_transform(scale_matrix)
 
     def rotate(self, *args, **kwargs) -> None:
-        """ Adds a rotation to the transformation. Must provide a rotation angle argument for each
+        """Adds a rotation to the transformation. Must provide a rotation angle argument for each
         axis (dimension).
         """
         raise NotImplementedError('Arbitrary rotation transformation not implemented yet')
@@ -144,7 +144,7 @@ class LinearTransformation:
         pass
 
 class LinearTransformation3D(LinearTransformation):
-    """ Linear transformation for 3D cartesian coordinates """
+    """Linear transformation for 3D cartesian coordinates."""
 
     _Vector = Tuple[float, float, float, float]
     _TransformationMatrix = Tuple[_Vector, _Vector, _Vector, _Vector]
@@ -157,7 +157,7 @@ class LinearTransformation3D(LinearTransformation):
                y_angle: Optional[float] = 0,
                z_angle: Optional[float] = 0
                ) -> None:
-        """ Adds a rotation to the transformation. Can provide a rotation angle (in rad) around
+        """Adds a rotation to the transformation. Can provide a rotation angle (in rad) around
         each of the 3 axes (x, y, z).
         """
         sin_a = np.sin(x_angle)
@@ -179,7 +179,7 @@ class LinearTransformation3D(LinearTransformation):
                   dy: Optional[float] = 0,
                   dz: Optional[float] = 0
                   ) -> None:
-        """ Adds a translation to the transformation. Can provide a displacement for each of the 3
+        """Adds a translation to the transformation. Can provide a displacement for each of the 3
         axes (x, y, z).
         """
         return super().translate(dx, dy, dz)
@@ -189,7 +189,7 @@ class LinearTransformation3D(LinearTransformation):
               sy: Optional[float] = 1,
               sz: Optional[float] = 1
               ) -> None:
-        """ Adds scaling to the transformation. Can provide a scale factor for each of the 3 axes
+        """Adds scaling to the transformation. Can provide a scale factor for each of the 3 axes
         (x, y, z).
         """
         return super().scale(sx, sy, sz)
@@ -197,8 +197,10 @@ class LinearTransformation3D(LinearTransformation):
     def add_rotation(self, matrix) -> None:
         """
         Add a rotation given by 3x3 matrix. Pad the array to represent this rotation plus a zero translation.
-        :param matrix:
-        :return:
+        
+        Parameters
+        ----------
+        matrix
         """
         rot_matrix = np.pad(matrix, [(0, 1), (0, 1)])
         rot_matrix[-1,-1] = 1
@@ -207,7 +209,7 @@ class LinearTransformation3D(LinearTransformation):
 
 
 class LinearTransformation2D(LinearTransformation):
-    """ Linear transformation for 2D cartesian coordinates """
+    """Linear transformation for 2D cartesian coordinates."""
 
     _Vector = Tuple[float, float, float]
     _TransformationMatrix = Tuple[_Vector, _Vector, _Vector]
@@ -229,13 +231,13 @@ class LinearTransformation2D(LinearTransformation):
         self.add_transform(rot_matrix)
 
     def translate(self, dx: Optional[float] = 0, dy: Optional[float] = 0) -> None:
-        """ Adds a translation to the transformation. Can provide a displacement for each of the 2
+        """Adds a translation to the transformation. Can provide a displacement for each of the 2
         axes (x, y).
         """
         return super().translate(dx, dy)
 
     def scale(self, sx: Optional[float] = 1, sy: Optional[float] = 1) -> None:
-        """ Adds scaling to the transformation. Can provide a scale factor for each of the 2 axes
+        """Adds scaling to the transformation. Can provide a scale factor for each of the 2 axes
         (x, y).
         """
         return super().scale(sx, sy)
@@ -255,7 +257,6 @@ def find_changing_axes(points: np.ndarray) -> np.ndarray:
     -------
     numpy.ndarray
         Array of the indices of the changing axes.
-
     """
     num_axes = len(points[0])
     axes_changing_p = np.zeros(num_axes, dtype=np.bool_)
@@ -283,7 +284,6 @@ def compute_reduced_vectors(points: np.ndarray) -> np.ndarray:
     -------
     numpy.ndarray
         Reduced array containing only the non-constant axes.
-
     """
     axes_changing_p = find_changing_axes(points)
     return points[:, axes_changing_p]
@@ -312,8 +312,7 @@ def compute_rotation_matrix_to_plane(v0: np.ndarray, v1: np.ndarray, v2: np.ndar
 
     Notes
     -----
-    See the math here: https://en.wikipedia.org/wiki/Rodrigues'_rotation_formula
-
+    See the math here: https://en.wikipedia.org/wiki/Rodrigues'_rotation_formula:return:
     """
     if len(v0) != 3 or len(v1) != 3 or len(v2) != 3:
         raise ValueError('The support vectors should have a length of 3.')

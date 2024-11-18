@@ -40,7 +40,7 @@ def get_unit_prefix_dict():
     Returns
     -------
     dict 
-        keys are string prefix and values are magnitude values.
+        Keys are string prefix and values are magnitude values.
     """
     unit_prefix_dict = {
         'y': 1e-24,
@@ -102,7 +102,7 @@ class ScaledFloat(float):
 
     @property
     def scale_val(self):
-        """ Returns the scale value which can be used to devide the actual value
+        """Returns the scale value which can be used to devide the actual value.
 
         Examples
         --------
@@ -114,14 +114,14 @@ class ScaledFloat(float):
 
     def __format__(self, fmt):
         """
-        Fromats the string using format fmt.
+        Formats the string using format fmt.
 
         r for scaled output.
 
         Parameters
         ----------
         fmt : str 
-            format string
+            Format string.
         """
         autoscale = False
         if len(fmt) >= 2:
@@ -147,7 +147,7 @@ class ScaledFloat(float):
 
 
 def create_formatted_output(param_dict, num_sig_digits=5):
-    """ Display a parameter set nicely in SI units.
+    """Display a parameter set nicely in SI units.
 
     Parameters
     ----------
@@ -234,14 +234,14 @@ def create_formatted_output(param_dict, num_sig_digits=5):
 
 
 def round_value_to_error(value, error):
-    """ The scientifically correct way of rounding a value according to an error.
+    """The scientifically correct way of rounding a value according to an error.
 
     Parameters
     ----------
     value : float or int 
-        the measurement value
+        The measurement value.
     error : float or int
-        the error for that measurement value
+        The error for that measurement value.
 
     Returns
     -------
@@ -344,8 +344,8 @@ def round_value_to_error(value, error):
 
 
 def get_relevant_digit(entry):
-    """ By using log10, abs and int operations, the proper relevant digit is
-        obtained.
+    """By using log10, abs and int operations, the proper relevant digit is
+    obtained.
 
     Parameters
     ----------
@@ -354,7 +354,7 @@ def get_relevant_digit(entry):
     Returns
     -------
     int
-        the leading relevant exponent
+        The leading relevant exponent.
     """
     # the log10 can only be calculated of a positive number.
     entry = np.abs(entry)
@@ -372,25 +372,20 @@ def get_relevant_digit(entry):
 
 
 def get_si_norm(entry):
-    """ A rather different way to display the value in SI notation.
+    """A rather different way to display the value in SI notation.
 
     Parameters
     ----------
     entry : float 
-        the float number from which normalization factor should
+        The float number from which normalization factor should
         be obtained.
-        
 
     Returns
     -------
-    tuple
-        A tuple containing:
-        
-        norm_val : float
-            The value in a normalized representation.
-        
-        normalization : float
-            The factor by which to divide the number.
+    norm_val : float
+        The value in a normalized representation.
+    normalization : float
+        The factor by which to divide the number.
     """
     val = get_relevant_digit(entry)
     fact = int(val / 3)

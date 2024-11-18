@@ -43,7 +43,6 @@ def get_main_dir() -> str:
 
 
 def get_artwork_dir() -> str:
-    
     """
     Returns the absolute path to the Qudi artwork directory.
 
@@ -51,7 +50,6 @@ def get_artwork_dir() -> str:
     -------
     str
         Path to the artwork directory of Qudi.
-
     """
     return os.path.join(get_main_dir(), 'artwork')
 
@@ -64,7 +62,6 @@ def get_home_dir() -> str:
     -------
     str
         Absolute path to the home directory.
-
     """
     return os.path.abspath(os.path.expanduser('~'))
 
@@ -78,7 +75,6 @@ def get_userdata_dir(create_missing: Optional[bool] = False) -> str:
     -------
     str
         Absolute path to the Qudi subfolder in the user home directory.
-
     """
     path = os.path.join(get_home_dir(), 'qudi')
     # Create directory if desired. Will throw an exception if path returned by get_home_dir() is
@@ -96,7 +92,6 @@ def get_appdata_dir(create_missing: Optional[bool] = False) -> str:
     -------
     str
         Path to the application data directory specific to the system.
-
     """
     if sys.platform == 'win32':
         # resolves to "C:\Documents and Settings\<UserName>\Application Data" on XP and
@@ -149,10 +144,13 @@ def get_default_log_dir(create_missing: Optional[bool] = False) -> str:
 
 
 def get_default_data_dir(create_missing: Optional[bool] = False) -> str:
-    """ Get the system specific application fallback data root directory.
+    """Get the system specific application fallback data root directory.
     Does NOT consider qudi configuration.
 
-    @return str: path to default data root directory
+    Returns
+    -------
+    str
+        Path to default data root directory.
     """
     # FIXME: This needs to be properly done for linux systems
     path = os.path.join(get_userdata_dir(create_missing), 'Data')
@@ -184,7 +182,6 @@ def get_daily_directory(timestamp: Optional[datetime.datetime] = None, root: Opt
     -------
     str
         Path representing the directory structure based on the timestamp.
-
     """
     if timestamp is None:
         timestamp = datetime.datetime.now()
@@ -200,7 +197,7 @@ def get_daily_directory(timestamp: Optional[datetime.datetime] = None, root: Opt
 
 
 def get_module_app_data_path(cls_name: str, module_base: str, module_name: str) -> str:
-    """ Constructs the appData file path for the given qudi module
+    """Constructs the appData file path for the given qudi module.
     """
     file_name = f'status-{cls_name}_{module_base}_{module_name}.cfg'
     return os.path.join(get_appdata_dir(), file_name)
