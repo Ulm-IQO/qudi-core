@@ -32,7 +32,7 @@ _RealNumber = Union[int, float]
 
 def iter_modules_recursive(paths: Union[str, Iterable[str]],
                            prefix: Optional[str] = '') -> List[pkgutil.ModuleInfo]:
-    """ Has the same signature as pkgutil.iter_modules() but extends the functionality by walking
+    """Has the same signature as pkgutil.iter_modules() but extends the functionality by walking
     through the entire directory tree and concatenating the return values of pkgutil.iter_modules()
     for each directory.
 
@@ -51,7 +51,6 @@ def iter_modules_recursive(paths: Union[str, Iterable[str]],
     -------
     iterable
         Concatenated return values of pkgutil.iter_modules() for all directories in the tree.
-
     """
     if isinstance(paths, str):
         paths = [paths]
@@ -91,7 +90,6 @@ def natural_sort(iterable: Iterable[Any]) -> List[Any]:
     -------
     list
         Sorted list of strings.
-
     """
     def conv(s):
         return int(s) if s.isdigit() else s
@@ -102,58 +100,58 @@ def natural_sort(iterable: Iterable[Any]) -> List[Any]:
 
 
 def is_number(test_value: Any) -> bool:
-    """ Check whether passed value is a number """
+    """Check whether passed value is a number."""
     return is_integer(test_value) or is_float(test_value) or is_complex(test_value)
 
 
 def is_number_type(test_obj: Type) -> bool:
-    """ Check whether passed object is a number type """
+    """Check whether passed object is a number type."""
     return is_integer_type(test_obj) or is_float_type(test_obj) or is_complex_type(test_obj)
 
 
 def is_integer(test_value: Any) -> bool:
-    """ Check all available integer representations """
+    """Check all available integer representations."""
     return isinstance(test_value, (int, np.integer))
 
 
 def is_integer_type(test_obj: Type) -> bool:
-    """ Check if passed object is an integer type """
+    """Check if passed object is an integer type."""
     return issubclass(test_obj, (int, np.integer))
 
 
 def is_float(test_value: Any) -> bool:
-    """ Check all available float representations """
+    """Check all available float representations."""
     return isinstance(test_value, (float, np.floating))
 
 
 def is_float_type(test_obj: Type) -> bool:
-    """ Check if passed object is a float type """
+    """Check if passed object is a float type."""
     return issubclass(test_obj, (float, np.floating))
 
 
 def is_complex(test_value: Any) -> bool:
-    """ Check all available complex representations """
+    """Check all available complex representations."""
     return isinstance(test_value, (complex, np.complexfloating))
 
 
 def is_complex_type(test_obj: Type) -> bool:
-    """ Check if passed object is a complex type """
+    """Check if passed object is a complex type."""
     return issubclass(test_obj, (complex, np.complexfloating))
 
 
 def is_string(test_value: Any) -> bool:
-    """ Check all available string representations """
+    """Check all available string representations."""
     return isinstance(test_value, (str, np.str_, np.string_))
 
 
 def is_string_type(test_obj: Type) -> bool:
-    """ Check if passed object is a string type """
+    """Check if passed object is a string type."""
     return issubclass(test_obj, (str, np.str_, np.string_))
 
 
 def in_range(value: _RealNumber, lower_limit: _RealNumber,
              upper_limit: _RealNumber) -> Tuple[bool, _RealNumber]:
-    """ Check if a value is in a given range an return closest possible value in range.
+    """Check if a value is in a given range an return closest possible value in range.
     Also check the range.
     Return value is clipped to range.
     """
@@ -187,7 +185,6 @@ def csv_2_list(csv_string: str, str_2_val: Optional[Callable[[str], Any]] = None
     -------
     list
         List of float values. If `str_2_val` is provided, type is invoked by this function.
-
     """
     if not isinstance(csv_string, str):
         raise TypeError('string_2_list accepts only str type input.')
@@ -210,7 +207,7 @@ def csv_2_list(csv_string: str, str_2_val: Optional[Callable[[str], Any]] = None
 
 def str_to_number(str_value: str,
                   return_failed: Optional[bool] = False) -> Union[int, float, complex, str]:
-    """ Parse a string into either int, float or complex (in that order) """
+    """Parse a string into either int, float or complex (in that order)."""
     try:
         return int(str_value)
     except ValueError:

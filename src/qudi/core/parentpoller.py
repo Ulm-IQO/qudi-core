@@ -34,7 +34,7 @@ logger = logging.getLogger(__name__)
 
 
 class ParentPollerUnix(Thread):
-    """ A Unix-specific daemon thread that terminates the program immediately
+    """A Unix-specific daemon thread that terminates the program immediately
     when the parent process no longer exists.
     """
 
@@ -55,7 +55,7 @@ class ParentPollerUnix(Thread):
         self.quit_function = quit_function
 
     def run(self):
-        """ Run the parentpoller.
+        """Run the parentpoller.
         """
         # We cannot use os.waitpid because it works only for child processes.
         from errno import EINTR
@@ -76,7 +76,7 @@ class ParentPollerUnix(Thread):
 
 
 class ParentPollerWindows(Thread):
-    """ A Windows-specific daemon thread that listens for a special event that signals an interrupt
+    """A Windows-specific daemon thread that listens for a special event that signals an interrupt
     and, optionally, terminates the program immediately when the parent process no longer exists.
     """
 
@@ -101,7 +101,7 @@ class ParentPollerWindows(Thread):
         self._stop_requested = False
 
     def run(self):
-        """ Run the poll loop. This method never returns.
+        """Run the poll loop. This method never returns.
         """
         try:
             from _winapi import WAIT_OBJECT_0, INFINITE

@@ -36,7 +36,7 @@ class ErrorDialog(QtWidgets.QDialog):
                        'critical': 'font-weight: bold; color: #FF00FF;'}
 
     def __init__(self, *args, **kwargs):
-        """ Create an ErrorDialog object
+        """Create an ErrorDialog object.
         """
         super().__init__(*args, **kwargs)
 
@@ -184,7 +184,7 @@ class ErrorDialog(QtWidgets.QDialog):
 
     @QtCore.Slot()
     def reject(self):
-        """ Override reject slot in order to prevent rejection of this QDialog.
+        """Override reject slot in order to prevent rejection of this QDialog.
         """
         if not self.dismiss_button.hasFocus():
             self.dismiss_button.setFocus()

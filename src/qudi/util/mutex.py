@@ -33,7 +33,7 @@ _RealNumber = Union[int, float]
 
 
 class Mutex(_QMutex):
-    """ Extends QMutex which serves as access serialization between threads.
+    """Extends QMutex which serves as access serialization between threads.
 
     This class provides:
     * Drop-in replacement for threading.Lock
@@ -62,12 +62,12 @@ class Mutex(_QMutex):
         return self.tryLock()
 
     def release(self) -> None:
-        """ Mimics threading.Lock.release() to allow this class as a drop-in replacement.
+        """Mimics threading.Lock.release() to allow this class as a drop-in replacement.
         """
         self.unlock()
 
     def __enter__(self):
-        """ Enter context.
+        """Enter context.
 
         Returns
         -------
@@ -78,7 +78,7 @@ class Mutex(_QMutex):
         return self
 
     def __exit__(self, *args):
-        """ Exit context.
+        """Exit context.
 
         Parameters
         ----------
@@ -93,7 +93,7 @@ class Mutex(_QMutex):
 # QRecursiveMutex. Check if QRecursiveMutex class has all API members (indicating it's PySide6).
 if all(hasattr(_QRecursiveMutex, attr) for attr in ('lock', 'unlock', 'tryLock')):
     class RecursiveMutex(_QRecursiveMutex):
-        """ Extends QRecursiveMutex which serves as access serialization between threads.
+        """Extends QRecursiveMutex which serves as access serialization between threads.
 
         This class provides:
         * Drop-in replacement for threading.Lock
@@ -131,7 +131,7 @@ if all(hasattr(_QRecursiveMutex, attr) for attr in ('lock', 'unlock', 'tryLock')
             return self.tryLock()
 
         def release(self) -> None:
-            """ Mimics threading.Lock.release() to allow this class as a drop-in replacement.
+            """Mimics threading.Lock.release() to allow this class as a drop-in replacement.
             """
             self.unlock()
 
@@ -162,7 +162,7 @@ if all(hasattr(_QRecursiveMutex, attr) for attr in ('lock', 'unlock', 'tryLock')
 
 else:
     class RecursiveMutex(Mutex):
-        """ Extends QRecursiveMutex which serves as access serialization between threads.
+        """Extends QRecursiveMutex which serves as access serialization between threads.
 
         This class provides:
         * Drop-in replacement for threading.Lock

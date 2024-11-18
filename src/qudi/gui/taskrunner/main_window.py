@@ -112,7 +112,8 @@ class TaskMainWindow(QtWidgets.QMainWindow):
             self.task_widgets[task_name] = widget
 
     def _clear_task_widgets(self) -> None:
-        """ Helper method to disconnect and delete all TaskWidgets and remove them from layout """
+        """Helper method to disconnect and delete all TaskWidgets and remove them from layout.
+        """
         for widget in reversed(self.task_widgets):
             groupbox = widget.parent()
             widget.sigStartTask.disconnect()

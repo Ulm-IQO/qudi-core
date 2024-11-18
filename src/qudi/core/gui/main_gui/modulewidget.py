@@ -27,7 +27,7 @@ from qudi.util.mutex import Mutex
 
 class ModuleFrameWidget(QtWidgets.QWidget):
     """
-    Custom module QWidget for the Qudi main GUI
+    Custom module QWidget for the Qudi main GUI.
     """
     sigActivateClicked = QtCore.Signal(str)
     sigDeactivateClicked = QtCore.Signal(str)

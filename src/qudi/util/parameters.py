@@ -85,7 +85,7 @@ class ParameterWidgetMapper:
 
     @classmethod
     def widgets_for_callable(cls, func: Callable) -> Dict[str, Union[Type[QtWidgets.QWidget], None]]:
-        """ Returns QWidget classes for each parameter from the call signature of "func".
+        """Returns QWidget classes for each parameter from the call signature of "func".
         See ParameterWidgetMapper.widget_for_parameter for more information.
         """
         sig = inspect.signature(func)
@@ -93,7 +93,7 @@ class ParameterWidgetMapper:
 
     @classmethod
     def widget_for_parameter(cls, param: inspect.Parameter) -> Union[Type[QtWidgets.QWidget], None]:
-        """ Tries to determine a suitable QWidget to represent the given parameter.
+        """Tries to determine a suitable QWidget to represent the given parameter.
         If no type annotation is given for a parameter it will try to determine the type from the
         default value.
         If no (known) type can be determined, None will be returned.
@@ -109,21 +109,21 @@ class ParameterWidgetMapper:
 
     @classmethod
     def widget_from_value(cls, value: Any) -> Union[Type[QtWidgets.QWidget], None]:
-        """ Tries to determine a suitable QWidget to represent the type of the given value.
+        """Tries to determine a suitable QWidget to represent the type of the given value.
         """
         normalized_type = cls._normalize_type(type(value))
         return cls._type_widget_map.get(normalized_type, None)
 
     @classmethod
     def widget_from_annotation(cls, annotation: Any) -> Union[Type[QtWidgets.QWidget], None]:
-        """ Tries to determine a suitable QWidget to represent values of the given annotation type.
+        """Tries to determine a suitable QWidget to represent values of the given annotation type.
         """
         normalized_type = cls._annotation_to_type(annotation)
         return cls._type_widget_map.get(normalized_type, None)
 
     @staticmethod
     def _normalize_type(typ: Type) -> Type:
-        """ Normalizes given type to a base/builtin type.
+        """Normalizes given type to a base/builtin type.
         Examples:
                       numpy.float32 -> float
             collections.OrderedDict -> dict
@@ -150,7 +150,7 @@ class ParameterWidgetMapper:
 
     @classmethod
     def _annotation_to_type(cls, annotation: Any) -> Type:
-        """ Converts a type annotation (e.g. from a callable signature) to a normalized type.
+        """Converts a type annotation (e.g. from a callable signature) to a normalized type.
         See ParameterWidgetMapper._normalize_type for more information.
         """
         # If annotation is optional, call this method again on the first argument in order to get a
@@ -174,8 +174,8 @@ class ParameterWidgetMapper:
 
     @staticmethod
     def _is_optional_annotation(annotation: Any) -> bool:
-        """ Check if an annotation is optional, i.e. if it is typing.Union with two arguments,
-        the second one being NoneType
+        """Check if an annotation is optional, i.e. if it is typing.Union with two arguments,
+        the second one being NoneType.
         """
         if get_origin(annotation) == typing.Union:
             args = get_args(annotation)

@@ -276,7 +276,7 @@ class ModuleManager(QtCore.QObject):
 
 
 class ManagedModule(QtCore.QObject):
-    """ Object representing a qudi module (gui, logic or hardware) to be managed by the qudi Manager
+    """Object representing a qudi module (gui, logic or hardware) to be managed by the qudi Manager
      object. Contains status properties and handles initialization, state transitions and
      connection of the module.
     """

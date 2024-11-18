@@ -41,7 +41,7 @@ __artwork_path_pattern = re.compile(r'>(.*?/artwork/.*?)</')
 
 
 def loadUi(file_path, base_widget):
-    """ Compiles a given .ui-file at <file_path> into python code. This code will be executed and
+    """Compiles a given .ui-file at <file_path> into python code. This code will be executed and
     the generated class will be used to initialize the widget given in <base_widget>.
     Creates a temporary file in the systems tmp directory using the tempfile module.
     The original .ui file will remain untouched.
@@ -52,9 +52,9 @@ def loadUi(file_path, base_widget):
     Parameters
     ----------
     file_path : str
-        The full path to the .ui-file to load
+        The full path to the .ui-file to load.
     base_widget : object
-        Instance of the base widget represented by the .ui-file
+        Instance of the base widget represented by the .ui-file.
 
     Returns
     -------
@@ -112,18 +112,18 @@ def loadUi(file_path, base_widget):
 
 
 def _convert_ui_to_absolute_paths(file_path):
-    """ Converts the .ui file in order to change all relative path declarations containing the
+    """Converts the .ui file in order to change all relative path declarations containing the
     keyword "/artwork/" into absolute paths pointing to the qudi artwork data directory.
 
     Parameters
     ----------
     file_path : str
-        The path to the .ui file to convert
+        The path to the .ui file to convert.
 
     Returns
     -------
     str | None
-        Converted file content of the .ui file, None if conversion is not needed
+        Converted file content of the .ui file, None if conversion is not needed.
     """
     path_prefix = get_artwork_dir()
     with open(file_path, 'r') as file:

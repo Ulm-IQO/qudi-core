@@ -27,7 +27,7 @@ from qudi.util.overload import OverloadProxy
 
 
 class Connector:
-    """ A connector used to connect qudi modules with each other.
+    """A connector used to connect qudi modules with each other.
     """
 
     def __init__(
@@ -67,7 +67,7 @@ class Connector:
             self.name = name
 
     def __call__(self) -> Any:
-        """ Return reference to the module that this connector is connected to. """
+        """Return reference to the module that this connector is connected to."""
         if self.is_connected:
             return self._obj_proxy
         if self.optional:
@@ -90,7 +90,7 @@ class Connector:
 
     @property
     def is_connected(self) -> bool:
-        """ Read-only property to check if the Connector instance is connected to a target module.
+        """Read-only property to check if the Connector instance is connected to a target module.
 
         Returns
         -------
@@ -102,7 +102,7 @@ class Connector:
         return self._obj_proxy is not None
 
     def connect(self, target: Any) -> None:
-        """ Check if target is connectible by this connector and connect.
+        """Check if target is connectible by this connector and connect.
         """
         bases = {cls.__name__ for cls in target.__class__.mro()}
         if self.interface not in bases:
@@ -114,12 +114,12 @@ class Connector:
         self._obj_ref = weakref.ref(target, self.__module_died_callback)
 
     def disconnect(self) -> None:
-        """ Disconnect connector.
+        """Disconnect connector.
         """
         self._obj_proxy = None
 
     def copy(self, **kwargs):
-        """ Create a new instance of Connector with copied values and update
+        """Create a new instance of Connector with copied values and update
         """
         return Connector(kwargs.get('interface', self.interface),
                          kwargs.get('name', self.name),

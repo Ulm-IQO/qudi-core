@@ -28,7 +28,7 @@ from qudi.util.mutex import Mutex
 
 
 class LogRecordsTableModel(QtCore.QAbstractTableModel):
-    """ This is a Qt model that represents textual information about all logged records.
+    """This is a Qt model that represents textual information about all logged records.
     Can be displayed with a QTableView for example.
     """
 
@@ -52,7 +52,7 @@ class LogRecordsTableModel(QtCore.QAbstractTableModel):
         self._fill_count = 0
 
     def rowCount(self, parent=None):
-        """ Returns the number of log records stored in the model.
+        """Returns the number of log records stored in the model.
 
         Returns
         -------
@@ -62,7 +62,7 @@ class LogRecordsTableModel(QtCore.QAbstractTableModel):
         return self._fill_count
 
     def columnCount(self, parent=None):
-        """ Returns the number of columns each log record has.
+        """Returns the number of columns each log record has.
 
         Returns
         -------
@@ -72,7 +72,7 @@ class LogRecordsTableModel(QtCore.QAbstractTableModel):
         return len(self._header)
 
     def flags(self, index):
-        """ Determines what can be done with log record cells in the table view.
+        """Determines what can be done with log record cells in the table view.
 
         Parameters
         ----------
@@ -87,7 +87,7 @@ class LogRecordsTableModel(QtCore.QAbstractTableModel):
         return QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEditable
 
     def data(self, index, role):
-        """ Get data from model for a given cell. Data can have a role that affects display.
+        """Get data from model for a given cell. Data can have a role that affects display.
 
         Parameters
         ----------
@@ -109,7 +109,7 @@ class LogRecordsTableModel(QtCore.QAbstractTableModel):
                 return record[index.column()]
 
     def headerData(self, section, orientation, role=None):
-        """ Data for the table view headers.
+        """Data for the table view headers.
 
         Parameters
         ----------
@@ -134,7 +134,7 @@ class LogRecordsTableModel(QtCore.QAbstractTableModel):
 
     @QtCore.Slot(object)
     def add_record(self, data):
-        """ Add a single log entry to the end of the table model.
+        """Add a single log entry to the end of the table model.
 
         Parameters
         ----------

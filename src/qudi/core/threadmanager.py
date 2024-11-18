@@ -31,7 +31,7 @@ logger = get_logger(__name__)
 
 
 class ThreadManager(QtCore.QAbstractListModel):
-    """ This class keeps track of all the QThreads that are needed somewhere.
+    """This class keeps track of all the QThreads that are needed somewhere.
 
     Using this class is thread-safe.
     """
@@ -67,7 +67,7 @@ class ThreadManager(QtCore.QAbstractListModel):
             return self._thread_names.copy()
 
     def get_new_thread(self, name):
-        """ Create and return a new QThread with objectName <name>
+        """Create and return a new QThread with objectName <name>.
 
         Parameters
         ----------
@@ -90,7 +90,7 @@ class ThreadManager(QtCore.QAbstractListModel):
 
     @QtCore.Slot(QtCore.QThread)
     def register_thread(self, thread):
-        """ Add QThread to ThreadManager.
+        """Add QThread to ThreadManager.
 
         Parameters
         ----------
@@ -116,7 +116,7 @@ class ThreadManager(QtCore.QAbstractListModel):
 
     @QtCore.Slot(object)
     def unregister_thread(self, name):
-        """ Remove thread from ThreadManager.
+        """Remove thread from ThreadManager.
 
         Parameters
         ----------
@@ -139,7 +139,7 @@ class ThreadManager(QtCore.QAbstractListModel):
 
     @QtCore.Slot(object)
     def quit_thread(self, name):
-        """ Stop event loop of QThread.
+        """Stop event loop of QThread.
 
         Parameters
         ----------
@@ -159,7 +159,7 @@ class ThreadManager(QtCore.QAbstractListModel):
 
     @QtCore.Slot(object, int)
     def join_thread(self, name, time=None):
-        """ Wait for stop of QThread event loop.
+        """Wait for stop of QThread event loop.
 
         Parameters
         ----------
@@ -184,7 +184,7 @@ class ThreadManager(QtCore.QAbstractListModel):
 
     @QtCore.Slot(int)
     def quit_all_threads(self, thread_timeout=10000):
-        """ Stop event loop of all QThreads.
+        """Stop event loop of all QThreads.
         """
         with self._lock:
             logger.debug('Quit all threads.')
@@ -194,7 +194,7 @@ class ThreadManager(QtCore.QAbstractListModel):
                     logger.error('Waiting for thread {0} timed out.'.format(thread.objectName()))
 
     def get_thread_by_name(self, name):
-        """ Get registered QThread instance by its objectName
+        """Get registered QThread instance by its objectName.
 
         Parameters
         ----------
@@ -269,7 +269,7 @@ class ThreadManager(QtCore.QAbstractListModel):
             return None
 
     def flags(self, index):
-        """ Determines what can be done with entry cells in the table view.
+        """Determines what can be done with entry cells in the table view.
 
         Parameters
         ----------

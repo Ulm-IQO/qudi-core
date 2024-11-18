@@ -37,13 +37,13 @@ logger = get_logger(__name__)
 
 
 class _SharedModulesModel(DictTableModel):
-    """ Derived dict model for GUI display elements
+    """Derived dict model for GUI display elements.
     """
     def __init__(self):
         super().__init__(headers='Shared Module')
 
     def data(self, index, role):
-        """ Get data from model for a given cell. Data can have a role that affects display.
+        """Get data from model for a given cell. Data can have a role that affects display.
 
         Parameters
         ----------
@@ -67,7 +67,7 @@ class _SharedModulesModel(DictTableModel):
 
 
 class RemoteModulesService(rpyc.Service):
-    """ An RPyC service that has a module list.
+    """An RPyC service that has a module list.
     """
     ALIASES = ['RemoteModules']
 
@@ -91,19 +91,19 @@ class RemoteModulesService(rpyc.Service):
             self.shared_modules.pop(name, None)
 
     def on_connect(self, conn):
-        """ code that runs when a connection is created
+        """Code that runs when a connection is created.
         """
         host, port = conn._config['endpoints'][1]
         logger.info(f'Client connected to remote modules service from [{host}]:{port:d}')
 
     def on_disconnect(self, conn):
-        """ code that runs when the connection is closing
+        """Code that runs when the connection is closing.
         """
         host, port = conn._config['endpoints'][1]
         logger.info(f'Client [{host}]:{port:d} disconnected from remote modules service')
 
     def exposed_get_module_instance(self, name, activate=False):
-        """ Return reference to a module in the shared module list.
+        """Return reference to a module in the shared module list.
 
         Parameters
         ----------
@@ -131,7 +131,7 @@ class RemoteModulesService(rpyc.Service):
             return module.instance
 
     def exposed_get_available_module_names(self):
-        """ Returns the currently shared module names independent of the current module state.
+        """Returns the currently shared module names independent of the current module state.
 
         Returns
         -------
@@ -142,7 +142,7 @@ class RemoteModulesService(rpyc.Service):
             return tuple(self.shared_modules)
 
     def exposed_get_loaded_module_names(self):
-        """ Returns the currently shared module names for all modules that have been loaded
+        """Returns the currently shared module names for all modules that have been loaded
         (instantiated).
 
         Returns
@@ -156,7 +156,7 @@ class RemoteModulesService(rpyc.Service):
                          mod is not None and mod.instance is not None)
 
     def exposed_get_active_module_names(self):
-        """ Returns the currently shared module names for all modules that are active.
+        """Returns the currently shared module names for all modules that are active.
 
         Returns
         -------
@@ -171,7 +171,7 @@ class RemoteModulesService(rpyc.Service):
 
 
 class QudiNamespaceService(rpyc.Service):
-    """ An RPyC service providing a namespace dict containing references to all active qudi module
+    """An RPyC service providing a namespace dict containing references to all active qudi module
     instances as well as a reference to the qudi application itself.
     """
     ALIASES = ['QudiNamespace']
@@ -197,7 +197,7 @@ class QudiNamespaceService(rpyc.Service):
         return manager
 
     def on_connect(self, conn):
-        """ code that runs when a connection is created
+        """Code that runs when a connection is created.
         """
         try:
             self._notifier_callbacks[conn] = rpyc.async_(conn.root.modules_changed)
@@ -207,7 +207,7 @@ class QudiNamespaceService(rpyc.Service):
         logger.info(f'Client connected to local module service from [{host}]:{port:d}')
 
     def on_disconnect(self, conn):
-        """ code that runs when the connection is closing
+        """Code that runs when the connection is closing.
         """
         self._notifier_callbacks.pop(conn, None)
         host, port = conn._config['endpoints'][1]
@@ -220,7 +220,7 @@ class QudiNamespaceService(rpyc.Service):
             callback()
 
     def exposed_get_namespace_dict(self):
-        """ Returns the instances of the currently active modules as well as a reference to the
+        """Returns the instances of the currently active modules as well as a reference to the
         qudi application itself.
 
         Returns
@@ -238,12 +238,12 @@ class QudiNamespaceService(rpyc.Service):
         return mods
 
     def exposed_get_logger(self, name: str) -> logging.Logger:
-        """ Returns a logger object for remote processes to log into the qudi logging facility """
+        """Returns a logger object for remote processes to log into the qudi logging facility."""
         return get_logger(name)
 
 
 class ModuleRpycProxy:
-    """ Instances of this class serve as proxies for qudi modules accessed via RPyC.
+    """Instances of this class serve as proxies for qudi modules accessed via RPyC.
     It currently wraps all API methods (none- and single-underscore methods) to only receive
     parameters "by value", i.e. using qudi.util.network.netobtain. This will only work if all
     method arguments are "pickle-able".
@@ -303,7 +303,7 @@ class ModuleRpycProxy:
 
     @classmethod
     def _create_class_proxy(cls, theclass):
-        """ creates a proxy for the given class
+        """Creates a proxy for the given class.
         """
 
         def make_method(method_name):
@@ -325,10 +325,10 @@ class ModuleRpycProxy:
         return type(f'{cls.__name__}({theclass.__name__})', (cls,), namespace)
 
     def __new__(cls, obj, *args, **kwargs):
-        """ creates an proxy instance referencing `obj`. (obj, *args, **kwargs) are passed to this
+        """Creates an proxy instance referencing `obj`. (obj, *args, **kwargs) are passed to this
         class' __init__, so deriving classes can define an __init__ method of their own.
 
-        note: _class_proxy_cache is unique per class (each deriving class must hold its own cache)
+        note: _class_proxy_cache is unique per class (each deriving class must hold its own cache).
         """
         theclass = cls._create_class_proxy(obj.__class__)
         return object.__new__(theclass)

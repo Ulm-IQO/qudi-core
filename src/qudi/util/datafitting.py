@@ -262,7 +262,7 @@ class FitConfigurationsModel(QtCore.QAbstractListModel):
         return [cfg.to_dict() for cfg in self._fit_configurations]
 
     def load_configs(self, configs):
-        """ Initializes/overwrites all currently held fit configurations by a given iterable of dict
+        """Initializes/overwrites all currently held fit configurations by a given iterable of dict
         representations (see also: FitConfigurationsModel.dump_configs).
 
         This method will reset the list model.

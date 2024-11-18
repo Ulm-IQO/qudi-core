@@ -28,7 +28,7 @@ from typing import Callable, Any, Optional
 
 
 class StatusVar:
-    """ This class defines a status variable that is loaded before activation and saved after
+    """This class defines a status variable that is loaded before activation and saved after
     deactivation.
     """
 
@@ -66,7 +66,7 @@ class StatusVar:
         return self.copy()
 
     def copy(self, **kwargs):
-        """ Create a new instance of StatusVar with copied and updated values.
+        """Create a new instance of StatusVar with copied and updated values.
 
         Parameters
         ----------
@@ -81,7 +81,7 @@ class StatusVar:
         return StatusVar(**newargs)
 
     def constructor(self, func: Callable) -> Callable:
-        """ This is the decorator for declaring constructor function for this StatusVar.
+        """This is the decorator for declaring constructor function for this StatusVar.
 
         Parameters
         ----------
@@ -97,7 +97,7 @@ class StatusVar:
         return func
 
     def representer(self, func: Callable) -> Callable:
-        """ This is the decorator for declaring a representer function for this StatusVar.
+        """This is the decorator for declaring a representer function for this StatusVar.
 
         Parameters
         ----------

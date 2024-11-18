@@ -104,7 +104,7 @@ def str_dict_to_metadata(str_dict):
 
 
 def _is_dtype_class(obj):
-    """ Helper to check for valid dtypes that can be handled.
+    """Helper to check for valid dtypes that can be handled.
     """
     allowed_types = (int,
                      float,
@@ -119,13 +119,13 @@ def _is_dtype_class(obj):
 
 
 def _is_dtype_str(obj):
-    """ Helper to check for valid dtype string
+    """Helper to check for valid dtype string.
     """
     return obj in ('int', 'float', 'complex', 'str')
 
 
 def _value_to_dtype(val):
-    """ Helper to return the dtype (int, float, complex or str) of a data value.
+    """Helper to return the dtype (int, float, complex or str) of a data value.
     """
     if is_string(val):
         return str
@@ -139,7 +139,7 @@ def _value_to_dtype(val):
 
 
 def _dtype_to_str(obj):
-    """ Helper to convert dtype class to str representation
+    """Helper to convert dtype class to str representation.
     """
     if _is_dtype_str(obj):
         return obj
@@ -290,7 +290,7 @@ def get_info_from_header(header):
 
 
 def create_dir_for_file(file_path):
-    """ Helper method to create the directory (recursively) for a given file path.
+    """Helper method to create the directory (recursively) for a given file path.
     Will NOT raise an error if the directory already exists.
 
     Parameters
@@ -302,7 +302,7 @@ def create_dir_for_file(file_path):
 
 
 class DataStorageBase(metaclass=ABCMeta):
-    """ Base helper class to store/load (measurement)data to/from disk.
+    """Base helper class to store/load (measurement)data to/from disk.
     Subclasses handle saving and loading of measurement data (including metadata) for specific file
     formats.
     Metadata is represented as dictionary (key-value pairs).
@@ -336,7 +336,7 @@ class DataStorageBase(metaclass=ABCMeta):
         self.image_format = image_format
 
     def save_thumbnail(self, mpl_figure, file_path):
-        """ Save a matplotlib figure visualizing the saved data in the image format configured.
+        """Save a matplotlib figure visualizing the saved data in the image format configured.
         It is recommended to use the same file_path as the corresponding data file (if applicable)
         and exclude the file extension (will be added according to image format).
 
@@ -367,7 +367,7 @@ class DataStorageBase(metaclass=ABCMeta):
         return file_path
 
     def get_unified_metadata(self, local_metadata=None):
-        """ Helper method to return a dict containing provided local_metadata as well as global
+        """Helper method to return a dict containing provided local_metadata as well as global
         metadata depending on include_global_metadata flag.
 
         Parameters
@@ -389,7 +389,7 @@ class DataStorageBase(metaclass=ABCMeta):
 
     @abstractmethod
     def save_data(self, data, *, metadata=None, notes=None, nametag=None, timestamp=None, **kwargs):
-        """ This method must be implemented in a subclass. It should provide the facility to save an
+        """This method must be implemented in a subclass. It should provide the facility to save an
         entire measurement as a whole along with experiment metadata (to include e.g. in the file
         header). The user can either specify an explicit filename or a generic one will be created.
         If optional nametag and/or timestamp is provided, this will be used to create the generic
@@ -420,7 +420,7 @@ class DataStorageBase(metaclass=ABCMeta):
 
     @abstractmethod
     def load_data(self, *args, **kwargs):
-        """ This method must be implemented in a subclass. It should provide the facility to load a
+        """This method must be implemented in a subclass. It should provide the facility to load a
         saved data set including the metadata/experiment parameters and column headers
         (if possible). Many storage classes can even implement this method as a static method.
 
@@ -444,14 +444,14 @@ class DataStorageBase(metaclass=ABCMeta):
 
     @classmethod
     def get_global_metadata(cls):
-        """ Return a copy of the global metadata dict.
+        """Return a copy of the global metadata dict.
         """
         with cls._global_metadata_lock:
             return cls._global_metadata.copy()
 
     @classmethod
     def add_global_metadata(cls, name, value=None, *, overwrite=False):
-        """ Set a single global metadata key-value pair or alternatively multiple ones as dict.
+        """Set a single global metadata key-value pair or alternatively multiple ones as dict.
         Metadata added this way will persist for all data storage instances in this process until
         being selectively removed by calls to "remove_global_metadata".
         """
@@ -475,7 +475,7 @@ class DataStorageBase(metaclass=ABCMeta):
 
     @classmethod
     def remove_global_metadata(cls, names):
-        """ Remove a global metadata key-value pair by key. Does not raise an error if the key is
+        """Remove a global metadata key-value pair by key. Does not raise an error if the key is
         not found.
         """
         if isinstance(names, str):
@@ -486,7 +486,7 @@ class DataStorageBase(metaclass=ABCMeta):
 
 
 class TextDataStorage(DataStorageBase):
-    """ Helper class to store (measurement)data on disk as text file.
+    """Helper class to store (measurement)data on disk as text file.
     Data will always be saved in a tabular format with column headers. Single/Multiple rows are
     appendable.
     """
@@ -501,18 +501,27 @@ class TextDataStorage(DataStorageBase):
     def __init__(self, *, root_dir, comments='# ', delimiter='\t', file_extension='.dat',
                  column_formats=None, **kwargs):
         """
-        @param str root_dir: Root directory for this storage instance to save files into
-        @param str comments: optional, string to put at the beginning of comment and header lines
-        @param str delimiter: optional, column delimiter used in text files
-        @param str file_extension: optional, file extension to use for text files
-        @param str|sequence column_formats: optional, value format specifier (mini-language) for each
-                                            column. Single string case will be used for all columns.
-        @param str|sequence column_headers: optional, sequence of strings containing column headers.
-                                            If a single string is given, write it to file header
-                                            without formatting.
-        @param type|str|sequence column_dtypes: optional, the column dtypes to expect
 
-        @param kwargs: optional, for additional keyword arguments see DataStorageBase.__init__
+        Parameters
+        ----------
+
+        root_dir : str
+            Root directory for this storage instance to save files into.
+        comments : str, optional
+            String to put at the beginning of comment and header lines.
+        delimiter : str, optional
+            Column delimiter used in text files.
+        file_extension : str, optional
+            File extension to use for text files
+        column_formats : str or sequence, optional
+            Value format specifier (mini-language) for each column. Single string case will be used for all columns.
+        column_headers : str or sequence, optional
+            Sequence of strings containing column headers. If a single string is given, write it to file header without
+            formatting.
+        column_dtypes : str or sequence, optional
+            The column dtypes to expect.
+        kwargs: optional
+            For additional keyword arguments, see DataStorageBase.__init__
         """
         super().__init__(root_dir=root_dir, **kwargs)
 
@@ -609,7 +618,7 @@ class TextDataStorage(DataStorageBase):
         return file_path, timestamp
 
     def append_file(self, data, file_path):
-        """ Append single or multiple rows to an existing data file.
+        """Append single or multiple rows to an existing data file.
 
         Parameters
         ----------
@@ -667,9 +676,10 @@ class TextDataStorage(DataStorageBase):
 
     def save_data(self, data, *, timestamp=None, metadata=None, notes=None, nametag=None,
                   column_headers=None, column_dtypes=None, filename=None):
-        """ See: DataStorageBase.save_data() for more information
+        """See: DataStorageBase.save_data() for more information.
 
-        @param str|list column_headers: optional, data column header strings or single string
+        column_headers : str or list, optional
+            Data column header strings or single string.
         """
         # Derive dtypes from first data row if not explicitly given
         if column_dtypes is None:
@@ -692,7 +702,8 @@ class TextDataStorage(DataStorageBase):
     def load_data(file_path):
         """ See: DataStorageBase.load_data()
 
-        @param str file_path: optional, path to file to load data from
+        file_path : str, optional
+            Path to file to load data from.
         """
         # Read back metadata
         try:
@@ -722,14 +733,14 @@ class TextDataStorage(DataStorageBase):
 
 
 class CsvDataStorage(TextDataStorage):
-    """ Helper class to store (measurement)data on disk as CSV file.
+    """Helper class to store (measurement)data on disk as CSV file.
     This is a specialized sub-class of TextDataStorage that uses hard-coded commas as delimiter and
     includes column headers uncommented in the first row of data. This is the standard format for
     importing a table into e.g. MS Excel.
     """
 
     def __init__(self, *, file_extension='.csv', **kwargs):
-        """ See: qudi.util.datastorage.TextDataStorage
+        """See: qudi.util.datastorage.TextDataStorage
         """
         kwargs['delimiter'] = ','
         super().__init__(file_extension=file_extension, **kwargs)
@@ -746,7 +757,7 @@ class CsvDataStorage(TextDataStorage):
 
     def create_header(self, timestamp=None, metadata=None, notes=None, column_headers=None,
                       column_dtypes=None):
-        """ Include column_headers without line comment specifier.
+        """Include column_headers without line comment specifier.
         for more information see: qudi.util.datastorage.TextDataStorage.create_header()
         """
         # Create default header as specified in parent TextDataStorage object without column headers
@@ -762,9 +773,10 @@ class CsvDataStorage(TextDataStorage):
 
     @staticmethod
     def load_data(file_path):
-        """ See: DataStorageBase.load_data()
+        """See: DataStorageBase.load_data()
 
-        @param str file_path: optional, path to file to load data from
+        file_path : str, optional
+            Path to file to load data from.
         """
         # Read back metadata
         header, header_lines = get_header_from_file(file_path)
@@ -793,7 +805,7 @@ class CsvDataStorage(TextDataStorage):
 
 
 class NpyDataStorage(DataStorageBase):
-    """ Helper class to store (measurement)data on disk as binary .npy file.
+    """Helper class to store (measurement) data on disk as binary .npy file.
     """
 
     def __init__(self, *, root_dir, **kwargs):
@@ -816,7 +828,7 @@ class NpyDataStorage(DataStorageBase):
 
     def save_data(self, data, *, metadata=None, notes=None, nametag=None, timestamp=None,
                   column_headers=None, filename=None):
-        """ Saves a binary file containing the data array.
+        """Saves a binary file containing the data array.
         Also saves alongside a text file containing the notes, (global) metadata and column headers
         for this data set. The filename of the text file will be the same as for the binary file
         appended by "_metadata".
@@ -827,7 +839,6 @@ class NpyDataStorage(DataStorageBase):
         ----------
         column_headers : str or list, optional
             Data column header strings or a single string.
-
         """
         if timestamp is None:
             timestamp = datetime.now()
@@ -866,6 +877,10 @@ class NpyDataStorage(DataStorageBase):
         file_path : str
             Path to the file to load data from.
 
+        Returns
+        -------
+        np.ndarray
+            Data as a numpy array.
         """
         # Load numpy array
         data = np.load(file_path, allow_pickle=False, fix_imports=False)

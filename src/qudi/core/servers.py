@@ -36,7 +36,7 @@ logger = get_logger(__name__)
 
 
 def get_remote_module_instance(remote_url, certfile=None, keyfile=None, protocol_config=None):
-    """ Helper method to retrieve a remote module instance via rpyc from a qudi RemoteModuleServer.
+    """Helper method to retrieve a remote module instance via rpyc from a qudi RemoteModuleServer.
 
     Parameters
     ----------
@@ -76,7 +76,7 @@ def get_remote_module_instance(remote_url, certfile=None, keyfile=None, protocol
 
 
 class _ServerRunnable(QtCore.QObject):
-    """ QObject containing the actual long-running code to execute in a separate thread for qudi
+    """QObject containing the actual long-running code to execute in a separate thread for qudi
     RPyC servers.
     """
 
@@ -105,7 +105,7 @@ class _ServerRunnable(QtCore.QObject):
 
     @QtCore.Slot()
     def run(self):
-        """ Start the RPyC server
+        """Start the RPyC server.
         """
         if self.certfile is not None and self.keyfile is not None:
             authenticator = SSLAuthenticator(certfile=self.certfile,
@@ -134,7 +134,7 @@ class _ServerRunnable(QtCore.QObject):
 
     @QtCore.Slot()
     def stop(self):
-        """ Stop the RPyC server
+        """Stop the RPyC server.
         """
         if self.server is not None:
             try:
@@ -149,7 +149,7 @@ class _ServerRunnable(QtCore.QObject):
 
 
 class BaseServer(QtCore.QObject):
-    """ Contains a threaded RPyC server providing given service.
+    """Contains a threaded RPyC server providing given service.
     USE SSL AUTHENTICATION WHEN LISTENING ON ANYTHING ELSE THAN "localhost"/127.0.0.1.
     Actual RPyC server runs in a QThread.
     """
@@ -212,7 +212,7 @@ class BaseServer(QtCore.QObject):
 
     @QtCore.Slot()
     def start(self):
-        """ Start the RPyC server
+        """Start the RPyC server.
         """
         with self._thread_lock:
             if self.server is None:
@@ -225,7 +225,7 @@ class BaseServer(QtCore.QObject):
 
     @QtCore.Slot()
     def stop(self):
-        """ Stop the RPyC server
+        """Stop the RPyC server.
         """
         with self._thread_lock:
             if self.server is not None:
@@ -255,7 +255,7 @@ class RemoteModulesServer(BaseServer):
 
 
 class QudiNamespaceServer(BaseServer):
-    """ Contains a RPyC server that serves all activated qudi modules as well as a reference to the
+    """Contains a RPyC server that serves all activated qudi modules as well as a reference to the
     running qudi instance locally without encryption.
     You can specify the port but the host will always be "localhost"/127.0.0.1
     See qudi.core.remotemodules.RemoteModuleServer if you want to expose qudi modules to non-local

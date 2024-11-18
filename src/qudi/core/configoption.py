@@ -38,8 +38,8 @@ class MissingOption(Enum):
 
 
 class ConfigOption:
-    """ This class represents a configuration entry in the config file that is loaded before
-        module initalisation.
+    """This class represents a configuration entry in the config file that is loaded before
+    module initalisation.
     """
 
     def __init__(self, name: Optional[str] = None, default: Optional[Any] = None, *,
@@ -108,14 +108,14 @@ class ConfigOption:
         return ConfigOption(**newargs)
 
     def check(self, value: Any) -> bool:
-        """ If checker function set, check value. Assume everything is ok otherwise.
+        """If checker function set, check value. Assume everything is ok otherwise.
         """
         if callable(self.checker):
             return self.checker(value)
         return True
 
     def convert(self, value: Any) -> Any:
-        """ If converter function set, convert value (pass-through otherwise).
+        """If converter function set, convert value (pass-through otherwise).
         """
         if callable(self.converter):
             return self.converter(value)

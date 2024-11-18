@@ -28,13 +28,13 @@ from .records_model import LogRecordsTableModel
 
 
 class QtSignaller(QtCore.QObject):
-    """ Just a bare Qt QObject containing a signal
+    """Just a bare Qt QObject containing a signal.
     """
     sigSignal = QtCore.Signal(object)
 
 
 class LogSignalHandler(logging.Handler):
-    """ Logging handler that emits a Qt signal when a log entry is registered
+    """Logging handler that emits a Qt signal when a log entry is registered.
     """
     def __init__(self, level=logging.NOTSET):
         super().__init__(level=level)
@@ -45,13 +45,13 @@ class LogSignalHandler(logging.Handler):
         return self.__qt_signaller.sigSignal
 
     def emit(self, record):
-        """ Emit a signal when logging.Handler emits a new log record
+        """Emit a signal when logging.Handler emits a new log record.
         """
         self.__qt_signaller.sigSignal.emit(record)
 
 
 class LogTableModelHandler(logging.Handler):
-    """ Logging handler that stores each log record in a QAbstractTableModel.
+    """Logging handler that stores each log record in a QAbstractTableModel.
     """
     def __init__(self, level=logging.INFO, max_records=10000):
         if level < logging.DEBUG:
@@ -63,7 +63,7 @@ class LogTableModelHandler(logging.Handler):
                                               QtCore.Qt.QueuedConnection)
 
     def emit(self, record):
-        """ Store the log record information in the table model
+        """Store the log record information in the table model.
         """
         self.__qt_signaller.sigSignal.emit(record)
 

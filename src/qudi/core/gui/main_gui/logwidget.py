@@ -119,7 +119,7 @@ class SelectableTextDelegate(QtWidgets.QStyledItemDelegate):
 
 
 class LogTableWidget(QtWidgets.QTableView):
-    """ Customized QTableView including the model for display of logging entries
+    """Customized QTableView including the model for display of logging entries.
     """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
