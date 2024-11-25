@@ -29,7 +29,7 @@ from PySide2 import QtWidgets
 
 
 class ConfigQTreeWidget(QtWidgets.QTreeWidget):
-    """ Specialized QTreeWidget to display qudi configurations.
+    """Specialized QTreeWidget to display qudi configurations.
     """
 
     def set_config(self, config: Mapping[str, Any]) -> None:
@@ -37,7 +37,7 @@ class ConfigQTreeWidget(QtWidgets.QTreeWidget):
         self._insert_value(self.invisibleRootItem(), config)
 
     def _insert_value(self, root: QtWidgets.QTreeWidgetItem, value: Any) -> None:
-        """ Recursively fill the QTreeWidgeItem.
+        """Recursively fill the QTreeWidgeItem.
         """
         # if value is a mapping, open up a new sub-tree and recursively fill it
         if isinstance(value, AbstractMapping):

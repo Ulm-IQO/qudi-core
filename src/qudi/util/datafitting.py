@@ -250,20 +250,29 @@ class FitConfigurationsModel(QtCore.QAbstractListModel):
         return False
 
     def dump_configs(self):
-        """ Returns all currently held fit configurations as dicts representations containing only
-        data types that can be dumped as YAML in qudi app status.
+        """
+        Returns all currently held fit configurations as dictionary representations containing only
+        data types that can be dumped as YAML in the Qudi app status.
 
-        @return list: List of fit config dict representations.
+        Returns
+        -------
+        list of dict
+            List of fit configuration dictionary representations.
         """
         return [cfg.to_dict() for cfg in self._fit_configurations]
 
     def load_configs(self, configs):
-        """ Initializes/overwrites all currently held fit configurations by a given iterable of dict
+        """Initializes/overwrites all currently held fit configurations by a given iterable of dict
         representations (see also: FitConfigurationsModel.dump_configs).
 
-        Calling this method will reset the list model.
+        This method will reset the list model.
 
-        @param iterable configs: Iterable of FitConfiguration dict representations
+        Parameters
+        ----------
+        configs : iterable
+            Iterable of FitConfiguration dictionary representations.
+            See also: FitConfigurationsModel.dump_configs.
+
         """
         config_objects = list()
         for cfg in configs:

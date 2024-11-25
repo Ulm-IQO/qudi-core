@@ -32,16 +32,25 @@ _RealNumber = Union[int, float]
 
 def iter_modules_recursive(paths: Union[str, Iterable[str]],
                            prefix: Optional[str] = '') -> List[pkgutil.ModuleInfo]:
-    """ Has the same signature as pkgutil.iter_modules() but extends the functionality by walking
+    """Has the same signature as pkgutil.iter_modules() but extends the functionality by walking
     through the entire directory tree and concatenating the return values of pkgutil.iter_modules()
     for each directory.
 
     Additional modifications include:
-    - Directories starting with "_" or "." are ignored (also including their sub-directories)
-    - Python modules starting with a double-underscore ("__") are excluded in the result
+    - Directories starting with "_" or "." are ignored (including their sub-directories).
+    - Python modules starting with a double-underscore ("__") are excluded from the result.
 
-    @param iterable paths: Iterable of root directories to start the search for modules
-    @param str prefix: optional, prefix to prepend to all module names.
+    Parameters
+    ----------
+    paths : iterable
+        Iterable of root directories to start the search for modules.
+    prefix : str, optional
+        Prefix to prepend to all module names.
+
+    Returns
+    -------
+    iterable
+        Concatenated return values of pkgutil.iter_modules() for all directories in the tree.
     """
     if isinstance(paths, str):
         paths = [paths]
@@ -69,11 +78,18 @@ def iter_modules_recursive(paths: Union[str, Iterable[str]],
 
 def natural_sort(iterable: Iterable[Any]) -> List[Any]:
     """
-    Sort an iterable of str in an intuitive, natural way (human/natural sort).
-    Use this to sort alphanumeric strings containing integers.
+    Sort an iterable of strings in an intuitive, natural way (human/natural sort).
+    This is useful for sorting alphanumeric strings that contain integers.
 
-    @param str[] iterable: Iterable with str items to sort
-    @return list: sorted list of strings
+    Parameters
+    ----------
+    iterable : list of str
+        Iterable with string items to sort.
+
+    Returns
+    -------
+    list
+        Sorted list of strings.
     """
     def conv(s):
         return int(s) if s.isdigit() else s
@@ -84,58 +100,58 @@ def natural_sort(iterable: Iterable[Any]) -> List[Any]:
 
 
 def is_number(test_value: Any) -> bool:
-    """ Check whether passed value is a number """
+    """Check whether passed value is a number."""
     return is_integer(test_value) or is_float(test_value) or is_complex(test_value)
 
 
 def is_number_type(test_obj: Type) -> bool:
-    """ Check whether passed object is a number type """
+    """Check whether passed object is a number type."""
     return is_integer_type(test_obj) or is_float_type(test_obj) or is_complex_type(test_obj)
 
 
 def is_integer(test_value: Any) -> bool:
-    """ Check all available integer representations """
+    """Check all available integer representations."""
     return isinstance(test_value, (int, np.integer))
 
 
 def is_integer_type(test_obj: Type) -> bool:
-    """ Check if passed object is an integer type """
+    """Check if passed object is an integer type."""
     return issubclass(test_obj, (int, np.integer))
 
 
 def is_float(test_value: Any) -> bool:
-    """ Check all available float representations """
+    """Check all available float representations."""
     return isinstance(test_value, (float, np.floating))
 
 
 def is_float_type(test_obj: Type) -> bool:
-    """ Check if passed object is a float type """
+    """Check if passed object is a float type."""
     return issubclass(test_obj, (float, np.floating))
 
 
 def is_complex(test_value: Any) -> bool:
-    """ Check all available complex representations """
+    """Check all available complex representations."""
     return isinstance(test_value, (complex, np.complexfloating))
 
 
 def is_complex_type(test_obj: Type) -> bool:
-    """ Check if passed object is a complex type """
+    """Check if passed object is a complex type."""
     return issubclass(test_obj, (complex, np.complexfloating))
 
 
 def is_string(test_value: Any) -> bool:
-    """ Check all available string representations """
+    """Check all available string representations."""
     return isinstance(test_value, (str, np.str_, np.string_))
 
 
 def is_string_type(test_obj: Type) -> bool:
-    """ Check if passed object is a string type """
+    """Check if passed object is a string type."""
     return issubclass(test_obj, (str, np.str_, np.string_))
 
 
 def in_range(value: _RealNumber, lower_limit: _RealNumber,
              upper_limit: _RealNumber) -> Tuple[bool, _RealNumber]:
-    """ Check if a value is in a given range an return closest possible value in range.
+    """Check if a value is in a given range an return closest possible value in range.
     Also check the range.
     Return value is clipped to range.
     """
@@ -151,16 +167,24 @@ def in_range(value: _RealNumber, lower_limit: _RealNumber,
 
 def csv_2_list(csv_string: str, str_2_val: Optional[Callable[[str], Any]] = None) -> List[Any]:
     """
-    Parse a list literal (with or without square brackets) given as string containing
-    comma-separated int or float values to a python list.
-    (blanks before and after commas are handled)
+    Parse a list literal (with or without square brackets) given as a string containing
+    comma-separated int or float values to a Python list.
+    
+    Blanks before and after commas are handled.
 
-    @param str csv_string: scalar number literals as strings separated by a single comma and any number
-                       of blanks. (brackets are ignored)
-                       Example: '[1e-6,2.5e6, 42]' or '1e-6, 2e-6,   42'
-    @param function str_2_val: optional, function to use for casting substrings into single values.
-    @return list: list of float values. If optional str_2_val is given, type is invoked by this
-                  function.
+    Parameters
+    ----------
+    csv_string : str
+        Scalar number literals as strings separated by a single comma and any number
+        of blanks. Brackets are ignored.
+        Example: '[1e-6,2.5e6, 42]' or '1e-6, 2e-6,   42'.
+    str_2_val : function, optional
+        Function to use for casting substrings into single values.
+
+    Returns
+    -------
+    list
+        List of float values. If `str_2_val` is provided, type is invoked by this function.
     """
     if not isinstance(csv_string, str):
         raise TypeError('string_2_list accepts only str type input.')
@@ -183,7 +207,7 @@ def csv_2_list(csv_string: str, str_2_val: Optional[Callable[[str], Any]] = None
 
 def str_to_number(str_value: str,
                   return_failed: Optional[bool] = False) -> Union[int, float, complex, str]:
-    """ Parse a string into either int, float or complex (in that order) """
+    """Parse a string into either int, float or complex (in that order)."""
     try:
         return int(str_value)
     except ValueError:
