@@ -10,7 +10,7 @@ None
 - Fixed a bug with the `qtconsole` package no longer being part of `jupyter`. It is now listed
 explicitly in the dependencies.
 - Fixed SystemTrayIcon error when activating GUI modules
-- Fixed `TextDataStorage` to load all lines of data and not skip the first line of data
+- Fixed `TextDataStorage.load_data` to load all lines of data and not skip the first line of data
 
 ### New Features
 None
