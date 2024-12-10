@@ -29,7 +29,6 @@ from qudi.util.fit_models.model import FitModelBase, estimator
 
 
 def multiple_exponential_decay(x, amplitudes, decays, stretches):
-   def sum_stretched_exponentials(x, amplitudes, decays, stretches):
     """
     Mathematical definition of the sum of multiple stretched exponential decays without any bias.
 
