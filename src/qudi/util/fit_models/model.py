@@ -97,7 +97,11 @@ class FitModelBase(Model, metaclass=FitModelMeta):
         """ Read-only dict property holding available estimator names as keys and the corresponding
         estimator methods as values.
 
-        @return dict: Available estimator methods (values) with corresponding names (keys)
+        Returns
+        -------
+        dict
+            Available estimator methods (values) with corresponding names (keys).
+
         """
         return self._estimators.copy()
 
@@ -127,6 +131,10 @@ class FitCompositeModelBase(CompositeModel, metaclass=FitCompositeModelMeta):
         """ Read-only dict property holding available estimator names as keys and the corresponding
         estimator methods as values.
 
-        @return dict: Available estimator methods (values) with corresponding names (keys)
+        Returns
+        -------
+        dict
+            Dictionary where keys are estimator names and values are corresponding estimator methods.
+
         """
         return self._estimators.copy()

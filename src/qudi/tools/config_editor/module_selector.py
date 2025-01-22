@@ -29,7 +29,7 @@ from qudi.util.widgets.separator_lines import HorizontalLine
 
 
 class ModuleSelector(QtWidgets.QDialog):
-    """ QDialog representing a selection editor for qudi modules to configure
+    """QDialog representing a selection editor for qudi modules to configure.
     """
 
     def __init__(self,
