@@ -793,7 +793,7 @@ class CsvDataStorage(TextDataStorage):
             else:
                 dtype = [(f'f{col:d}', typ) for col, typ in enumerate(dtype)]
         # Load data from file and skip header
-        start_line = header_lines + 2
+        start_line = header_lines + 1
         if general['column_headers']:
             start_line += 1
         data = np.genfromtxt(file_path,
