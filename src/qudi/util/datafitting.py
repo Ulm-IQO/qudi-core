@@ -173,10 +173,10 @@ class FitConfigurationsModel(QtCore.QAbstractListModel):
         return self._fit_configurations.copy()
 
     @QtCore.Slot(str, str)
-    def add_configuration(self, name, model):
+    def add_configuration(self, name: str, model: str, estimator: Optional[str] = None, custom_parameters: Optional[lmfit.Parameters] = None):
         assert name not in self.configuration_names, f'Fit config "{name}" already defined.'
         assert name != 'No Fit', '"No Fit" is a reserved name for fit configs. Choose another.'
-        config = FitConfiguration(name, model)
+        config = FitConfiguration(name, model, estimator, custom_parameters)
         new_row = len(self._fit_configurations)
         self.beginInsertRows(self.createIndex(new_row, 0), new_row, new_row)
         self._fit_configurations.append(config)
