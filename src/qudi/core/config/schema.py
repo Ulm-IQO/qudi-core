@@ -29,7 +29,7 @@ __module_name_pattern = r'[a-zA-Z_]+[a-zA-Z0-9_]*'
 
 
 def config_schema() -> Dict[str, Any]:
-    """ Creates and returns the JSON schema for a qudi configuration """
+    """Creates and returns the JSON schema for a qudi configuration."""
     return {
         'type': 'object',
         'additionalProperties': False,
@@ -155,7 +155,7 @@ def config_schema() -> Dict[str, Any]:
 
 
 def local_module_config_schema() -> Dict[str, Any]:
-    """ Creates and returns the JSON schema for a single qudi local module configuration """
+    """Creates and returns the JSON schema for a single qudi local module configuration."""
     return {
         'type': 'object',
         'required': ['module.Class'],
@@ -187,7 +187,7 @@ def local_module_config_schema() -> Dict[str, Any]:
 
 
 def remote_module_config_schema() -> Dict[str, Any]:
-    """ Creates and returns the JSON schema for a single qudi remote module configuration """
+    """Creates and returns the JSON schema for a single qudi remote module configuration."""
     return {
         'type': 'object',
         'required': ['native_module_name', 'address', 'port'],

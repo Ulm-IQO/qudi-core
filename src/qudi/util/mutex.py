@@ -33,22 +33,28 @@ _RealNumber = Union[int, float]
 
 
 class Mutex(_QMutex):
-    """ Extends QMutex which serves as access serialization between threads.
+    """Extends QMutex which serves as access serialization between threads.
 
     This class provides:
     * Drop-in replacement for threading.Lock
     * Context management (enter/exit)
     """
 
-    def acquire(self, blocking: Optional[bool] = True, timeout: Optional[_RealNumber] = -1) -> bool:
-        """ Mimics threading.Lock.acquire() to allow this class as a drop-in replacement.
+    def acquire(self, blocking: Optional[bool] = True, timeout: Optional[_RealNumber] =
+-1) -> bool:
+        """
+        Mimics threading.Lock.acquire() to allow this class as a drop-in replacement.
 
-        @param bool blocking: If True, this method will be blocking (indefinitely or for up to
-                              <timeout> seconds) until the mutex has been locked. If False this
-                              method will return immediately independent of the ability to lock.
-        @param float timeout: Timeout in seconds specifying the maximum wait time for the mutex to
-                              be able to lock. Negative numbers correspond to infinite wait time.
-                              This parameter is ignored for <blocking> == False.
+        Parameters
+        ----------
+        blocking : bool, optional
+            If True, this method will block until the mutex is locked (up to <timeout> seconds).
+            If False, this method will return immediately regardless of the lock status. Default is True.
+        timeout : float, optional
+            Timeout in seconds specifying the maximum wait time for the mutex to be able to lock.
+            Negative numbers correspond to infinite wait time. This parameter is ignored if blocking is False.
+            Default is -1.0.
+
         """
         if blocking:
             # Convert to milliseconds for QMutex
@@ -56,22 +62,28 @@ class Mutex(_QMutex):
         return self.tryLock()
 
     def release(self) -> None:
-        """ Mimics threading.Lock.release() to allow this class as a drop-in replacement.
+        """Mimics threading.Lock.release() to allow this class as a drop-in replacement.
         """
         self.unlock()
 
     def __enter__(self):
-        """ Enter context.
+        """Enter context.
 
-        @return Mutex: this mutex
+        Returns
+        -------
+        Mutex
+            This mutex object itself.
         """
         self.lock()
         return self
 
     def __exit__(self, *args):
-        """ Exit context.
+        """Exit context.
 
-        @param args: context arguments (type, value, traceback)
+        Parameters
+        ----------
+        *args
+            Context arguments (type, value, traceback) passed to the method.
         """
         self.unlock()
 
@@ -81,7 +93,7 @@ class Mutex(_QMutex):
 # QRecursiveMutex. Check if QRecursiveMutex class has all API members (indicating it's PySide6).
 if all(hasattr(_QRecursiveMutex, attr) for attr in ('lock', 'unlock', 'tryLock')):
     class RecursiveMutex(_QRecursiveMutex):
-        """ Extends QRecursiveMutex which serves as access serialization between threads.
+        """Extends QRecursiveMutex which serves as access serialization between threads.
 
         This class provides:
         * Drop-in replacement for threading.Lock
@@ -91,16 +103,27 @@ if all(hasattr(_QRecursiveMutex, attr) for attr in ('lock', 'unlock', 'tryLock')
         refactoring your code to use a simple mutex before using this object.
         """
 
-        def acquire(self, blocking: Optional[bool] = True,
-                    timeout: Optional[_RealNumber] = -1) -> bool:
-            """ Mimics threading.Lock.acquire() to allow this class as a drop-in replacement.
+        def acquire(
+            self, blocking: Optional[bool] = True, timeout: Optional[_RealNumber] = -1
+        ) -> bool:
+            """
+            Mimics threading.Lock.acquire() to allow this class as a drop-in replacement.
 
-            @param bool blocking: If True, this method will be blocking (indefinitely or for up to
-                                  <timeout> seconds) until the mutex has been locked. If False this
-                                  method will return immediately independent of the ability to lock.
-            @param float timeout: Timeout in seconds specifying the maximum wait time for the mutex to
-                                  be able to lock. Negative numbers correspond to infinite wait time.
-                                  This parameter is ignored for <blocking> == False.
+            Parameters
+            ----------
+            blocking : bool, optional
+                If True, this method will block until the mutex is locked (up to <timeout> seconds).
+                If False, this method will return immediately regardless of the lock status. Default is True.
+            timeout : float, optional
+                Timeout in seconds specifying the maximum wait time for the mutex to be able to lock.
+                Negative numbers correspond to infinite wait time. This parameter is ignored if blocking is False.
+                Default is -1.0.
+
+            Returns
+            -------
+            Mutex
+                This mutex object itself.
+
             """
             if blocking:
                 # Convert to milliseconds for QMutex
@@ -108,27 +131,38 @@ if all(hasattr(_QRecursiveMutex, attr) for attr in ('lock', 'unlock', 'tryLock')
             return self.tryLock()
 
         def release(self) -> None:
-            """ Mimics threading.Lock.release() to allow this class as a drop-in replacement.
+            """Mimics threading.Lock.release() to allow this class as a drop-in replacement.
             """
             self.unlock()
 
         def __enter__(self):
-            """ Enter context.
+            """
+            Enter the context managed by this mutex.
 
-            @return RecursiveMutex: this mutex
+            Returns
+            -------
+            RecursiveMutex
+                This mutex object itself.
+
             """
             self.lock()
             return self
 
         def __exit__(self, *args):
-            """ Exit context.
+            """
+            Exit the context managed by this mutex.
 
-            @param args: context arguments (type, value, traceback)
+            Parameters
+            ----------
+            *args
+                Context arguments (type, value, traceback) passed to the method.
+
             """
             self.unlock()
+
 else:
     class RecursiveMutex(Mutex):
-        """ Extends QRecursiveMutex which serves as access serialization between threads.
+        """Extends QRecursiveMutex which serves as access serialization between threads.
 
         This class provides:
         * Drop-in replacement for threading.Lock

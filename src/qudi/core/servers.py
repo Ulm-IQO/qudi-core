@@ -36,14 +36,23 @@ logger = get_logger(__name__)
 
 
 def get_remote_module_instance(remote_url, certfile=None, keyfile=None, protocol_config=None):
-    """ Helper method to retrieve a remote module instance via rpyc from a qudi RemoteModuleServer.
+    """Helper method to retrieve a remote module instance via rpyc from a qudi RemoteModuleServer.
 
-    @param str remote_url: The URL of the remote qudi module
-    @param str certfile: Certificate file path for the request
-    @param str keyfile: Key file path for the request
-    @param dict protocol_config: optional, configuration options for rpyc.ssl_connect
+    Parameters
+    ----------
+    remote_url : str
+        The URL of the remote qudi module.
+    certfile : str
+        Certificate file path for the request.
+    keyfile : str
+        Key file path for the request.
+    protocol_config : dict, optional
+        Configuration options for rpyc.ssl_connect.
 
-    @return object: The requested qudi module instance (None if request failed)
+    Returns
+    -------
+    object or None
+        The requested qudi module instance. Returns None if the request failed.
     """
     parsed = urlparse(remote_url)
     if protocol_config is None:
@@ -67,7 +76,7 @@ def get_remote_module_instance(remote_url, certfile=None, keyfile=None, protocol
 
 
 class _ServerRunnable(QtCore.QObject):
-    """ QObject containing the actual long-running code to execute in a separate thread for qudi
+    """QObject containing the actual long-running code to execute in a separate thread for qudi
     RPyC servers.
     """
 
@@ -96,7 +105,7 @@ class _ServerRunnable(QtCore.QObject):
 
     @QtCore.Slot()
     def run(self):
-        """ Start the RPyC server
+        """Start the RPyC server.
         """
         if self.certfile is not None and self.keyfile is not None:
             authenticator = SSLAuthenticator(certfile=self.certfile,
@@ -125,7 +134,7 @@ class _ServerRunnable(QtCore.QObject):
 
     @QtCore.Slot()
     def stop(self):
-        """ Stop the RPyC server
+        """Stop the RPyC server.
         """
         if self.server is not None:
             try:
@@ -140,7 +149,7 @@ class _ServerRunnable(QtCore.QObject):
 
 
 class BaseServer(QtCore.QObject):
-    """ Contains a threaded RPyC server providing given service.
+    """Contains a threaded RPyC server providing given service.
     USE SSL AUTHENTICATION WHEN LISTENING ON ANYTHING ELSE THAN "localhost"/127.0.0.1.
     Actual RPyC server runs in a QThread.
     """
@@ -149,7 +158,10 @@ class BaseServer(QtCore.QObject):
                  keyfile=None, protocol_config=None, ssl_version=None, cert_reqs=None,
                  ciphers=None, parent=None):
         """
-        @param int port: port the RPyC server should listen to
+        Parameters
+        ----------
+        port : int
+            Port number the RPyC server should listen to.
         """
         super().__init__(parent=parent)
 
@@ -200,7 +212,7 @@ class BaseServer(QtCore.QObject):
 
     @QtCore.Slot()
     def start(self):
-        """ Start the RPyC server
+        """Start the RPyC server.
         """
         with self._thread_lock:
             if self.server is None:
@@ -213,7 +225,7 @@ class BaseServer(QtCore.QObject):
 
     @QtCore.Slot()
     def stop(self):
-        """ Stop the RPyC server
+        """Stop the RPyC server.
         """
         with self._thread_lock:
             if self.server is not None:
@@ -243,7 +255,7 @@ class RemoteModulesServer(BaseServer):
 
 
 class QudiNamespaceServer(BaseServer):
-    """ Contains a RPyC server that serves all activated qudi modules as well as a reference to the
+    """Contains a RPyC server that serves all activated qudi modules as well as a reference to the
     running qudi instance locally without encryption.
     You can specify the port but the host will always be "localhost"/127.0.0.1
     See qudi.core.remotemodules.RemoteModuleServer if you want to expose qudi modules to non-local
@@ -253,10 +265,20 @@ class QudiNamespaceServer(BaseServer):
 
     def __init__(self, qudi, name, port, force_remote_calls_by_value=False, parent=None):
         """
-        @param qudi.Qudi qudi: The governing qudi main application instance
-        @param str name: Server name (used as name for the associated QThread)
-        @param int port: port the RPyC server should listen to
-        @param PySide2.QtCore.QObject parent: optional, parent Qt QObject
+        Parameters
+        ----------
+        qudi : qudi.Qudi
+            The governing qudi main application instance.
+        name : str
+            Server name (used as name for the associated QThread).
+        port : int
+            Port number the RPyC server should listen to.
+        parent : PySide2.QtCore.QObject, optional
+            Parent Qt QObject.
+
+        Returns
+        -------
+        None
         """
         service_instance = QudiNamespaceService(
             qudi=qudi,

@@ -183,7 +183,7 @@ class Qudi(QtCore.QObject):
             pass
 
     def _qudi_excepthook(self, ex_type, ex_value, ex_traceback):
-        """ Handler function to be used as sys.excepthook. Should forward all unhandled exceptions
+        """Handler function to be used as sys.excepthook. Should forward all unhandled exceptions
         to logging module.
         """
         # Use default sys.excepthook if exception is exotic/no subclass of Exception.
@@ -343,7 +343,7 @@ class Qudi(QtCore.QObject):
             sys.exit(exit_code)
 
     def _exit(self, prompt=True, restart=False):
-        """ Shutdown qudi. Nicely request that all modules shut down if prompt is True.
+        """Shutdown qudi. Nicely request that all modules shut down if prompt is True.
         Signal restart to parent process (if present) via exitcode 42 if restart is True.
         """
         with self._quit_lock:
