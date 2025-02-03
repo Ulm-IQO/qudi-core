@@ -12,6 +12,7 @@ explicitly in the dependencies.
 - Fixed SystemTrayIcon error when activating GUI modules
 - Fixed `TextDataStorage.load_data` to load all lines of data and not skip the first line of data
 - Fixed `CsvDataStorage.load_data` to load all lines of data and not skip the first line of data
+- Fixed `NpyDataStorage.load_data` exception when loading metadata
 
 ### New Features
 None
