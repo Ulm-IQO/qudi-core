@@ -887,7 +887,7 @@ class NpyDataStorage(DataStorageBase):
         # Try to find and load metadata from text file
         metadata_path = file_path.split('.npy')[0] + '_metadata.txt'
         try:
-            header = get_header_from_file(metadata_path)
+            header, _ = get_header_from_file(metadata_path)
         except FileNotFoundError:
             return data, dict(), dict()
         metadata, general = get_info_from_header(header)
