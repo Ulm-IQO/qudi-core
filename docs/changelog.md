@@ -6,11 +6,29 @@
 None
 
 ### Bugfixes
+None
+
+### New Features
+None
+
+### Other
+None
+
+
+## Version 1.6.0
+Released on 03.02.2025
+
+### Breaking Changes
+None
+
+### Bugfixes
 - Fixed a bug where qudi would deadlock when starting a GUI module via the ipython terminal
 - Fixed a bug with the `qtconsole` package no longer being part of `jupyter`. It is now listed
 explicitly in the dependencies.
 - Fixed SystemTrayIcon error when activating GUI modules
 - Fixed `TextDataStorage.load_data` to load all lines of data and not skip the first line of data
+- Fixed `CsvDataStorage.load_data` to load all lines of data and not skip the first line of data
+- Fixed `NpyDataStorage.load_data` exception when loading metadata
 
 ### New Features
 None
