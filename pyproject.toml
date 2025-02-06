@@ -77,6 +77,25 @@ dependencies = [
     "qtconsole>=5.5.0",
 ]
 
+[project.optional-dependencies]
+dev-lint-format = ["ruff==0.7.0",]
+
+[tool.ruff]
+line-length = 120
+
+[tool.ruff.format]
+quote-style = "preserve"
+skip-magic-trailing-comma = true
+
+[tool.ruff.lint]
+ignore = [
+    "ERA001",  # Commented-out code
+    "SLF001",  # Private member accessed
+    "N803",  # Argument name should be lowercase
+    "N806",  # Variable in function should be lowercase
+    "C901",  # Init method too complex
+]
+
 [project.scripts]
 qudi = "qudi.runnable:main"
 qudi-config-editor = "qudi.tools.config_editor.config_editor:main"
