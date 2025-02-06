@@ -9,7 +9,7 @@ None
 None
 
 ### New Features
-None
+- Added ruff configuration to `pyproject.toml` to standardize formatting
 
 ### Other
 None
