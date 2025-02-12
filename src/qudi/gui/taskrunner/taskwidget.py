@@ -43,7 +43,7 @@ class TestToolButton(QtWidgets.QToolButton):
 
 
 class TaskWidget(QtWidgets.QWidget):
-    """ QWidget to control a ModuleTask and display its state.
+    """QWidget to control a ModuleTask and display its state.
     """
 
     sigStartTask = QtCore.Signal(dict)  # parameters
@@ -118,7 +118,7 @@ class TaskWidget(QtWidgets.QWidget):
 
     @staticmethod
     def __create_parameter_editor_widgets(task_type: Type[ModuleTask]) -> _ParamWidgetsDict:
-        """ Helper function to create editor widgets and labels for each ModuleTask call parameter
+        """Helper function to create editor widgets and labels for each ModuleTask call parameter.
         """
         task_parameters = task_type.call_parameters()
         param_widgets = dict()
@@ -138,7 +138,7 @@ class TaskWidget(QtWidgets.QWidget):
     @staticmethod
     def __layout_parameter_widgets(param_widgets: _ParamWidgetsIterable,
                                    max_rows: int) -> QtWidgets.QGridLayout:
-        """ Helper function to layout parameter widgets in a QGridLayout """
+        """Helper function to layout parameter widgets in a QGridLayout."""
         row = 0
         column = 0
         layout = QtWidgets.QGridLayout()
@@ -161,7 +161,7 @@ class TaskWidget(QtWidgets.QWidget):
 
     @QtCore.Slot()
     def _run_interrupt_clicked(self) -> None:
-        """ Callback method for button clicks """
+        """Callback method for button clicks."""
         if self._interrupt_enabled:
             self.sigInterruptTask.emit()
         else:
@@ -177,12 +177,12 @@ class TaskWidget(QtWidgets.QWidget):
 
     @QtCore.Slot(str)
     def task_state_changed(self, new_state: str) -> None:
-        """ Callback method for ModuleTask state changes """
+        """Callback method for ModuleTask state changes."""
         self.state_label.setText(new_state)
 
     @QtCore.Slot(object, bool)
     def task_finished(self, result: Any, success: bool) -> None:
-        """ Callback for task finished event """
+        """Callback for task finished event."""
         self._interrupt_enabled = False
         self.run_interrupt_button.setIcon(self._play_icon)
         self.run_interrupt_button.setEnabled(True)
@@ -191,11 +191,11 @@ class TaskWidget(QtWidgets.QWidget):
 
     @QtCore.Slot(object, bool)
     def set_task_result(self, result: Any, success: bool) -> None:
-        """ Updates the task result display """
+        """Updates the task result display."""
         print(result, success)
 
     def get_parameters(self) -> Dict[str, Any]:
-        """ Reads parameters from parameter editors and returns them in a dict """
+        """Reads parameters from parameter editors and returns them in a dict."""
         parameters = dict()
         for param_name, (_, editor) in self.parameter_widgets.items():
             if isinstance(editor, QtWidgets.QLabel):

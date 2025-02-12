@@ -29,17 +29,27 @@ from qudi.util.fit_models.model import FitModelBase, estimator
 
 
 def multiple_exponential_decay(x, amplitudes, decays, stretches):
-    """ Mathematical definition of the sum of multiple stretched exponential decays without any
-    bias.
+    """
+    Mathematical definition of the sum of multiple stretched exponential decays without any bias.
 
-    WARNING: iterable parameters "amplitudes", "decays" and "stretches" must have same length.
+    WARNING: Iterable parameters "amplitudes", "decays", and "stretches" must have the same length.
 
-    @param float x: The independent variable to calculate f(x)
-    @param iterable amplitudes: Iterable containing amplitudes for all exponentials
-    @param iterable decays: Iterable containing decay constants for all exponentials
-    @param iterable stretches: Iterable containing stretch constants for all exponentials
+    Parameters
+    ----------
+    x : float
+        The independent variable to calculate f(x).
+    amplitudes : iterable
+        Iterable containing amplitudes for all exponentials.
+    decays : iterable
+        Iterable containing decay constants for all exponentials.
+    stretches : iterable
+        Iterable containing stretch constants for all exponentials.
 
-    @return float|numpy.ndarray: The result given x for f(x)
+    Returns
+    -------
+    float or numpy.ndarray
+        The result given x for f(x).
+
     """
     assert len(decays) == len(amplitudes) == len(stretches)
     return sum(amp * np.exp(-(x / decay) ** stretch) for amp, decay, stretch in
@@ -94,7 +104,7 @@ class ExponentialDecay(FitModelBase):
         # perform a linear fit on the logarithm of the remaining data
         try:
             poly_coef = np.polyfit(x[:stop_index], np.log(data_smoothed[:stop_index]), deg=1)
-            decay = 1 / np.sqrt(abs(poly_coef[0]))
+            decay = 1 / abs(poly_coef[0])
             amplitude = np.exp(poly_coef[1])
         except:
             warnings.warn('Estimation of decay constant and amplitude failed.')

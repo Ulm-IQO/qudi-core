@@ -27,7 +27,7 @@ from inspect import isclass, isfunction
 
 
 class DefaultMixin:
-    """ Mixin for BaseAttribute introducing optional default value behaviour in __get__.
+    """Mixin for BaseAttribute introducing optional default value behaviour in __get__.
     If no default value is specified, fall back to raising AttributeError.
     """
     _no_default = object()  # unique placeholder
@@ -52,7 +52,7 @@ class DefaultMixin:
 
 
 class ReadOnlyMixin:
-    """ Mixin for BaseAttribute introducing read-only access """
+    """Mixin for BaseAttribute introducing read-only access."""
     def __delete__(self, instance):
         raise AttributeError('Read-only attribute can not be deleted')
 
@@ -64,7 +64,7 @@ class ReadOnlyMixin:
 
 
 class TypedMixin:
-    """ Mixin for BaseAttribute introducing optional type checking via isinstance builtin """
+    """Mixin for BaseAttribute introducing optional type checking via isinstance builtin."""
     def __init__(self, valid_types: Optional[Iterable[Type]] = None, **kwargs):
         super().__init__(**kwargs)
         self.valid_types = None if valid_types is None else tuple(valid_types)
@@ -83,10 +83,10 @@ class TypedMixin:
 
 
 class ValidateMixin:
-    """ Mixin for BaseAttribute introducing optional validation via registering static and/or
+    """Mixin for BaseAttribute introducing optional validation via registering static and/or
     bound validator methods.
     Bound methods are best registered via the "validator" decorator (cooperative with
-    staticmethod/classmethod decorator)
+    staticmethod/classmethod decorator).
     """
     def __init__(self,
                  static_validators: Optional[Iterable[Callable[[Any], None]]] = None,
@@ -104,7 +104,7 @@ class ValidateMixin:
     def validator(self,
                   func: Union[staticmethod, classmethod, Callable[[Any], None]]
                   ) -> Union[staticmethod, classmethod, Callable[[Any], None]]:
-        """ Decorator to register either a static or bound validator """
+        """Decorator to register either a static or bound validator."""
         # Use function reference directly if static
         if isinstance(func, staticmethod):
             self.static_validators.append(func.__func__)
@@ -147,7 +147,7 @@ class ValidateMixin:
 
 
 class BaseAttribute:
-    """ Base descriptor class implementing trivial get/set/delete behaviour for an instance
+    """Base descriptor class implementing trivial get/set/delete behaviour for an instance
     attribute.
     """
     def __init__(self):
@@ -176,7 +176,7 @@ class BaseAttribute:
 
 
 class DefaultAttribute(DefaultMixin, BaseAttribute):
-    """ Attribute that can be given a default value which is used if not explicitly initialized by
+    """Attribute that can be given a default value which is used if not explicitly initialized by
     the instance.
 
     Example usage:
@@ -194,7 +194,7 @@ class DefaultAttribute(DefaultMixin, BaseAttribute):
 
 
 class ReadOnlyAttribute(ReadOnlyMixin, DefaultAttribute):
-    """ Extension of DefaultAttribute to be read-only. A non-default value can be set by calling
+    """Extension of DefaultAttribute to be read-only. A non-default value can be set by calling
     "set_value(instance, value)" on the descriptor instance.
 
     Example usage:
@@ -213,7 +213,7 @@ class ReadOnlyAttribute(ReadOnlyMixin, DefaultAttribute):
 
 
 class TypedAttribute(TypedMixin, DefaultAttribute):
-    """ Extension of DefaultAttribute including type checking via isinstance. A given default
+    """Extension of DefaultAttribute including type checking via isinstance. A given default
     value is not type-checked.
 
     Example usage:
@@ -237,7 +237,7 @@ class TypedAttribute(TypedMixin, DefaultAttribute):
 
 
 class CheckedAttribute(TypedMixin, ValidateMixin, DefaultAttribute):
-    """ Extension of DefaultAttribute including optional validation via static or bound validator
+    """Extension of DefaultAttribute including optional validation via static or bound validator
     methods as well as optional type checking via "isinstance".
     A given default value is not validated. Type checking is performed before validation.
     Register bound validator methods via the CheckedAttribute.validator decorator. This decorator

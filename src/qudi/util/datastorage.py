@@ -44,20 +44,28 @@ from qudi.util.helpers import is_string, is_integer, is_float, is_complex, is_nu
 
 
 class ImageFormat(Enum):
-    """ Image format to use for saving data thumbnails.
-    """
+    """Image format to use for saving data thumbnails."""
+
     PNG = '.png'
     PDF = '.pdf'
 
 
 def get_timestamp_filename(timestamp, nametag=None):
-    """ Returns a qudi standard filename used for saving measurement data to file.
-    Not including any file extension.
+    """
+    Returns a qudi standard filename used for saving measurement data to a file,
+    not including any file extension.
 
-    @param datetime.datetime timestamp: Timestamp used to create the filename from
-    @param str nametag: optional, additional string to include in the file name
+    Parameters
+    ----------
+    timestamp : datetime.datetime
+        Timestamp used to create the filename from.
+    nametag : str, optional
+        Additional string to include in the filename.
 
-    @return str: Generated file name without file extension
+    Returns
+    -------
+    str
+        Generated filename without file extension.
     """
     # Start of the filename contains the timestamp, i.e. "20210130-1130-59"
     datetime_str = timestamp.strftime('%Y%m%d-%H%M-%S')
@@ -96,7 +104,7 @@ def str_dict_to_metadata(str_dict):
 
 
 def _is_dtype_class(obj):
-    """ Helper to check for valid dtypes that can be handled.
+    """Helper to check for valid dtypes that can be handled.
     """
     allowed_types = (int,
                      float,
@@ -111,13 +119,13 @@ def _is_dtype_class(obj):
 
 
 def _is_dtype_str(obj):
-    """ Helper to check for valid dtype string
+    """Helper to check for valid dtype string.
     """
     return obj in ('int', 'float', 'complex', 'str')
 
 
 def _value_to_dtype(val):
-    """ Helper to return the dtype (int, float, complex or str) of a data value.
+    """Helper to return the dtype (int, float, complex or str) of a data value.
     """
     if is_string(val):
         return str
@@ -131,7 +139,7 @@ def _value_to_dtype(val):
 
 
 def _dtype_to_str(obj):
-    """ Helper to convert dtype class to str representation
+    """Helper to convert dtype class to str representation.
     """
     if _is_dtype_str(obj):
         return obj
@@ -282,16 +290,19 @@ def get_info_from_header(header):
 
 
 def create_dir_for_file(file_path):
-    """ Helper method to create the directory (recursively) for a given file path.
+    """Helper method to create the directory (recursively) for a given file path.
     Will NOT raise an error if the directory already exists.
 
-    @param str file_path: File path to create the directory for
+    Parameters
+    ----------
+    file_path : str
+        File path to create the directory for.
     """
     os.makedirs(os.path.dirname(file_path), exist_ok=True)
 
 
 class DataStorageBase(metaclass=ABCMeta):
-    """ Base helper class to store/load (measurement)data to/from disk.
+    """Base helper class to store/load (measurement)data to/from disk.
     Subclasses handle saving and loading of measurement data (including metadata) for specific file
     formats.
     Metadata is represented as dictionary (key-value pairs).
@@ -308,26 +319,38 @@ class DataStorageBase(metaclass=ABCMeta):
     def __init__(self, *, root_dir=None, include_global_metadata=True,
                  image_format=ImageFormat.PNG):
         """
-        @param str root_dir: optional, root-directory for this storage instance to work in
-        @param bool include_global_metadata: optional, flag indicating saving of global metadata
-        @param ImageFormat image_format: optional, image file format Enum for saving thumbnails
+        Parameters
+        ----------
+        root_dir : str, optional
+            Root directory for this storage instance to work in.
+        include_global_metadata : bool, optional
+            Flag indicating whether to save global metadata.
+        image_format : ImageFormat, optional
+            Image file format Enum for saving thumbnails.
         """
         if not isinstance(image_format, ImageFormat):
-            raise TypeError('image_format must be ImageFormat Enum')
+            raise TypeError("image_format must be ImageFormat Enum")
 
         self.root_dir = root_dir  # ToDo: Maybe some sanity checking for correct path syntax?
         self.include_global_metadata = bool(include_global_metadata)
         self.image_format = image_format
 
     def save_thumbnail(self, mpl_figure, file_path):
-        """ Save a matplotlib figure visualizing the saved data in the image format configured.
+        """Save a matplotlib figure visualizing the saved data in the image format configured.
         It is recommended to use the same file_path as the corresponding data file (if applicable)
         and exclude the file extension (will be added according to image format).
 
-        @param matplotlib.figure.Figure mpl_figure: The matplotlib figure object to save as image
-        @param str file_path: full file path to use without file extension
+        Parameters
+        ----------
+        mpl_figure : matplotlib.figure.Figure
+            The matplotlib figure object to save as an image.
+        file_path : str
+            Full file path to use without the file extension.
 
-        @return str: Full absolute path of the saved image
+        Returns
+        -------
+        str
+            Full absolute path of the saved image.
         """
         file_path += self.image_format.value
 
@@ -344,12 +367,20 @@ class DataStorageBase(metaclass=ABCMeta):
         return file_path
 
     def get_unified_metadata(self, local_metadata=None):
-        """ Helper method to return a dict containing provided local_metadata as well as global
+        """Helper method to return a dict containing provided local_metadata as well as global
         metadata depending on include_global_metadata flag.
 
-        @param dict local_metadata: Metadata to include in addition to global metadata
+        Parameters
+        ----------
+        local_metadata : dict
+            Metadata to include in addition to global metadata.
+        include_global_metadata : bool, optional
+            Flag indicating whether to include global metadata.
 
-        @return dict: New dict containing local_metadata and global metadata
+        Returns
+        -------
+        dict
+            New dictionary containing local metadata and global metadata.
         """
         metadata = self.get_global_metadata() if self.include_global_metadata else dict()
         if local_metadata is not None:
@@ -358,43 +389,69 @@ class DataStorageBase(metaclass=ABCMeta):
 
     @abstractmethod
     def save_data(self, data, *, metadata=None, notes=None, nametag=None, timestamp=None, **kwargs):
-        """ This method must be implemented in a subclass. It should provide the facility to save an
+        """This method must be implemented in a subclass. It should provide the facility to save an
         entire measurement as a whole along with experiment metadata (to include e.g. in the file
         header). The user can either specify an explicit filename or a generic one will be created.
         If optional nametag and/or timestamp is provided, this will be used to create the generic
-        filename (only if filename parameter is omitted).
+        filename (only if the filename parameter is omitted).
 
-        @param numpy.ndarray data: data array to be saved (must be 1D or 2D for text files)
-        @param str notes: optional, string that is included in the metadata "as-is" without a key
-        @param dict metadata: optional, named metadata to be saved in the data header / metadata
-        @param str nametag: optional, nametag to include in the generic filename
-        @param datetime.datetime timestamp: optional, timestamp to construct a generic filename from
+        Parameters
+        ----------
+        data : numpy.ndarray
+            Data array to be saved (must be 1D or 2D for text files).
+        notes : str, optional
+            String that is included in the metadata "as-is" without a key.
+        metadata : dict, optional
+            Named metadata to be saved in the data header / metadata.
+        nametag : str, optional
+            Nametag to include in the generic filename.
+        timestamp : datetime.datetime, optional
+            Timestamp to construct a generic filename from.
+        filename : str, optional
+            Explicit filename to use for saving the data.
 
-        @return (str, datetime.datetime, tuple): Full file path, timestamp used, saved data shape
+        Returns
+        -------
+        tuple
+            Full file path (str), timestamp used (datetime.datetime), saved data shape (tuple).
         """
+
         pass
 
     @abstractmethod
     def load_data(self, *args, **kwargs):
-        """ This method must be implemented in a subclass. It should provide the facility to load a
+        """This method must be implemented in a subclass. It should provide the facility to load a
         saved data set including the metadata/experiment parameters and column headers
-        (if possible). Many storage classes can even implement this method as staticmethod (better).
-        For file based storage objects, the only parameter should be file_path (if possible).
+        (if possible). Many storage classes can even implement this method as a static method.
 
-        @return np.ndarray, dict, dict: Data as numpy array, user metadata, general header data
+        For file-based storage objects, the only parameter should be file_path.
+
+        Parameters
+        ----------
+        file_path : str
+            Path to the file to be loaded.
+
+        Returns
+        -------
+        np.ndarray
+            Data as a numpy array.
+        dict
+            User metadata.
+        dict
+            General header data.
         """
         pass
 
     @classmethod
     def get_global_metadata(cls):
-        """ Return a copy of the global metadata dict.
+        """Return a copy of the global metadata dict.
         """
         with cls._global_metadata_lock:
             return cls._global_metadata.copy()
 
     @classmethod
     def add_global_metadata(cls, name, value=None, *, overwrite=False):
-        """ Set a single global metadata key-value pair or alternatively multiple ones as dict.
+        """Set a single global metadata key-value pair or alternatively multiple ones as dict.
         Metadata added this way will persist for all data storage instances in this process until
         being selectively removed by calls to "remove_global_metadata".
         """
@@ -418,7 +475,7 @@ class DataStorageBase(metaclass=ABCMeta):
 
     @classmethod
     def remove_global_metadata(cls, names):
-        """ Remove a global metadata key-value pair by key. Does not raise an error if the key is
+        """Remove a global metadata key-value pair by key. Does not raise an error if the key is
         not found.
         """
         if isinstance(names, str):
@@ -429,7 +486,7 @@ class DataStorageBase(metaclass=ABCMeta):
 
 
 class TextDataStorage(DataStorageBase):
-    """ Helper class to store (measurement)data on disk as text file.
+    """Helper class to store (measurement)data on disk as text file.
     Data will always be saved in a tabular format with column headers. Single/Multiple rows are
     appendable.
     """
@@ -444,18 +501,27 @@ class TextDataStorage(DataStorageBase):
     def __init__(self, *, root_dir, comments='# ', delimiter='\t', file_extension='.dat',
                  column_formats=None, **kwargs):
         """
-        @param str root_dir: Root directory for this storage instance to save files into
-        @param str comments: optional, string to put at the beginning of comment and header lines
-        @param str delimiter: optional, column delimiter used in text files
-        @param str file_extension: optional, file extension to use for text files
-        @param str|sequence column_formats: optional, value format specifier (mini-language) for each
-                                            column. Single string case will be used for all columns.
-        @param str|sequence column_headers: optional, sequence of strings containing column headers.
-                                            If a single string is given, write it to file header
-                                            without formatting.
-        @param type|str|sequence column_dtypes: optional, the column dtypes to expect
 
-        @param kwargs: optional, for additional keyword arguments see DataStorageBase.__init__
+        Parameters
+        ----------
+
+        root_dir : str
+            Root directory for this storage instance to save files into.
+        comments : str, optional
+            String to put at the beginning of comment and header lines.
+        delimiter : str, optional
+            Column delimiter used in text files.
+        file_extension : str, optional
+            File extension to use for text files
+        column_formats : str or sequence, optional
+            Value format specifier (mini-language) for each column. Single string case will be used for all columns.
+        column_headers : str or sequence, optional
+            Sequence of strings containing column headers. If a single string is given, write it to file header without
+            formatting.
+        column_dtypes : str or sequence, optional
+            The column dtypes to expect.
+        kwargs: optional
+            For additional keyword arguments, see DataStorageBase.__init__
         """
         super().__init__(root_dir=root_dir, **kwargs)
 
@@ -507,17 +573,28 @@ class TextDataStorage(DataStorageBase):
 
     def new_file(self, *, timestamp=None, metadata=None, notes=None, nametag=None,
                  column_headers=None, column_dtypes=None, filename=None):
-        """ Create a new data file on disk and write header string to it. Will overwrite old files
+        """
+        Create a new data file on disk and write header string to it. Will overwrite old files
         silently if they have the same path.
 
-        @param dict metadata: optional, named metadata values to be saved in the data header
-        @param str notes: optional, string that is included in the file header "as-is"
-        @param str nametag: optional, nametag to include in the generic filename
-        @param datetime.datetime timestamp: optional, timestamp to use. Will create one if missing.
-        @param str filename: optional, custom filename to use (nametag, timestamp and configured
-                             file_extension will not be included for file naming)
+        Parameters
+        ----------
+        metadata : dict, optional
+            Named metadata values to be saved in the data header.
+        notes : str, optional
+            String that is included in the file header "as-is".
+        nametag : str, optional
+            Nametag to include in the generic filename.
+        timestamp : datetime.datetime, optional
+            Timestamp to use. Will create one if missing.
+        filename : str, optional
+            Custom filename to use (nametag, timestamp, and configured file_extension will not be
+            included for file naming).
 
-        @return (str, datetime.datetime): Full file path, timestamp used
+        Returns
+        -------
+        tuple
+            Full file path (str), timestamp used (datetime.datetime).
         """
         # Create timestamp if missing
         if timestamp is None:
@@ -541,12 +618,22 @@ class TextDataStorage(DataStorageBase):
         return file_path, timestamp
 
     def append_file(self, data, file_path):
-        """ Append single or multiple rows to an existing data file.
+        """Append single or multiple rows to an existing data file.
 
-        @param numpy.ndarray data: data array to be appended (1D: single row, 2D: multiple rows)
-        @param str file_path: file path to append to
+        Parameters
+        ----------
+        data : numpy.ndarray
+            Data array to be appended.
+            For 1D arrays, it represents a single row.
+            For 2D arrays, it represents multiple rows.
+        file_path : str
+            File path to append to.
 
-        @return (int, int): Number of rows written, Number of columns written
+        Returns
+        -------
+        tuple
+            Number of rows written (int).
+            Number of columns written (int).
         """
         if not os.path.isfile(file_path):
             raise FileNotFoundError(f'File to append data to not found: "{file_path}"\n'
@@ -589,9 +676,10 @@ class TextDataStorage(DataStorageBase):
 
     def save_data(self, data, *, timestamp=None, metadata=None, notes=None, nametag=None,
                   column_headers=None, column_dtypes=None, filename=None):
-        """ See: DataStorageBase.save_data() for more information
+        """See: DataStorageBase.save_data() for more information.
 
-        @param str|list column_headers: optional, data column header strings or single string
+        column_headers : str or list, optional
+            Data column header strings or single string.
         """
         # Derive dtypes from first data row if not explicitly given
         if column_dtypes is None:
@@ -614,7 +702,8 @@ class TextDataStorage(DataStorageBase):
     def load_data(file_path):
         """ See: DataStorageBase.load_data()
 
-        @param str file_path: optional, path to file to load data from
+        file_path : str, optional
+            Path to file to load data from.
         """
         # Read back metadata
         try:
@@ -644,14 +733,14 @@ class TextDataStorage(DataStorageBase):
 
 
 class CsvDataStorage(TextDataStorage):
-    """ Helper class to store (measurement)data on disk as CSV file.
+    """Helper class to store (measurement)data on disk as CSV file.
     This is a specialized sub-class of TextDataStorage that uses hard-coded commas as delimiter and
     includes column headers uncommented in the first row of data. This is the standard format for
     importing a table into e.g. MS Excel.
     """
 
     def __init__(self, *, file_extension='.csv', **kwargs):
-        """ See: qudi.util.datastorage.TextDataStorage
+        """See: qudi.util.datastorage.TextDataStorage
         """
         kwargs['delimiter'] = ','
         super().__init__(file_extension=file_extension, **kwargs)
@@ -668,7 +757,7 @@ class CsvDataStorage(TextDataStorage):
 
     def create_header(self, timestamp=None, metadata=None, notes=None, column_headers=None,
                       column_dtypes=None):
-        """ Include column_headers without line comment specifier.
+        """Include column_headers without line comment specifier.
         for more information see: qudi.util.datastorage.TextDataStorage.create_header()
         """
         # Create default header as specified in parent TextDataStorage object without column headers
@@ -684,9 +773,10 @@ class CsvDataStorage(TextDataStorage):
 
     @staticmethod
     def load_data(file_path):
-        """ See: DataStorageBase.load_data()
+        """See: DataStorageBase.load_data()
 
-        @param str file_path: optional, path to file to load data from
+        file_path : str, optional
+            Path to file to load data from.
         """
         # Read back metadata
         header, header_lines = get_header_from_file(file_path)
@@ -703,7 +793,7 @@ class CsvDataStorage(TextDataStorage):
             else:
                 dtype = [(f'f{col:d}', typ) for col, typ in enumerate(dtype)]
         # Load data from file and skip header
-        start_line = header_lines + 2
+        start_line = header_lines + 1
         if general['column_headers']:
             start_line += 1
         data = np.genfromtxt(file_path,
@@ -715,7 +805,7 @@ class CsvDataStorage(TextDataStorage):
 
 
 class NpyDataStorage(DataStorageBase):
-    """ Helper class to store (measurement)data on disk as binary .npy file.
+    """Helper class to store (measurement) data on disk as binary .npy file.
     """
 
     def __init__(self, *, root_dir, **kwargs):
@@ -738,14 +828,17 @@ class NpyDataStorage(DataStorageBase):
 
     def save_data(self, data, *, metadata=None, notes=None, nametag=None, timestamp=None,
                   column_headers=None, filename=None):
-        """ Saves a binary file containing the data array.
+        """Saves a binary file containing the data array.
         Also saves alongside a text file containing the notes, (global) metadata and column headers
         for this data set. The filename of the text file will be the same as for the binary file
         appended by "_metadata".
 
-        For more information see: qudi.util.datastorage.DataStorageBase.save_data
+        For more information, see :meth:`~qudi.util.datastorage.DataStorageBase.save_data`.
 
-        @param str|list column_headers: optional, data column header strings or single string
+        Parameters
+        ----------
+        column_headers : str or list, optional
+            Data column header strings or a single string.
         """
         if timestamp is None:
             timestamp = datetime.now()
@@ -776,16 +869,25 @@ class NpyDataStorage(DataStorageBase):
 
     @staticmethod
     def load_data(file_path):
-        """ See: DataStorageBase.load_data()
+        """
+        See :meth:`~DataStorageBase.load_data` for more information.
 
-        @param str file_path: path to file to load data from
+        Parameters
+        ----------
+        file_path : str
+            Path to the file to load data from.
+
+        Returns
+        -------
+        np.ndarray
+            Data as a numpy array.
         """
         # Load numpy array
         data = np.load(file_path, allow_pickle=False, fix_imports=False)
         # Try to find and load metadata from text file
         metadata_path = file_path.split('.npy')[0] + '_metadata.txt'
         try:
-            header = get_header_from_file(metadata_path)
+            header, _ = get_header_from_file(metadata_path)
         except FileNotFoundError:
             return data, dict(), dict()
         metadata, general = get_info_from_header(header)

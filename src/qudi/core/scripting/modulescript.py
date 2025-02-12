@@ -40,7 +40,7 @@ from qudi.util.mutex import Mutex
 
 
 class ModuleScriptInterrupted(Exception):
-    """ Custom exception class to indicate that a ModuleScript execution has been interrupted.
+    """Custom exception class to indicate that a ModuleScript execution has been interrupted.
     """
     pass
 
@@ -94,10 +94,13 @@ class ModuleScript(QtCore.QObject, metaclass=QudiObjectMeta):
 
     @property
     def log(self) -> Logger:
-        """ Returns a logger object.
+        """Returns a logger object.
         DO NOT OVERRIDE IN SUBCLASS!
 
-        @return Logger: Logger object for this script class
+        Returns
+        -------
+        Logger
+            Logger object for this script class.
         """
         return self.__logger
 
@@ -113,7 +116,7 @@ class ModuleScript(QtCore.QObject, metaclass=QudiObjectMeta):
 
     @property
     def connected_modules(self) -> Mapping[str, Union[str, None]]:
-        """ Mapping of Connector names (keys) to connected module target names (values).
+        """Mapping of Connector names (keys) to connected module target names (values).
         Unconnected Connectors are indicated by None target.
         """
         return {conn.name: None if conn() is None else conn().module_name for conn in
@@ -121,7 +124,7 @@ class ModuleScript(QtCore.QObject, metaclass=QudiObjectMeta):
 
     @classmethod
     def call_parameters(cls) -> Dict[str, inspect.Parameter]:
-        """ Call parameters of the _run method implementation.
+        """Call parameters of the _run method implementation.
 
         Override in subclass if you want anything else than this default implementation.
         Make sure custom implementations of this property are compatible with _run!
@@ -137,7 +140,7 @@ class ModuleScript(QtCore.QObject, metaclass=QudiObjectMeta):
 
     @classmethod
     def result_annotation(cls) -> Union[Any, inspect.Signature.empty]:
-        """ Return type annotation for the _run method implementation.
+        """Return type annotation for the _run method implementation.
         Will return inspect.Signature.empty if _run return value is not annotated.
         """
         return inspect.signature(cls._run).return_annotation
@@ -147,12 +150,15 @@ class ModuleScript(QtCore.QObject, metaclass=QudiObjectMeta):
             self._interrupted = True
 
     def __call__(self, *args, **kwargs) -> Any:
-        """ Convenience magic method to run this script like a function
+        """Convenience magic method to run this script like a function.
         DO NOT OVERRIDE IN SUBCLASS!
 
         Arguments are passed directly to _run() method.
 
-        @return object: Result of the script method
+        Returns
+        -------
+        object
+            Result of the script method.
         """
         self.args = args
         self.kwargs = kwargs
@@ -161,7 +167,7 @@ class ModuleScript(QtCore.QObject, metaclass=QudiObjectMeta):
 
     @QtCore.Slot()
     def run(self) -> None:
-        """ Check run prerequisites and execute _run method with pre-cached arguments.
+        """Check run prerequisites and execute _run method with pre-cached arguments.
         DO NOT OVERRIDE IN SUBCLASS!
         """
         self.result = None
@@ -186,7 +192,7 @@ class ModuleScript(QtCore.QObject, metaclass=QudiObjectMeta):
                 self.sigFinished.emit()
 
     def connect_modules(self, connector_targets: Mapping[str, Base]) -> None:
-        """ Connects given modules (values) to their respective Connector (keys).
+        """Connects given modules (values) to their respective Connector (keys).
 
         DO NOT CALL THIS METHOD UNLESS YOU KNOW WHAT YOU ARE DOING!
         """
@@ -214,7 +220,7 @@ class ModuleScript(QtCore.QObject, metaclass=QudiObjectMeta):
             conn.connect(target)
 
     def disconnect_modules(self) -> None:
-        """ Disconnects all Connector instances for this object.
+        """Disconnects all Connector instances for this object.
 
         DO NOT CALL THIS METHOD UNLESS YOU KNOW WHAT YOU ARE DOING!
         """
@@ -230,14 +236,14 @@ class ModuleScript(QtCore.QObject, metaclass=QudiObjectMeta):
 
     @abstractmethod
     def _run(self, *args, **kwargs) -> Any:
-        """ The actual script to be run. Implement only this method in a subclass.
+        """The actual script to be run. Implement only this method in a subclass.
         """
         raise NotImplementedError(f'No _run() method implemented for "{self.__class__.__name__}".')
 
 
 def import_module_script(module: str, cls: str,
                          reload: Optional[bool] = True) -> Type[ModuleScript]:
-    """ Helper function to import ModuleScript sub-classes by name from a given module.
+    """Helper function to import ModuleScript sub-classes by name from a given module.
     Reloads the module to import from by default.
     """
     mod = importlib.import_module(module)
@@ -250,7 +256,7 @@ def import_module_script(module: str, cls: str,
 
 
 class ModuleScriptsDictTableModel(DictTableModel):
-    """ Qt compatible table model holding all configured and available ModuleScript subclasses.
+    """Qt compatible table model holding all configured and available ModuleScript subclasses.
     """
     def __init__(self, scripts_config: Optional[Mapping[str, dict]] = None):
         super().__init__(headers=['Name', 'Class'])

@@ -73,10 +73,12 @@ class ModuleStateMachine(Fysom, QtCore.QObject):
         return self.current
 
     def on_change_state(self, e: Any) -> None:
-        """
-        Fysom callback for all state transitions.
+        """Fysom callback for all state transitions.
 
-        @param object e: Fysom event object passed through all state transition callbacks
+        Parameters
+        ----------
+        e : object
+            Fysom event object passed through all state transition callbacks.
         """
         self.sigStateChanged.emit(e)
 
@@ -98,7 +100,7 @@ class ModuleStateMachine(Fysom, QtCore.QObject):
 
 
 class Base(QtCore.QObject, metaclass=ModuleMeta):
-    """ Base class for all loadable modules
+    """Base class for all loadable modules
 
     * Ensure that the program will not die during the load of modules
     * Initialize modules
@@ -124,13 +126,19 @@ class Base(QtCore.QObject, metaclass=ModuleMeta):
     def __init__(self, qudi_main_weakref: Any, name: str,
                  config: Optional[Mapping[str, Any]] = None,
                  callbacks: Optional[Mapping[str, Callable]] = None, **kwargs):
-        """ Initialise Base instance. Set up its state machine and initialize ConfigOption meta
+        """Initialise Base instance. Set up its state machine and initialize ConfigOption meta
         attributes from given config.
 
-        @param object self: the object being initialised
-        @param str name: unique name for this module instance
-        @param dict configuration: parameters from the configuration file
-        @param dict callbacks: dict specifying functions to be run on state machine transitions
+        Parameters
+        ----------
+        self : object
+            The object being initialized.
+        name : str
+            Unique name for this module instance.
+        configuration : dict
+            Parameters from the configuration file.
+        callbacks : dict
+            Dictionary specifying functions to be run on state machine transitions.
         """
         super().__init__(**kwargs)
 
@@ -202,7 +210,7 @@ class Base(QtCore.QObject, metaclass=ModuleMeta):
 
     @QtCore.Slot()
     def move_to_main_thread(self) -> None:
-        """ Method that will move this module into the main/manager thread.
+        """Method that will move this module into the main/manager thread.
         """
         if QtCore.QThread.currentThread() != self.thread():
             QtCore.QMetaObject.invokeMethod(self,
@@ -213,7 +221,7 @@ class Base(QtCore.QObject, metaclass=ModuleMeta):
 
     @property
     def module_thread(self) -> Union[QtCore.QThread, None]:
-        """ Read-only property returning the current module QThread instance if the module is
+        """Read-only property returning the current module QThread instance if the module is
         threaded. Returns None otherwise.
         """
         if self._threaded:
@@ -222,27 +230,27 @@ class Base(QtCore.QObject, metaclass=ModuleMeta):
 
     @property
     def module_name(self) -> str:
-        """ Read-only property returning the module name of this module instance as specified in the
+        """Read-only property returning the module name of this module instance as specified in the
         config.
         """
         return self._meta['name']
 
     @property
     def module_base(self) -> str:
-        """ Read-only property returning the module base of this module instance
-        ('hardware' 'logic' or 'gui')
+        """Read-only property returning the module base of this module instance
+        ('hardware' 'logic' or 'gui').
         """
         return self._meta['base']
 
     @property
     def module_uuid(self) -> uuid.UUID:
-        """ Read-only property returning a unique uuid for this module instance.
+        """Read-only property returning a unique uuid for this module instance.
         """
         return self._meta['uuid']
 
     @property
     def module_default_data_dir(self) -> str:
-        """ Read-only property returning the generic default directory in which to save data.
+        """Read-only property returning the generic default directory in which to save data.
         Module implementations can overwrite this property with a custom path but should only do so
         with a very good reason.
         """
@@ -283,18 +291,18 @@ class Base(QtCore.QObject, metaclass=ModuleMeta):
 
     @property
     def log(self) -> logging.Logger:
-        """ Returns the module logger instance
+        """Returns the module logger instance.
         """
         return self.__logger
 
     @property
     def is_module_threaded(self) -> bool:
-        """ Returns whether the module shall be started in its own thread.
+        """Returns whether the module shall be started in its own thread.
         """
         return self._threaded
 
     def __activation_callback(self, event=None) -> bool:
-        """ Restore status variables before activation and invoke on_activate method.
+        """Restore status variables before activation and invoke on_activate method.
         """
         try:
             self._load_status_variables()
@@ -305,7 +313,7 @@ class Base(QtCore.QObject, metaclass=ModuleMeta):
         return True
 
     def __deactivation_callback(self, event=None) -> bool:
-        """ Invoke on_deactivate method and save status variables afterwards even if deactivation
+        """Invoke on_deactivate method and save status variables afterwards even if deactivation
         fails.
         """
         try:
@@ -318,7 +326,7 @@ class Base(QtCore.QObject, metaclass=ModuleMeta):
         return True
 
     def _load_status_variables(self) -> None:
-        """ Load status variables from app data directory on disc.
+        """Load status variables from app data directory on disc.
         """
         # Load status variables from app data directory
         file_path = get_module_app_data_path(self.__class__.__name__,
@@ -341,7 +349,7 @@ class Base(QtCore.QObject, metaclass=ModuleMeta):
             self.log.exception('Error while settings status variables:')
 
     def _dump_status_variables(self) -> None:
-        """ Dump status variables to app data directory on disc.
+        """Dump status variables to app data directory on disc.
 
         This method can also be used to manually dump status variables independent of the automatic
         dump during module deactivation.
@@ -380,7 +388,7 @@ class Base(QtCore.QObject, metaclass=ModuleMeta):
         qudi_main.gui.pop_up_message(title, message)
 
     def connect_modules(self, connections: Mapping[str, Any]) -> None:
-        """ Connects given modules (values) to their respective Connector (keys).
+        """Connects given modules (values) to their respective Connector (keys).
 
         DO NOT CALL THIS METHOD UNLESS YOU KNOW WHAT YOU ARE DOING!
         """
@@ -408,7 +416,7 @@ class Base(QtCore.QObject, metaclass=ModuleMeta):
             conn.connect(target)
 
     def disconnect_modules(self) -> None:
-        """ Disconnects all Connector instances for this module.
+        """Disconnects all Connector instances for this module.
 
         DO NOT CALL THIS METHOD UNLESS YOU KNOW WHAT YOU ARE DOING!
         """
@@ -417,13 +425,13 @@ class Base(QtCore.QObject, metaclass=ModuleMeta):
 
     @abstractmethod
     def on_activate(self) -> None:
-        """ Method called when module is activated. Must be implemented by actual qudi module.
+        """Method called when module is activated. Must be implemented by actual qudi module.
         """
         raise NotImplementedError('Please implement and specify the activation method.')
 
     @abstractmethod
     def on_deactivate(self) -> None:
-        """ Method called when module is deactivated. Must be implemented by actual qudi module.
+        """Method called when module is deactivated. Must be implemented by actual qudi module.
         """
         raise NotImplementedError('Please implement and specify the deactivation method.')
 

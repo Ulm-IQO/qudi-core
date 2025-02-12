@@ -38,8 +38,8 @@ class MissingOption(Enum):
 
 
 class ConfigOption:
-    """ This class represents a configuration entry in the config file that is loaded before
-        module initalisation.
+    """This class represents a configuration entry in the config file that is loaded before
+    module initalisation.
     """
 
     def __init__(self, name: Optional[str] = None, default: Optional[Any] = None, *,
@@ -47,13 +47,24 @@ class ConfigOption:
                  checker: Optional[Callable] = None, converter: Optional[Callable] = None):
         """ Create a ConfigOption object.
 
-        @param name: identifier of the option in the configuration file
-        @param default: default value for the case that the option is not set in the config file
-        @param missing: action to take when the option is not set. 'nothing' does nothing, 'warn'
-                        logs a warning, 'error' logs an error and prevents the module from loading
-        @param constructor: constructor function for complex config option behaviour
-        @param checker: static function that checks if value is ok
-        @param converter: static function that forces type interpretation
+        Parameters
+        ----------
+        name : Optional[str], optional
+            Identifier of the option in the configuration file.
+        default : Optional[Any], optional
+            Default value for the case that the option is not set in the config file.
+        missing : Optional[str], optional
+            Action to take when the option is not set.
+            'nothing' does nothing,
+            'warn' logs a warning,
+            'error' logs an error and prevents the module from loading.
+        constructor : Optional[Callable], optional
+            Constructor function for complex config option behavior.
+        checker : Optional[Callable], optional
+            Static function that checks if value is okay.
+        converter : Optional[Callable], optional
+            Static function that forces type interpretation.
+
         """
         self.missing = MissingOption[missing]
 
@@ -80,9 +91,12 @@ class ConfigOption:
         return self.missing != MissingOption.error
 
     def copy(self, **kwargs):
-        """ Create a new instance of ConfigOption with copied values and update
+        """Create a new instance of ConfigOption with copied values and update.
 
-        @param kwargs: extra arguments or overrides for the constructor of this class
+        Parameters
+        ----------
+        **kwargs
+            Extra arguments or overrides for the constructor of this class.
         """
         newargs = {'name': self.name,
                    'default': copy.deepcopy(self.default),
@@ -94,24 +108,31 @@ class ConfigOption:
         return ConfigOption(**newargs)
 
     def check(self, value: Any) -> bool:
-        """ If checker function set, check value. Assume everything is ok otherwise.
+        """If checker function set, check value. Assume everything is ok otherwise.
         """
         if callable(self.checker):
             return self.checker(value)
         return True
 
     def convert(self, value: Any) -> Any:
-        """ If converter function set, convert value (pass-through otherwise).
+        """If converter function set, convert value (pass-through otherwise).
         """
         if callable(self.converter):
             return self.converter(value)
         return value
 
     def constructor(self, func: Callable) -> Callable:
-        """ This is the decorator for declaring a constructor function for this ConfigOption.
+        """Decorator for declaring a constructor function for this ConfigOption.
 
-        @param func: constructor function for this ConfigOption
-        @return: return the original function so this can be used as a decorator
+        Parameters
+        ----------
+        func : Callable
+            Constructor function for this ConfigOption.
+
+        Returns
+        -------
+        Callable
+            Returns the original function so it can be used as a decorator.
         """
         self.constructor_function = self._assert_func_signature(func)
         return func

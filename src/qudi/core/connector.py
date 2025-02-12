@@ -27,15 +27,29 @@ from qudi.util.overload import OverloadProxy
 
 
 class Connector:
-    """ A connector used to connect qudi modules with each other.
+    """A connector used to connect qudi modules with each other.
     """
 
-    def __init__(self, interface: Union[str, Type], name: str = None, optional: bool = False):
-        """
-        @param str interface: name of the interface class to connect to
-        @param str name: optional, name of the connector in qudi config. Will set attribute name if
-                         omitted.
-        @param bool optional: optional, flag indicating if the connection is mandatory (False)
+    def __init__(
+        self, interface: Union[str, Type], name: str = None, optional: bool = False
+    ):
+        """Initialize a Connector instance.
+
+        Parameters
+        ----------
+        interface : Union[str, Type]
+            Name of the interface class to connect to or the interface class itself.
+        name : str, optional
+            Name of the connector in qudi config. Will set attribute name if omitted.
+        optional : bool, optional
+            Flag indicating if the connection is mandatory (False by default).
+
+        Raises
+        ------
+        AssertionError
+            If `interface` is not a string or a type.
+            If `name` is not `None` or a non-empty string.
+            If `optional` is not a boolean.
         """
         assert isinstance(interface, (str, type)), \
             'Parameter "interface" must be an interface class or the class name as str.'
@@ -53,7 +67,7 @@ class Connector:
             self.name = name
 
     def __call__(self) -> Any:
-        """ Return reference to the module that this connector is connected to. """
+        """Return reference to the module that this connector is connected to."""
         if self.is_connected:
             return self._obj_proxy
         if self.optional:
@@ -76,14 +90,19 @@ class Connector:
 
     @property
     def is_connected(self) -> bool:
-        """ Read-only property to check if the Connector instance is connected to a target module.
+        """Read-only property to check if the Connector instance is connected to a target module.
 
-        @return bool: Connection status flag (True: connected, False: disconnected)
+        Returns
+        -------
+        bool
+            Connection status flag.
+            - True: Connected
+            - False: Disconnected
         """
         return self._obj_proxy is not None
 
     def connect(self, target: Any) -> None:
-        """ Check if target is connectible by this connector and connect.
+        """Check if target is connectible by this connector and connect.
         """
         bases = {cls.__name__ for cls in target.__class__.mro()}
         if self.interface not in bases:
@@ -95,12 +114,12 @@ class Connector:
         self._obj_ref = weakref.ref(target, self.__module_died_callback)
 
     def disconnect(self) -> None:
-        """ Disconnect connector.
+        """Disconnect connector.
         """
         self._obj_proxy = None
 
     def copy(self, **kwargs):
-        """ Create a new instance of Connector with copied values and update
+        """Create a new instance of Connector with copied values and update
         """
         return Connector(kwargs.get('interface', self.interface),
                          kwargs.get('name', self.name),
