@@ -68,7 +68,7 @@ class FitConfiguration:
     """
     """
 
-    def __init__(self, name, model, estimator=None, custom_parameters=None):
+    def __init__(self, name: str, model: str, estimator: Optional[str] = None, custom_parameters: Optional[lmfit.Parameters] = None):
         assert isinstance(name, str), 'FitConfiguration name must be str type.'
         assert name, 'FitConfiguration name must be non-empty string.'
         assert model in _fit_models, f'Invalid fit model name encountered: "{model}".'
@@ -94,7 +94,7 @@ class FitConfiguration:
         return self._estimator
 
     @estimator.setter
-    def estimator(self, value):
+    def estimator(self, value: Union[str, None]):
         if value is not None:
             assert value in self.available_estimators, \
                 f'Invalid fit model estimator encountered: "{value}"'
@@ -114,7 +114,7 @@ class FitConfiguration:
         return self._custom_parameters.copy() if self._custom_parameters is not None else None
 
     @custom_parameters.setter
-    def custom_parameters(self, value):
+    def custom_parameters(self, value: Union[lmfit.Parameters, None]):
         if value is not None:
             default_params = self.default_parameters
             invalid = set(value).difference(default_params)
@@ -173,10 +173,10 @@ class FitConfigurationsModel(QtCore.QAbstractListModel):
         return self._fit_configurations.copy()
 
     @QtCore.Slot(str, str)
-    def add_configuration(self, name, model):
+    def add_configuration(self, name: str, model: str, estimator: Optional[str] = None, custom_parameters: Optional[lmfit.Parameters] = None):
         assert name not in self.configuration_names, f'Fit config "{name}" already defined.'
         assert name != 'No Fit', '"No Fit" is a reserved name for fit configs. Choose another.'
-        config = FitConfiguration(name, model)
+        config = FitConfiguration(name, model, estimator, custom_parameters)
         new_row = len(self._fit_configurations)
         self.beginInsertRows(self.createIndex(new_row, 0), new_row, new_row)
         self._fit_configurations.append(config)
