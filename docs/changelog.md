@@ -6,7 +6,7 @@
 None
 
 ### Bugfixes
-None
+- Fixed the correct assignment of `metadata` and `general` when loading data with `NpyDataStorage`, in line with the other storage classes
 
 ### New Features
 None
