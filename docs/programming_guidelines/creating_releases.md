@@ -1,10 +1,6 @@
-layout: default
-title: qudi-core
----
 
-[index](../index.md)
-
----
+(creating_releases)=
+# Creating Releases
 
 # How to create a new qudi-core release
 
@@ -97,5 +93,3 @@ release description field. Remove the section header, i.e. the `Version vX.Y.Z` 
 Congratulations! You have successfully published a release of `qudi-core` on GitHub and PyPI.
   
 ---
-
-[index](../index.md)

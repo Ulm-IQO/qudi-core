@@ -1,11 +1,3 @@
----
-layout: default
-title: qudi-core
----
-
-[index](../index.md)
-
----
 
 # Status Variables
 
@@ -124,5 +116,3 @@ By default, the declared variable name in the class body will be used and since 
 never opens the AppStatus files, this feature is not quite too useful.
 
 ---
-
-[index](../index.md)

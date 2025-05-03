@@ -1,11 +1,3 @@
----
-layout: default
-title: qudi-core
----
-
-[index](../index.md)
-
----
 
 # Connectors
 
@@ -19,5 +11,3 @@ modules members via the right interface.
 
 
 ---
-
-[index](../index.md)

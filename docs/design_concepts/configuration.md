@@ -1,11 +1,3 @@
----
-layout: default
-title: qudi-core
----
-
-[index](../index.md)
-
----
 
 # Configuration
 
@@ -74,7 +66,7 @@ gui:
         ...
 ```
 
-#### remote_modules_server
+#### Remote-modules-server
 If you want to expose qudi modules running on the local machine to networked remote qudi instances, 
 you need to specify the server settings with this property.
 By default this property will be `null`, meaning the remote module server is disabled.  
@@ -253,7 +245,7 @@ hardware:
 ```
 
 As you can probably see, the config looks very much like the `remote_module_server` global config 
-entry [above](#remote_modules_server). In fact the `address` and `port` items must mirror the 
+entry [above](#remote-modules-server). In fact the `address` and `port` items must mirror the 
 `remote_module_server` config on the remote qudi instance to connect to.
 
 
@@ -298,5 +290,3 @@ environment:
    ```
 
 ---
-
-[index](../index.md)

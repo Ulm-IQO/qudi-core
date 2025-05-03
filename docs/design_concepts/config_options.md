@@ -1,12 +1,5 @@
----
-layout: default
-title: qudi-core
----
 
-[index](../index.md)
-
----
-
+(config_options)=
 # Configuration Options
 
 When working with [measurement modules](measurement_modules.md) (hardware/logic/GUI) you may want 
@@ -149,5 +142,3 @@ Since the `constructor` function is usually static (as the example above also sh
 combine that with the `@staticmethod` decorator. But this is not necessary and just good style.
 
 ---
-
-[index](../index.md)

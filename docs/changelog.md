@@ -54,7 +54,7 @@ None
 is in a set of discrete values
 
 ### Other
-- Improved documentation [`getting_started.md`](getting_started.md)
+- Improved documentation [`getting_started.md`](getting_started/getting_started.md)
 - Added documentation [`programming_guidelines/data_fitting_integration.md`](programming_guidelines/data_fitting_integration.md)
 
 

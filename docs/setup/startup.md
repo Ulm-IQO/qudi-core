@@ -1,11 +1,3 @@
----
-layout: default
-title: qudi-core
----
-
-[index](../index.md)
-
----
 
 # Starting qudi
 If you have followed the [installation instructions](installation.md), the easiest way of running 
@@ -53,5 +45,3 @@ optional arguments:
 ```
 
 ---
-
-[index](../index.md)

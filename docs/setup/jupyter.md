@@ -1,11 +1,3 @@
----
-layout: default
-title: qudi-core
----
-
-[index](../index.md)
-
----
 
 # Jupyter Notebook Integration
 
@@ -79,5 +71,3 @@ be useful to configure a fully automated measurement sequence for example.
 You can read more about the qudi kernel on the [Integrated IPython kernel](../404.md) page.
 
 ---
-
-[index](../index.md)

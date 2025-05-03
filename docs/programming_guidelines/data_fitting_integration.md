@@ -1,11 +1,3 @@
----
-layout: default
-title: qudi-core
----
-
-[index](../index.md)
-
----
 
 # Fitting
 Qudi provides drop-in objects that can be used in logic and corresponding GUI modules to facilitate 
@@ -49,5 +41,3 @@ Each fit model is implemented as a class that inherits from FitModelBase and nee
 
 #Todo: More Documentation
 ---
-
-[index](../index.md)

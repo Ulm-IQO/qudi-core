@@ -1,11 +1,3 @@
----
-layout: default
-title: qudi-core
----
-
-[index](../index.md)
-
----
 
 # Installation
 
@@ -332,4 +324,3 @@ Quantum Optics ([Ulm-IQO](https://github.com/Ulm-IQO/)) under the LGPL v3 licens
 
 ---
 
-[index](../index.md)

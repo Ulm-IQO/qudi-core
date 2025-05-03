@@ -1,11 +1,3 @@
----
-layout: default
-title: qudi-core
----
-
-[index](../index.md)
-
----
 
 # Hardware Interface
 When we talk about an "interface" in the context of qudi, mean the hardware interface classes 
@@ -21,9 +13,9 @@ So every class that inherits the same interface is guaranteed to provide at leas
 methods and properties defined in the interface.
 
 Since the interface subclass that implements all the abstract members is also a subclass of `Base`,
-this class is then called a [hardware module]().
+this class is then called a [hardware module](../404.md).
 
-See also the detailed [qudi modules](qudi_modules.md) documentation if you want to know more about 
+See also the detailed [IQO modules](inv:iqo:std:doc#index) documentation if you want to know more about 
 what defines a qudi module and the respective inheritance trees.
 
 It's always good to have a look at some example... so here is a simple interface class for you.
@@ -130,4 +122,3 @@ This is also called "hardware abstraction".
 
 ---
 
-[index](../index.md)

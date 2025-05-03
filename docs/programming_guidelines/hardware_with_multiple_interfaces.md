@@ -1,11 +1,3 @@
----
-layout: default
-title: qudi-core
----
-
-[index](../index.md)
-
----
 
 # Creating hardware modules satisfying multiple interfaces
 
@@ -244,5 +236,3 @@ classes for the overload mechanism to work, which allows you to use it with any 
 The same is true for hiding the overloading semantics using `OverloadProxy`.
 
 ---
-
-[index](../index.md)

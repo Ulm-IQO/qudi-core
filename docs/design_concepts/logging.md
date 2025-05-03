@@ -1,11 +1,3 @@
----
-layout: default
-title: qudi-core
----
-
-[index](../index.md)
-
----
 
 # Logging
 Qudi uses the `logging` module from the Python standard library to manage log messages. Please 
@@ -133,5 +125,3 @@ logger.info('Module initialized')  # create example log record
 ```
 
 ---
-
-[index](../index.md)

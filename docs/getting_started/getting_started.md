@@ -1,12 +1,5 @@
----
-layout: default
-title: qudi-core
----
 
-[index](index.md)
-
----
-
+(getting_started)=
 # How to get started with qudi
 This article is an attempt at guiding new users through the process of installing, understanding 
 and using qudi.
@@ -20,10 +13,10 @@ For every hardware interface in qudi, there must be a dummy module to simulate t
 in the absence of a real instrument.
 
 The installation however is always the same. You can refer to the detailed step-by-step 
-[installation guide](setup/installation.md) to install qudi.
+[installation guide](../setup/installation.md) to install qudi.
 
 ## Startup
-Time to fire up the engines... Please refer to the detailed [startup guide](setup/startup.md) to 
+Time to fire up the engines... Please refer to the detailed [startup guide](../setup/startup.md) to 
 run qudi.
 
 If you have set up everything correctly, you should see the main window of qudi coming up.
@@ -35,7 +28,7 @@ dedicated to
 - __Logic__: "Brains" of each application. Configure, control and monitor the measurement. 
 Orchestrate hardware.
 - __Hardware__: Similar to a driver. Provide simple, abstracted 
-[interfaces](design_concepts/hardware_interface.md) 
+[interfaces](../design_concepts/hardware_interface.md) 
 to avoid the logic from needing to "speak" the language of each specific device.
 - __GUI__: User-friendly graphical interfaces.
 
@@ -65,7 +58,7 @@ using them in your specific setup. They will just clutter you manager GUI otherw
 For telling qudi what modules to use and how they should connect to each other, you need to provide
 a setup-specific config file. 
 
-Please refer to the detailed [configuration guide](design_concepts/configuration.md) to set up a 
+Please refer to the detailed [configuration guide](../design_concepts/configuration.md) to set up a 
 proper qudi config for your needs.
 
 
@@ -92,7 +85,7 @@ approaching qudi development:
 
 With both ways, you'll be able to install your own developments on top of an existing qudi-core 
 installation, as described in 
-[Step 4](setup/installation.md#step-4-install-measurement-module-addons) of the installation 
+[Step 4](../setup/installation.md#step-4-install-measurement-module-addons) of the installation 
 instructions.
 
 You may even want to share your hard work with others or find people who can give you input on the 
@@ -148,7 +141,7 @@ The TemplateLogic makes use of four central concepts:
 - `Signal` for easy (asynchronous) communication with connected qudi modules. 
 
 For more info on the software infrastructure that your custom module may use, please refer to the 
-[measurement modules](design_concepts/measurement_modules.md) documentation.
+[measurement modules](../design_concepts/measurement_modules.md) documentation.
 
 After you successfully loaded your custom logic in the qudi manager, you can go on by adding more 
 functions and stripping away not needed parts.  
@@ -159,5 +152,3 @@ example_logic.reset_counter()
 ```
 
 ---
-
-[index](index.md)

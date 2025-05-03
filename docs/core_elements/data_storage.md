@@ -1,11 +1,3 @@
----
-layout: default
-title: qudi-core
----
-
-[index](../index.md)
-
----
 
 # Data storage with qudi
 
@@ -349,5 +341,3 @@ separate files.
 The handling of the global parameters (read/add/remove) can be considered thread-safe.
 
 ---
-
-[index](../index.md)

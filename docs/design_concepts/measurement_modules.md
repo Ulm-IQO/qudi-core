@@ -1,11 +1,3 @@
----
-layout: default
-title: qudi-core
----
-
-[index](../index.md)
-
----
 
 # Qudi Measurement Modules
 Qudi user applications revolve around "qudi measurement modules", namely hardware, logic and 
@@ -172,7 +164,7 @@ generally considered bad practice. Unless you have a very specific and good reas
 you should never use this object in your experiment toolchains.
 
 
-## Inter-Module Communication
+## Inter-Module-Communication
 So, as you might have noticed the relationship of GUI, logic and hardware modules is hierarchical:
 - GUI modules control one or more logic modules but no other GUI or hardware modules
 - Logic modules control other logic modules and/or hardware modules but no GUI modules
@@ -282,5 +274,3 @@ class MyLogicModule(LogicBase):
 
 
 ---
-
-[index](../index.md)
