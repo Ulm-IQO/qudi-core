@@ -79,10 +79,11 @@ dependencies = [
 
 [project.optional-dependencies]
 dev-docs = [
-    "Sphinx==7.2.6",
-    "numpydoc==1.6.0",
-    "pydata_sphinx_theme==0.15.4",
-    "sphinx-design==0.6.1"  # Added sphinx-design here
+    "Sphinx",
+    "numpydoc",
+    "pydata_sphinx_theme",
+    "sphinx-design" ,
+    "myst_parser"
 ]
 
 [project.scripts]
