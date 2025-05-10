@@ -77,6 +77,14 @@ dependencies = [
     "qtconsole>=5.5.0",
 ]
 
+[project.optional-dependencies]
+dev-docs = [
+    "Sphinx==7.2.6",
+    "numpydoc==1.6.0",
+    "pydata_sphinx_theme==0.15.4",
+    "sphinx-design==0.6.1"  # Added sphinx-design here
+]
+
 [project.scripts]
 qudi = "qudi.runnable:main"
 qudi-config-editor = "qudi.tools.config_editor.config_editor:main"
