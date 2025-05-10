@@ -44,7 +44,7 @@ templates_path = ['templates']
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store', '**.ipynb_checkpoints']
 
 autosummary_generate = True
-autosummary_ignore_module_all = False
+autosummary_ignore_module_all = True
 autosummary_imported_members = False
 autodoc_mock_imports = ['lmfit']
 
