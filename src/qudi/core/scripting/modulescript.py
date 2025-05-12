@@ -198,9 +198,13 @@ class ModuleScript(QtCore.QObject, metaclass=QudiObjectMeta):
         """
         # Sanity checks
         conn_names = set(conn.name for conn in self._meta['connectors'].values())
+        conn_names = conn_names.union(set(conn.name for conn in self._meta['connector_lists'].values()))
         mandatory_conn = set(
             conn.name for conn in self._meta['connectors'].values() if not conn.optional
         )
+        mandatory_conn = mandatory_conn.union(set(
+            conn.name for conn in self._meta['connector_lists'].values() if not conn.optional
+        ))
         configured_conn = set(connector_targets)
         if not configured_conn.issubset(conn_names):
             raise KeyError(f'Mismatch of connectors in configuration {configured_conn} and '
@@ -218,6 +222,12 @@ class ModuleScript(QtCore.QObject, metaclass=QudiObjectMeta):
                 raise RuntimeError(f'Connector "{conn.name}" already connected.\n'
                                    f'Call "disconnect_modules()" before trying to reconnect.')
             conn.connect(target)
+        for conn in self._meta['connector_lists'].values():
+            targets = connector_targets.get(conn.name, None)
+            if targets is None:
+                continue
+            for target in targets:
+                conn.connect(target)
 
     def disconnect_modules(self) -> None:
         """Disconnects all Connector instances for this object.
@@ -225,6 +235,8 @@ class ModuleScript(QtCore.QObject, metaclass=QudiObjectMeta):
         DO NOT CALL THIS METHOD UNLESS YOU KNOW WHAT YOU ARE DOING!
         """
         for conn in self._meta['connectors'].values():
+            conn.disconnect()
+        for conn in self._meta['connector_lists'].values():
             conn.disconnect()
 
     def _check_interrupt(self) -> None:

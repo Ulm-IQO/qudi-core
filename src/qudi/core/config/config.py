@@ -26,7 +26,7 @@ __all__ = ['Configuration', 'ValidationError', 'ParserError', 'YAMLError', 'Dupl
 import copy
 from numbers import Number
 from PySide2 import QtCore
-from typing import Mapping, Optional, Union, Sequence, Set, List, MutableMapping, Any
+from typing import Iterable, Mapping, Optional, Union, Sequence, Set, List, MutableMapping, Any
 from collections.abc import MutableMapping as _MutableMapping
 from qudi.core.meta import ABCQObjectMeta as _ABCQObjectMeta
 
@@ -189,7 +189,7 @@ class Configuration(_FileHandlerBase,
                          name: str,
                          module_class: str,
                          allow_remote: Optional[bool] = None,
-                         connect: Optional[Mapping[str, str]] = None,
+                         connect: Optional[Mapping[str, Union[str, Iterable[str]]]] = None,
                          options: Optional[Mapping[str, _OptionType]] = None) -> None:
         """Mutates the current configuration by validating and adding a new local qudi module
         config with base "gui", "logic" or "hardware" of the form:
@@ -203,6 +203,10 @@ class Configuration(_FileHandlerBase,
                 connect:
                     <connect_key1>: <connect_value1>
                     <connect_key2>: <connect_value1>
+                    <connect_key3>:
+                        - <connect_value3a>
+                        - <connect_value3b>
+                        - ...
                     ...
 
         Raises KeyError if a module with the same name is already configured.

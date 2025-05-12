@@ -172,8 +172,17 @@ def local_module_config_schema() -> Dict[str, Any]:
             'connect': {
                 'type': 'object',
                 'additionalProperties': {
-                    'type': 'string',
-                    'pattern': f'^{__module_name_pattern}$'
+                    'oneOf': [
+                        { 'type': 'string', 'pattern': f'^{__module_name_pattern}$' },
+                        {
+                            'type': 'array',
+                            'uniqueItems': True,
+                            'items': {
+                                'type': 'string',
+                                'pattern': f'^{__module_name_pattern}$'
+                            },
+                        }
+                    ]
                 },
                 'default': dict()
             },

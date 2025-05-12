@@ -142,7 +142,7 @@ NOT each time the module is activated.
 See also the [qudi configuration option documentation](../404.md).
 
 #### 7. Measurement Module Interconnection
-You can define other measurement modules that can be accessed via `Connector` meta object members.  
+You can define other measurement modules that can be accessed via `Connector` and `ConnectorList` meta object members.  
 The qudi module manager will automatically load and activate dependency modules according to the 
 configuration and connect them to the module upon activation.
 
@@ -179,7 +179,7 @@ So, as you might have noticed the relationship of GUI, logic and hardware module
 - Hardware modules control no other qudi modules and are just providing an interface to a specific 
 instrument
 
-The connection to another module is done by the `qudi.core.connector.Connector` meta object. These
+The connection to another module is done by the `qudi.core.connector.Connector` and `qudi.core.connector.ConnectorList`  meta object. These
 connectors declare the dependency of a module on another module further down the hierarchy, i.e. it 
 opens up a control flow path to another module.
 
