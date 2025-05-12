@@ -890,5 +890,5 @@ class NpyDataStorage(DataStorageBase):
             header, _ = get_header_from_file(metadata_path)
         except FileNotFoundError:
             return data, dict(), dict()
-        metadata, general = get_info_from_header(header)
+        general, metadata = get_info_from_header(header)
         return data, metadata, general
