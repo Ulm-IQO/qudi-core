@@ -39,7 +39,6 @@ intersphinx_mapping = {
 }
 
 
-
 templates_path = ['templates']
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store', '**.ipynb_checkpoints']
 
@@ -95,7 +94,6 @@ autodoc_default_options = {
 }
 
 
-
 # This gives the full name of the inherited classes in the documentation. It would be better if we could
 # just reference the documentation externally with intersphinx but it's not working correctly. Sphinx
 # ends up documenting the entire inherited base class instead of just linking to it. It could be a problem
@@ -105,5 +103,27 @@ def process_bases(app, name, obj, options, bases):
         bases[i] = ':py:class:`' + base.__module__ + '.' + base.__name__ + '`'
 
 
+def process_docstring(
+    app,
+    what,
+    name,
+    obj,
+    options, 
+    lines
+):
+    if what in {"module",'package'} :
+        orig_lines = lines[:]
+        new_lines = []
+        for line in orig_lines:
+            if 'Copyright' in line:
+                break
+            new_lines.append(line)
+
+        lines[:] = new_lines
+        if lines and lines[-1]:
+            lines.append('')
+         
+
 def setup(app):
     app.connect('autodoc-process-bases', process_bases)
+    app.connect("autodoc-process-docstring", process_docstring) 
