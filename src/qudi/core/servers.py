@@ -186,7 +186,10 @@ class BaseServer(QtCore.QObject):
                  ciphers: Optional[str] = None,
                  parent: Optional[QtCore.QObject] = None):
         """
-        @param int port: port the RPyC server should listen to
+        Parameters
+        ----------
+        port : int
+            Port number the RPyC server should listen to.
         """
         super().__init__(parent=parent)
         self._thread_lock = Mutex()
@@ -214,7 +217,8 @@ class BaseServer(QtCore.QObject):
 
     @QtCore.Slot()
     def start(self):
-        """ Start the RPyC server """
+        """Start the RPyC server.
+        """
         with self._thread_lock:
             if self.server is None:
                 thread = self._thread_manager.get_new_thread(self._name)
@@ -226,7 +230,8 @@ class BaseServer(QtCore.QObject):
 
     @QtCore.Slot()
     def stop(self):
-        """ Stop the RPyC server """
+        """Stop the RPyC server.
+        """
         with self._thread_lock:
             if self.server is not None:
                 try:

@@ -201,7 +201,7 @@ class ThreadManager(QtCore.QObject):
         ----------
         name : str
             name of thread to join.
-            
+
         timeout : float, optional
             timeout duration in seconds (default will never time out).
 
@@ -285,14 +285,51 @@ class ThreadManagerListModel(QtCore.QAbstractListModel):
                                                            QtCore.Qt.QueuedConnection)
 
     def rowCount(self, parent=None, *args, **kwargs):
+        """Gives the number of threads registered.
+
+        Returns
+        -------
+        int
+            Number of threads.
+        """
         return len(self._thread_names)
 
     def headerData(self, section, orientation, role=QtCore.Qt.DisplayRole):
+        """Data for the list view header.
+
+        Parameters
+        ----------
+        section : int
+            Column/row index to get header data for.
+        orientation : QtCore.Qt.Orientation
+            Orientation of header (horizontal or vertical).
+        role : QtCore.ItemDataRole
+            Data access role.
+
+        Returns
+        -------
+        str
+            Header data for the given column/row and role.
+        """
         if role == QtCore.Qt.DisplayRole and orientation == QtCore.Qt.Horizontal and section == 0:
             return 'Thread Name'
         return None
 
     def data(self, index, role):
+        """Get data from model for a given cell. Data can have a role that affects display.
+
+        Parameters
+        ----------
+        index : QtCore.QModelIndex
+            Cell for which data is requested.
+        role : QtCore.Qt.ItemDataRole
+            Data access role of the request.
+
+        Returns
+        -------
+        QVariant
+            Data for the given cell and role.
+        """
         if index.isValid() and role == QtCore.Qt.DisplayRole and index.column() == 0:
             try:
                 return self._thread_names[index.row()]
@@ -301,6 +338,18 @@ class ThreadManagerListModel(QtCore.QAbstractListModel):
         return None
 
     def flags(self, index):
+        """Determines what can be done with entry cells in the table view.
+
+        Parameters
+        ----------
+        index : QModelIndex
+            Cell for which the flags are requested.
+
+        Returns
+        -------
+        Qt.ItemFlags
+            Actions allowed for this cell.
+        """
         return QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable
 
     def _thread_registered(self, name: str) -> None:

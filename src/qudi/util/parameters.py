@@ -2,16 +2,31 @@
 """
 This file contains utility methods to annotate arguments for which the user can potentially edit
 values via GUI. These arguments are boiled down to simple builtin types that can be represented by
-a GUI editor:
-                            int: qudi.util.widgets.scientific_spinbox.ScienSpinBox
-                          float: qudi.util.widgets.scientific_spinbox.ScienDSpinbox
-                            str: PySide2.QtWidgets.QLineEdit
-                        complex: qudi.util.widgets.literal_lineedit.ComplexLineEdit
-                            set: qudi.util.widgets.literal_lineedit.SetLineEdit
-                           dict: qudi.util.widgets.literal_lineedit.DictLineEdit
-                           list: qudi.util.widgets.literal_lineedit.ListLineEdit
-                          tuple: qudi.util.widgets.literal_lineedit.TupleLineEdit
+a GUI editor.
 
+Parameters
+----------
+:int: :class:`~qudi.util.widgets.scientific_spinbox.ScienSpinBox`
+    An integer type represented by a scientific spinbox widget.
+:float: :class:`~qudi.util.widgets.scientific_spinbox.ScienDSpinbox`
+    A floating-point type represented by a double precision scientific spinbox widget.
+:str: :class:`~PySide2.QtWidgets.QLineEdit`
+    A string type represented by a QLineEdit widget.
+:complex: :class:`~qudi.util.widgets.literal_lineedit.ComplexLineEdit`
+    A complex number type represented by a custom ComplexLineEdit widget.
+:set: :class:`~qudi.util.widgets.literal_lineedit.SetLineEdit`
+    A set type represented by a custom SetLineEdit widget.
+:dict: :class:`~qudi.util.widgets.literal_lineedit.DictLineEdit`
+    A dictionary type represented by a custom DictLineEdit widget.
+:list: :class:`~qudi.util.widgets.literal_lineedit.ListLineEdit`
+    A list type represented by a custom ListLineEdit widget.
+:tuple: :class:`~qudi.util.widgets.literal_lineedit.TupleLineEdit`
+    A tuple type represented by a custom TupleLineEdit widget.
+:FilePath: :class:`~PySide2.QtWidgets.QLineEdit`
+    A type for file paths represented by a QLineEdit widget.
+
+Notes
+-----
 Here defined are also custom generic types that can be used like any other type from
 the typing module.
 Arguments annotated with these types are represented with the following widgets:
@@ -70,7 +85,7 @@ class ParameterWidgetMapper:
 
     @classmethod
     def widgets_for_callable(cls, func: Callable) -> Dict[str, Union[Type[QtWidgets.QWidget], None]]:
-        """ Returns QWidget classes for each parameter from the call signature of "func".
+        """Returns QWidget classes for each parameter from the call signature of "func".
         See ParameterWidgetMapper.widget_for_parameter for more information.
         """
         sig = inspect.signature(func)
@@ -78,7 +93,7 @@ class ParameterWidgetMapper:
 
     @classmethod
     def widget_for_parameter(cls, param: inspect.Parameter) -> Union[Type[QtWidgets.QWidget], None]:
-        """ Tries to determine a suitable QWidget to represent the given parameter.
+        """Tries to determine a suitable QWidget to represent the given parameter.
         If no type annotation is given for a parameter it will try to determine the type from the
         default value.
         If no (known) type can be determined, None will be returned.
@@ -94,21 +109,21 @@ class ParameterWidgetMapper:
 
     @classmethod
     def widget_from_value(cls, value: Any) -> Union[Type[QtWidgets.QWidget], None]:
-        """ Tries to determine a suitable QWidget to represent the type of the given value.
+        """Tries to determine a suitable QWidget to represent the type of the given value.
         """
         normalized_type = cls._normalize_type(type(value))
         return cls._type_widget_map.get(normalized_type, None)
 
     @classmethod
     def widget_from_annotation(cls, annotation: Any) -> Union[Type[QtWidgets.QWidget], None]:
-        """ Tries to determine a suitable QWidget to represent values of the given annotation type.
+        """Tries to determine a suitable QWidget to represent values of the given annotation type.
         """
         normalized_type = cls._annotation_to_type(annotation)
         return cls._type_widget_map.get(normalized_type, None)
 
     @staticmethod
     def _normalize_type(typ: Type) -> Type:
-        """ Normalizes given type to a base/builtin type.
+        """Normalizes given type to a base/builtin type.
         Examples:
                       numpy.float32 -> float
             collections.OrderedDict -> dict
@@ -135,7 +150,7 @@ class ParameterWidgetMapper:
 
     @classmethod
     def _annotation_to_type(cls, annotation: Any) -> Type:
-        """ Converts a type annotation (e.g. from a callable signature) to a normalized type.
+        """Converts a type annotation (e.g. from a callable signature) to a normalized type.
         See ParameterWidgetMapper._normalize_type for more information.
         """
         # If annotation is optional, call this method again on the first argument in order to get a
@@ -159,8 +174,8 @@ class ParameterWidgetMapper:
 
     @staticmethod
     def _is_optional_annotation(annotation: Any) -> bool:
-        """ Check if an annotation is optional, i.e. if it is typing.Union with two arguments,
-        the second one being NoneType
+        """Check if an annotation is optional, i.e. if it is typing.Union with two arguments,
+        the second one being NoneType.
         """
         if get_origin(annotation) == typing.Union:
             args = get_args(annotation)

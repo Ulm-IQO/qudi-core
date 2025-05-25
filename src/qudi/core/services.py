@@ -117,7 +117,18 @@ class RemoteModulesService(rpyc.Service):
         _logger.info(f'Client {address} disconnected from remote modules service')
 
     def exposed_get_module_instance(self, name: str) -> Union[CachedObjectRpycByValueProxy, Base]:
-        """ Return reference to a module in the shared module list """
+        """Return reference to a module in the shared module list.
+
+        Parameters
+        ----------
+        name : str
+            Unique module name.
+
+        Returns
+        -------
+        object
+            Reference to the module.
+        """
         self._check_module_name(name)
         with self._lock:
             instance = self._module_manager.get_module_instance(name)

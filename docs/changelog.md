@@ -55,6 +55,7 @@ that code changes are applied during runtime. This has been causing too many pro
 since most users and even developers are not aware about the many caveats that come with it.
 
 ### Bugfixes
+- Fixed the correct assignment of `metadata` and `general` when loading data with `NpyDataStorage`, in line with the other storage classes
 - Fixed a `scipy` warning about the deprecated `scipy.ndimage.filters` namespace
 - Exceptions during initialization and construction of `ConfigOption` and `StatusVar` will now
 cause the affected descriptor to be initialized to its default value and no longer prevent the
@@ -69,6 +70,9 @@ server has shut down first. This sometimes even prevented remote clients to shut
 module activation/deactivation cycles.
 
 ### New Features
+- Added type hinting in `FitConfiguration`
+- Added optional parameters `estimator` and `custom_parameters` to `FitConfigurationsModel.add_configuration` to enable adding of new fit configuration with custom parameters and selectable estimator
+- Added ruff configuration to `pyproject.toml` to standardize formatting
 - New context manager `qudi.util.mutex.acquire_timeout` to facilitate (Recursive)Mutex/(R)Lock
 acquisition with a timeout
 - Added helper methods `call_slot_from_native_thread`, `current_is_native_thread` and
@@ -103,6 +107,28 @@ of the respective module.
 - Removed `setup.py` and moved fully to `pyproject.toml` instead
 
 
+## Version 1.6.0
+Released on 03.02.2025
+
+### Breaking Changes
+None
+
+### Bugfixes
+- Fixed a bug where qudi would deadlock when starting a GUI module via the ipython terminal
+- Fixed a bug with the `qtconsole` package no longer being part of `jupyter`. It is now listed
+explicitly in the dependencies.
+- Fixed SystemTrayIcon error when activating GUI modules
+- Fixed `TextDataStorage.load_data` to load all lines of data and not skip the first line of data
+- Fixed `CsvDataStorage.load_data` to load all lines of data and not skip the first line of data
+- Fixed `NpyDataStorage.load_data` exception when loading metadata
+
+### New Features
+None
+
+### Other
+- Removed `setup.py` and moved fully to `pyproject.toml` instead
+
+
 ## Version 1.5.1
 Released on 18.08.2024
 
@@ -115,7 +141,7 @@ None
 - Fixed syntax error in `qudi.util.fit_models.lorentzian.LorentzianLinear` fit model
 
 ### New Features
-- Introduced `DiscreteScalarConstraint` that expands the functionality of `ScalarConstraint` to check whether a value 
+- Introduced `DiscreteScalarConstraint` that expands the functionality of `ScalarConstraint` to check whether a value
 is in a set of discrete values
 
 ### Other

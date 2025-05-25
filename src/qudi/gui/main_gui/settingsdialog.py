@@ -24,7 +24,7 @@ from PySide2 import QtCore, QtWidgets
 
 class SettingsDialog(QtWidgets.QDialog):
     """
-    Custom QDialog widget for configuration of the qudi main GUI
+    Custom QDialog widget for configuration of the qudi main GUI.
     """
     def __init__(self, parent=None, **kwargs):
         super().__init__(parent, **kwargs)

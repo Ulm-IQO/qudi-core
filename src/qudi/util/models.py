@@ -27,7 +27,7 @@ from qudi.util.mutex import Mutex
 
 
 class DictTableModel(QtCore.QAbstractTableModel):
-    """ Qt model storing a table in dictionaries
+    """Qt model storing a table in dictionaries.
     """
     def __init__(self, headers: Union[str, Sequence[str]], parent: Optional[QtCore.QObject] = None):
         super().__init__(parent=parent)
@@ -41,24 +41,24 @@ class DictTableModel(QtCore.QAbstractTableModel):
         self._storage = dict()
 
     def rowCount(self, parent: Optional[QtCore.QModelIndex] = None) -> int:
-        """ Returns the number of stored items (rows)
+        """Returns the number of stored items (rows).
         """
         with self._lock:
             return len(self._storage)
 
     def columnCount(self, parent: Optional[QtCore.QModelIndex] = None) -> int:
-        """ Returns the number of data fields (columns)
+        """Returns the number of data fields (columns).
         """
         with self._lock:
             return len(self._headers)
 
     def flags(self, index: Optional[QtCore.QModelIndex] = None) -> QtCore.Qt.ItemFlags:
-        """ Determines what can be done with the given indexed cell.
+        """Determines what can be done with the given indexed cell.
         """
         return QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable
 
     def data(self, index: QtCore.QModelIndex, role: QtCore.Qt.ItemDataRole) -> Any:
-        """ Get data from model for a given cell. Data can have a role that affects display.
+        """Get data from model for a given cell. Data can have a role that affects display.
         Re-Implement in subclass in order to support anything else than the 2 default columns.
         """
         with self._lock:
@@ -72,7 +72,7 @@ class DictTableModel(QtCore.QAbstractTableModel):
 
     def headerData(self, section: int, orientation: QtCore.Qt.Orientation,
                    role: Optional[QtCore.Qt.ItemDataRole] = QtCore.Qt.DisplayRole) -> Any:
-        """ Data for the table view headers """
+        """Data for the table view headers."""
         with self._lock:
             if role == QtCore.Qt.DisplayRole:
                 if orientation == QtCore.Qt.Horizontal:
@@ -80,7 +80,7 @@ class DictTableModel(QtCore.QAbstractTableModel):
             return None
 
     def get_key_by_index(self, n: int) -> Any:
-        """ Get a dict key by index number """
+        """Get a dict key by index number."""
         with self._lock:
             return self._get_key_by_index(n)
 
@@ -97,7 +97,7 @@ class DictTableModel(QtCore.QAbstractTableModel):
         return key
 
     def get_index_by_key(self, key: Any) -> int:
-        """ Get row index for dict key.
+        """Get row index for dict key.
 
         Warning: Row index for a key changes when keys with lower index are removed.
         """
@@ -167,11 +167,22 @@ class DictTableModel(QtCore.QAbstractTableModel):
                 self.__setitem__(key, value)
 
     def pop(self, *args):
-        """ Remove key from dictionary.
+        """
+        Remove a key from a dictionary and return its value.
 
-        @param args: dict key to remove, optional default return value
+        Parameters
+        ----------
+        *args : tuple
+            The arguments should include:
+            - key : The key to remove from the dictionary.
+            - default : optional
+                The value to return if the key is not found in the dictionary.
 
-        @return value: value removed from dict
+        Returns
+        -------
+        value
+            The value associated with the removed key. If the key is not found and a default 
+            value is provided, the default value is returned. Otherwise, a `KeyError` is raised.
         """
         with self._lock:
             return self._pop(*args)
@@ -187,11 +198,22 @@ class DictTableModel(QtCore.QAbstractTableModel):
             return args[1]
 
     def get(self, *args):
-        """ Get value for key from dictionary.
+        """
+        Get the value associated with a key from a dictionary.
 
-        @param args: value for key, optional default return value
+        Parameters
+        ----------
+        *args : tuple
+            The arguments should include:
+            - key : The key to look up in the dictionary.
+            - default : optional
+                The value to return if the key is not found in the dictionary.
 
-        @return value: value for key from dict
+        Returns
+        -------
+        value
+            The value associated with the key in the dictionary. If the key is not found 
+            and a default value is provided, the default value is returned.
         """
         with self._lock:
             return self._storage.get(*args)
@@ -210,7 +232,7 @@ class DictTableModel(QtCore.QAbstractTableModel):
 
 
 class ListTableModel(QtCore.QAbstractTableModel):
-    """ Qt model storing a table in lists.
+    """Qt model storing a table in lists.
     """
 
     def __init__(self, headers: Union[str, Sequence[str]], parent: Optional[QtCore.QObject] = None):
@@ -225,23 +247,23 @@ class ListTableModel(QtCore.QAbstractTableModel):
         self._storage = list()
 
     def rowCount(self, parent: Optional[QtCore.QModelIndex] = None):
-        """ Gives the number of stored items (rows)
+        """Gives the number of stored items (rows).
         """
         with self._lock:
             return len(self._storage)
 
     def columnCount(self, parent: Optional[QtCore.QModelIndex] = None):
-        """ Gives the number of data fields (columns)
+        """Gives the number of data fields (columns).
         """
         return len(self._headers)
 
     def flags(self, index: QtCore.QModelIndex) -> QtCore.Qt.ItemFlags:
-        """ Determines what can be done with entry cells in the table view.
+        """Determines what can be done with entry cells in the table view.
         """
         return QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable
 
     def data(self, index: QtCore.QModelIndex, role: QtCore.Qt.ItemDataRole) -> Any:
-        """ Get data from model for a given cell. Data can have a role that affects display.
+        """Get data from model for a given cell. Data can have a role that affects display.
         """
         with self._lock:
             if index.isValid() and role == QtCore.Qt.DisplayRole:
@@ -250,7 +272,7 @@ class ListTableModel(QtCore.QAbstractTableModel):
 
     def headerData(self, section: int, orientation: QtCore.Qt.Orientation,
                    role: Optional[QtCore.Qt.ItemDataRole] = QtCore.Qt.DisplayRole) -> Any:
-        """ Data for the table view headers
+        """Data for the table view headers.
         """
         if role == QtCore.Qt.DisplayRole:
             if orientation == QtCore.Qt.Horizontal:
@@ -291,10 +313,16 @@ class ListTableModel(QtCore.QAbstractTableModel):
             return item in self._storage
 
     def insert(self, n, data):
-        """ Insert a row into table.
+        """
+        Insert a row into a table before the nth element.
 
-        @param int n: insert before nth element
-        @param data: row to insert
+        Parameters
+        ----------
+        n : int
+            Index before which the row should be inserted.
+        data : object
+            Row to insert into the table.
+
         """
         with self._lock:
             if 0 <= n <= len(self._storage):
@@ -305,9 +333,14 @@ class ListTableModel(QtCore.QAbstractTableModel):
                 raise IndexError
 
     def append(self, data):
-        """ Append row to table.
-            
-        @param data: row to append
+        """
+        Append a row to a table.
+
+        Parameters
+        ----------
+        data : object
+            Row to append to the table.
+
         """
         with self._lock:
             n = len(self._storage)
@@ -316,11 +349,19 @@ class ListTableModel(QtCore.QAbstractTableModel):
             self.endInsertRows()
 
     def pop(self, n):
-        """ Remove nth row from table.
+        """
+        Remove the nth row from a table.
 
-        @param int n: index of row to remove
+        Parameters
+        ----------
+        n : int
+            Index of the row to remove.
 
-        @return data: removed row
+        Returns
+        -------
+        object
+            Removed row.
+
         """
         with self._lock:
             return self._pop(n)

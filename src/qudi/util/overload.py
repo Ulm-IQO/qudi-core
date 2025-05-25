@@ -136,7 +136,7 @@ class OverloadedAttribute:
 
 
 class OverloadProxy(CachedObjectProxy):
-    """ Instances of this class serve as proxies for objects containing attributes of type
+    """Instances of this class serve as proxies for objects containing attributes of type
     OverloadedAttribute. It can be used to hide the overloading mechanism by fixing the overloaded
     attribute access key in a OverloadProxy instance. This allows for interfacing an overloaded
     attribute in the object represented by this proxy by normal "pythonic" means without the

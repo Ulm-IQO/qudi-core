@@ -67,7 +67,7 @@ class TaskRunnerGui(GuiBase):
         self.show()
 
     def show(self):
-        """ Make sure that the window is visible and at the top.
+        """Make sure that the window is visible and at the top.
         """
         self._mw.show()
 
@@ -76,7 +76,7 @@ class TaskRunnerGui(GuiBase):
         ModuleManager.instance().deactivate_module(self.nametag)
 
     def on_deactivate(self):
-        """ Hide window and stop ipython console.
+        """Hide window and stop ipython console.
         """
         self._save_window_geometry(self._mw)
         self._mw.close()
