@@ -53,6 +53,7 @@ have the same qudi namespace packages installed.
 before. Reloading will no longer invalidate the import cache and reload the module from file so 
 that code changes are applied during runtime. This has been causing too many problems in the past 
 since most users and even developers are not aware about the many caveats that come with it.
+- Removed support for Python 3.8 since it is EOL
 
 ### Bugfixes
 - Fixed the correct assignment of `metadata` and `general` when loading data with `NpyDataStorage`, in line with the other storage classes

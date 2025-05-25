@@ -49,7 +49,6 @@ classifiers = [
     "Operating System :: Unix",
     "Operating System :: POSIX :: Linux",
 
-    "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
 
@@ -57,7 +56,7 @@ classifiers = [
     "Topic :: Software Development :: Libraries :: Application Frameworks",
     "Topic :: Software Development :: User Interfaces",
 ]
-requires-python = ">=3.8, <3.11"
+requires-python = ">=3.9, <3.11"
 dependencies = [
     "cycler>=0.10.0",
     "entrypoints>=0.3",
