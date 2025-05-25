@@ -109,7 +109,7 @@ class TaskStateWidget(QtWidgets.QWidget):
         self._interrupt_enabled = True
 
         # Create state label and run/interrupt button
-        self.state_label = QtWidgets.QLabel(ModuleTaskState.RUNNING.value)
+        self.state_label = QtWidgets.QLabel(ModuleTaskState.DEACTIVATING.value)
         self.state_label.setAlignment(QtCore.Qt.AlignCenter)
         font = self.state_label.font()
         font.setBold(True)
@@ -136,12 +136,12 @@ class TaskStateWidget(QtWidgets.QWidget):
     @QtCore.Slot(ModuleTaskState)
     def update_state(self, state: ModuleTaskState) -> None:
         self.state_label.setText(state.value)
-        if state.running:
-            self.run_interrupt_button.setIcon(self._stop_icon)
-            self._interrupt_enabled = True
-        else:
+        if state.idle:
             self.run_interrupt_button.setIcon(self._play_icon)
             self._interrupt_enabled = False
+        else:
+            self.run_interrupt_button.setIcon(self._stop_icon)
+            self._interrupt_enabled = True
         self.run_interrupt_button.setEnabled(True)
 
 

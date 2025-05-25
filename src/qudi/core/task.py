@@ -34,7 +34,7 @@ from typing import final
 
 from qudi.util.mutex import Mutex
 from qudi.util.helpers import call_slot_from_native_thread
-from qudi.core.object import QudiObject
+from qudi.core.object import QudiQObject
 from qudi.core.module import Base
 from qudi.core.modulemanager import ModuleManager
 from qudi.core.threadmanager import ThreadManager
@@ -55,18 +55,28 @@ class ModuleTaskState(Enum):
     properties
     """
     IDLE = 'idle'
+    ACTIVATING = 'activating'
     RUNNING = 'running'
+    DEACTIVATING = 'deactivating'
 
     @property
     def idle(self) -> bool:
         return self is self.IDLE
 
     @property
+    def activating(self) -> bool:
+        return self is self.ACTIVATING
+
+    @property
     def running(self) -> bool:
         return self is self.RUNNING
 
+    @property
+    def deactivating(self) -> bool:
+        return self is self.DEACTIVATING
 
-class ModuleTask(QudiObject):
+
+class ModuleTask(QudiQObject):
     """ Abstract base class for a runnable qudi task.
     Subclasses MUST implement the main "_run" method with a desired method signature that can
     return a result.
@@ -83,7 +93,7 @@ class ModuleTask(QudiObject):
     Minimal implementations must simply provide a "_run" method.
     """
 
-    interrupted: bool
+    sigStateChanged = QtCore.Signal(ModuleTaskState)
 
     @classmethod
     def call_parameters(cls) -> Dict[str, inspect.Parameter]:
@@ -116,20 +126,37 @@ class ModuleTask(QudiObject):
                  connections: Optional[MutableMapping[str, Any]] = None,
                  nametag: Optional[str] = '',
                  parent: Optional[QtCore.QObject] = None) -> None:
-        super().__init__(options, connections, nametag, parent=parent)
-        self.interrupted = False
+        super().__init__(parent=parent, nametag=nametag, options=options, connections=connections)
+        self._interrupted: bool = False
+        self._task_state: ModuleTaskState = ModuleTaskState.IDLE
+
+    @final
+    @property
+    def interrupted(self) -> bool:
+        return self._interrupted
+
+    @final
+    @property
+    def task_state(self) -> ModuleTaskState:
+        return self._task_state
 
     @final
     def interrupt(self) -> None:
-        self.interrupted = True
+        self._interrupted = True
 
     @final
     def _check_interrupt(self) -> None:
         """ Implementations of "_run" should occasionally call this method in order to break
         execution early if another thread has interrupted this script in the meantime.
         """
-        if self.interrupted:
+        if self._interrupted:
             raise ModuleTaskInterrupted
+
+    @final
+    def __set_task_state(self, state: ModuleTaskState) -> None:
+        if self._task_state != state:
+            self._task_state = state
+            self.sigStateChanged.emit(state)
 
     @final
     def __call__(self, **kwargs) -> Any:
@@ -138,19 +165,19 @@ class ModuleTask(QudiObject):
 
         DO NOT OVERRIDE IN SUBCLASS!
         """
-        self.log.info(f'Starting task: "{self.nametag}"')
+        self.log.info(f'Starting task "{self.nametag}"')
         try:
+            self.__set_task_state(ModuleTaskState.ACTIVATING)
+            self._activate()
+            self.__set_task_state(ModuleTaskState.RUNNING)
+            result = self._run(**kwargs)
+        finally:
             try:
-                self._activate()
-                result = self._run(**kwargs)
-            finally:
+                self.__set_task_state(ModuleTaskState.DEACTIVATING)
                 self._deactivate()
-        except ModuleTaskInterrupted:
-            self.log.info(f'Task interrupted: "{self.nametag}"')
-            raise
-        except Exception as err:
-            raise ModuleTaskStateError(f'Exception running task: "{self.nametag}"') from err
-        self.log.info(f'Task finished successfully: "{self.nametag}"')
+            finally:
+                self.__set_task_state(ModuleTaskState.IDLE)
+        self.log.info(f'Task "{self.nametag}" finished successfully')
         return result
 
     # Implement "_activate" and "_deactivate" in subclass if needed. They will simply do nothing
@@ -184,20 +211,11 @@ class ModuleTask(QudiObject):
 
 
 class ModuleTaskWorker(QtCore.QObject):
-    """ Worker QObject to spawn, configure and run ModuleTask instances and signal current
-    ModuleTaskState.
+    """ Worker QObject to spawn, configure and run ModuleTask instances and persist arguments and
+    results.
 
     Can be considered thread-safe.
     """
-
-    _arguments: Dict[str, Any]
-    _result: Tuple[Any, bool]
-    _name: str
-    _task_type: Type[ModuleTask]
-    _options: Dict[str, Any]
-    _connect: Dict[str, str]
-    _current_state: ModuleTaskState
-    __task: Union[None, ModuleTask]
 
     sigStateChanged = QtCore.Signal(ModuleTaskState)
     sigArgumentsChanged = QtCore.Signal(dict)
@@ -205,25 +223,23 @@ class ModuleTaskWorker(QtCore.QObject):
     def __init__(self,
                  name: str,
                  task_type: Type[ModuleTask],
-                 module_manager: ModuleManager,
                  options: Optional[Mapping[str, Any]] = None,
                  connect: Optional[Mapping[str, Any]] = None) -> None:
-        super().__init__()
         # ModuleTaskWorker QObjects must not have a parent in order to be used as threaded workers
-        self._name = name
-        self._task_type = task_type
-        self._options = dict() if options is None else options
-        self._connect = dict() if connect is None else connect
-        self._module_manager = module_manager
-
+        super().__init__()
         self._lock = Mutex()
-        self._arguments = {
+
+        self._name: str = name
+        self._task_type: Type[ModuleTask] = task_type
+        self._options: Dict[str, Any] = dict() if options is None else options
+        self._connect: Dict[str, str] = dict() if connect is None else connect
+
+        self._arguments: Dict[str, Any] = {
             name: param.default for name, param in task_type.call_parameters().items() if
             param.default is not inspect.Parameter.empty
         }
-        self._result = (None, False)
-        self._current_state = ModuleTaskState.IDLE
-        self.__task = None
+        self._result: Tuple[Any, bool] = (None, False)
+        self.__task: Union[None, ModuleTask] = None
 
     @property
     def call_parameters(self) -> Dict[str, inspect.Parameter]:
@@ -239,7 +255,11 @@ class ModuleTaskWorker(QtCore.QObject):
 
     @property
     def state(self) -> ModuleTaskState:
-        return self._current_state
+        try:
+            state = self.__task.task_state
+        except AttributeError:
+            state = ModuleTaskState.IDLE
+        return state
 
     @property
     def arguments(self) -> Dict[str, Any]:
@@ -271,31 +291,28 @@ class ModuleTaskWorker(QtCore.QObject):
                                               connections=connections,
                                               nametag=self._name,
                                               parent=self)
-                self.__update_state(ModuleTaskState.RUNNING)
+                self.__task.sigStateChanged.connect(self.sigStateChanged)
                 self._result = (self.__task(**self._arguments), True)
             except ModuleTaskInterrupted:
-                pass
-            except ModuleTaskStateError:
-                self.__task.log.exception(f'Exception running task: "{self._name}"')
+                self.__task.log.info(f'Task "{self._name}" interrupted')
+            except Exception:
+                self.__task.log.exception(f'Exception while running task "{self._name}":')
             finally:
+                self.__task.sigStateChanged.disconnect()
+                self.__task.setParent(None)
+                self.__task.deleteLater()
                 self.__task = None
-                self.__update_state(ModuleTaskState.IDLE)
 
     def __activate_connected_modules(self) -> Dict[str, Base]:
-        return {name: self._module_manager.get_module_instance(target) for name, target in
+        module_manager = ModuleManager.instance()
+        return {name: module_manager.get_module_instance(target) for name, target in
                 self._connect.items()}
 
-    def __update_state(self, new: ModuleTaskState) -> None:
-        self._current_state = new
-        self.sigStateChanged.emit(new)
 
-
-def import_module_task(module: str, cls: str, reload: Optional[bool] = False) -> Type[ModuleTask]:
+def import_module_task(module: str, cls: str) -> Type[ModuleTask]:
     """ Import a ModuleTask class from a given module name and class name """
-    mod = importlib.import_module(module)
-    if reload:
-        mod = importlib.reload(mod)
     try:
+        mod = importlib.import_module(module)
         task_cls = getattr(mod, cls)
         if not issubclass(task_cls, ModuleTask):
             raise TypeError(f'"{module}.{cls}" is not a subclass of '
@@ -308,23 +325,16 @@ def import_module_task(module: str, cls: str, reload: Optional[bool] = False) ->
 class ModuleTaskManager(QtCore.QAbstractTableModel):
     """ Governing instance to monitor and run ModuleTask objects. Doubles as a Qt table model. """
 
-    _thread_manager: ThreadManager
-    _tasks: List[ModuleTaskWorker]
-    _name_to_index: Dict[str, int]
     _headers: Tuple[str, str, str] = ('Arguments', 'State', 'Result')
 
     def __init__(self,
                  tasks_configuration: Mapping[str, Mapping[str, Any]],
-                 module_manager: ModuleManager,
-                 thread_manager: ThreadManager,
-                 reload: Optional[bool] = False,
                  parent: Optional[QtCore.QObject] = None):
         super().__init__(parent=parent)
-        self._thread_manager = thread_manager
-        self._tasks = list()
-        self._name_to_index = dict()
+        self._tasks: List[ModuleTaskWorker] = list()
+        self._name_to_index: Dict[str, int] = dict()
         for name, config in tasks_configuration.items():
-            self.__add_worker(module_manager, name, config, reload)
+            self.__add_worker(name, config)
 
     def terminate(self) -> None:
         """ """
@@ -362,19 +372,15 @@ class ModuleTaskManager(QtCore.QAbstractTableModel):
                 index: QtCore.QModelIndex,
                 value: Any,
                 role: Optional[QtCore.Qt.ItemDataRole] = QtCore.Qt.EditRole) -> bool:
+        success = False
         if (role == QtCore.Qt.EditRole) and (index.column() == 0):
             try:
                 task = self._tasks[index.row()]
-            except IndexError:
+                task.set_arguments(**value)
+                success = True
+            except (IndexError, TypeError):
                 pass
-            else:
-                try:
-                    task.set_arguments(**value)
-                except TypeError:
-                    pass
-                else:
-                    return True
-        return False
+        return success
 
     def headerData(self,
                    section: int,
@@ -411,9 +417,9 @@ class ModuleTaskManager(QtCore.QAbstractTableModel):
         task, _ = self._get_task(name)
         return task.result_annotation
 
-    def set_arguments(self, name: str, /, **kwargs) -> None:
+    def set_arguments(self, __name: str, /, **kwargs) -> None:
         """ Set keyword arguments of named task """
-        task, _ = self._get_task(name)
+        task, _ = self._get_task(__name)
         task.set_arguments(**kwargs)
 
     def get_arguments(self, name: str) -> Dict[str, Any]:
@@ -447,30 +453,27 @@ class ModuleTaskManager(QtCore.QAbstractTableModel):
             raise ValueError(f'No task found by name "{name}"') from None
         return self._tasks[row], row
 
-    def __add_worker(self,
-                     module_manager: ModuleManager,
-                     name: str,
-                     config: Mapping[str, Any],
-                     reload: Optional[bool] = False) -> None:
+    def __add_worker(self, name: str, config: Mapping[str, Any]) -> None:
         if len(name) < 1:
             raise ValueError('Task name must be non-empty string')
         if name in self._name_to_index:
             raise ValueError(f'Task with name "{name}" already registered')
         module, cls = config['module.Class'].rsplit('.', 1)
-        task_type = import_module_task(module=module, cls=cls, reload=reload)
-        worker = ModuleTaskWorker(name=name,
-                                  task_type=task_type,
-                                  module_manager=module_manager,
-                                  options=config.get('options', None),
-                                  connect=config.get('connect', None))
-        thread = self._thread_manager.get_new_thread(f'task-{name}')
+        task_type = import_module_task(module=module, cls=cls)
+        worker = ModuleTaskWorker(
+            name=name,
+            task_type=task_type,
+            options=config.get('options', None),
+            connect=config.get('connect', None)
+        )
+        thread = ThreadManager.instance().get_new_thread(f'task-{name}')
         worker.moveToThread(thread)
-        index = len(self._tasks)
-        worker.sigStateChanged.connect(self.__get_state_updated_callback(index),
-                                       QtCore.Qt.QueuedConnection)
-        worker.sigArgumentsChanged.connect(self.__get_arguments_updated_callback(index),
-                                           QtCore.Qt.QueuedConnection)
         thread.start()
+        index = len(self._tasks)
+        worker.sigStateChanged.connect(self.__get_state_updated_callback(name),
+                                       QtCore.Qt.QueuedConnection)
+        worker.sigArgumentsChanged.connect(self.__get_arguments_updated_callback(name),
+                                           QtCore.Qt.QueuedConnection)
         self._tasks.append(worker)
         self._name_to_index[name] = index
 
@@ -480,24 +483,31 @@ class ModuleTaskManager(QtCore.QAbstractTableModel):
         except KeyError:
             return
         task = self._tasks.pop(index)
+        self._name_to_index = {task.name: idx for idx, task in enumerate(self._tasks)}
         task.sigStateChanged.disconnect()
         task.sigArgumentsChanged.disconnect()
         task.interrupt()
         thread_name = f'task-{name}'
-        self._thread_manager.quit_thread(thread_name)
-        self._thread_manager.join_thread(thread_name)
+        thread_manager = ThreadManager.instance()
+        thread_manager.quit_thread(thread_name)
+        thread_manager.join_thread(thread_name)
 
-    def __get_arguments_updated_callback(self, row: int) -> Callable[[], None]:
+    def __get_arguments_updated_callback(self, name: str) -> Callable[[], None]:
 
         def updated_callback():
-            index = self.index(row, 0)
-            self.dataChanged.emit(index, index)
+            row = self._name_to_index[name]
+            start_index = self.index(row, 0)
+            stop_index = self.index(row, 2)
+            self.dataChanged.emit(start_index, stop_index)
 
         return updated_callback
 
-    def __get_state_updated_callback(self, row: int) -> Callable[[], None]:
+    def __get_state_updated_callback(self, name: str) -> Callable[[], None]:
 
         def updated_callback():
-            self.dataChanged.emit(self.index(row, 1), self.index(row, 2))
+            row = self._name_to_index[name]
+            start_index = self.index(row, 1)
+            stop_index = self.index(row, 2)
+            self.dataChanged.emit(start_index, stop_index)
 
         return updated_callback

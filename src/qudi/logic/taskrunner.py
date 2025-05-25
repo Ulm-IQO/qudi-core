@@ -28,20 +28,8 @@ from qudi.core.task import ModuleTaskManager, ModuleTaskState
 from qudi.core.configoption import ConfigOption
 
 
-# Detect if this module has been reloaded
-_reloaded: bool
-try:
-    _reloaded
-except NameError:
-    _reloaded = False  # means the module is being imported
-else:
-    _reloaded = True  # means the module is being reloaded
-
-
 class TaskRunnerLogic(LogicBase):
-    """Lightweight wrapper logic for qudi.core.task.ModuleTaskManager control """
-
-    _task_manager: Union[ModuleTaskManager, None]
+    """Lightweight wrapper logic for qudi.core.task.ModuleTaskManager control."""
 
     _module_task_configs = ConfigOption(name='module_tasks', default=dict(), missing='warn')
 
@@ -50,15 +38,14 @@ class TaskRunnerLogic(LogicBase):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._lock = Mutex()
-        self._task_manager = None
+        self._task_manager: Union[ModuleTaskManager, None] = None
 
     def on_activate(self) -> None:
         """ Initialise task runner """
-        self._task_manager = ModuleTaskManager(tasks_configuration=self._module_task_configs,
-                                               module_manager=self._qudi_main.module_manager,
-                                               thread_manager=self._qudi_main.thread_manager,
-                                               reload=_reloaded,
-                                               parent=self)
+        self._task_manager = ModuleTaskManager(
+            tasks_configuration=self._module_task_configs,
+            parent=self
+        )
         self._sigRunTask.connect(self._task_manager.run, QtCore.Qt.QueuedConnection)
 
     def on_deactivate(self) -> None:
@@ -69,6 +56,8 @@ class TaskRunnerLogic(LogicBase):
         except AttributeError:
             pass
         finally:
+            self._task_manager.setParent(None)
+            self._task_manager.deleteLater()
             self._task_manager = None
 
     @property

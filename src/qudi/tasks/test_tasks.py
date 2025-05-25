@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 """
-This file contains scripts for testing the qudi.core.scripting package.
+This file contains tasks for testing the qudi ModuleTask functionality.
 
 Copyright (c) 2021-2024, the qudi developers. See the AUTHORS.md file at the top-level directory of
 this distribution and on <https://github.com/Ulm-IQO/qudi-core/>
@@ -23,8 +23,13 @@ If not, see <https://www.gnu.org/licenses/>.
 import time
 from typing import Iterable, Sequence, Mapping, Optional, Tuple
 
-from qudi.core.task import ModuleTask
+from qudi.core.task import ModuleTask, ModuleTaskState
 from qudi.core.connector import Connector
+from qudi.logic.taskrunner import TaskRunnerLogic
+
+
+ACTIVATION_TIME: float = 3.0
+DEACTIVATION_TIME: float = 3.0
 
 
 class TestTask(ModuleTask):
@@ -33,53 +38,44 @@ class TestTask(ModuleTask):
 
     def _activate(self) -> None:
         start = time.time()
-        while (time.time() - start) < 3:
-            time.sleep(0.1)
+        while (time.time() - start) < ACTIVATION_TIME:
+            time.sleep(ACTIVATION_TIME / 3)
             self._check_interrupt()
-        # i = 0
-        # for i in range(100000000):
-        #     i += 1
 
     def _deactivate(self) -> None:
-        time.sleep(3)
-        # i = 0
-        # for i in range(100000000):
-        #     i += 1
+        time.sleep(DEACTIVATION_TIME)
 
     def _run(self, str_arg: str, int_arg: int, duration_sec: Optional[float] = 5):
         start = time.time()
         while (time.time() - start) < duration_sec:
-            time.sleep(0.1)
+            time.sleep(duration_sec / 3)
             self._check_interrupt()
-        # i = 0
-        # for i in range(10000000):
-        #     self._check_interrupt()
-        #     i += 1
+        return str_arg, int_arg
 
 
 class TestTask2(ModuleTask):
 
-    _derp = Connector(name='derp', interface='TemplateLogic')
+    _derp = Connector(name='derp', interface=TaskRunnerLogic)
 
     def _activate(self) -> None:
-        i = 0
-        for i in range(100000000):
-            i += 1
+        start = time.time()
+        while (time.time() - start) < ACTIVATION_TIME:
+            time.sleep(ACTIVATION_TIME / 3)
+            self._check_interrupt()
 
     def _deactivate(self) -> None:
-        i = 0
-        for i in range(100000000):
-            i += 1
+        time.sleep(DEACTIVATION_TIME)
 
     def _run(self,
              seq_arg: Sequence[int],
              iter_arg: Iterable[str],
              map_arg: Mapping[str, int],
-             opt_arg: Optional[int] = 42
+             opt_arg: Optional[int] = 42,
+             duration_sec: Optional[float] = 5
              ) -> Tuple[Sequence[int], Iterable[str], Mapping[str, int], int]:
-        i = 0
-        for i in range(10000000):
-            if i % 100 == 0:
-                self._check_interrupt()
-            i += 1
+        assert self._derp.task_state(self.nametag) == ModuleTaskState.RUNNING
+        start = time.time()
+        while (time.time() - start) < duration_sec:
+            time.sleep(duration_sec / 3)
+            self._check_interrupt()
         return seq_arg, iter_arg, map_arg, opt_arg

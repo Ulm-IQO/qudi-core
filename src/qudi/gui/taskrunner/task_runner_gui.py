@@ -41,7 +41,7 @@ class TaskRunnerGui(GuiBase):
     def on_activate(self):
         """Create all UI objects and show the window """
         # Initialize main window and connect task widgets
-        self._mw = TaskMainWindow(task_manager=self._task_runner().data_model)
+        self._mw = TaskMainWindow(task_manager=self._task_runner.data_model)
         self._mw.sigClosed.connect(self._deactivate_self)
         self._restore_window_geometry(self._mw)
         self.show()
