@@ -25,7 +25,59 @@ from typing import Optional, Union, Tuple
 
 from qudi.util.paths import get_artwork_dir
 from qudi.core.module import ModuleState, ModuleBase
-from qudi.core.modulemanager import ManagedModule
+from qudi.core.modulemanager import ModuleManager
+
+
+class ModuleListModel(QtCore.QAbstractListModel):
+    """ List model for all configured qudi modules with a certain ModuleBase filter """
+    def __init__(self,
+                 base: ModuleBase,
+                 module_manager: ModuleManager,
+                 parent: Optional[QtCore.QObject] = None):
+        super().__init__(parent=parent)
+        self._base = base
+        self._module_manager = module_manager
+        self._index_to_name = [name for name in self._module_manager.module_names if
+                               self._module_manager.module_base(name) == base]
+        self._name_to_index = {name: idx for idx, name in enumerate(self._index_to_name)}
+        # Handle data updates from module manager
+        self._module_manager.sigStateChanged.connect(self._state_updated)
+        self._module_manager.sigHasAppdataChanged.connect(self._state_updated)
+
+    def rowCount(self, parent: Optional[QtCore.QModelIndex] = None) -> int:
+        """ Returns the number of stored items (rows) """
+        return len(self._index_to_name)
+
+    def flags(self, index: Optional[QtCore.QModelIndex] = None) -> QtCore.Qt.ItemFlags:
+        """ Determines what can be done with the given indexed cell """
+        return QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable
+
+    def data(self,
+             index: QtCore.QModelIndex,
+             role: Optional[QtCore.Qt.ItemDataRole] = QtCore.Qt.DisplayRole
+             ) -> Union[None, Tuple[str, ModuleState, bool]]:
+        """ Get data from model for a given cell. Data can have a role that affects display. """
+        if index.isValid() and role == QtCore.Qt.DisplayRole:
+            name = self._index_to_name[index.row()]
+            state = self._module_manager.module_state(name)
+            has_appdata = self._module_manager.has_appdata(name)
+            return name, state, has_appdata
+        return None
+
+    def headerData(self,
+                   section: int,
+                   orientation: QtCore.Qt.Orientation,
+                   role: Optional[QtCore.Qt.ItemDataRole] = QtCore.Qt.DisplayRole
+                   ) -> Union[None, str]:
+        """ Data for the table view headers """
+        if (orientation == QtCore.Qt.Horizontal) and (role == QtCore.Qt.DisplayRole):
+            return 'State'
+        return None
+
+    def _state_updated(self, base: ModuleBase, name: str, _: Union[ModuleState, bool]) -> None:
+        if base == self._base:
+            index = self.index(self._name_to_index[name], 0)
+            self.dataChanged.emit(index, index)
 
 
 class ModuleFrameWidget(QtWidgets.QWidget):
@@ -36,6 +88,8 @@ class ModuleFrameWidget(QtWidgets.QWidget):
     sigDeactivateClicked = QtCore.Signal(str)
     sigReloadClicked = QtCore.Signal(str)
     sigCleanupClicked = QtCore.Signal(str)
+    sigDumpAppDataClicked = QtCore.Signal(str)
+
 
     def __init__(self, *args, module_name: Optional[str] = '', **kwargs):
         super().__init__(*args, **kwargs)
@@ -45,11 +99,14 @@ class ModuleFrameWidget(QtWidgets.QWidget):
         self.cleanup_button = QtWidgets.QToolButton()
         self.deactivate_button = QtWidgets.QToolButton()
         self.reload_button = QtWidgets.QToolButton()
+        self.dump_appdata_button = QtWidgets.QToolButton()
+
         # Set icons for QToolButtons
         icon_path = os.path.join(get_artwork_dir(), 'icons')
         self.cleanup_button.setIcon(QtGui.QIcon(os.path.join(icon_path, 'edit-clear')))
         self.deactivate_button.setIcon(QtGui.QIcon(os.path.join(icon_path, 'edit-delete')))
         self.reload_button.setIcon(QtGui.QIcon(os.path.join(icon_path, 'view-refresh')))
+        self.dump_appdata_button.setIcon(QtGui.QIcon(os.path.join(icon_path, 'document-save')))
         # Create activation pushbutton
         self.activate_button = QtWidgets.QPushButton(f'Activate {self._module_name}')
         self.activate_button.setCheckable(True)
@@ -69,6 +126,9 @@ class ModuleFrameWidget(QtWidgets.QWidget):
         )
         self.activate_button.setToolTip('Activate this module and all its dependencies')
         self.status_label.setToolTip('Displays module status information')
+        self.dump_appdata_button.setToolTip(
+            'Save module AppData to file. Only available for active modules.'
+        )
 
         # Combine all widgets in a layout and set as main layout
         layout = QtWidgets.QGridLayout()
@@ -76,7 +136,8 @@ class ModuleFrameWidget(QtWidgets.QWidget):
         layout.addWidget(self.reload_button, 0, 1)
         layout.addWidget(self.deactivate_button, 0, 2)
         layout.addWidget(self.cleanup_button, 0, 3)
-        layout.addWidget(self.status_label, 1, 0, 1, 4)
+        layout.addWidget(self.dump_appdata_button, 0, 4)
+        layout.addWidget(self.status_label, 1, 0, 1, 5)
         self.setLayout(layout)
 
         # Connect widget signals
@@ -84,21 +145,24 @@ class ModuleFrameWidget(QtWidgets.QWidget):
         self.deactivate_button.clicked.connect(self.deactivate_clicked)
         self.reload_button.clicked.connect(self.reload_clicked)
         self.cleanup_button.clicked.connect(self.cleanup_clicked)
+        self.dump_appdata_button.clicked.connect(self.dump_appdata_clicked)
 
     def set_module_data(self, name: str, state: ModuleState, has_appdata: bool) -> None:
         self._module_name = name
-        if state.deactivated:
+        if state == ModuleState.DEACTIVATED:
             self.activate_button.setText(f'Activate {self._module_name}')
             self.cleanup_button.setEnabled(has_appdata)
             self.deactivate_button.setEnabled(False)
             self.reload_button.setEnabled(True)
             self.activate_button.setChecked(False)
+            self.dump_appdata_button.setEnabled(False)
         else:
             self.activate_button.setText(self._module_name)
             self.cleanup_button.setEnabled(False)
             self.deactivate_button.setEnabled(True)
             self.reload_button.setEnabled(True)
             self.activate_button.setChecked(True)
+            self.dump_appdata_button.setEnabled(True)
         self.status_label.setText(f'Module is {state.value}')
 
     @QtCore.Slot()
@@ -114,35 +178,12 @@ class ModuleFrameWidget(QtWidgets.QWidget):
         self.sigCleanupClicked.emit(self._module_name)
 
     @QtCore.Slot()
+    def dump_appdata_clicked(self):
+        self.sigDumpAppDataClicked.emit(self._module_name)
+
+    @QtCore.Slot()
     def reload_clicked(self):
         self.sigReloadClicked.emit(self._module_name)
-
-
-class ModuleListProxyModel(QtCore.QSortFilterProxyModel):
-    """ Model proxy that filters out all modules of a certain ModuleBase type and collapses the
-    table model to a list of modules
-    """
-    def __init__(self, filter_base: ModuleBase, parent: Optional[QtCore.QObject] = None):
-        super().__init__(parent=parent)
-        self._filter_base = ModuleBase(filter_base)
-
-    def columnCount(self, parent: Optional[QtCore.QModelIndex] = None) -> int:
-        return 1
-
-    def filterAcceptsRow(self, source_row: int, source_parent: QtCore.QModelIndex) -> bool:
-        return self.sourceModel().index(source_row, 0, source_parent).data() == self._filter_base
-
-    def data(self,
-             index: QtCore.QModelIndex,
-             role: Optional[QtCore.Qt.ItemDataRole] = QtCore.Qt.DisplayRole
-             ) -> Union[None, Tuple[str, ModuleState, bool], ManagedModule]:
-        if index.isValid():
-            source_index = self.mapToSource(index)
-            module = source_index.data(QtCore.Qt.UserRole)
-            if role == QtCore.Qt.DisplayRole:
-                return module.name, module.state, module.has_appdata
-            elif role == QtCore.Qt.UserRole:
-                return module
 
 
 class ModuleListItemDelegate(QtWidgets.QStyledItemDelegate):
@@ -150,6 +191,7 @@ class ModuleListItemDelegate(QtWidgets.QStyledItemDelegate):
     sigDeactivateClicked = QtCore.Signal(str)
     sigReloadClicked = QtCore.Signal(str)
     sigCleanupClicked = QtCore.Signal(str)
+    sigDumpAppDataClicked = QtCore.Signal(str)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -164,6 +206,7 @@ class ModuleListItemDelegate(QtWidgets.QStyledItemDelegate):
         widget.sigDeactivateClicked.connect(self.sigDeactivateClicked)
         widget.sigReloadClicked.connect(self.sigReloadClicked)
         widget.sigCleanupClicked.connect(self.sigCleanupClicked)
+        widget.sigDumpAppDataClicked.connect(self.sigDumpAppDataClicked)
         return widget
 
     def setEditorData(self, editor, index) -> None:
@@ -222,26 +265,32 @@ class ModuleWidget(QtWidgets.QTabWidget):
     sigActivateModule = QtCore.Signal(str)
     sigDeactivateModule = QtCore.Signal(str)
     sigCleanupModule = QtCore.Signal(str)
+    sigDumpModuleAppData = QtCore.Signal(str)
     sigReloadModule = QtCore.Signal(str)
 
-    def __init__(self, *args, module_manager: 'ModuleManager', **kwargs):
+    def __init__(self, *args, module_manager: ModuleManager, **kwargs):
         super().__init__(*args, **kwargs)
         self.setSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
         self.list_views = {'gui'     : ModuleListView(),
                            'logic'   : ModuleListView(),
                            'hardware': ModuleListView()}
-        self.proxy_models = {'gui'     : ModuleListProxyModel(filter_base=ModuleBase.GUI),
-                             'logic'   : ModuleListProxyModel(filter_base=ModuleBase.LOGIC),
-                             'hardware': ModuleListProxyModel(filter_base=ModuleBase.HARDWARE)}
+        self.data_models = {'gui'     : ModuleListModel(base=ModuleBase.GUI,
+                                                        module_manager=module_manager,
+                                                        parent=self),
+                            'logic'   : ModuleListModel(base=ModuleBase.LOGIC,
+                                                        module_manager=module_manager,
+                                                        parent=self),
+                            'hardware': ModuleListModel(base=ModuleBase.HARDWARE,
+                                                        module_manager=module_manager,
+                                                        parent=self)}
         self.addTab(self.list_views['gui'], 'GUI')
         self.addTab(self.list_views['logic'], 'Logic')
         self.addTab(self.list_views['hardware'], 'Hardware')
         for base, view in self.list_views.items():
-            proxy_model = self.proxy_models[base]
-            proxy_model.setSourceModel(module_manager)
-            view.setModel(proxy_model)
+            view.setModel(self.data_models[base])
             delegate = view.itemDelegate()
             delegate.sigActivateClicked.connect(self.sigActivateModule)
             delegate.sigDeactivateClicked.connect(self.sigDeactivateModule)
             delegate.sigReloadClicked.connect(self.sigReloadModule)
             delegate.sigCleanupClicked.connect(self.sigCleanupModule)
+            delegate.sigDumpAppDataClicked.connect(self.sigDumpModuleAppData)

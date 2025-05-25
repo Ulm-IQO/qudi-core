@@ -23,8 +23,16 @@ __all__ = ['OverloadedAttribute', 'OverloadProxy']
 
 import weakref
 import warnings
-from typing import Any, Callable
+from inspect import isclass
+from typing import Any, Callable, Union
 from qudi.util.proxy import CachedObjectProxy
+
+
+def _convert_type_key(key: Union[str, type]) -> str:
+    if isclass(key):
+        return f'{key.__module__}.{key.__qualname__}'
+    else:
+        return key
 
 
 class _OverloadedAttributeMapper:
@@ -77,7 +85,8 @@ class OverloadedAttribute:
     def __init__(self):
         self._attr_mapper = _OverloadedAttributeMapper()
 
-    def overload(self, key: str) -> Callable[[Any], Any]:
+    def overload(self, key: Union[str, type]) -> Callable[[Any], Any]:
+        key = _convert_type_key(key)
         def decorator(attr):
             self._attr_mapper.add_mapping(key, attr)
             return self
@@ -95,8 +104,9 @@ class OverloadedAttribute:
     def __delete__(self, instance):
         raise AttributeError('can\'t delete attribute')
 
-    def setter(self, key: str) -> Callable[[Any], Any]:
+    def setter(self, key: Union[str, type]) -> Callable[[Any], Any]:
         obj = self._attr_mapper.get_mapped(key)
+        key = _convert_type_key(key)
 
         def decorator(attr):
             self._attr_mapper.add_mapping(key, obj.setter(attr))
@@ -104,8 +114,9 @@ class OverloadedAttribute:
 
         return decorator
 
-    def getter(self, key: str) -> Callable[[Any], Any]:
+    def getter(self, key: Union[str, type]) -> Callable[[Any], Any]:
         obj = self._attr_mapper.get_mapped(key)
+        key = _convert_type_key(key)
 
         def decorator(attr):
             self._attr_mapper.add_mapping(key, obj.getter(attr))
@@ -113,8 +124,9 @@ class OverloadedAttribute:
 
         return decorator
 
-    def deleter(self, key: str) -> Callable[[Any], Any]:
+    def deleter(self, key: Union[str, type]) -> Callable[[Any], Any]:
         obj = self._attr_mapper.get_mapped(key)
+        key = _convert_type_key(key)
 
         def decorator(attr):
             self._attr_mapper.add_mapping(key, obj.deleter(attr))
@@ -124,7 +136,7 @@ class OverloadedAttribute:
 
 
 class OverloadProxy(CachedObjectProxy):
-    """ Instances of this class serve as proxies for objects containing attributes of type
+    """Instances of this class serve as proxies for objects containing attributes of type
     OverloadedAttribute. It can be used to hide the overloading mechanism by fixing the overloaded
     attribute access key in a OverloadProxy instance. This allows for interfacing an overloaded
     attribute in the object represented by this proxy by normal "pythonic" means without the
@@ -133,9 +145,9 @@ class OverloadProxy(CachedObjectProxy):
 
     __slots__ = ['_overload_key', '__warning_sent']
 
-    def __init__(self, obj: Any, overload_key: str):
+    def __init__(self, obj: Any, overload_key: Union[str, type]):
         super().__init__(obj)
-        object.__setattr__(self, '_overload_key', overload_key)
+        object.__setattr__(self, '_overload_key', _convert_type_key(overload_key))
         object.__setattr__(self, '__warning_sent', False)
 
     # proxying (special cases)

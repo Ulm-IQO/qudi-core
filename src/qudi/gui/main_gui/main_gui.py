@@ -33,13 +33,14 @@ except ImportError:
     InvalidGitRepositoryError = RuntimeError
 
 from qudi.core.statusvariable import StatusVar
-from qudi.core.threadmanager import ThreadManager
+from qudi.core.threadmanager import ThreadManager, ThreadManagerListModel
 from qudi.util.paths import get_main_dir, get_default_config_dir
 from qudi.gui.main_gui.errordialog import ErrorDialog
 from qudi.gui.main_gui.mainwindow import QudiMainWindow
 from qudi.core.module import GuiBase
 from qudi.core.logger import get_signal_handler
 from qudi.core.config import Configuration
+from qudi.core.application import Qudi
 
 
 class QudiMainGui(GuiBase):
@@ -50,8 +51,10 @@ class QudiMainGui(GuiBase):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.error_dialog = None
-        self._mw = None
+        self.thread_model = None
+        self.mw = None
         self._has_console = False  # Flag indicating if an IPython console is available
+        self._qudi_main = Qudi.instance()
 
     def on_activate(self) -> None:
         """ Activation method called on change to active state.
@@ -87,7 +90,9 @@ class QudiMainGui(GuiBase):
         # IPython console widget
         self.start_jupyter_widget()
         # Configure thread widget
-        self.mw.threads_widget.setModel(ThreadManager.instance())
+        self.thread_model = ThreadManagerListModel(thread_manager=ThreadManager.instance(),
+                                                   parent=self)
+        self.mw.threads_widget.setModel(self.thread_model)
         # Configure remotemodules widget
         self._init_remote_modules_widget()
         self.reset_default_layout()
@@ -118,9 +123,8 @@ class QudiMainGui(GuiBase):
         self.mw.action_clear_all_appdata.triggered.connect(
             qudi_main.module_manager.clear_all_appdata
         )
+        self.mw.action_dump_all_appdata.triggered.connect(qudi_main.module_manager.dump_all_appdata)
         self.mw.action_view_default.triggered.connect(self.reset_default_layout)
-        # Connect signals from manager
-        qudi_main.configuration.sigConfigChanged.connect(self.update_config_widget)
         # Settings dialog
         self.mw.settings_dialog.accepted.connect(self.apply_settings)
         self.mw.settings_dialog.rejected.connect(self.keep_settings)
@@ -134,9 +138,11 @@ class QudiMainGui(GuiBase):
         self.mw.module_widget.sigCleanupModule.connect(
             qudi_main.module_manager.clear_module_appdata
         )
+        self.mw.module_widget.sigDumpModuleAppData.connect(
+            qudi_main.module_manager.dump_module_appdata
+        )
 
     def _disconnect_signals(self) -> None:
-        qudi_main = self._qudi_main
         # Disconnect the main windows actions
         self.mw.action_quit.triggered.disconnect()
         self.mw.action_load_configuration.triggered.disconnect()
@@ -145,9 +151,8 @@ class QudiMainGui(GuiBase):
         self.mw.action_load_all_modules.triggered.disconnect()
         self.mw.action_deactivate_all_modules.triggered.disconnect()
         self.mw.action_clear_all_appdata.triggered.disconnect()
+        self.mw.action_dump_all_appdata.triggered.disconnect()
         self.mw.action_view_default.triggered.disconnect()
-        # Disconnect signals from manager
-        qudi_main.configuration.sigConfigChanged.disconnect(self.update_config_widget)
         # Settings dialog
         self.mw.settings_dialog.accepted.disconnect()
         self.mw.settings_dialog.rejected.disconnect()
@@ -157,6 +162,7 @@ class QudiMainGui(GuiBase):
         self.mw.module_widget.sigReloadModule.disconnect()
         self.mw.module_widget.sigDeactivateModule.disconnect()
         self.mw.module_widget.sigCleanupModule.disconnect()
+        self.mw.module_widget.sigDumpModuleAppData.disconnect()
 
         get_signal_handler().sigRecordLogged.disconnect(self.handle_log_record)
 
@@ -172,9 +178,6 @@ class QudiMainGui(GuiBase):
             port = remote_server.server.port
             self.mw.remote_widget.setVisible(True)
             self.mw.remote_widget.server_label.setText(f'Server URL: rpyc://{host}:{port}/')
-            self.mw.remote_widget.shared_module_listview.setModel(
-                remote_server.service.shared_modules
-            )
 
     def show(self) -> None:
         """ Show the window and bring it to the top """

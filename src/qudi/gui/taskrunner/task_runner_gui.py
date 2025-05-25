@@ -23,15 +23,16 @@ from PySide2 import QtCore
 
 from qudi.core.connector import Connector
 from qudi.core.module import GuiBase
-
-from .main_window import TaskMainWindow
+from qudi.core.modulemanager import ModuleManager
+from qudi.gui.taskrunner.main_window import TaskMainWindow
+from qudi.logic.taskrunner import TaskRunnerLogic
 
 
 class TaskRunnerGui(GuiBase):
     """ TODO: Document """
 
     # declare connectors
-    _task_runner = Connector(name='task_runner', interface='TaskRunnerLogic')
+    _task_runner = Connector(name='task_runner', interface=TaskRunnerLogic)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -46,15 +47,16 @@ class TaskRunnerGui(GuiBase):
         self.show()
 
     def show(self):
-        """ Make sure that the window is visible and at the top """
+        """Make sure that the window is visible and at the top.
+        """
         self._mw.show()
 
     @QtCore.Slot()
     def _deactivate_self(self):
-        self._qudi_main.module_manager.deactivate_module(self.module_name)
+        ModuleManager.instance().deactivate_module(self.nametag)
 
     def on_deactivate(self):
-        """ Hide window and stop ipython console.
+        """Hide window and stop ipython console.
         """
         self._save_window_geometry(self._mw)
         self._mw.close()

@@ -39,7 +39,7 @@ else:
 
 
 class TaskRunnerLogic(LogicBase):
-    """ Lightweight wrapper logic for qudi.core.task.ModuleTaskManager control """
+    """Lightweight wrapper logic for qudi.core.task.ModuleTaskManager control """
 
     _task_manager: Union[ModuleTaskManager, None]
 

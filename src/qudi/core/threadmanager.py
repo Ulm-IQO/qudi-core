@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 """
-This file contains the Qudi thread manager singleton class.
+Contains the qudi thread manager singleton as well as a Qt list model to represent the thread names
+registered in the thread manager.
 
-Copyright (c) 2021, the qudi developers. See the AUTHORS.md file at the top-level directory of this
-distribution and on <https://github.com/Ulm-IQO/qudi-core/>
+Copyright (c) 2021-2024, the qudi developers. See the AUTHORS.md file at the top-level directory
+of this distribution and on <https://github.com/Ulm-IQO/qudi-core/>.
 
 This file is part of qudi.
 
@@ -19,220 +20,350 @@ You should have received a copy of the GNU Lesser General Public License along w
 If not, see <https://www.gnu.org/licenses/>.
 """
 
-import weakref
-from functools import partial
-from PySide2 import QtCore
-from typing import List, Dict, Any, Optional, Union, Tuple, final
+__all__ = ['ThreadManager', 'ThreadManagerListModel']
 
-from qudi.util.mutex import Mutex
+import weakref
+from PySide2 import QtCore
+from typing import Dict, List, Union, Optional
+
+from qudi.util.mutex import RecursiveMutex, Mutex
 from qudi.core.logger import get_logger
 
-_logger = get_logger(__name__)
+
+logger = get_logger(__name__)
 
 
-# @final
-class ThreadManager(QtCore.QAbstractListModel):
-    """ This class keeps track of all the QThreads that are used throughout qudi. Always use this
-    singleton to create and destroy threads and do not create threads manually.
-
-    Using this class is thread-safe.
+class ThreadManager(QtCore.QObject):
     """
+    Singleton to keep track of all the QThreads that are needed in a qudi process.
+    Public methods and attributes can be considered thread-safe.
+    The singleton instance can be obtained during runtime via call to `ThreadManager.instance()`.
+
+    Parameters
+    ----------
+    parent : QtCore.QObject, optional
+        Parent QObject passed on to QtCore.QObject.__init__ (defaults to None).
+    """
+
     _instance = None
-    _lock = Mutex()
+    _join_lock = RecursiveMutex()
+    _main_lock = Mutex()
 
-    _threads: List[QtCore.QThread]
-    _names: List[str]
-    _name_to_index: Dict[str, int]
+    sigThreadRegistered = QtCore.Signal(str)  # thread name
+    sigThreadUnregistered = QtCore.Signal(str)  # thread name
 
-    def __new__(cls, *args, **kwargs):
-        with cls._lock:
-            if (cls._instance is None) or (cls._instance() is None):
-                obj = super().__new__(cls, *args, **kwargs)
-                cls._instance = weakref.ref(obj)
-                return obj
-            raise TypeError(
-                'Only one ThreadManager instance per process possible (Singleton). Please use '
-                'ThreadManager.instance() to get a reference to the already created instance.'
-            )
+    @staticmethod
+    def _quit_thread(thread: QtCore.QThread) -> None:
+        thread.quit()
+        logger.debug(f'Quit thread: "{thread.objectName()}"')
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self._threads = list()
-        self._names = list()
-        self._name_to_index = dict()
+    @staticmethod
+    def _join_thread(thread: QtCore.QThread, timeout: Optional[Union[int, float]] = None) -> None:
+        name = thread.objectName()
+        logger.debug(f'Waiting for thread: "{name}"')
+        if (timeout is None) or (timeout <= 0):
+            thread.wait()
+        else:
+            if not thread.wait(int(round(timeout * 1000))):
+                raise TimeoutError(f'Thread "{name}" has not terminated after {timeout:.2f} sec')
+        logger.debug(f'Joined thread: "{name}"')
+
+    @staticmethod
+    def _create_thread(name: str) -> QtCore.QThread:
+        """Create a new QThread instance"""
+        thread = QtCore.QThread()
+        thread.setObjectName(name)
+        logger.debug(f'Created new thread: "{name}"')
+        return thread
 
     @classmethod
-    def instance(cls):
-        with cls._lock:
-            try:
-                return cls._instance()
-            except TypeError:
-                return None
+    def instance(cls) -> Union[None, 'ThreadManager']:
+        """Returns the only instance (singleton) of this class."""
+        try:
+            inst = cls._instance()
+        except TypeError:
+            inst = None
+        return inst
+
+    def __new__(cls, *args, **kwargs):
+        with cls._main_lock:
+            if cls.instance() is not None:
+                raise RuntimeError(
+                    'Only one ThreadManager instance per process possible (Singleton). Please use '
+                    'ThreadManager.instance() to get a reference to the already created instance.'
+                )
+            obj = super().__new__(cls, *args, **kwargs)
+            cls._instance = weakref.ref(obj)
+            return obj
+
+    def __init__(self, parent: Optional[QtCore.QObject] = None):
+        super().__init__(parent=parent)
+        self._gen_name_counter: int = 0
+        self._threads: Dict[str, QtCore.QThread] = dict()
 
     @property
     def thread_names(self) -> List[str]:
-        with self._lock:
-            return self._names.copy()
+        """
+        Returns
+        -------
+        list of str
+            List of registered thread names.
+        """
+        return list(self._threads)
 
-    def get_new_thread(self, name: str) -> QtCore.QThread:
-        """ Create and return a new QThread with objectName <name> """
-        with self._lock:
-            if name in self._names:
-                raise ValueError(f'Thread with name "{name}" has already been created')
-            thread = QtCore.QThread()
-            _logger.debug(f'Created new thread: "{name}"')
+    def get_new_thread(self, name: Optional[str] = None) -> QtCore.QThread:
+        """Get a new QThread instance with given or generic name.
+
+        Parameters
+        ----------
+        name : str, optional
+            unique name of new thread (default will create a generic name).
+
+        Returns
+        -------
+        QtCore.QThread
+            new thread instance.
+
+        Raises
+        ------
+        ValueError
+            If the given name already exists
+        """
+        with self._main_lock:
+            if not name:
+                name = self._generate_name()
+            elif name in self._threads:
+                raise ValueError(f'Thread with name "{name}" already registered')
+            thread = self._create_thread(name)
             self._register_thread(name, thread)
             return thread
 
-    def register_thread(self, name: str, thread: QtCore.QThread) -> None:
-        """ Add existing QThread to ThreadManager data model. Try to avoid this method and use
-        "get_new_thread" instead of creating your own QThread instances.
-        """
-        with self._lock:
-            return self._register_thread(name, thread)
+    def register_thread(self, thread: QtCore.QThread) -> str:
+        """Add a QtCore.QThread instance to ThreadManager.
+        If the threads objectName is not set, assign it a generic name.
 
-    def unregister_thread(self, name: str) -> None:
-        """ Remove QThread from ThreadManager data model if present. Fails if the thread in
-        question is still running.
+        Parameters
+        ----------
+        thread : QtCore.QThread
+            thread instance to register.
+
+        Returns
+        -------
+        str
+            objectName of the registered thread.
+
+        Raises
+        ------
+        ValueError
+            If the given thread objectName already exists in ThreadManager
         """
-        with self._lock:
-            return self._unregister_thread(name)
+        if not isinstance(thread, QtCore.QThread):
+            raise TypeError(f'Expected thread instance of type {QtCore.QThread}')
+        with self._main_lock:
+            name = thread.objectName()
+            if not name:
+                name = self._generate_name()
+                thread.setObjectName(name)
+            elif name in self._threads:
+                raise ValueError(f'Thread with name "{name}" already registered')
+            self._register_thread(name, thread)
+            return name
+
+    def unregister_thread(self, thread: Union[str, QtCore.QThread]) -> None:
+        """Remove thread from ThreadManager"""
+        with self._main_lock:
+            if isinstance(thread, QtCore.QThread):
+                thread = thread.objectName()
+            if thread in self._threads:
+                self._unregister_thread(thread)
 
     def quit_thread(self, name: str) -> None:
-        """ Stop event loop of QThread """
-        with self._lock:
-            return self._quit_thread(name)
+        """Signal stop of thread event loop.
 
-    def join_thread(self, name: str, timeout: Optional[float] = None) -> None:
-        """ Wait for event loop of QThread to stop. Call "quit_thread" beforehand.
-        An optional timeout in seconds can be set. If the thread does not terminate before this
-        time runs out, a TimeoutError is raised.
+        Parameters
+        ----------
+        name : str
+            name of thread to quit.
+
+        Raises
+        ------
+        ValueError
+            If the given thread objectName does not exist in ThreadManager
         """
-        with self._lock:
-            return self._join_thread(name, timeout)
+        with self._join_lock:
+            thread = self.get_thread_by_name(name)
+            self._quit_thread(thread)
 
-    def quit_all_threads(self) -> None:
-        """ Stop event loops of all QThreads """
-        with self._lock:
-            for name in self._names:
-                self._quit_thread(name)
+    def join_thread(self, name: str, timeout: Optional[Union[int, float]] = None) -> None:
+        """Wait for stop of QThread event loop and unregister afterward
 
-    def join_all_threads(self, timeout: Optional[float] = None) -> None:
-        """ Wait for event loops of all registered QThreads to stop. Call "quit_all_threads"
-        beforehand.
-        An optional timeout in seconds can be set. If an individual thread does not terminate
-        before this time runs out, a TimeoutError is raised. """
-        with self._lock:
-            for name in self._names:
-                self._join_thread(name, timeout)
+        Parameters
+        ----------
+        name : str
+            name of thread to join.
 
-    def get_thread(self, name: str) -> QtCore.QThread:
-        """ Get registered QThread instance by its name """
-        with self._lock:
-            return self._get_thread(name)[0]
+        timeout : float, optional
+            timeout duration in seconds (default will never time out).
 
-    # Non-threadsafe private methods below
+        Raises
+        ------
+        ValueError
+            If the given thread objectName does not exist in ThreadManager.
+
+        TimeoutError
+            If the joining times out.
+        """
+        with self._join_lock:
+            thread = self.get_thread_by_name(name)
+            self._join_thread(thread, timeout)
+            with self._main_lock:
+                self._unregister_thread(name)
+
+    def get_thread_by_name(self, name: str) -> QtCore.QThread:
+        """Get registered QThread instance by its name.
+
+        Parameters
+        ----------
+        name : str
+            name of thread to get.
+
+        Returns
+        -------
+        QtCore.QThread
+            registered thread instance.
+
+        Raises
+        ------
+        ValueError
+            If the given thread objectName does not exist in ThreadManager.
+        """
+        thread = self._threads.get(name, None)
+        if thread is None:
+            raise ValueError(f'No thread with name "{name}" registered')
+        return thread
+
+    def _generate_name(self) -> str:
+        """Get a unique generic name for a thread"""
+        while True:
+            self._gen_name_counter += 1
+            name = f'qudi-thread-{self._gen_name_counter:d}'
+            if name not in self._threads:
+                break
+        return name
+
     def _register_thread(self, name: str, thread: QtCore.QThread) -> None:
-        """ Add existing QThread to ThreadManager data model """
-        # Check if thread has already been registered
-        try:
-            row = self._name_to_index[name]
-        except KeyError:
-            pass
-        else:
-            if self._threads[row] is thread:
-                # Thread already registered
-                return
-            raise ValueError(f'Different thread with name "{name}" already registered') from None
-
-        row = len(self._threads)
-        self.beginInsertRows(QtCore.QModelIndex(), row, row)
-        thread.setObjectName(name)
-        self._threads.append(thread)
-        self._names.append(name)
-        self._name_to_index[name] = row
-        _logger.debug(f'Registered thread: "{name}"')
-        self.endInsertRows()
+        self._threads[name] = thread
+        logger.debug(f'Registered thread: "{name}"')
+        self.sigThreadRegistered.emit(name)
 
     def _unregister_thread(self, name: str) -> None:
-        """ Remove QThread from ThreadManager data model if present. Fails if the thread in
-        question is still running.
-        """
-        try:
-            thread, row = self._get_thread(name)
-        except ValueError:
-            return
+        if self._threads.pop(name).isRunning():
+            logger.warning(f'Removing running thread: "{name}"')
+        logger.debug(f'Unregistered thread: "{name}"')
+        self.sigThreadUnregistered.emit(name)
 
-        if thread.isRunning():
-            raise RuntimeError(f'QThread "{name}" is still running')
 
-        self.beginRemoveRows(QtCore.QModelIndex(), row, row)
-        del self._threads[row]
-        del self._names[row]
-        del self._name_to_index[name]
-        for name in self._names[row:]:
-            self._name_to_index[name] -= 1
-        _logger.debug(f'Unregistered thread: "{name}"')
-        self.endRemoveRows()
+class ThreadManagerListModel(QtCore.QAbstractListModel):
+    """
+    QAbstractListModel implementation to use with the ThreadManager singleton.
 
-    def _quit_thread(self, name: str) -> None:
-        """ Stop event loop of QThread """
-        thread, _ = self._get_thread(name)
-        thread.quit()
-        _logger.debug(f'Quit thread: "{name}"')
+    Parameters
+    ----------
+    thread_manager : ThreadManager
+        The thread manager singleton to use as data source.
+    parent : QtCore.QObject, optional
+        Parent QObject passed on to QtCore.QObject.__init__ (defaults to None).
+    """
 
-    def _join_thread(self, name: str, timeout: Optional[float] = None) -> None:
-        """ Wait for event loop of QThread to stop. Call "quit_thread" beforehand.
-        An optional timeout in seconds can be set. If the thread does not terminate before this
-        time runs out, a TimeoutError is raised.
-        """
-        thread, _ = self._get_thread(name)
-        _logger.debug(f'Joining thread: "{name}"')
-        if timeout is None:
-            thread.wait()
-        elif not thread.wait(int(round(1000 * timeout))):
-            raise TimeoutError(f'Joining thread "{name}" timed out after {timeout:.3f} seconds')
-        self._unregister_thread(name)
+    def __init__(self, thread_manager: ThreadManager, parent: Optional[QtCore.QObject] = None):
+        super().__init__(parent=parent)
+        self._thread_manager = thread_manager
+        self._thread_names = self._thread_manager.thread_names.copy()
+        self._thread_manager.sigThreadRegistered.connect(self._thread_registered,
+                                                         QtCore.Qt.QueuedConnection)
+        self._thread_manager.sigThreadUnregistered.connect(self._thread_unregistered,
+                                                           QtCore.Qt.QueuedConnection)
 
-    def _get_thread(self, name: str) -> Tuple[QtCore.QThread, int]:
-        """ Get registered QThread instance and row index by its name """
-        try:
-            row = self._name_to_index[name]
-        except KeyError:
-            raise ValueError(f'No thread with name "{name}" registered') from None
-        return self._threads[row], row
-
-    # QAbstractListModel interface methods follow below
     def rowCount(self, parent=None, *args, **kwargs):
-        """
-        Gives the number of threads registered.
+        """Gives the number of threads registered.
 
-        @return int: number of threads
+        Returns
+        -------
+        int
+            Number of threads.
         """
-        return len(self._threads)
+        return len(self._thread_names)
 
-    def headerData(self,
-                   section: int,
-                   orientation: QtCore.Qt.Orientation,
-                   role: Optional[QtCore.Qt.ItemDataRole] = QtCore.Qt.DisplayRole
-                   ) -> Union[str, None]:
-        """ Data for the list view header """
-        if (role == QtCore.Qt.DisplayRole) and (orientation == QtCore.Qt.Horizontal):
+    def headerData(self, section, orientation, role=QtCore.Qt.DisplayRole):
+        """Data for the list view header.
+
+        Parameters
+        ----------
+        section : int
+            Column/row index to get header data for.
+        orientation : QtCore.Qt.Orientation
+            Orientation of header (horizontal or vertical).
+        role : QtCore.ItemDataRole
+            Data access role.
+
+        Returns
+        -------
+        str
+            Header data for the given column/row and role.
+        """
+        if role == QtCore.Qt.DisplayRole and orientation == QtCore.Qt.Horizontal and section == 0:
             return 'Thread Name'
         return None
 
-    def data(self,
-             index: QtCore.QModelIndex,
-             role: Optional[QtCore.Qt.ItemDataRole] = QtCore.Qt.DisplayRole) -> Union[str, None]:
-        """ Get data from model for a given cell. Data can have a role that affects display. """
-        if index.isValid() and (role == QtCore.Qt.DisplayRole):
-            row = index.row()
+    def data(self, index, role):
+        """Get data from model for a given cell. Data can have a role that affects display.
+
+        Parameters
+        ----------
+        index : QtCore.QModelIndex
+            Cell for which data is requested.
+        role : QtCore.Qt.ItemDataRole
+            Data access role of the request.
+
+        Returns
+        -------
+        QVariant
+            Data for the given cell and role.
+        """
+        if index.isValid() and role == QtCore.Qt.DisplayRole and index.column() == 0:
             try:
-                return self._names[row]
+                return self._thread_names[index.row()]
             except IndexError:
                 pass
         return None
 
-    def flags(self, index: QtCore.QModelIndex) -> Union[QtCore.Qt.ItemFlags, QtCore.Qt.ItemFlag]:
-        """ Determines what can be done with entry cells in the table view """
+    def flags(self, index):
+        """Determines what can be done with entry cells in the table view.
+
+        Parameters
+        ----------
+        index : QModelIndex
+            Cell for which the flags are requested.
+
+        Returns
+        -------
+        Qt.ItemFlags
+            Actions allowed for this cell.
+        """
         return QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable
+
+    def _thread_registered(self, name: str) -> None:
+        row = len(self._thread_names)
+        self.beginInsertRows(QtCore.QModelIndex(), row, row)
+        self._thread_names.append(name)
+        self.endInsertRows()
+
+    def _thread_unregistered(self, name: str) -> None:
+        try:
+            row = self._thread_names.index(name)
+        except ValueError:
+            pass
+        else:
+            self.beginRemoveRows(QtCore.QModelIndex(), row, row)
+            del self._thread_names[row]
+            self.endRemoveRows()

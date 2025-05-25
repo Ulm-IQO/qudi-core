@@ -127,7 +127,7 @@ class CachedObjectProxy(ObjectProxy):
 
 
 class CachedObjectRpycByValueProxy(CachedObjectProxy):
-    """ Same as CachedObjectProxy but it wraps all API methods (none- and single-underscore methods)
+    """ Same as CachedObjectProxy but it wraps all API methods (none-underscore-named methods)
     to only receive parameters "by value" by using qudi.util.network.netobtain.
     This will only work if all method arguments are "pickle-able" and can take a very long time for
     large arrays.
@@ -135,7 +135,7 @@ class CachedObjectRpycByValueProxy(CachedObjectProxy):
     """
     def __getattribute__(self, name):
         attr = super().__getattribute__(name)
-        if not name.startswith('__') and ismethod(attr) or isfunction(attr):
+        if not name.startswith('_') and ismethod(attr) or isfunction(attr):
             sig = signature(attr)
             if len(sig.parameters) > 0:
 

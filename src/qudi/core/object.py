@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 """
-Definition of base qudi objects
+Base implementation and mixins for abstract QObjects employing qudi meta attribute functionality.
 
-Copyright (c) 2023, the qudi developers. See the AUTHORS.md file at the top-level directory of this
-distribution and on <https://github.com/Ulm-IQO/qudi-core/>
+Copyright (c) 2023-2024, the qudi developers. See the AUTHORS.md file at the top-level directory of
+this distribution and on <https://github.com/Ulm-IQO/qudi-core/>.
 
 This file is part of qudi.
 
@@ -19,90 +19,236 @@ You should have received a copy of the GNU Lesser General Public License along w
 If not, see <https://www.gnu.org/licenses/>.
 """
 
-__all__ = ['ABCQObject', 'QudiObject']
+__all__ = ['QudiQObject', 'ABCQObjectMixin', 'QudiQObjectMixin', 'QudiObjectFileHandler']
 
 import os
 import copy
 import logging
-
 from uuid import uuid4, UUID
-from typing import MutableMapping, Mapping, Optional, Any, final, Union, Dict
-from PySide2.QtCore import QObject, Signal, Slot, QCoreApplication
+from typing import MutableMapping, Mapping, Optional, Any, final, Sequence, Union
+from PySide2 import QtCore
 
+from qudi.core.statusvariable import StatusVar
 from qudi.core.logger import get_logger
-from qudi.core.meta import ABCQObjectMeta, QudiObjectMeta
+from qudi.core.meta import ABCQObjectMeta, QudiQObjectMeta
 from qudi.util.yaml import YamlFileHandler
 from qudi.util.helpers import call_slot_from_native_thread, current_is_native_thread
 from qudi.util.paths import get_appdata_dir
 
 
-class _QudiObjectAppDataHelper:
-    """ File handler helper class for writing/deleting/checking AppData of a QudiObject instance """
-
-    class_name: str
-
-    def __init__(self, class_name: str) -> None:
-        super().__init__()
-        self.class_name = class_name
-
-    def __call__(self, nametag: str) -> YamlFileHandler:
-        if nametag:
-            filename = f'status-{self.class_name}-{nametag}.cfg'
-        else:
-            filename = f'status-{self.class_name}.cfg'
-        return YamlFileHandler(os.path.join(get_appdata_dir(), filename))
-
-    def exists(self, nametag: str) -> bool:
-        return self(nametag).exists
-
-    def clear(self, nametag: str) -> None:
-        self(nametag).clear()
-
-    def dump(self, nametag: str, data: Mapping[str, Any]) -> None:
-        self(nametag).dump(data)
-
-    def load(self, nametag: str, ignore_missing: Optional[bool] = False) -> Dict[str, Any]:
-        return self(nametag).load(ignore_missing)
-
-
-class _QudiObjectAppDataDescriptor:
-    """ Descriptor object for AppData handlers of QudiObject classes """
-
-    appdata_helper: Union[_QudiObjectAppDataHelper, None]
-
-    def __init__(self) -> None:
-        self.appdata_helper = None
-
-    def __set_name__(self, owner, name) -> None:
-        self.appdata_helper = _QudiObjectAppDataHelper(owner.__name__)
-
-    def __get__(self, instance, owner) -> Union[_QudiObjectAppDataHelper, YamlFileHandler]:
-        if instance is None:
-            return self.appdata_helper
-        else:
-            return self.appdata_helper(instance.nametag)
-
-
-class _ThreadedDescriptor:
-    """ Read-only class descriptor representing the owners private class attribute <_threaded> value
+class QudiObjectFileHandler(YamlFileHandler):
     """
-    def __get__(self, instance, owner) -> bool:
-        try:
-            return owner._threaded
-        except AttributeError:
-            return type(instance)._threaded
+    Specialization of qudi.util.yaml.YamlFileHandler for QudiQObjectMixin types AppData.
 
-    def __delete__(self, instance):
-        raise AttributeError('Can not delete')
+    Parameters
+    ----------
+    cls_name : str
+        Class name of the qudi QObject (QudiQObjectMixin subclass)
+    nametag : str
+        Unique module name of the qudi object
+    """
+    def __init__(self, cls_name: str, nametag: str):
+        super().__init__(
+            file_path=os.path.join(get_appdata_dir(), f'status-{cls_name}-{nametag}.yml')
+        )
 
-    def __set__(self, instance, value):
-        raise AttributeError('Read-Only')
+
+class QudiObjectAppDataHandler(QtCore.QObject):
+    """
+    Handles dumping, loading and deletion of StatusVar meta attributes in qudi objects.
+    Includes automatic, periodic dumping functionality that can be enabled/disabled at any time.
+    All public methods and attributes can be considered thread-safe.
+
+    Parameters
+    ----------
+    instance : QudiQObjectMixin
+        Class name of the qudi QObject (QudiQObjectMixin subclass)
+    status_vars : list
+        Sequence of qudi.core.statusvariable.StatusVar meta attribute instances associated with the
+        qudi object instance.
+    """
+
+    sigAppDataChanged = QtCore.Signal(bool)  # exists
+    _sigStartPeriodicDump = QtCore.Signal(object)  # interval
+
+    def __init__(self, instance: 'QudiQObjectMixin', status_vars: Sequence[StatusVar]):
+        super().__init__(parent=instance)
+        self._status_vars = status_vars
+        self._instance = instance
+        self._file_handler = QudiObjectFileHandler(cls_name=self._instance.__class__.__name__,
+                                                   nametag=self._instance.nametag)
+        self._periodic_dumper = QudiObjectPeriodicAppDataDumper(handler=self)
+        self._sigStartPeriodicDump.connect(self.start_periodic_dump,
+                                           QtCore.Qt.BlockingQueuedConnection)
+
+    @property
+    def exists(self) -> bool:
+        """
+        Indicates if an AppData file exists on disc.
+
+        Returns
+        -------
+        bool
+            AppData file exists flag.
+        """
+        return self._file_handler.exists
+
+    @QtCore.Slot()
+    def dump(self) -> None:
+        """
+        Dumps current values of StatusVar meta-attributes to a file in AppData. Ignores variables
+        that fail to dump either due to exceptions in the respective StatusVar representer or any
+        other reason.
+        Can be considered thread-safe.
+        """
+        if current_is_native_thread(self):
+            appdata = dict()
+            for status_variable in self._status_vars:
+                try:
+                    appdata[status_variable.name] = status_variable.represent(self._instance)
+                except:
+                    self._instance.log.exception(
+                        f'Error while representing status variable "{status_variable.name}". '
+                        f'This variable will not be saved.'
+                    )
+            try:
+                self._file_handler.dump(appdata)
+                self.sigAppDataChanged.emit(True)
+            except:
+                self.log.exception('Error dumping status variables to file. Status not saved.')
+        else:
+            call_slot_from_native_thread(self, 'dump', blocking=True)
+
+    @QtCore.Slot()
+    def load(self) -> None:
+        """
+        Loads status variables from file (if present) and tries to initialize the instance
+        meta-attributes with them. If a variable is not found in AppData or fails to initialize,
+        the default initialization is used instead.
+        Can be considered thread-safe.
+        """
+        if current_is_native_thread(self):
+            appdata = self._file_handler.load(ignore_missing=True)
+            for status_variable in self._status_vars:
+                try:
+                    if status_variable.name in appdata:
+                        value = appdata[status_variable.name]
+                        try:
+                            status_variable.construct(self._instance, value)
+                        except:
+                            self.log.exception(
+                                f'Error while constructing status variable "{status_variable.name}"'
+                                f' from stored value "{value}". Falling back to default value.'
+                            )
+                            status_variable.construct(self._instance)
+                    else:
+                        status_variable.construct(self._instance)
+                except Exception as err:
+                    raise RuntimeError(
+                        f'Default initialization of status variable "{status_variable.name}" failed'
+                    ) from err
+        else:
+            call_slot_from_native_thread(self, 'load', blocking=True)
+
+    @QtCore.Slot()
+    def clear(self) -> None:
+        """
+        Clears status variables file (if present).
+        Can be considered thread-safe.
+        """
+        if current_is_native_thread(self):
+            if self._file_handler.exists:
+                self._file_handler.clear()
+                self.sigAppDataChanged.emit(False)
+        else:
+            call_slot_from_native_thread(self, 'clear', blocking=True)
+
+    @QtCore.Slot(object)
+    def start_periodic_dump(self, interval: Union[int, float]) -> None:
+        """
+        Start automatic, periodic dumping of status variables.
+        Can be considered thread-safe.
+
+        Parameters
+        ----------
+        interval : float
+            Interval in seconds for dumping. Does not include the execution time of the dump call.
+        """
+        if current_is_native_thread(self):
+            self._periodic_dumper.start(interval)
+        else:
+            self._sigStartPeriodicDump.emit(interval)
+
+    @QtCore.Slot()
+    def stop_periodic_dump(self):
+        """
+        Stop automatic, periodic dumping of status variables. Ignored if no timer is running.
+        Can be considered thread-safe.
+        """
+        if current_is_native_thread(self):
+            self._periodic_dumper.stop()
+        else:
+            call_slot_from_native_thread(self, 'stop_periodic_dump', blocking=True)
 
 
-class ABCQObject(QObject, metaclass=ABCQObjectMeta):
-    """ Base class for an abstract QObject.
-    This is necessary because of a known bug in PySide2(6).
-    See: https://bugreports.qt.io/browse/PYSIDE-1434 for more details
+class QudiObjectPeriodicAppDataDumper(QtCore.QObject):
+    """
+    Helper object to facilitate periodic dumping of AppData in qudi QObjects.
+
+    Parameters
+    ----------
+    handler : QudiObjectAppDataHandler
+        Parent AppData handler instance.
+    """
+    def __init__(self, handler: QudiObjectAppDataHandler):
+        super().__init__(parent=handler)
+        self._handler = handler
+        self._stop_requested = True
+        self._timer = QtCore.QTimer(parent=self)
+        self._timer.setSingleShot(True)
+        self._timer.timeout.connect(self._dump_callback, QtCore.Qt.QueuedConnection)
+
+    @QtCore.Slot(object)
+    def start(self, interval: Union[int, float]) -> None:
+        """
+        Start automatic, periodic dumping of AppData.
+
+        Parameters
+        ----------
+        interval : float
+            Interval in seconds for dumping. Does not include the execution time of the dump call.
+
+        Raises
+        ------
+        ValueError
+            If the dump interval is <= 0.
+        """
+        if interval <= 0:
+            raise ValueError('Dump interval in seconds must be > 0')
+        if self._stop_requested and not self._timer.isActive():
+            self._stop_requested = False
+            self._timer.setInterval(int(round(1000 * interval)))
+            self._timer.start()
+
+    @QtCore.Slot()
+    def stop(self) -> None:
+        """
+        Stop automatic, periodic dumping of AppData. Ignored if no timer is running.
+        """
+        self._stop_requested = True
+        self._timer.stop()
+
+    def _dump_callback(self) -> None:
+        """Body of the timed loop."""
+        if not self._stop_requested:
+            self._handler.dump()
+            self._timer.start()
+
+
+class ABCQObjectMixin(metaclass=ABCQObjectMeta):
+    """
+    Base class for an abstract QObject. This is necessary because of a known bug in PySide2(6).
+    See https://bugreports.qt.io/browse/PYSIDE-1434 for more details
     """
     def __new__(cls, *args, **kwargs):
         abstract = getattr(cls, '__abstractmethods__', frozenset())
@@ -112,28 +258,42 @@ class ABCQObject(QObject, metaclass=ABCQObjectMeta):
         return super().__new__(cls, *args, **kwargs)
 
 
-class QudiObject(ABCQObject, metaclass=QudiObjectMeta):
-    """ Base class for any qudi QObjects that want to employ meta attribute magic, i.e. StatusVar,
-    ConfigOption and Connector
+class QudiQObjectMixin(ABCQObjectMixin, metaclass=QudiQObjectMeta):
     """
+    Mixin for any qudi QObject that wants to employ meta attribute magic, i.e. StatusVar,
+    ConfigOption and Connector.
+    Also adds logging.Logger, nametag and UUID attributes and ABC metaclass functionality.
 
-    appdata_handler = _QudiObjectAppDataDescriptor()
+    Use with QObject/QWidget types only and make sure this is placed before QObject/QWidget in mro!
 
-    __uuid: UUID
-    __nametag: str
-    __logger: logging.Logger
-
+    Parameters
+    ----------
+    nametag : str, optional
+        Human-readable string identifier for the object instance (defaults to empty string).
+    options : dict, optional
+        name-value pairs to initialize ConfigOption meta attributes with. Must provide at least as
+        many items as there are mandatory ConfigOption attributes in the qudi object.
+    connections : dict, optional
+        name-value pairs to initialize Connector meta attributes with. Must provide at least as
+        many items as there are mandatory Connector attributes in the qudi object.
+    uuid : uuid.UUID, optional
+        Universal unique identifier object for this object instance (defaults to creating one
+        with uuid.uuid4 if not provided).
+    *args
+        Positional arguments will be passed down the MRO (possibly to QObject)
+    **kwargs
+        Additional keyword arguments will be passed down the MRO (possibly to QObject)
+    """
     def __init__(self,
+                 *args,
+                 nametag: Optional[str] = '',
                  options: Optional[Mapping[str, Any]] = None,
                  connections: Optional[MutableMapping[str, Any]] = None,
-                 nametag: Optional[str] = '',
                  uuid: Optional[UUID] = None,
-                 parent: Optional[QObject] = None):
-        super().__init__(parent=parent)
-
+                 **kwargs):
         # Create unique UUID for this object if needed
-        self.__uuid = uuid if isinstance(uuid, UUID) else uuid4()
-        self.__nametag = nametag
+        self.__uuid: UUID = uuid if isinstance(uuid, UUID) else uuid4()
+        self.__nametag: str = nametag
         # Create logger instance for this object instance
         if nametag:
             logger_name = f'{self.__module__}.{self.__class__.__name__}::{nametag}'
@@ -141,12 +301,20 @@ class QudiObject(ABCQObject, metaclass=QudiObjectMeta):
             logger_name = f'{self.__module__}.{self.__class__.__name__}'
         self.__logger = get_logger(logger_name)
 
+        super().__init__(*args, **kwargs)
+
         # Initialize ConfigOption and Connector meta-attributes (descriptors)
         self.__init_config_options(dict() if options is None else options)
         self.__init_connectors(dict() if connections is None else connections)
+        # Initialize AppData handler
+        self.__appdata_handler = QudiObjectAppDataHandler(
+            instance=self,
+            status_vars=list(self._meta['status_variables'].values())
+        )
+
 
     def __eq__(self, other):
-        if isinstance(other, QudiObject):
+        if isinstance(other, QudiQObjectMixin):
             return self.__uuid == other.uuid
         return False
 
@@ -175,83 +343,59 @@ class QudiObject(ABCQObject, metaclass=QudiObjectMeta):
     @property
     @final
     def log(self) -> logging.Logger:
-        """ Returns the objects logger instance """
+        """Logger of this object instance."""
         return self.__logger
 
     @property
     @final
     def uuid(self) -> UUID:
-        """ Read-only property returning a unique uuid for this object instance """
+        """Unique uuid of this object instance."""
         return self.__uuid
 
     @property
     @final
     def nametag(self) -> str:
-        """ Read-only property returning the nametag for this object instance """
+        """Nametag of this object instance."""
         return self.__nametag
 
-    @Slot()
+    @property
     @final
-    def move_to_main_thread(self) -> None:
-        """ Method that will move this module into the main thread """
-        if current_is_native_thread(self):
-            self.moveToThread(QCoreApplication.instance().thread())
-        else:
-            call_slot_from_native_thread(self, 'move_to_main_thread', blocking=True)
+    def appdata(self) -> QudiObjectAppDataHandler:
+        """Handler for AppData of this object instance."""
+        return self.__appdata_handler
 
-    @final
-    def dump_status_variables(self) -> None:
-        """ Dumps current values of StatusVar meta-attributes to a file in AppData that is unique
-        for each combination of this objects type and the given appdata_nametag.
-        Ignores variables that fail to dump either due to exceptions in the respective StatusVar
-        representer or any other reason.
-        """
-        data = dict()
-        cls = self.__class__
-        for attr_name, var in self._meta['status_variables'].items():
-            try:
-                data[var.name] = var.represent(self)
-            except:
-                self.__logger.exception(
-                    f'Error while representing status variable "{var.name}" at '
-                    f'"{cls.__module__}.{cls.__name__}.{attr_name}". '
-                    f'This variable will NOT be saved.'
-                )
-        try:
-            self.appdata_handler.dump(data)
-        except Exception as err:
-            raise RuntimeError(
-                f'Error dumping status variables to file for "{cls.__module__}.{cls.__name__}"'
-            ) from err
 
-    @final
-    def load_status_variables(self) -> None:
-        """ Loads status variables from file (if present) and tries to initialize the instance
-        meta-attributes with them. If a variable is not found in AppData or fails to initialize,
-        the default initialization is used instead.
-        """
-        cls = self.__class__
-        try:
-            data = self.appdata_handler.load(ignore_missing=True)
-        except Exception as err:
-            raise RuntimeError(
-                f'Error loading status variables from file for "{cls.__module__}.{cls.__name__}"'
-            ) from err
-        for attr_name, var in self._meta['status_variables'].items():
-            if var.name in data:
-                value = data[var.name]
-                try:
-                    var.construct(self, value)
-                except:
-                    self.__logger.exception(
-                        f'Error while constructing status variable "{var.name}" at '
-                        f'"{cls.__module__}.{cls.__name__}.{attr_name}" from value "{value}". '
-                        f'Using default initialization instead.'
-                    )
-                else:
-                    continue
-            try:
-                var.construct(self)
-            except Exception as err:
-                raise RuntimeError(f'Default initialization of status variable "{var.name}" at '
-                                   f'"{cls.__module__}.{cls.__name__}.{attr_name}" failed') from err
+class QudiQObject(QudiQObjectMixin, QtCore.QObject):
+    """Expands QObject class with qudi meta attribute magic, i.e. StatusVar, ConfigOption and
+    Connector.
+    Also adds logging.Logger, nametag and UUID attributes and ABC metaclass functionality.
+
+    Use with QObject/QWidget types only and make sure this is placed before QObject/QWidget in mro!
+
+    Parameters
+    ----------
+    parent : QtCore.QObject, optional
+        Parent QObject passed on to QtCore.QObject.__init__ (defaults to None).
+    nametag : str, optional
+        Human-readable string identifier for the object instance (defaults to empty string).
+    options : dict, optional
+        name-value pairs to initialize ConfigOption meta attributes with. Must provide at least as
+        many items as there are mandatory ConfigOption attributes in the qudi object.
+    connections : dict, optional
+        name-value pairs to initialize Connector meta attributes with. Must provide at least as
+        many items as there are mandatory Connector attributes in the qudi object.
+    uuid : uuid.UUID, optional
+        Universal unique identifier object for this object instance (defaults to creating one
+        with uuid.uuid4 if not provided).
+    """
+    def __init__(self,
+                 parent: Optional[QtCore.QObject] = None,
+                 nametag: Optional[str] = '',
+                 options: Optional[Mapping[str, Any]] = None,
+                 connections: Optional[MutableMapping[str, Any]] = None,
+                 uuid: Optional[UUID] = None):
+        super().__init__(parent=parent,
+                         nametag=nametag,
+                         options=options,
+                         connections=connections,
+                         uuid=uuid)

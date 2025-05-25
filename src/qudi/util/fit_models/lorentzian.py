@@ -35,12 +35,24 @@ def multiple_lorentzian(x, centers, sigmas, amplitudes):
     """ Mathematical definition of the sum of multiple (physical) Lorentzian functions without any
     bias.
 
-    WARNING: iterable parameters "centers", "sigmas" and "amplitudes" must have same length.
+    WARNING: Iterable parameters "centers", "sigmas", and "amplitudes" must have the same length.
 
-    @param float x: The independent variable to calculate lorentz(x)
-    @param iterable centers: Iterable containing center positions for all lorentzians
-    @param iterable sigmas: Iterable containing sigmas for all lorentzians
-    @param iterable amplitudes: Iterable containing amplitudes for all lorentzians
+    Parameters
+    ----------
+    x : float
+        The independent variable to calculate lorentz(x).
+    centers : iterable
+        Iterable containing center positions for all Lorentzians.
+    sigmas : iterable
+        Iterable containing width parameters (half-width at half-maximum) for all Lorentzians.
+    amplitudes : iterable
+        Iterable containing amplitudes for all Lorentzians.
+
+    Returns
+    -------
+    float
+        The result given x for lorentz(x).
+
     """
     assert len(centers) == len(sigmas) == len(amplitudes)
     return sum(amp * sig ** 2 / ((x - c) ** 2 + sig ** 2) for c, sig, amp in
@@ -306,7 +318,7 @@ class LorentzianLinear(FitModelBase):
         # Perform a linear fit in subtracted data in order to estimate slope
         model = Linear()
         linear_fit = model.fit(data_sub, model.estimate(data_sub, x), x=x)
-        offset = linear_fit['offset'] + min(x) * linear_fit['slope']
+        offset = linear_fit.params['offset'].value + min(x) * linear_fit.params['slope'].value
 
         # Merge fit results into parameter estimates
         estimate = self.make_params()
@@ -314,18 +326,18 @@ class LorentzianLinear(FitModelBase):
                                min=min(data) - data_span / 2,
                                max=max(data) + data_span / 2,
                                vary=True)
-        estimate['slope'].set(value=linear_fit['slope'].value, min=-np.inf, max=np.inf, vary=True)
-        estimate['amplitude'].set(value=gauss_fit['amplitude'].value,
-                                  min=gauss_fit['amplitude'].min,
-                                  max=gauss_fit['amplitude'].max,
+        estimate['slope'].set(value=linear_fit.params['slope'].value, min=-np.inf, max=np.inf, vary=True)
+        estimate['amplitude'].set(value=gauss_fit.params['amplitude'].value,
+                                  min=gauss_fit.params['amplitude'].min,
+                                  max=gauss_fit.params['amplitude'].max,
                                   vary=True)
-        estimate['center'].set(value=gauss_fit['center'].value,
-                               min=gauss_fit['center'].min,
-                               max=gauss_fit['center'].max,
+        estimate['center'].set(value=gauss_fit.params['center'].value,
+                               min=gauss_fit.params['center'].min,
+                               max=gauss_fit.params['center'].max,
                                vary=True)
-        estimate['sigma'].set(value=gauss_fit['sigma'].value,
-                              min=gauss_fit['sigma'].min,
-                              max=gauss_fit['sigma'].max,
+        estimate['sigma'].set(value=gauss_fit.params['sigma'].value,
+                              min=gauss_fit.params['sigma'].min,
+                              max=gauss_fit.params['sigma'].max,
                               vary=True)
         return estimate
 

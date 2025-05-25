@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 """
-This file contains the qudi tools for remote module sharing via rpyc server.
+Contains RPyC services to interact with qudi modules across process boundaries.
 
-Copyright (c) 2021, the qudi developers. See the AUTHORS.md file at the top-level directory of this
-distribution and on <https://github.com/Ulm-IQO/qudi-core/>
+Copyright (c) 2021-2024, the qudi developers. See the AUTHORS.md file at the top-level directory of
+this distribution and on <https://github.com/Ulm-IQO/qudi-core/>.
 
 This file is part of qudi.
 
@@ -23,11 +23,10 @@ __all__ = ['RemoteModulesService', 'LocalNamespaceService']
 
 import rpyc
 from logging import Logger
-from PySide2 import QtCore
-from typing import Optional, Union, List, Dict, Any, Iterable, Set
+from typing import Optional, Union, List, Dict, Any
 
-from qudi.util.mutex import Mutex
 from qudi.util.proxy import CachedObjectRpycByValueProxy
+from qudi.util.mutex import Mutex
 from qudi.core.logger import get_logger
 from qudi.core.module import Base, ModuleState, ModuleBase
 from qudi.core.modulemanager import ModuleManager
@@ -36,21 +35,49 @@ from qudi.core.modulemanager import ModuleManager
 _logger = get_logger(__name__)
 
 
-class _SharedModuleTableProxyModel(QtCore.QSortFilterProxyModel):
-    """ Model proxy to filter ManagedModules according to their "allow_remote" flag. """
-    def filterAcceptsRow(self, source_row: int, source_parent: QtCore.QModelIndex) -> bool:
-        return self.sourceModel().index(source_row, 4, source_parent).data()
-
-
-class _LocalModuleTableProxyModel(QtCore.QSortFilterProxyModel):
-    """ Model proxy to filter ManagedModules according to their "allow_remote" flag. """
-    def filterAcceptsRow(self, source_row: int, source_parent: QtCore.QModelIndex) -> bool:
-        return self.sourceModel().index(source_row, 0, source_parent).data() != ModuleBase.GUI
-
-
 class RemoteModulesService(rpyc.Service):
-    """ An RPyC service that has a shared modules table model """
+    """
+    RPyC service providing access of allowed qudi modules to client qudi applications.
+
+    Parameters
+    ----------
+    module_manager : qudi.core.modulemanager.ModuleManager
+        Qudi module manager singleton.
+    force_remote_calls_by_value : bool, optional
+        If `True` each qudi module instance will be wrapped by
+        `qudi.util.proxy.CachedObjectRpycByValueProxy` to force serialization of most call
+        arguments and return values.
+    *args
+        Positional arguments will be passed to `rpyc.Service.__init__`.
+    **kwargs
+        Additional keyword arguments will be passed to `rpyc.Service.__init__`.
+    """
     ALIASES = ['RemoteModules']
+
+    _lock = Mutex()
+    __shared_module_count: Dict[str, int] = dict()
+
+    @classmethod
+    def init_shared_modules(cls, module_manager: ModuleManager) -> None:
+        with cls._lock:
+            cls.__shared_module_count = {name: 0 for name in module_manager.module_names if
+                                         module_manager.allow_remote(name)}
+
+    @classmethod
+    def __increase_module_count(cls, name: str) -> int:
+        cls.__shared_module_count[name] += 1
+        return cls.__shared_module_count[name]
+
+    @classmethod
+    def __decrease_module_count(cls, name: str) -> int:
+        new_count = max(0, cls.__shared_module_count[name] - 1)
+        cls.__shared_module_count[name] = new_count
+        return new_count
+
+    @classmethod
+    def __reset_module_count(cls, name: str) -> int:
+        cls.__shared_module_count[name] = 0
+        return 0
 
     def __init__(self,
                  *args,
@@ -58,65 +85,159 @@ class RemoteModulesService(rpyc.Service):
                  force_remote_calls_by_value: Optional[bool] = False,
                  **kwargs):
         super().__init__(*args, **kwargs)
-        self._thread_lock = Mutex()
         self._force_remote_calls_by_value = force_remote_calls_by_value
         self._module_manager = module_manager
-        self._module_cache: Set[str] = set()
-        self.shared_modules = _SharedModuleTableProxyModel()
-        self.shared_modules.setSourceModel(self._module_manager)
-        self.shared_modules.modelReset.connect(self._refresh_module_cache)
-        self.shared_modules.rowsInserted.connect(self._refresh_module_cache)
-        self.shared_modules.rowsRemoved.connect(self._refresh_module_cache)
-        self._refresh_module_cache()
+        self.__shared_modules = set()
 
-    @QtCore.Slot()
-    def _refresh_module_cache(self) -> None:
-        with self._thread_lock:
-            self._module_cache = {
-                self.shared_modules.index(row, 1).data() for row in
-                range(self.shared_modules.rowCount())
-            }
+    def __del__(self):
+        self.__cleanup_shared_modules()
 
     def _check_module_name(self, name: str) -> None:
-        if name not in self._module_cache:
+        if name not in self.__shared_module_count:
             raise ValueError(f'Client requested module "{name}" that is not shared')
 
+    def __cleanup_shared_modules(self) -> None:
+        with self._lock:
+            for name in self.__shared_modules:
+                self.__decrease_module_count(name)
+        self.__shared_modules.clear()
+
     def on_connect(self, conn):
-        """ code that runs when a connection is created
-        """
+        """Runs when a connection is created."""
         host, port = conn._config['endpoints'][1]
-        _logger.info(f'Client connected to remote modules service from [{host}]:{port:d}')
+        address = f'{host}:{port:d}'
+        self.__shared_modules = set()
+        _logger.info(f'Client connected to remote modules service from {address}')
 
     def on_disconnect(self, conn):
-        """ code that runs when the connection is closing
-        """
+        """Runs when the connection is closing."""
         host, port = conn._config['endpoints'][1]
-        _logger.info(f'Client [{host}]:{port:d} disconnected from remote modules service')
+        address = f'{host}:{port:d}'
+        self.__cleanup_shared_modules()
+        _logger.info(f'Client {address} disconnected from remote modules service')
 
-    def exposed_get_module_instance(self, name: str,) -> Union[CachedObjectRpycByValueProxy, Base]:
-        """ Return reference to a module in the shared module list """
-        with self._thread_lock:
-            self._check_module_name(name)
+    def exposed_get_module_instance(self, name: str) -> Union[CachedObjectRpycByValueProxy, Base]:
+        """Return reference to a module in the shared module list.
+
+        Parameters
+        ----------
+        name : str
+            Unique module name.
+
+        Returns
+        -------
+        object
+            Reference to the module.
+        """
+        self._check_module_name(name)
+        with self._lock:
             instance = self._module_manager.get_module_instance(name)
             if self._force_remote_calls_by_value:
-                return CachedObjectRpycByValueProxy(instance)
-            return instance
+                instance = CachedObjectRpycByValueProxy(instance)
+            if name not in self.__shared_modules:
+                self.__shared_modules.add(name)
+                self.__increase_module_count(name)
+        return instance
+
+    def exposed_try_deactivate_module(self, name: str) -> int:
+        """
+        Tries to deactivate module from remote client. Only succeeds if no other local module
+        or remote client is connected to it; unregisters the calling client in any case.
+        Returns the number of remaining connections to local modules or remote clients.
+        A return value > 0 indicates that the module remains active on the server side.
+
+        Parameters
+        ----------
+        name : str
+            Local native (server side) module name to deactivate.
+
+        Returns
+        -------
+        int
+            Number of remaining module connections. A value > 0 indicates the module remains active.
+        """
+        self._check_module_name(name)
+        with self._lock:
+            self.__shared_modules.discard(name)
+            if self._module_manager.module_state(name) == ModuleState.DEACTIVATED:
+                count = self.__reset_module_count(name)
+            else:
+                count = self.__decrease_module_count(name)
+                if count == 0 and len(self._module_manager.active_dependent_modules(name)) == 0:
+                    self._module_manager.deactivate_module(name)
+                else:
+                    count += 1
+        return count
 
     def exposed_get_module_state(self, name: str) -> ModuleState:
-        """ Return current ModuleState of the given module """
-        with self._thread_lock:
-            self._check_module_name(name)
-            return self._module_manager.get_module_state(name)
+        """
+        Get current module state of the requested module.
+
+        Parameters
+        ----------
+        name : str
+            Local native (server side) module name to get the state for.
+
+        Returns
+        -------
+        qudi.core.module.ModuleState
+            Current state representation enum.
+        """
+        self._check_module_name(name)
+        with self._lock:
+            state = self._module_manager.module_state(name)
+            if state == ModuleState.DEACTIVATED:
+                self.__shared_modules.discard(name)
+                self.__reset_module_count(name)
+        return state
+
+    def exposed_module_has_appdata(self, name: str) -> bool:
+        """
+        Get flag indicating if the requested module has an existing AppData file.
+
+        Parameters
+        ----------
+        name : str
+            Local native (server side) module name to get the AppData flag for.
+
+        Returns
+        -------
+        bool
+            Flag indicating if the requested module has AppData (`True`) or nor (`False`).
+        """
+        self._check_module_name(name)
+        return self._module_manager.has_appdata(name)
 
     def exposed_get_available_module_names(self) -> List[str]:
-        """ Returns the currently shared module names """
-        with self._thread_lock:
-            return list(self._module_cache)
+        """
+        Get a list of currently shared module names, i.e. a list of valid names to use as call
+        arguments for most of the methods in this service.
+
+        Returns
+        -------
+        list of str
+            List of shared native (server side) module names.
+        """
+        return list(self.__shared_module_count)
 
 
 class LocalNamespaceService(rpyc.Service):
-    """ An RPyC service providing a namespace dict containing references to all active qudi module
+    """
+    An RPyC service providing a namespace dict containing references to all active qudi module
     instances as well as a reference to the qudi application itself.
+
+    Parameters
+    ----------
+    qudi : qudi.core.application.Qudi
+        Qudi application singleton instance.
+    force_remote_calls_by_value : bool, optional
+        If `True` each qudi module instance will be wrapped by
+        `qudi.util.proxy.CachedObjectRpycByValueProxy` to force serialization of most call
+        arguments and return values.
+    *args
+        Positional arguments will be passed to `rpyc.Service.__init__`.
+    **kwargs
+        Additional keyword arguments will be passed to `rpyc.Service.__init__`.
     """
     ALIASES = ['QudiNamespace']
 
@@ -126,70 +247,52 @@ class LocalNamespaceService(rpyc.Service):
                  force_remote_calls_by_value: Optional[bool] = False,
                  **kwargs):
         super().__init__(*args, **kwargs)
-        self._thread_lock = Mutex()
         self._qudi = qudi
         self._force_remote_calls_by_value = force_remote_calls_by_value
-        self._module_cache: Dict[str, Union[Base, CachedObjectRpycByValueProxy]] = dict()
-
-        self.namespace_modules = _LocalModuleTableProxyModel()
-        self.namespace_modules.setSourceModel(self._qudi.module_manager)
-        self.namespace_modules.modelReset.connect(self._refresh_module_cache)
-        self.namespace_modules.rowsInserted.connect(self._refresh_module_cache)
-        self.namespace_modules.rowsRemoved.connect(self._refresh_module_cache)
-        self.namespace_modules.dataChanged.connect(self._module_state_changed)
-        self._refresh_module_cache()
-
-    @QtCore.Slot()
-    def _refresh_module_cache(self) -> None:
-        with self._thread_lock:
-            modules = [
-                self.namespace_modules.index(row, 0).data(QtCore.Qt.UserRole) for row in
-                range(self.namespace_modules.rowCount())
-            ]
-            if self._force_remote_calls_by_value:
-                self._module_cache = {mod.name: CachedObjectRpycByValueProxy(mod.instance) for mod
-                                      in modules if mod.state.activated}
-            else:
-                self._module_cache = {mod.name: mod.instance for mod in modules if
-                                      mod.state.activated}
-
-    def _module_state_changed(self,
-                              top_left: QtCore.QModelIndex,
-                              bottom_right: QtCore.QModelIndex,
-                              roles: Iterable[QtCore.Qt.ItemDataRole]) -> None:
-        if (top_left.column() <= 2) and (bottom_right.column() >= 2):
-            with self._thread_lock:
-                for row in range(top_left.row(), bottom_right.row() + 1):
-                    module = top_left.model().index(row, 0).data(QtCore.Qt.UserRole)
-                    if module.state.deactivated:
-                        self._module_cache.pop(module.name, None)
-                    else:
-                        if self._force_remote_calls_by_value:
-                            self._module_cache[module.name] = CachedObjectRpycByValueProxy(
-                                module.instance
-                            )
-                        else:
-                            self._module_cache[module.name] = module.instance
 
     def on_connect(self, conn):
-        """ runs when a connection is created """
+        """Runs when a connection is created."""
         host, port = conn._config['endpoints'][1]
-        _logger.info(f'Client connected to local module service from [{host}]:{port:d}')
+        _logger.info(f'Client connected to local module service from {host}:{port:d}')
 
     def on_disconnect(self, conn):
-        """ runs when the connection is closing """
+        """Runs when the connection is closing."""
         host, port = conn._config['endpoints'][1]
-        _logger.info(f'Client [{host}]:{port:d} disconnected from local module service')
+        _logger.info(f'Client {host}:{port:d} disconnected from local module service')
 
     def exposed_get_namespace_dict(self) -> Dict[str, Any]:
-        """ Returns the instances of the currently active modules as well as a reference to the
-        qudi application itself.
         """
-        with self._thread_lock:
-            mods = self._module_cache.copy()
-            mods['qudi'] = self._qudi
-            return mods
+        Get names and instances of the currently active modules as well as a reference to the
+        qudi application itself.
+
+        Returns
+        -------
+        dict
+            Currently active module names (keys) with their respective module instances (values).
+            Also the special key "qudi" containing a reference to the qudi application instance.
+        """
+        mods = self._qudi.module_manager.get_active_module_instances()
+        if self._force_remote_calls_by_value:
+            mods = {name: CachedObjectRpycByValueProxy(mod) for name, mod in mods.items() if
+                    mod.module_base != ModuleBase.GUI}
+        else:
+            mods = {name: mod for name, mod in mods.items() if mod.module_base != ModuleBase.GUI}
+        mods['qudi'] = self._qudi
+        return mods
 
     def exposed_get_logger(self, name: str) -> Logger:
-        """ Returns a logger object for remote processes to log into the qudi logging facility """
+        """
+        Returns a logger instance for remote processes to send log messages directly into the qudi
+        logging facility.
+
+        Parameters
+        ----------
+        name : str
+            Name identifier to initialize the logger instance with.
+
+        Returns
+        -------
+        logging.Logger
+            Logger instance initialized with given name and connected to the running qudi app.
+        """
         return get_logger(name)

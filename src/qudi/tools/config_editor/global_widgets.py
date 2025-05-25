@@ -32,7 +32,7 @@ from qudi.core.config.schema import config_schema
 
 
 class RemoteServerWidget(QtWidgets.QWidget):
-    """ Remote modules server configuration editor widget.
+    """Remote modules server configuration editor widget.
     """
     def __init__(self,
                  config: Optional[Mapping[str, Union[int, str]]] = None,

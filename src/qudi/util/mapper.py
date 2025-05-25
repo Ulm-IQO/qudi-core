@@ -47,31 +47,35 @@ class Converter:
     """
     def widget_to_model(self, data):
         """
-        Converts data in the format given by the widget and converts it
-        to the model data format.
+        Converts data from the format given by the widget to the model data format.
 
-        Parameter:
-        ==========
-        data: object data to be converted
+        Parameters
+        ----------
+        data : object
+            Data to be converted.
 
-        Returns:
-        ========
-        out: object converted data
+        Returns
+        -------
+        object
+            Converted data.
+
         """
         return data
 
     def model_to_widget(self, data):
         """
-        Converts data in the format given by the model and converts it
-        to the widget data format.
+        Converts data from the model format to the widget data format.
 
-        Parameter:
-        ==========
-        data: object data to be converted
+        Parameters
+        ----------
+        data : object
+            Data to be converted from the model format to the widget format.
 
-        Returns:
-        ========
-        out: object converted data
+        Returns
+        -------
+        object
+            Converted data in the widget format.
+
         """
         return data
 
@@ -150,43 +154,29 @@ class Mapper:
         Adds a mapping.
 
         Parameters
-        ==========
-        widget QtWidget A widget displaying some data. You want to map this
-                        widget to model data
-        model  object   Instance of a class holding model data (e.g. a logic
-                        or hardware module)
-        model_getter property/callable either a property holding the data to
-                                       be displayed in widget or a getter
-                                       method to retrieve data from the model
-                                       was changed.
-        model_property_notifier Signal A signal that is fired when the data
-                                       was changed.
-                                       Default: None. If None then data
-                                       changes are not monitored and the
-                                       widget is not updated.
-        model_setter callable A setter method which is called to set data to
-                              the model.
-                              If model_getter is a property the setter can be
-                              determined from this property and model_setter
-                              is ignored if it is None. If it is not None
-                              always this callable is used.
-                              Default: None
-        widget_property_name str The name of the pyqtProperty of the widget
-                                 used to map the data.
-                                 Default: ''
-                                 If it is an empty string the relevant
-                                 property is guessed from the widget's type.
-        widget_property_notifier Signal Notifier signal which is fired by the
-                                        widget when the data changed. If None
-                                        this is determined directly from the
-                                        property.
-                                        Example usage:
-                                        QLineEdit().editingFinished
-                                        Default: None
-        converter Converter converter instance for converting data between
-                            widget display and model.
-                            Default: None
-
+        ----------
+        widget : QtWidget
+            A widget displaying some data. You want to map this widget to model data.
+        model : object
+            Instance of a class holding model data (e.g. a logic or hardware module).
+        model_getter : property/callable 
+            Either a property holding the data to be displayed in widget or a getter method to retrieve data from the
+            model was changed.
+        model_property_notifier : Signal
+            A signal that is fired when the data was changed. If None then data changes are not monitored and the
+            widget is not updated. Default is None.
+        model_setter : callable
+            A setter method which is called to set data to the model. If model_getter is a property the setter can be
+            determined from this property and model_setter is ignored if it is None. If it is not None always this
+            callable is used. Default is None.
+        widget_property_name : str
+            The name of the pyqtProperty of the widget used to map the data. If it is an empty string the relevant
+            property is guessed from the widget's type. Default is ''.
+        widget_property_notifier : Signal
+            Notifier signal which is fired by the widget when the data changed. If None, this is determined directly
+            from the property. Example usage: QLineEdit().editingFinished. Default is None.
+        converter : Converter
+            Converter instance for converting data between widget display and model. Default is None.
         """
         # guess widget property if not specified
         if widget_property_name == '':
@@ -304,10 +294,11 @@ class Mapper:
         functools.partial to get the widget as first parameter.
 
         Parameters
-        ==========
-        key: (QtWidget, str) The key consisting of widget and property name,
-                             the notification signal was emitted from.
-        args*: List list of event parameters
+        ----------
+        key : (QtWidget, str)
+            The key consisting of widget and property name, the notification signal was emitted from.
+        args*: list
+            List of event parameters.
         """
         widget, widget_property_name = key
         if self._mappings[key]['widget_property_notifications_disabled']:
@@ -337,10 +328,11 @@ class Mapper:
         functools.partial to get the widget as first parameter.
 
         Parameters
-        ==========
-        key: (QtWidget, str) The key consisting of widget and property name
-                             the notification signal was emitted from.
-        args*: List list of event parameters
+        ----------
+        key : (QtWidget, str)
+            The key consisting of widget and property name the notification signal was emitted from.
+        args* : list
+            List of event parameters
         """
         widget, widget_property_name = key
         mapping = self._mappings[key]
@@ -388,14 +380,12 @@ class Mapper:
         Removes the mapping which maps the QtWidget widget to some model data.
 
         Parameters
-        ==========
-        widget: QtWidget/(QtWidget, str) widget the mapping is attached to
-                                  or a tuple containing the widget and the
-                                  widget's property name
-        widget_property_name: str name of the property of the widget we are
-                                  dealing with. If '' it will be determined
-                                  from the widget.
-                                  Default: ''
+        ----------
+        widget : QtWidget/(QtWidget, str)
+            Widget the mapping is attached to or a tuple containing the widget and the widget's property name.
+        widget_property_name : str
+            Name of the property of the widget we are dealing with. If '' it will be determined from the widget.
+            Default is ''.
         """
         if isinstance(widget, tuple):
             widget, widget_property_name = widget
@@ -434,8 +424,9 @@ class Mapper:
         call submit() to submit it.
 
         Parameters
-        ==========
-        policy: enum submit policy
+        ----------
+        policy : enum 
+            Submit policy.
         """
         if policy not in [SUBMIT_POLICY_AUTO, SUBMIT_POLICY_MANUAL]:
             raise ValueError(f'Unknown submit policy "{policy}"')
