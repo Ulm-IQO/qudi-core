@@ -22,16 +22,22 @@ If not, see <https://www.gnu.org/licenses/>.
 __all__ = ['Connector']
 
 import weakref
-from typing import Any, Type, Union
+from typing import Optional, Type, Union, TypeVar, Generic, TYPE_CHECKING
 from qudi.util.overload import OverloadProxy
 
+if TYPE_CHECKING:
+    from qudi.core.module import Base
+    M = TypeVar('M', bound=Base)
+else:
+    M = TypeVar('M')
 
-class Connector:
+
+class Connector(Generic[M]):
     """A connector used to connect qudi modules with each other.
     """
 
     def __init__(
-        self, interface: Union[str, Type], name: str = None, optional: bool = False
+        self, interface: Union[str, Type[M]], name: Optional[str] = None, optional: bool = False
     ):
         """Initialize a Connector instance.
 
@@ -66,7 +72,7 @@ class Connector:
         if self.name is None:
             self.name = name
 
-    def __call__(self) -> Any:
+    def __call__(self) -> M:
         """Return reference to the module that this connector is connected to."""
         if self.is_connected:
             return self._obj_proxy
@@ -101,7 +107,7 @@ class Connector:
         """
         return self._obj_proxy is not None
 
-    def connect(self, target: Any) -> None:
+    def connect(self, target: M) -> None:
         """Check if target is connectible by this connector and connect.
         """
         bases = {cls.__name__ for cls in target.__class__.mro()}
