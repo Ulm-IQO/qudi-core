@@ -30,6 +30,7 @@ import re
 import copy
 import numpy as np
 import matplotlib.pyplot as plt
+import importlib
 
 from enum import Enum
 from datetime import datetime
@@ -98,7 +99,19 @@ def str_dict_to_metadata(str_dict):
     for param, value in str_dict.items():
         try:
             metadata[param] = eval(value)
-        except:
+        except NameError as e:
+            match = re.match(r"name '(\w+)' is not defined", str(e))
+            if match:
+                missing_name = match.group(1)
+                try:
+                    modules = {}
+                    modules[missing_name] = importlib.import_module(missing_name)
+                    metadata[param] = eval(value, modules)
+                except Exception as e:
+                    metadata[param] = value
+            else:
+                metadata[param] = value
+        except Exception:
             metadata[param] = value
     return metadata
 
