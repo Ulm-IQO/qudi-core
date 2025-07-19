@@ -37,7 +37,10 @@ class Connector(Generic[M]):
     """
 
     def __init__(
-        self, interface: Union[str, Type[M]], name: Optional[str] = None, optional: bool = False
+            self,
+            interface: Union[str, Type[M]],
+            name: Optional[str] = None,
+            optional: Optional[bool] = False
     ):
         """Initialize a Connector instance.
 
