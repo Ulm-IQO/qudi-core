@@ -22,16 +22,21 @@ If not, see <https://www.gnu.org/licenses/>.
 __all__ = ['Connector', 'QudiConnectionError']
 
 import importlib
-from typing import Union
+from typing import Optional, Type, Union, TypeVar, Generic, TYPE_CHECKING
 from qudi.util.overload import OverloadProxy
 
+if TYPE_CHECKING:
+    from qudi.core.module import Base
+    M = TypeVar('M', bound=Base)
+else:
+    M = TypeVar('M')
 
 class QudiConnectionError(RuntimeError):
     """Error type related to qudi Connector meta attribute functionality."""
     pass
 
 
-class Connector:
+class Connector(Generic[M]):
     """
     Descriptor object used to connect qudi objects with each other.
 
@@ -48,7 +53,9 @@ class Connector:
         connected to it (defaults to `False`).
     """
 
-    def __init__(self, interface: type, name: str = None, optional: bool = False):
+    def __init__(
+            self, interface: Type[M], name: Optional[str] = None, optional: Optional[bool] = False
+    ):
         if not isinstance(interface, type):
             raise TypeError('Parameter "interface" must be an interface class')
         if name is not None:
@@ -70,7 +77,7 @@ class Connector:
             self.name = name
         self.attr_name = name
 
-    def __get__(self, instance, owner) -> Union[None, OverloadProxy, 'Connector']:
+    def __get__(self, instance, owner) -> Union[None, M, 'Connector']:
         """
         If called on a class, will return this descriptor instance itself. If called on an instance,
         will return the connection target (or `None` if optional and not connected).
@@ -104,7 +111,7 @@ class Connector:
         interface = f'{self.interface.__module__}.{self.interface.__qualname__}'
         return f'{connector}({interface}, "{self.name}", {self.optional})'
 
-    def connect(self, instance: object, target: object) -> None:
+    def connect(self, instance: object, target: M) -> None:
         """
         Connect the target qudi object instance to the object instance owning this connector and
         check if it is an instance of the specified interface
@@ -179,7 +186,7 @@ class Connector:
         except (KeyError, AttributeError):
             return False
 
-    def _target_complies_with_interface(self, target) -> bool:
+    def _target_complies_with_interface(self, target: M) -> bool:
         target_qualname = type(target).__qualname__
         if not target_qualname.startswith('qudi.'):
             target_qualname = f'{type(target).__module__}.{target_qualname}'
