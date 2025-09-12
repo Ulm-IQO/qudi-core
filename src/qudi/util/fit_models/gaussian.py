@@ -72,35 +72,61 @@ class Gaussian(FitModelBase):
 
     @estimator('Peak')
     def estimate_peak(self, data, x):
+        # Sort and compute baseline from raw ends
         data, x = sort_check_data(data, x)
-        # Smooth data
-        filter_width = max(1, int(round(len(x) / 20)))
-        data_smoothed, _ = smooth_data(data, filter_width)
-        data_smoothed, offset = correct_offset_histogram(data_smoothed, bin_width=2 * filter_width)
+        n_end    = max(2, len(data) // 20)
+        baseline = np.min(np.r_[data[:n_end], data[-n_end:]])
+        data_bc  = data - baseline
 
-        # determine peak position
-        center = x[np.argmax(data_smoothed)]
+        # Smooth for peak & half-max detection
+        filt      = max(1, round(len(x) / 20))
+        smooth, _ = smooth_data(data_bc, filt)
+        idx_peak  = int(np.argmax(smooth))
+        center    = x[idx_peak]
+        amplitude = smooth[idx_peak]
+        half_max  = amplitude / 2
 
-        # calculate amplitude
-        amplitude = abs(max(data_smoothed))
+        # Find FWHM edges by walking outwards and interpolating
+        def interp_edge(i, direction):
+            if i + direction >= len(x)  or i + direction < 0 :
+                return None
+            while 0 <= i + direction < len(x)-1 and smooth[i] >= half_max:
+                i += direction
+            i0, i1 = (i, i + 1) if direction > 1 else (i - 1, i)
 
-        # according to the derived formula, calculate sigma. The crucial part is here that the
-        # offset was estimated correctly, then the area under the curve is calculated correctly:
-        numerical_integral = np.trapz(data_smoothed, x)
-        sigma = abs(numerical_integral / (np.sqrt(2 * np.pi) * amplitude))
+            x0, y0 = x[i0], smooth[i0]
+            x1, y1 = x[i1], smooth[i1]
+            return x0 + (half_max - y0) * (x1 - x0) / (y1 - y0) if y1 != y0 else x0
 
-        x_spacing = min(abs(np.ediff1d(x)))
-        x_span = abs(x[-1] - x[0])
-        data_span = abs(max(data) - min(data))
+        left_edge  = interp_edge(idx_peak, -1)
+        right_edge = interp_edge(idx_peak, +1)
+        if left_edge and right_edge:
+            fwhm       = right_edge - left_edge
+        elif left_edge:
+            fwhm = (center - left_edge) * 2
+        elif right_edge:
+            fwhm = (right_edge - center) *2
+        else:
+            fwhm = min(center - x[0], x[-1] - center) *2
+        sigma      = fwhm / (2 * np.sqrt(2 * np.log(2)))
+
+        # Build params with sensible bounds
+        span      = x[-1] - x[0]
+        dx        = float(np.min(np.diff(x))) if len(x) > 1 else span
+        data_span = smooth.max() - smooth.min()
 
         estimate = self.make_params()
         estimate['amplitude'].set(value=amplitude, min=0, max=2 * amplitude)
-        estimate['sigma'].set(value=sigma, min=x_spacing, max=x_span)
-        estimate['center'].set(value=center, min=min(x) - x_span / 2, max=max(x) + x_span / 2)
-        estimate['offset'].set(
-            value=offset, min=min(data) - data_span / 2, max=max(data) + data_span / 2
-        )
+        estimate['center'].set(value=center,
+                              min=x[0] - span/2, max=x[-1] + span/2)
+        estimate['sigma'].set(value=max(sigma, dx),
+                             min=dx, max=span)
+        estimate['offset'].set(value=baseline,
+                              min=baseline - data_span,
+                              max=baseline + data_span)
         return estimate
+
+
 
     @estimator('Dip')
     def estimate_dip(self, data, x):
