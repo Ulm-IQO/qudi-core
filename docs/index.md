@@ -38,7 +38,7 @@ has_children: true
 - Data Fit Models
 
 ### Programming Guidelines
-- Code Style
+- [Code Style](programming_guidelines/code_style.md)
 - Writing qudi Modules
 - Porting Old qudi Modules
 - [Hardware With Multiple Interfaces](programming_guidelines/hardware_with_multiple_interfaces.md)
