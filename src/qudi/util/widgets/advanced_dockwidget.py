@@ -20,14 +20,13 @@ You should have received a copy of the GNU Lesser General Public License along w
 If not, see <https://www.gnu.org/licenses/>.
 """
 
-__all__ = ['AdvancedDockWidget']
+__all__ = ["AdvancedDockWidget"]
 
-from PySide2 import QtCore, QtWidgets
+from PySide6 import QtCore, QtWidgets
 
 
 class AdvancedDockWidget(QtWidgets.QDockWidget):
-    """ QDockWidget that emits a sigClosed signal when handling a closeEvent
-    """
+    """QDockWidget that emits a sigClosed signal when handling a closeEvent"""
 
     sigClosed = QtCore.Signal()
 

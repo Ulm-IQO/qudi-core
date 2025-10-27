@@ -19,11 +19,11 @@ You should have received a copy of the GNU Lesser General Public License along w
 If not, see <https://www.gnu.org/licenses/>.
 """
 
-__all__ = ['TaskWidget']
+__all__ = ["TaskWidget"]
 
 import os
 from typing import Type, Optional, Dict, Tuple, Any, Iterable
-from PySide2 import QtCore, QtWidgets, QtGui
+from PySide6 import QtCore, QtWidgets, QtGui
 
 from qudi.util.helpers import is_integer
 from qudi.util.paths import get_artwork_dir
@@ -43,8 +43,7 @@ class TestToolButton(QtWidgets.QToolButton):
 
 
 class TaskWidget(QtWidgets.QWidget):
-    """QWidget to control a ModuleTask and display its state.
-    """
+    """QWidget to control a ModuleTask and display its state."""
 
     sigStartTask = QtCore.Signal(dict)  # parameters
     sigInterruptTask = QtCore.Signal()
@@ -52,8 +51,14 @@ class TaskWidget(QtWidgets.QWidget):
     _ParamWidgetsIterable = Iterable[Tuple[QtWidgets.QLabel, QtWidgets.QWidget]]
     _ParamWidgetsDict = Dict[str, Tuple[QtWidgets.QLabel, QtWidgets.QWidget]]
 
-    def __init__(self, *args, task_type: Type[ModuleTask], max_columns: Optional[int] = None,
-                 max_rows: Optional[int] = None, **kwargs):
+    def __init__(
+        self,
+        *args,
+        task_type: Type[ModuleTask],
+        max_columns: Optional[int] = None,
+        max_rows: Optional[int] = None,
+        **kwargs,
+    ):
         super().__init__(*args, **kwargs)
 
         if max_rows is not None and max_columns is not None:
@@ -67,14 +72,16 @@ class TaskWidget(QtWidgets.QWidget):
             max_rows = 8
         elif max_rows is None:
             number_of_widgets = len(task_type.call_parameters())
-            max_rows = number_of_widgets // max_columns + number_of_widgets % max_columns
+            max_rows = (
+                number_of_widgets // max_columns + number_of_widgets % max_columns
+            )
 
         # Create control button and state label. Arrange them in a sub-layout and connect button.
         # Also add animated busy-indicator
-        icon_dir = os.path.join(get_artwork_dir(), 'icons')
-        self._play_icon = QtGui.QIcon(os.path.join(icon_dir, 'media-playback-start'))
-        self._stop_icon = QtGui.QIcon(os.path.join(icon_dir, 'media-playback-stop'))
-        self.state_label = QtWidgets.QLabel('stopped')
+        icon_dir = os.path.join(get_artwork_dir(), "icons")
+        self._play_icon = QtGui.QIcon(os.path.join(icon_dir, "media-playback-start"))
+        self._stop_icon = QtGui.QIcon(os.path.join(icon_dir, "media-playback-stop"))
+        self.state_label = QtWidgets.QLabel("stopped")
         self.state_label.setAlignment(QtCore.Qt.AlignCenter)
         font = self.state_label.font()
         font.setBold(True)
@@ -104,7 +111,9 @@ class TaskWidget(QtWidgets.QWidget):
 
         # Create task parameter editors and put them in a sub-layout
         self.parameter_widgets = self.__create_parameter_editor_widgets(task_type)
-        param_layout = self.__layout_parameter_widgets(self.parameter_widgets.values(), max_rows)
+        param_layout = self.__layout_parameter_widgets(
+            self.parameter_widgets.values(), max_rows
+        )
 
         # Add sub-layouts to main layout
         main_layout = QtWidgets.QHBoxLayout()
@@ -117,27 +126,31 @@ class TaskWidget(QtWidgets.QWidget):
         self._interrupt_enabled = False
 
     @staticmethod
-    def __create_parameter_editor_widgets(task_type: Type[ModuleTask]) -> _ParamWidgetsDict:
-        """Helper function to create editor widgets and labels for each ModuleTask call parameter.
-        """
+    def __create_parameter_editor_widgets(
+        task_type: Type[ModuleTask],
+    ) -> _ParamWidgetsDict:
+        """Helper function to create editor widgets and labels for each ModuleTask call parameter."""
         task_parameters = task_type.call_parameters()
         param_widgets = dict()
         for param_name, param in task_parameters.items():
             editor = ParameterWidgetMapper.widget_for_parameter(param)
             if editor is None:
-                editor = QtWidgets.QLabel('Unknown parameter type')
-                editor.setSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Minimum)
+                editor = QtWidgets.QLabel("Unknown parameter type")
+                editor.setSizePolicy(
+                    QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Minimum
+                )
             else:
                 editor = editor()
                 # ToDo: Set default values here
-            label = QtWidgets.QLabel(f'{param_name}:')
+            label = QtWidgets.QLabel(f"{param_name}:")
             label.setAlignment(QtCore.Qt.AlignVCenter | QtCore.Qt.AlignRight)
             param_widgets[param_name] = (label, editor)
         return param_widgets
 
     @staticmethod
-    def __layout_parameter_widgets(param_widgets: _ParamWidgetsIterable,
-                                   max_rows: int) -> QtWidgets.QGridLayout:
+    def __layout_parameter_widgets(
+        param_widgets: _ParamWidgetsIterable, max_rows: int
+    ) -> QtWidgets.QGridLayout:
         """Helper function to layout parameter widgets in a QGridLayout."""
         row = 0
         column = 0

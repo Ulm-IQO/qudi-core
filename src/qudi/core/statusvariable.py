@@ -20,7 +20,7 @@ You should have received a copy of the GNU Lesser General Public License along w
 If not, see <https://www.gnu.org/licenses/>.
 """
 
-__all__ = ['StatusVar']
+__all__ = ["StatusVar"]
 
 import copy
 import inspect
@@ -32,8 +32,14 @@ class StatusVar:
     deactivation.
     """
 
-    def __init__(self, name: Optional[str] = None, default: Optional[Any] = None, *,
-                 constructor: Optional[Callable] = None, representer: Optional[Callable] = None):
+    def __init__(
+        self,
+        name: Optional[str] = None,
+        default: Optional[Any] = None,
+        *,
+        constructor: Optional[Callable] = None,
+        representer: Optional[Callable] = None,
+    ):
         """
         Parameters
         ----------
@@ -73,10 +79,12 @@ class StatusVar:
         **kwargs : dict
             Additional or overridden parameters for the constructor of this class.
         """
-        newargs = {'name': self.name,
-                   'default': copy.deepcopy(self.default),
-                   'constructor': self.constructor_function,
-                   'representer': self.representer_function}
+        newargs = {
+            "name": self.name,
+            "default": copy.deepcopy(self.default),
+            "constructor": self.constructor_function,
+            "representer": self.representer_function,
+        }
         newargs.update(kwargs)
         return StatusVar(**newargs)
 
@@ -114,11 +122,14 @@ class StatusVar:
 
     @staticmethod
     def _assert_func_signature(func: Callable) -> Callable:
-        assert callable(func), 'StatusVar constructor/representer must be callable'
+        assert callable(func), "StatusVar constructor/representer must be callable"
         params = tuple(inspect.signature(func).parameters)
-        assert 0 < len(params) < 3, 'StatusVar constructor/representer must be function with ' \
-                                    '1 (static) or 2 (bound method) parameters.'
+        assert 0 < len(params) < 3, (
+            "StatusVar constructor/representer must be function with "
+            "1 (static) or 2 (bound method) parameters."
+        )
         if len(params) == 1:
+
             def wrapper(instance, value):
                 return func(value)
 

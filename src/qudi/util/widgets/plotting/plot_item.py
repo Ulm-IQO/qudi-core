@@ -20,11 +20,11 @@ You should have received a copy of the GNU Lesser General Public License along w
 If not, see <https://www.gnu.org/licenses/>.
 """
 
-__all__ = ['DataImageItem', 'XYPlotItem']
+__all__ = ["DataImageItem", "XYPlotItem"]
 
 import numpy as np
 from typing import Union, Optional, Tuple
-from PySide2 import QtCore
+from PySide6 import QtCore
 from pyqtgraph import ImageItem as _ImageItem
 from pyqtgraph import PlotDataItem as _PlotDataItem
 
@@ -33,22 +33,23 @@ from qudi.util.colordefs import QudiPalette as _QudiPalette
 
 
 class XYPlotItem(_PlotDataItem):
-    """ Extension of pg.PlotDataItem with default qudi style plot options """
+    """Extension of pg.PlotDataItem with default qudi style plot options"""
+
     def __init__(self, *args, **kwargs) -> None:
         super().__init__()
-        self.opts['pen'] = _QudiPalette.c1
-        self.opts['symbolPen'] = _QudiPalette.c1
-        self.opts['symbolBrush'] = _QudiPalette.c1
+        self.opts["pen"] = _QudiPalette.c1
+        self.opts["symbolPen"] = _QudiPalette.c1
+        self.opts["symbolBrush"] = _QudiPalette.c1
         self.setData(*args, **kwargs)
 
 
 class DataImageItem(_ImageItem):
-    """ Extension of pg.ImageItem with percentile level scaling and image size adjustment """
+    """Extension of pg.ImageItem with percentile level scaling and image size adjustment"""
 
     def __init__(self, image=None, **kwargs):
         # Change default color scale to qudi default
-        if kwargs.get('lut', None) is None:
-            kwargs['lut'] = _Colorscale().lut
+        if kwargs.get("lut", None) is None:
+            kwargs["lut"] = _Colorscale().lut
         super().__init__(image, **kwargs)
         self._percentiles = None
 
@@ -57,8 +58,7 @@ class DataImageItem(_ImageItem):
         return self._percentiles
 
     def set_percentiles(self, percentiles: Union[None, Tuple[float, float]]) -> None:
-        """ Set percentile range to clip image color level scaling.
-        """
+        """Set percentile range to clip image color level scaling."""
         if percentiles is not None:
             percentiles = (min(percentiles), max(percentiles))
         if percentiles != self._percentiles:
@@ -68,19 +68,20 @@ class DataImageItem(_ImageItem):
                 if masked_image.size > 0:
                     self.setLevels(self._get_percentile_levels(masked_image))
 
-    def set_image_extent(self,
-                         extent: Tuple[Tuple[float, float], Tuple[float, float]],
-                         adjust_for_px_size: Optional[bool] = True
-                         ) -> None:
-        """ Scales the image to a certain value range. By default, the resulting extent will be a
+    def set_image_extent(
+        self,
+        extent: Tuple[Tuple[float, float], Tuple[float, float]],
+        adjust_for_px_size: Optional[bool] = True,
+    ) -> None:
+        """Scales the image to a certain value range. By default, the resulting extent will be a
         bit larger, so that each pixel center corresponds to the respective xy coordinate.
         """
         if adjust_for_px_size is None:
             adjust_for_px_size = True
         if len(extent) != 2:
-            raise ValueError('Image extent must be float sequence of length 2')
+            raise ValueError("Image extent must be float sequence of length 2")
         if len(extent[0]) != 2 or len(extent[1]) != 2:
-            raise TypeError('Image extent for each axis must be sequence of length 2.')
+            raise TypeError("Image extent for each axis must be sequence of length 2.")
 
         if self.image is not None:
             x_min, x_max = min(extent[0]), max(extent[0])
@@ -96,14 +97,15 @@ class DataImageItem(_ImageItem):
             self.setRect(QtCore.QRectF(x_min, y_min, x_max - x_min, y_max - y_min))
 
     def set_image(self, image=None, **kwargs):
-        """ vpg.ImageItem method override to apply optional filter when setting image data.
-        """
+        """vpg.ImageItem method override to apply optional filter when setting image data."""
         if image is None:
             self.clear()
         else:
             masked_image = np.ma.masked_invalid(image).compressed()
             if masked_image.size > 0:
-                kwargs['levels'] = kwargs.get('levels', self._get_percentile_levels(masked_image))
+                kwargs["levels"] = kwargs.get(
+                    "levels", self._get_percentile_levels(masked_image)
+                )
                 self.setImage(image=image, **kwargs)
             else:
                 self.clear()

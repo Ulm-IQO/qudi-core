@@ -19,7 +19,7 @@ You should have received a copy of the GNU Lesser General Public License along w
 If not, see <https://www.gnu.org/licenses/>.
 """
 
-__all__ = ['Connector']
+__all__ = ["Connector"]
 
 import weakref
 from typing import Any, Type, Union
@@ -27,8 +27,7 @@ from qudi.util.overload import OverloadProxy
 
 
 class Connector:
-    """A connector used to connect qudi modules with each other.
-    """
+    """A connector used to connect qudi modules with each other."""
 
     def __init__(
         self, interface: Union[str, Type], name: str = None, optional: bool = False
@@ -51,10 +50,12 @@ class Connector:
             If `name` is not `None` or a non-empty string.
             If `optional` is not a boolean.
         """
-        assert isinstance(interface, (str, type)), \
+        assert isinstance(interface, (str, type)), (
             'Parameter "interface" must be an interface class or the class name as str.'
-        assert name is None or (isinstance(name, str) and name), \
+        )
+        assert name is None or (isinstance(name, str) and name), (
             'Parameter "name" must be non-empty str or None.'
+        )
         assert isinstance(optional, bool), 'Parameter "optional" must be bool type.'
         self.interface = interface if isinstance(interface, str) else interface.__name__
         self.name = name
@@ -102,8 +103,7 @@ class Connector:
         return self._obj_proxy is not None
 
     def connect(self, target: Any) -> None:
-        """Check if target is connectible by this connector and connect.
-        """
+        """Check if target is connectible by this connector and connect."""
         bases = {cls.__name__ for cls in target.__class__.mro()}
         if self.interface not in bases:
             raise RuntimeError(
@@ -114,13 +114,13 @@ class Connector:
         self._obj_ref = weakref.ref(target, self.__module_died_callback)
 
     def disconnect(self) -> None:
-        """Disconnect connector.
-        """
+        """Disconnect connector."""
         self._obj_proxy = None
 
     def copy(self, **kwargs):
-        """Create a new instance of Connector with copied values and update
-        """
-        return Connector(kwargs.get('interface', self.interface),
-                         kwargs.get('name', self.name),
-                         kwargs.get('optional', self.optional))
+        """Create a new instance of Connector with copied values and update"""
+        return Connector(
+            kwargs.get("interface", self.interface),
+            kwargs.get("name", self.name),
+            kwargs.get("optional", self.optional),
+        )

@@ -19,11 +19,11 @@ You should have received a copy of the GNU Lesser General Public License along w
 If not, see <https://www.gnu.org/licenses/>.
 """
 
-__all__ = ('LogRecordsTableModel',)
+__all__ = ("LogRecordsTableModel",)
 
 import traceback
 from datetime import datetime
-from PySide2 import QtCore, QtGui
+from PySide6 import QtCore, QtGui
 from qudi.util.mutex import Mutex
 
 
@@ -32,14 +32,15 @@ class LogRecordsTableModel(QtCore.QAbstractTableModel):
     Can be displayed with a QTableView for example.
     """
 
-    _color_map = {'debug'   : QtGui.QColor('#77F'),
-                  'info'    : QtGui.QColor('#1F1'),
-                  'warning' : QtGui.QColor('#F90'),
-                  'error'   : QtGui.QColor('#F11'),
-                  'critical': QtGui.QColor('#FF00FF'),
-                  }
-    _fallback_color = QtGui.QColor('#FFF')
-    _header = ('Time', 'Level', 'Source', 'Message')
+    _color_map = {
+        "debug": QtGui.QColor("#77F"),
+        "info": QtGui.QColor("#1F1"),
+        "warning": QtGui.QColor("#F90"),
+        "error": QtGui.QColor("#F11"),
+        "critical": QtGui.QColor("#FF00FF"),
+    }
+    _fallback_color = QtGui.QColor("#FFF")
+    _header = ("Time", "Level", "Source", "Message")
 
     def __init__(self, *args, max_records=10000, **kwargs):
         super().__init__(*args, **kwargs)
@@ -84,7 +85,11 @@ class LogRecordsTableModel(QtCore.QAbstractTableModel):
         Qt.ItemFlags
             Actions allowed for this cell.
         """
-        return QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEditable
+        return (
+            QtCore.Qt.ItemIsEnabled
+            | QtCore.Qt.ItemIsSelectable
+            | QtCore.Qt.ItemIsEditable
+        )
 
     def data(self, index, role):
         """Get data from model for a given cell. Data can have a role that affects display.
@@ -105,7 +110,11 @@ class LogRecordsTableModel(QtCore.QAbstractTableModel):
             record = self._records[(self._begin + index.row()) % self._max_records]
             if role == QtCore.Qt.TextColorRole:
                 return self._color_map.get(record[1], self._fallback_color)
-            if role in (QtCore.Qt.DisplayRole, QtCore.Qt.ToolTipRole, QtCore.Qt.EditRole):
+            if role in (
+                QtCore.Qt.DisplayRole,
+                QtCore.Qt.ToolTipRole,
+                QtCore.Qt.EditRole,
+            ):
                 return record[index.column()]
 
     def headerData(self, section, orientation, role=None):
@@ -125,7 +134,9 @@ class LogRecordsTableModel(QtCore.QAbstractTableModel):
         QVariant
             Header data for given column and role.
         """
-        if (role is None or role == QtCore.Qt.DisplayRole) and orientation == QtCore.Qt.Horizontal:
+        if (
+            role is None or role == QtCore.Qt.DisplayRole
+        ) and orientation == QtCore.Qt.Horizontal:
             try:
                 return self._header[section]
             except IndexError:
@@ -183,16 +194,18 @@ class LogRecordsTableModel(QtCore.QAbstractTableModel):
     @staticmethod
     def _format_log_record(record):
         # Compose message to display
-        message = record.getMessage()  # message if hasattr(record, 'message') else record.msg
+        message = (
+            record.getMessage()
+        )  # message if hasattr(record, 'message') else record.msg
         if record.exc_info is not None:
-            message += f'\n\n{traceback.format_exception(*record.exc_info)[-1][:-1]}'
-            tb = '\n'.join(traceback.format_exception(*record.exc_info)[:-1])
+            message += f"\n\n{traceback.format_exception(*record.exc_info)[-1][:-1]}"
+            tb = "\n".join(traceback.format_exception(*record.exc_info)[:-1])
             if tb:
-                message += f'\n{tb}'
+                message += f"\n{tb}"
 
         # Create human-readable timestamp
-        timestamp = datetime.fromtimestamp(record.created).strftime('%Y-%m-%d %H:%M:%S')
+        timestamp = datetime.fromtimestamp(record.created).strftime("%Y-%m-%d %H:%M:%S")
 
         # return 4 element tuple (timestamp, level, name, message)
         # Avoid problems with Qt by eliminating NULL bytes in strings.
-        return timestamp, record.levelname, record.name, message.replace('\0', '\\x00')
+        return timestamp, record.levelname, record.name, message.replace("\0", "\\x00")

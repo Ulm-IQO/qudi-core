@@ -19,16 +19,17 @@ You should have received a copy of the GNU Lesser General Public License along w
 If not, see <https://www.gnu.org/licenses/>.
 """
 
-from PySide2 import QtCore, QtWidgets
+from PySide6 import QtCore, QtWidgets
 
 
 class SettingsDialog(QtWidgets.QDialog):
     """
     Custom QDialog widget for configuration of the qudi main GUI.
     """
+
     def __init__(self, parent=None, **kwargs):
         super().__init__(parent, **kwargs)
-        self.setWindowTitle('Qudi: Main GUI settings')
+        self.setWindowTitle("Qudi: Main GUI settings")
 
         # Create main layout
         # Add widgets to layout and set as main layout
@@ -38,31 +39,35 @@ class SettingsDialog(QtWidgets.QDialog):
 
         # Create widgets and add them to the layout
         self.font_size_spinbox = QtWidgets.QSpinBox()
-        self.font_size_spinbox.setObjectName('fontSizeSpinBox')
+        self.font_size_spinbox.setObjectName("fontSizeSpinBox")
         self.font_size_spinbox.setMinimum(5)
         self.font_size_spinbox.setValue(10)
-        label = QtWidgets.QLabel('Console font size:')
-        label.setObjectName('fontSizeLabel')
+        label = QtWidgets.QLabel("Console font size:")
+        label.setObjectName("fontSizeLabel")
         label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
         layout.addWidget(label, 0, 0)
         layout.addWidget(self.font_size_spinbox, 0, 1)
 
         self.show_error_popups_checkbox = QtWidgets.QCheckBox()
-        self.show_error_popups_checkbox.setObjectName('showErrorPopupsCheckbox')
+        self.show_error_popups_checkbox.setObjectName("showErrorPopupsCheckbox")
         self.show_error_popups_checkbox.setChecked(True)
-        label = QtWidgets.QLabel('Show error popups:')
-        label.setObjectName('showErrorPopupsLabel')
+        label = QtWidgets.QLabel("Show error popups:")
+        label.setObjectName("showErrorPopupsLabel")
         label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
         layout.addWidget(label, 1, 0)
         layout.addWidget(self.show_error_popups_checkbox, 1, 1)
 
-        buttonbox = QtWidgets.QDialogButtonBox(QtWidgets.QDialogButtonBox.Ok
-                                               | QtWidgets.QDialogButtonBox.Cancel
-                                               | QtWidgets.QDialogButtonBox.Apply)
+        buttonbox = QtWidgets.QDialogButtonBox(
+            QtWidgets.QDialogButtonBox.Ok
+            | QtWidgets.QDialogButtonBox.Cancel
+            | QtWidgets.QDialogButtonBox.StandardButton.Apply
+        )
         buttonbox.setOrientation(QtCore.Qt.Horizontal)
         layout.addWidget(buttonbox, 2, 0, 1, 2)
 
         # Add internal signals
         buttonbox.accepted.connect(self.accept)
         buttonbox.rejected.connect(self.reject)
-        buttonbox.button(buttonbox.Apply).clicked.connect(self.accepted)
+        buttonbox.button(
+            QtWidgets.QDialogButtonBox.StandardButton.Apply
+        ).clicked.connect(self.accepted)

@@ -21,11 +21,17 @@ You should have received a copy of the GNU Lesser General Public License along w
 If not, see <https://www.gnu.org/licenses/>.
 """
 
-__all__ = ['Configuration', 'ValidationError', 'ParserError', 'YAMLError', 'DuplicateKeyError']
+__all__ = [
+    "Configuration",
+    "ValidationError",
+    "ParserError",
+    "YAMLError",
+    "DuplicateKeyError",
+]
 
 import copy
 from numbers import Number
-from PySide2 import QtCore
+from PySide6 import QtCore
 from typing import Mapping, Optional, Union, Sequence, Set, List, MutableMapping, Any
 from collections.abc import MutableMapping as _MutableMapping
 from qudi.core.meta import ABCQObjectMeta as _ABCQObjectMeta
@@ -41,39 +47,40 @@ from .file_handler import FileHandlerBase as _FileHandlerBase
 _OptionType = Union[Sequence, Mapping, Set, Number, str]
 
 
-class Configuration(_FileHandlerBase,
-                    _MutableMapping,
-                    QtCore.QObject,
-                    metaclass=_ABCQObjectMeta):
+class Configuration(
+    _FileHandlerBase, _MutableMapping, QtCore.QObject, metaclass=_ABCQObjectMeta
+):
     """QObject subclass representing a valid qudi configuration.
     Handles config file loading/dumping as well as writing qudi load config to AppData.
     Performs JSON schema validation upon file loading/dumping and mutation.
     Includes interface methods to add/remove module configurations as well as getting/setting
     various config items.
     """
+
     sigConfigChanged = QtCore.Signal(object)  # self
 
-    def __init__(self,
-                 config: Optional[MutableMapping[str, Any]] = None,
-                 parent: Optional[QtCore.QObject] = None
-                 ) -> None:
+    def __init__(
+        self,
+        config: Optional[MutableMapping[str, Any]] = None,
+        parent: Optional[QtCore.QObject] = None,
+    ) -> None:
         super().__init__(parent=parent)
 
         self._file_path = None  # File path for corresponding .cfg file
-        self._config = None     # The raw configuration as dict
+        self._config = None  # The raw configuration as dict
 
         # initialize and validate config dict
         self.set_config(config)
 
     def __repr__(self) -> str:
-        return f'Configuration({repr(self._config)})'
+        return f"Configuration({repr(self._config)})"
 
     def __str__(self) -> str:
-        return f'Configuration({str(self._config)})'
+        return f"Configuration({str(self._config)})"
 
     def __getitem__(self, key: str) -> Any:
         try:
-            return copy.deepcopy(self._config['global'][key])
+            return copy.deepcopy(self._config["global"][key])
         except KeyError:
             return copy.deepcopy(self._config[key])
 
@@ -82,7 +89,7 @@ class Configuration(_FileHandlerBase,
         if key in new_config:
             new_config[key] = value
         else:
-            new_config['global'][key] = value
+            new_config["global"][key] = value
         self.set_config(new_config)
 
     def __delitem__(self, key: str) -> None:
@@ -90,18 +97,18 @@ class Configuration(_FileHandlerBase,
         try:
             del new_config[key]
         except KeyError:
-            del new_config['global'][key]
+            del new_config["global"][key]
         self.set_config(new_config)
 
     def __iter__(self):
         for key, sub_cfg in self.config_map.items():
-            if key == 'global':
+            if key == "global":
                 yield from sub_cfg
             else:
                 yield key
 
     def __len__(self) -> int:
-        return max(0, len(self._config) + len(self._config['global']) - 1)
+        return max(0, len(self._config) + len(self._config["global"]) - 1)
 
     @property
     def config_map(self) -> MutableMapping[str, Any]:
@@ -117,14 +124,15 @@ class Configuration(_FileHandlerBase,
         return self._file_path
 
     def set_config(self, config: Union[None, MutableMapping[str, Any]]) -> None:
-        """Validate and reset this Configuration with the given raw config dict.
-        """
+        """Validate and reset this Configuration with the given raw config dict."""
         new_config = dict() if config is None else copy.deepcopy(config)
         _validate_config(new_config)
         self._config = new_config
         self.sigConfigChanged.emit(self)
 
-    def load(self, file_path: Optional[str] = None, set_default: Optional[bool] = False) -> None:
+    def load(
+        self, file_path: Optional[str] = None, set_default: Optional[bool] = False
+    ) -> None:
         """Load a config from file (.cfg), validate it (JSON schema) and reset this Configuration
         instance.
 
@@ -151,7 +159,7 @@ class Configuration(_FileHandlerBase,
                 except FileNotFoundError:
                     pass
         if file_path is None:
-            raise ValueError('No file path defined for configuration to load')
+            raise ValueError("No file path defined for configuration to load")
 
         # Load YAML file from disk.
         config = self._load(file_path)
@@ -178,19 +186,21 @@ class Configuration(_FileHandlerBase,
         """
         file_path = self._file_path if file_path is None else file_path
         if file_path is None:
-            raise ValueError('No file path defined for qudi configuration to dump into')
+            raise ValueError("No file path defined for qudi configuration to dump into")
         config = self.config_map
         _validate_config(config)
         self._dump(file_path, config)
         self._file_path = file_path
 
-    def add_local_module(self,
-                         base: str,
-                         name: str,
-                         module_class: str,
-                         allow_remote: Optional[bool] = None,
-                         connect: Optional[Mapping[str, str]] = None,
-                         options: Optional[Mapping[str, _OptionType]] = None) -> None:
+    def add_local_module(
+        self,
+        base: str,
+        name: str,
+        module_class: str,
+        allow_remote: Optional[bool] = None,
+        connect: Optional[Mapping[str, str]] = None,
+        options: Optional[Mapping[str, _OptionType]] = None,
+    ) -> None:
         """Mutates the current configuration by validating and adding a new local qudi module
         config with base "gui", "logic" or "hardware" of the form:
             <name>:
@@ -210,26 +220,28 @@ class Configuration(_FileHandlerBase,
         if self.module_configured(name):
             raise KeyError(f'Module with name "{name}" already configured')
         self.validate_module_base(base)
-        module_config = {'module.Class': module_class}
+        module_config = {"module.Class": module_class}
         if allow_remote is not None:
-            module_config['allow_remote'] = allow_remote
+            module_config["allow_remote"] = allow_remote
         if connect is not None:
-            module_config['connect'] = copy.copy(connect)
+            module_config["connect"] = copy.copy(connect)
         if options is not None:
-            module_config['options'] = copy.deepcopy(options)
+            module_config["options"] = copy.deepcopy(options)
         _validate_local_module_config(module_config)
         new_config = self.config_map
         new_config[base][name] = module_config
         self.set_config(new_config)
 
-    def add_remote_module(self,
-                          base: str,
-                          name: str,
-                          native_module_name: str,
-                          address: str,
-                          port: int,
-                          certfile: Optional[str] = None,
-                          keyfile: Optional[str] = None) -> None:
+    def add_remote_module(
+        self,
+        base: str,
+        name: str,
+        native_module_name: str,
+        address: str,
+        port: int,
+        certfile: Optional[str] = None,
+        keyfile: Optional[str] = None,
+    ) -> None:
         """Mutates the current configuration by validating and adding a new remote qudi module
         config with base "gui", "logic" or "hardware" of the form:
             <name>:
@@ -244,13 +256,15 @@ class Configuration(_FileHandlerBase,
         if self.module_configured(name):
             raise KeyError(f'Module with name "{name}" already configured')
         self.validate_module_base(base)
-        module_config = {'native_module_name': native_module_name,
-                         'address'           : address,
-                         'port'              : port}
+        module_config = {
+            "native_module_name": native_module_name,
+            "address": address,
+            "port": port,
+        }
         if certfile is not None:
-            module_config['certfile'] = certfile
+            module_config["certfile"] = certfile
         if keyfile is not None:
-            module_config['keyfile'] = keyfile
+            module_config["keyfile"] = keyfile
         _validate_remote_module_config(module_config)
         new_config = self.config_map
         new_config[base][name] = module_config
@@ -271,7 +285,7 @@ class Configuration(_FileHandlerBase,
             raise KeyError(f'Module with name "{new_name}" already configured')
 
         new_config = self.config_map
-        for base in ['gui', 'logic', 'hardware']:
+        for base in ["gui", "logic", "hardware"]:
             try:
                 module_config = new_config[base].pop(old_name)
             except KeyError:
@@ -287,7 +301,7 @@ class Configuration(_FileHandlerBase,
         Raises KeyError if no module is configured by given <name>.
         """
         new_config = self.config_map
-        for base in ['gui', 'logic', 'hardware']:
+        for base in ["gui", "logic", "hardware"]:
             try:
                 del new_config[base][name]
             except KeyError:
@@ -299,15 +313,18 @@ class Configuration(_FileHandlerBase,
 
     def module_configured(self, name: str) -> bool:
         """Checks if a module with given name is present in current configuration."""
-        return name in self._config['gui'] or name in self._config['logic'] or name in self._config[
-            'hardware']
+        return (
+            name in self._config["gui"]
+            or name in self._config["logic"]
+            or name in self._config["hardware"]
+        )
 
     def module_config(self, name: str) -> MutableMapping[str, Any]:
         """Returns module configuration for given module <name>.
 
         Raises KeyError if no module is configured by given <name>.
         """
-        for base in ['gui', 'logic', 'hardware']:
+        for base in ["gui", "logic", "hardware"]:
             try:
                 return copy.deepcopy(self._config[base][name])
             except KeyError:
@@ -319,22 +336,24 @@ class Configuration(_FileHandlerBase,
 
         Raises KeyError if no module is configured by given <name>.
         """
-        return 'native_module_name' in self.get_module_config(name)
+        return "native_module_name" in self.get_module_config(name)
 
     def is_local_module(self, name):
         """Checks whether a configured module is a local module and returns answer flag.
 
         Raises KeyError if no module is configured by given <name>.
         """
-        return 'module.Class' in self.get_module_config(name)
+        return "module.Class" in self.get_module_config(name)
 
     @property
     def module_names(self) -> List[str]:
         """List of the currently configured module names."""
-        return [*self._config['gui'], *self._config['logic'], *self._config['hardware']]
+        return [*self._config["gui"], *self._config["logic"], *self._config["hardware"]]
 
     @staticmethod
     def validate_module_base(base: str) -> None:
         """Raises ValueError if the given string is no valid qudi module base."""
-        if base not in ['gui', 'logic', 'hardware']:
-            raise ValueError('qudi module base must be one of ["gui", "logic", "hardware"]')
+        if base not in ["gui", "logic", "hardware"]:
+            raise ValueError(
+                'qudi module base must be one of ["gui", "logic", "hardware"]'
+            )

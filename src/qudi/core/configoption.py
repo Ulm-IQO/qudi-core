@@ -21,7 +21,7 @@ You should have received a copy of the GNU Lesser General Public License along w
 If not, see <https://www.gnu.org/licenses/>.
 """
 
-__all__ = ['ConfigOption', 'MissingOption']
+__all__ = ["ConfigOption", "MissingOption"]
 
 import copy
 import inspect
@@ -30,7 +30,8 @@ from typing import Any, Optional, Callable
 
 
 class MissingOption(Enum):
-    """ Representation for missing ConfigOption """
+    """Representation for missing ConfigOption"""
+
     error = -3
     warn = -2
     info = -1
@@ -42,10 +43,17 @@ class ConfigOption:
     module initalisation.
     """
 
-    def __init__(self, name: Optional[str] = None, default: Optional[Any] = None, *,
-                 missing: Optional[str] = 'nothing', constructor: Optional[Callable] = None,
-                 checker: Optional[Callable] = None, converter: Optional[Callable] = None):
-        """ Create a ConfigOption object.
+    def __init__(
+        self,
+        name: Optional[str] = None,
+        default: Optional[Any] = None,
+        *,
+        missing: Optional[str] = "nothing",
+        constructor: Optional[Callable] = None,
+        checker: Optional[Callable] = None,
+        converter: Optional[Callable] = None,
+    ):
+        """Create a ConfigOption object.
 
         Parameters
         ----------
@@ -98,25 +106,25 @@ class ConfigOption:
         **kwargs
             Extra arguments or overrides for the constructor of this class.
         """
-        newargs = {'name': self.name,
-                   'default': copy.deepcopy(self.default),
-                   'missing': self.missing.name,
-                   'constructor': self.constructor_function,
-                   'checker': self.checker,
-                   'converter': self.converter}
+        newargs = {
+            "name": self.name,
+            "default": copy.deepcopy(self.default),
+            "missing": self.missing.name,
+            "constructor": self.constructor_function,
+            "checker": self.checker,
+            "converter": self.converter,
+        }
         newargs.update(kwargs)
         return ConfigOption(**newargs)
 
     def check(self, value: Any) -> bool:
-        """If checker function set, check value. Assume everything is ok otherwise.
-        """
+        """If checker function set, check value. Assume everything is ok otherwise."""
         if callable(self.checker):
             return self.checker(value)
         return True
 
     def convert(self, value: Any) -> Any:
-        """If converter function set, convert value (pass-through otherwise).
-        """
+        """If converter function set, convert value (pass-through otherwise)."""
         if callable(self.converter):
             return self.converter(value)
         return value
@@ -139,11 +147,14 @@ class ConfigOption:
 
     @staticmethod
     def _assert_func_signature(func: Callable) -> Callable:
-        assert callable(func), 'ConfigOption constructor must be callable'
+        assert callable(func), "ConfigOption constructor must be callable"
         params = tuple(inspect.signature(func).parameters)
-        assert 0 < len(params) < 3, 'ConfigOption constructor must be function with ' \
-                                    '1 (static) or 2 (bound method) parameters.'
+        assert 0 < len(params) < 3, (
+            "ConfigOption constructor must be function with "
+            "1 (static) or 2 (bound method) parameters."
+        )
         if len(params) == 1:
+
             def wrapper(instance, value):
                 return func(value)
 

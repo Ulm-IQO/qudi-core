@@ -19,14 +19,26 @@ You should have received a copy of the GNU Lesser General Public License along w
 If not, see <https://www.gnu.org/licenses/>.
 """
 
-__all__ = ['StatusVar', 'ConfigOption', 'Connector', 'Base', 'LogicBase', 'GuiBase', 'get_logger']
+__all__ = [
+    "StatusVar",
+    "ConfigOption",
+    "Connector",
+    "Base",
+    "LogicBase",
+    "GuiBase",
+    "get_logger",
+]
 
 import os
 from importlib import metadata
-__version__ = metadata.version('qudi-core')
 
-# Set QT_API environment variable to PySide2
-os.environ['QT_API'] = 'pyside2'
+try:
+    __version__ = metadata.version("qudi-core")
+except metadata.PackageNotFoundError:
+    __version__ = "dev"
+
+# Set QT_API environment variable to PySide6
+os.environ["QT_API"] = "pyside6"
 
 from qudi.core.statusvariable import StatusVar
 from qudi.core.configoption import ConfigOption

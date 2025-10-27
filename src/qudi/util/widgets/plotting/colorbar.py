@@ -21,11 +21,11 @@ You should have received a copy of the GNU Lesser General Public License along w
 If not, see <https://www.gnu.org/licenses/>.
 """
 
-__all__ = ['ColorBarWidget']
+__all__ = ["ColorBarWidget"]
 
 from enum import IntEnum
 from pyqtgraph import mkPen, mkBrush, PlotWidget, BarGraphItem
-from PySide2 import QtCore, QtGui, QtWidgets
+from PySide6 import QtCore, QtGui, QtWidgets
 from qudi.util.widgets.scientific_spinbox import ScienDSpinBox
 from qudi.util.colordefs import ColorScaleInferno
 
@@ -37,17 +37,19 @@ class ColorBarItem(BarGraphItem):
         pen = mkPen(QtGui.QPen(QtCore.Qt.PenStyle.NoPen)) if pen is None else mkPen(pen)
         grad = QtGui.QLinearGradient(0, 0, 0, 1)
         grad.setCoordinateMode(QtGui.QGradient.ObjectMode)
-        for stop, color in zip(*cmap.getStops('byte')):
+        for stop, color in zip(*cmap.getStops("byte")):
             grad.setColorAt(stop, QtGui.QColor(*color))
         brush = mkBrush(QtGui.QBrush(grad))
         height = abs(limits[1] - limits[0])
-        super().__init__(parent=parent,
-                         x=[0],
-                         y=[limits[0] + height / 2],
-                         height=[height],
-                         width=1.5,
-                         brush=brush,
-                         pen=pen)
+        super().__init__(
+            parent=parent,
+            x=[0],
+            y=[limits[0] + height / 2],
+            height=[height],
+            width=1.5,
+            brush=brush,
+            pen=pen,
+        )
 
     def set_limits(self, min_val, max_val):
         if max_val < min_val:
@@ -57,8 +59,7 @@ class ColorBarItem(BarGraphItem):
 
 
 class ColorBarWidget(QtWidgets.QWidget):
-    """ A widget containing a controllable colorbar for color-coded plots.
-    """
+    """A widget containing a controllable colorbar for color-coded plots."""
 
     class ColorBarMode(IntEnum):
         ABSOLUTE = 0
@@ -68,37 +69,49 @@ class ColorBarWidget(QtWidgets.QWidget):
     sigPercentilesChanged = QtCore.Signal(tuple)  # (low_percentile, high_percentile)
     sigModeChanged = QtCore.Signal(object)
 
-    def __init__(self, *args, unit=None, label=None, absolute_range=None, percentile_range=None,
-                 mode=ColorBarMode.PERCENTILE, **kwargs):
+    def __init__(
+        self,
+        *args,
+        unit=None,
+        label=None,
+        absolute_range=None,
+        percentile_range=None,
+        mode=ColorBarMode.PERCENTILE,
+        **kwargs,
+    ):
         super().__init__(*args, **kwargs)
 
         self.min_spinbox = ScienDSpinBox()
-        self.min_spinbox.setSizePolicy(QtWidgets.QSizePolicy.Preferred,
-                                       QtWidgets.QSizePolicy.Fixed)
+        self.min_spinbox.setSizePolicy(
+            QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Fixed
+        )
         self.min_spinbox.setAlignment(QtCore.Qt.AlignRight)
         self.min_spinbox.setMinimumWidth(75)
         self.min_spinbox.setValue(0)
         self.max_spinbox = ScienDSpinBox()
-        self.max_spinbox.setSizePolicy(QtWidgets.QSizePolicy.Preferred,
-                                       QtWidgets.QSizePolicy.Fixed)
+        self.max_spinbox.setSizePolicy(
+            QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Fixed
+        )
         self.max_spinbox.setAlignment(QtCore.Qt.AlignRight)
         self.min_spinbox.setMinimumWidth(75)
         self.max_spinbox.setValue(1)
         self.low_percentile_spinbox = ScienDSpinBox()
-        self.low_percentile_spinbox.setSizePolicy(QtWidgets.QSizePolicy.Preferred,
-                                                  QtWidgets.QSizePolicy.Fixed)
+        self.low_percentile_spinbox.setSizePolicy(
+            QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Fixed
+        )
         self.low_percentile_spinbox.setAlignment(QtCore.Qt.AlignRight)
         self.low_percentile_spinbox.setMinimumWidth(75)
-        self.low_percentile_spinbox.setSuffix('%')
-        self.low_percentile_spinbox.setMinimalStep('0.01')
+        self.low_percentile_spinbox.setSuffix("%")
+        self.low_percentile_spinbox.setMinimalStep("0.01")
         self.low_percentile_spinbox.setValue(0)
         self.high_percentile_spinbox = ScienDSpinBox()
-        self.high_percentile_spinbox.setSizePolicy(QtWidgets.QSizePolicy.Preferred,
-                                                   QtWidgets.QSizePolicy.Fixed)
+        self.high_percentile_spinbox.setSizePolicy(
+            QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Fixed
+        )
         self.high_percentile_spinbox.setAlignment(QtCore.Qt.AlignRight)
         self.high_percentile_spinbox.setMinimumWidth(75)
-        self.high_percentile_spinbox.setSuffix('%')
-        self.high_percentile_spinbox.setMinimalStep('0.01')
+        self.high_percentile_spinbox.setSuffix("%")
+        self.high_percentile_spinbox.setMinimalStep("0.01")
         self.high_percentile_spinbox.setValue(100)
         if unit is not None:
             self.max_spinbox.setSuffix(unit)
@@ -107,8 +120,12 @@ class ColorBarWidget(QtWidgets.QWidget):
             self.min_spinbox.setRange(*absolute_range)
             self.max_spinbox.setRange(*absolute_range)
         if percentile_range is not None:
-            min_percentile = percentile_range[0] if 0 <= percentile_range[0] <= 100 else 0
-            max_percentile = percentile_range[1] if 0 <= percentile_range[1] <= 100 else 0
+            min_percentile = (
+                percentile_range[0] if 0 <= percentile_range[0] <= 100 else 0
+            )
+            max_percentile = (
+                percentile_range[1] if 0 <= percentile_range[1] <= 100 else 0
+            )
             self.low_percentile_spinbox.setRange(min_percentile, max_percentile)
             self.high_percentile_spinbox.setRange(min_percentile, max_percentile)
         else:
@@ -117,7 +134,7 @@ class ColorBarWidget(QtWidgets.QWidget):
 
         grad = QtGui.QLinearGradient(0, 0, 0, 1)
         grad.setCoordinateMode(QtGui.QGradient.ObjectMode)
-        for stop, color in zip(*ColorScaleInferno().colormap.getStops('byte')):
+        for stop, color in zip(*ColorScaleInferno().colormap.getStops("byte")):
             grad.setColorAt(stop, QtGui.QColor(*color))
         self._cb_brush = mkBrush(QtGui.QBrush(grad))
 
@@ -125,18 +142,20 @@ class ColorBarWidget(QtWidgets.QWidget):
         self.cb_plot_widget = PlotWidget()
         self.cb_plot_widget.hideButtons()
         self.cb_plot_widget.setMinimumWidth(75)
-        self.cb_plot_widget.setSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Expanding)
+        self.cb_plot_widget.setSizePolicy(
+            QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Expanding
+        )
         self.cb_plot_widget.addItem(self.colorbar)
-        self.cb_plot_widget.hideAxis('bottom')
-        self.cb_plot_widget.setLabel('left', text=label, units=unit)
+        self.cb_plot_widget.hideAxis("bottom")
+        self.cb_plot_widget.setLabel("left", text=label, units=unit)
         self.cb_plot_widget.setMouseEnabled(x=False, y=False)
         self.cb_plot_widget.disableAutoRange()
         self.cb_plot_widget.setYRange(0, 1)
         self.cb_plot_widget.setFocusPolicy(QtCore.Qt.FocusPolicy.NoFocus)
 
-        self.absolute_radioButton = QtWidgets.QRadioButton('Absolute')
+        self.absolute_radioButton = QtWidgets.QRadioButton("Absolute")
         self.absolute_radioButton.setAutoExclusive(True)
-        self.percentile_radioButton = QtWidgets.QRadioButton('Percentile')
+        self.percentile_radioButton = QtWidgets.QRadioButton("Percentile")
         self.percentile_radioButton.setAutoExclusive(True)
 
         main_layout = QtWidgets.QVBoxLayout()
@@ -156,13 +175,17 @@ class ColorBarWidget(QtWidgets.QWidget):
         # main_layout.setSpacing(0)
         main_layout.setContentsMargins(1, 1, 1, 1)
         self.setLayout(main_layout)
-        self.setSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
+        self.setSizePolicy(
+            QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred
+        )
 
         # Connect signals
         self.min_spinbox.valueChanged.connect(self._absolute_value_changed)
         self.max_spinbox.valueChanged.connect(self._absolute_value_changed)
         self.low_percentile_spinbox.valueChanged.connect(self._percentile_value_changed)
-        self.high_percentile_spinbox.valueChanged.connect(self._percentile_value_changed)
+        self.high_percentile_spinbox.valueChanged.connect(
+            self._percentile_value_changed
+        )
         self.percentile_radioButton.toggled.connect(self._mode_changed)
         self.absolute_radioButton.toggled.connect(self._mode_changed)
         return
@@ -189,7 +212,7 @@ class ColorBarWidget(QtWidgets.QWidget):
         if unit is not None:
             self.max_spinbox.setSuffix(unit)
             self.min_spinbox.setSuffix(unit)
-        return self.cb_plot_widget.setLabel('left', text=text, units=unit)
+        return self.cb_plot_widget.setLabel("left", text=text, units=unit)
 
     def set_colormap(self, cmap=None):
         return self.colorbar.set_cmap(cmap=cmap)
@@ -198,11 +221,15 @@ class ColorBarWidget(QtWidgets.QWidget):
         return self.colorbar.set_pen(pen)
 
     @QtCore.Slot(float, float, float, float)
-    def set_limits(self, min_value, max_value, low_percentile=None, high_percentile=None):
+    def set_limits(
+        self, min_value, max_value, low_percentile=None, high_percentile=None
+    ):
         # Check and set percentile values in spinboxes
         if (low_percentile is None) != (high_percentile is None):
-            raise ValueError('If percentile ranges should be changed, you must specify both low '
-                             'and high percentile values.')
+            raise ValueError(
+                "If percentile ranges should be changed, you must specify both low "
+                "and high percentile values."
+            )
         elif low_percentile is not None:
             self.low_percentile_spinbox.blockSignals(True)
             self.high_percentile_spinbox.blockSignals(True)
@@ -250,8 +277,9 @@ class ColorBarWidget(QtWidgets.QWidget):
         if not self.percentile_radioButton.isChecked():
             self.percentile_radioButton.setChecked(True)
             self.sigModeChanged.emit(self.ColorBarMode.PERCENTILE)
-        self.sigPercentilesChanged.emit((self.low_percentile_spinbox.value(),
-                                         self.high_percentile_spinbox.value()))
+        self.sigPercentilesChanged.emit(
+            (self.low_percentile_spinbox.value(), self.high_percentile_spinbox.value())
+        )
         return
 
     @QtCore.Slot()

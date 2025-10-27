@@ -20,7 +20,7 @@ You should have received a copy of the GNU Lesser General Public License along w
 If not, see <https://www.gnu.org/licenses/>.
 """
 
-from PySide2 import QtCore, QtWidgets, QtGui
+from PySide6 import QtCore, QtWidgets, QtGui
 from typing import Optional, Mapping, Any, Dict, Tuple, Union, List, Sequence
 import pyqtgraph as pg
 
@@ -35,8 +35,7 @@ PlotWidget = label_nudged_plot_widget(RubberbandZoomSelectionPlotWidget)
 
 
 class PlotEditorWidget(QtWidgets.QWidget):
-    """
-    """
+    """ """
 
     sigAutoRangeClicked = QtCore.Signal(bool, bool)  # x- and/or y-axis
     sigLabelsChanged = QtCore.Signal(object, object)
@@ -50,15 +49,15 @@ class PlotEditorWidget(QtWidgets.QWidget):
         self.setLayout(layout)
 
         # Generate labels
-        x_label = QtWidgets.QLabel('Horizontal Axis:')
+        x_label = QtWidgets.QLabel("Horizontal Axis:")
         x_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
-        y_label = QtWidgets.QLabel('Vertical Axis:')
+        y_label = QtWidgets.QLabel("Vertical Axis:")
         y_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
-        label_label = QtWidgets.QLabel('Label')
+        label_label = QtWidgets.QLabel("Label")
         label_label.setAlignment(QtCore.Qt.AlignCenter)
-        unit_label = QtWidgets.QLabel('Units')
+        unit_label = QtWidgets.QLabel("Units")
         unit_label.setAlignment(QtCore.Qt.AlignCenter)
-        range_label = QtWidgets.QLabel('Range')
+        range_label = QtWidgets.QLabel("Range")
         range_label.setAlignment(QtCore.Qt.AlignCenter)
         # Generate editors
         self.x_label_lineEdit = QtWidgets.QLineEdit()
@@ -69,7 +68,7 @@ class PlotEditorWidget(QtWidgets.QWidget):
         self.x_lower_limit_spinBox.setMinimumWidth(70)
         self.x_upper_limit_spinBox = ScienDSpinBox()
         self.x_upper_limit_spinBox.setMinimumWidth(70)
-        self.x_auto_button = QtWidgets.QPushButton('Auto Range')
+        self.x_auto_button = QtWidgets.QPushButton("Auto Range")
         self.y_label_lineEdit = QtWidgets.QLineEdit()
         self.y_label_lineEdit.setMinimumWidth(50)
         self.y_unit_lineEdit = QtWidgets.QLineEdit()
@@ -78,7 +77,7 @@ class PlotEditorWidget(QtWidgets.QWidget):
         self.y_lower_limit_spinBox.setMinimumWidth(70)
         self.y_upper_limit_spinBox = ScienDSpinBox()
         self.y_upper_limit_spinBox.setMinimumWidth(70)
-        self.y_auto_button = QtWidgets.QPushButton('Auto Range')
+        self.y_auto_button = QtWidgets.QPushButton("Auto Range")
 
         row = 0
         layout.addWidget(label_label, row, 1)
@@ -122,8 +121,8 @@ class PlotEditorWidget(QtWidgets.QWidget):
         )
 
         self.set_limits((-0.5, 0.5), (-0.5, 0.5))
-        self.set_units('arb.u.', 'arb.u.')
-        self.set_labels('X', 'Y')
+        self.set_units("arb.u.", "arb.u.")
+        self.set_labels("X", "Y")
 
     @property
     def labels(self) -> Tuple[str, str]:
@@ -135,10 +134,12 @@ class PlotEditorWidget(QtWidgets.QWidget):
 
     @property
     def limits(self) -> Tuple[Tuple[float, float], Tuple[float, float]]:
-        x_min, x_max = sorted([self.x_lower_limit_spinBox.value(),
-                               self.x_upper_limit_spinBox.value()])
-        y_min, y_max = sorted([self.y_lower_limit_spinBox.value(),
-                               self.y_upper_limit_spinBox.value()])
+        x_min, x_max = sorted(
+            [self.x_lower_limit_spinBox.value(), self.x_upper_limit_spinBox.value()]
+        )
+        y_min, y_max = sorted(
+            [self.y_lower_limit_spinBox.value(), self.y_upper_limit_spinBox.value()]
+        )
         return (x_min, x_max), (y_min, y_max)
 
     def set_labels(self, x: Optional[str] = None, y: Optional[str] = None) -> None:
@@ -153,10 +154,11 @@ class PlotEditorWidget(QtWidgets.QWidget):
         if y is not None:
             self.y_unit_lineEdit.setText(y)
 
-    def set_limits(self,
-                   x: Optional[Tuple[float, float]] = None,
-                   y: Optional[Tuple[float, float]] = None
-                   ) -> None:
+    def set_limits(
+        self,
+        x: Optional[Tuple[float, float]] = None,
+        y: Optional[Tuple[float, float]] = None,
+    ) -> None:
         if x is not None:
             lower, upper = sorted(x)
             self.x_lower_limit_spinBox.setValue(lower)
@@ -223,36 +225,50 @@ class PlotLegendIconWidget(QtWidgets.QWidget):
         p = QtGui.QPainter(self)
 
         opts = self._item.opts
-        if opts.get('antialias'):
+        if opts.get("antialias"):
             p.setRenderHint(p.RenderHint.Antialiasing)
 
         if not isinstance(self._item, pg.ScatterPlotItem):
-            p.setPen(pg.mkPen(opts['pen']))
+            p.setPen(pg.mkPen(opts["pen"]))
             p.drawLine(0, 11, 20, 11)
 
-            if (opts.get('fillLevel', None) is not None and
-                    opts.get('fillBrush', None) is not None):
-                p.setBrush(pg.mkBrush(opts['fillBrush']))
-                p.setPen(pg.mkPen(opts['pen']))
-                p.drawPolygon(QtGui.QPolygonF(
-                    [QtCore.QPointF(2, 18), QtCore.QPointF(18, 2),
-                     QtCore.QPointF(18, 18)]))
+            if (
+                opts.get("fillLevel", None) is not None
+                and opts.get("fillBrush", None) is not None
+            ):
+                p.setBrush(pg.mkBrush(opts["fillBrush"]))
+                p.setPen(pg.mkPen(opts["pen"]))
+                p.drawPolygon(
+                    QtGui.QPolygonF(
+                        [
+                            QtCore.QPointF(2, 18),
+                            QtCore.QPointF(18, 2),
+                            QtCore.QPointF(18, 18),
+                        ]
+                    )
+                )
 
-        symbol = opts.get('symbol', None)
+        symbol = opts.get("symbol", None)
         if symbol is not None:
             if isinstance(self._item, pg.PlotDataItem):
                 opts = self._item.scatter.opts
             p.translate(10, 10)
-            pg.graphicsItems.ScatterPlotItem.drawSymbol(p, symbol, opts['size'], pg.mkPen(opts['pen']), pg.mkBrush(opts['brush']))
+            pg.graphicsItems.ScatterPlotItem.drawSymbol(
+                p,
+                symbol,
+                opts["size"],
+                pg.mkPen(opts["pen"]),
+                pg.mkBrush(opts["brush"]),
+            )
 
         if isinstance(self._item, pg.BarGraphItem):
-            p.setBrush(pg.mkBrush(opts['brush']))
+            p.setBrush(pg.mkBrush(opts["brush"]))
             p.drawRect(QtCore.QRectF(2, 2, 18, 18))
 
 
 class PlotSelectorWidget(QtWidgets.QWidget):
-    """
-    """
+    """ """
+
     sigSelectionChanged = QtCore.Signal(dict)  # selection
 
     def __init__(self, parent: Optional[QtWidgets.QWidget] = None) -> None:
@@ -270,7 +286,10 @@ class PlotSelectorWidget(QtWidgets.QWidget):
 
     @property
     def selection(self) -> Dict[str, bool]:
-        return {name: selector.isChecked() for name, (_, selector) in self._selectors.items()}
+        return {
+            name: selector.isChecked()
+            for name, (_, selector) in self._selectors.items()
+        }
 
     def set_selection(self, selection: Mapping[str, bool]) -> None:
         for name, select in selection.items():
@@ -279,12 +298,16 @@ class PlotSelectorWidget(QtWidgets.QWidget):
             except KeyError:
                 pass
 
-    def add_selector(self,
-                     name: str,
-                     item: Optional[pg.PlotDataItem] = None,
-                     selected: Optional[bool] = False) -> None:
+    def add_selector(
+        self,
+        name: str,
+        item: Optional[pg.PlotDataItem] = None,
+        selected: Optional[bool] = False,
+    ) -> None:
         if name in self._selectors:
-            raise ValueError(f'Selector with name "{name}" already present in plot selector')
+            raise ValueError(
+                f'Selector with name "{name}" already present in plot selector'
+            )
         selector = self._create_selector(name)
         selector.setChecked(selected)
         selector.clicked.connect(self._selection_changed)
@@ -334,22 +357,22 @@ class PlotSelectorWidget(QtWidgets.QWidget):
         checkbox = QtWidgets.QCheckBox(name)
         if color is not None:
             color_str = pg.mkColor(color).name()
-            checkbox.setStyleSheet('QCheckBox { color: ' + color_str + ' }')
+            checkbox.setStyleSheet("QCheckBox { color: " + color_str + " }")
         return checkbox
 
 
 class CursorPositionLabel(QtWidgets.QLabel):
-    """
-    """
+    """ """
 
-    def __init__(self,
-                 units: Optional[Tuple[str, str]] = None,
-                 parent: Optional[QtWidgets.QWidget] = None
-                 ) -> None:
+    def __init__(
+        self,
+        units: Optional[Tuple[str, str]] = None,
+        parent: Optional[QtWidgets.QWidget] = None,
+    ) -> None:
         super().__init__(parent=parent)
 
-        self._units = ('', '')
-        self._text_template = ''
+        self._units = ("", "")
+        self._text_template = ""
         self._pos_cache = (0, 0)
 
         if units is None:
@@ -357,7 +380,7 @@ class CursorPositionLabel(QtWidgets.QLabel):
         self.set_units(*units)
 
     def set_units(self, x: str, y: str) -> None:
-        units = (x if x else '', y if y else '')
+        units = (x if x else "", y if y else "")
         self._update_text_template(units)
         self._units = units
         self.update_position(self._pos_cache)
@@ -370,33 +393,35 @@ class CursorPositionLabel(QtWidgets.QLabel):
 
     def _update_text_template(self, units: Tuple[str, str]) -> None:
         x_unit, y_unit = units
-        self._text_template = f'Cursor: ({{:.3r}}{x_unit}, {{:.3r}}{y_unit})'
+        self._text_template = f"Cursor: ({{:.3r}}{x_unit}, {{:.3r}}{y_unit})"
 
 
 class InteractiveCurvesWidget(QtWidgets.QWidget):
-    """
-    """
+    """ """
 
     SelectionMode = RubberbandZoomSelectionPlotWidget.SelectionMode
-    
+
     sigPlotParametersChanged = QtCore.Signal()
     sigAutoLimitsApplied = QtCore.Signal(bool, bool)  # in x- and/or y-direction
 
-    def __init__(self,
-                 allow_tracking_outside_data: Optional[bool] = False,
-                 max_mouse_pos_update_rate: Optional[float] = None,
-                 selection_bounds: Optional[Sequence[Tuple[Union[None, float], Union[None, float]]]] = None,
-                 selection_pen: Optional[Any] = None,
-                 selection_hover_pen: Optional[Any] = None,
-                 selection_brush: Optional[Any] = None,
-                 selection_hover_brush: Optional[Any] = None,
-                 xy_region_selection_crosshair: Optional[bool] = False,
-                 xy_region_selection_handles: Optional[bool] = True,
-                 **kwargs
-                 ) -> None:
+    def __init__(
+        self,
+        allow_tracking_outside_data: Optional[bool] = False,
+        max_mouse_pos_update_rate: Optional[float] = None,
+        selection_bounds: Optional[
+            Sequence[Tuple[Union[None, float], Union[None, float]]]
+        ] = None,
+        selection_pen: Optional[Any] = None,
+        selection_hover_pen: Optional[Any] = None,
+        selection_brush: Optional[Any] = None,
+        selection_hover_brush: Optional[Any] = None,
+        xy_region_selection_crosshair: Optional[bool] = False,
+        xy_region_selection_handles: Optional[bool] = True,
+        **kwargs,
+    ) -> None:
         super().__init__(**kwargs)
         if max_mouse_pos_update_rate is None:
-            max_mouse_pos_update_rate = 20.
+            max_mouse_pos_update_rate = 20.0
 
         self._plot_widget = PlotWidget(
             allow_tracking_outside_data=allow_tracking_outside_data,
@@ -441,7 +466,9 @@ class InteractiveCurvesWidget(QtWidgets.QWidget):
 
         # patch attributes of advanced PlotWidget into this widget for easier access and
         # auto-completion
-        self.set_rubberband_zoom_selection_mode = self._plot_widget.set_rubberband_zoom_selection_mode
+        self.set_rubberband_zoom_selection_mode = (
+            self._plot_widget.set_rubberband_zoom_selection_mode
+        )
         self.set_region_selection_mode = self._plot_widget.set_region_selection_mode
         self.set_marker_selection_mode = self._plot_widget.set_marker_selection_mode
         self.set_selection_mutable = self._plot_widget.set_selection_mutable
@@ -466,7 +493,7 @@ class InteractiveCurvesWidget(QtWidgets.QWidget):
         # Disable bugged pyqtgraph interactive mouse menu options to avoid a myriad of
         # user-induced errors.
         for action in self._plot_widget.getPlotItem().ctrlMenu.actions():
-            if action.text() not in ('Alpha', 'Grid', 'Points'):
+            if action.text() not in ("Alpha", "Grid", "Points"):
                 action.setEnabled(False)
                 action.setVisible(False)
         for axis_ctrl in self._plot_widget.getViewBox().menu.ctrl:
@@ -484,7 +511,7 @@ class InteractiveCurvesWidget(QtWidgets.QWidget):
         self._fit_plot_items = dict()
 
     def _get_valid_generic_name(self, index: Optional[int] = 1) -> str:
-        name = f'Dataset {index:d}'
+        name = f"Dataset {index:d}"
         if name in self._plot_items:
             return self._get_valid_generic_name(index + 1)
         return name
@@ -500,7 +527,7 @@ class InteractiveCurvesWidget(QtWidgets.QWidget):
         elif name in self._plot_items:
             self.remove_plot(name)
         # Add new plot and enable antialias by default if not explicitly set
-        antialias = kwargs.pop('antialias', True)
+        antialias = kwargs.pop("antialias", True)
         item = self._plot_widget.plot(name=name, antialias=antialias, **kwargs)
         self._plot_items[name] = item
         self._plot_selector.add_selector(name=name, item=item, selected=True)
@@ -531,7 +558,7 @@ class InteractiveCurvesWidget(QtWidgets.QWidget):
         if name in self._fit_plot_items:
             self.remove_fit_plot(name)
         # Add new plot and enable antialias by default if not explicitly set
-        antialias = kwargs.pop('antialias', True)
+        antialias = kwargs.pop("antialias", True)
         item = self._plot_widget.plot(name=None, antialias=antialias, **kwargs)
         self._fit_plot_items[name] = item
 
@@ -541,11 +568,11 @@ class InteractiveCurvesWidget(QtWidgets.QWidget):
             self._plot_widget.removeItem(item)
 
     def set_data(self, name: str, *args, **kwargs) -> None:
-        """ See pyqtgraph.PlotDataItem.__init__ for valid arguments """
+        """See pyqtgraph.PlotDataItem.__init__ for valid arguments"""
         self._plot_items[name].setData(*args, **kwargs)
 
     def set_fit_data(self, name: str, *args, **kwargs) -> None:
-        """ See pyqtgraph.PlotDataItem.__init__ for valid arguments """
+        """See pyqtgraph.PlotDataItem.__init__ for valid arguments"""
         if name not in self._fit_plot_items:
             self.plot_fit(name)
         self._fit_plot_items[name].setData(*args, **kwargs)
@@ -562,13 +589,15 @@ class InteractiveCurvesWidget(QtWidgets.QWidget):
         self._plot_selector.set_selection(selection)
         self._update_plot_selection(selection)
 
-    def set_auto_range(self, x: Optional[bool] = None, y: Optional[bool] = None) -> None:
+    def set_auto_range(
+        self, x: Optional[bool] = None, y: Optional[bool] = None
+    ) -> None:
         if x is y is None:
             return
         if x is not None:
-            self._plot_widget.enableAutoRange(axis='x', enable=x)
+            self._plot_widget.enableAutoRange(axis="x", enable=x)
         if y is not None:
-            self._plot_widget.enableAutoRange(axis='y', enable=y)
+            self._plot_widget.enableAutoRange(axis="y", enable=y)
         self.sigAutoLimitsApplied.emit(bool(x), bool(y))
 
     def set_labels(self, x: Optional[str] = None, y: Optional[str] = None) -> None:
@@ -579,10 +608,11 @@ class InteractiveCurvesWidget(QtWidgets.QWidget):
         self._plot_editor.set_units(x, y)
         self.__units_changed(*self.units)
 
-    def set_limits(self,
-                   x: Optional[Tuple[float, float]] = None,
-                   y: Optional[Tuple[float, float]] = None
-                   ) -> None:
+    def set_limits(
+        self,
+        x: Optional[Tuple[float, float]] = None,
+        y: Optional[Tuple[float, float]] = None,
+    ) -> None:
         self._plot_editor.set_limits(x, y)
         self.__limits_changed(*self.limits)
 
@@ -629,7 +659,9 @@ class InteractiveCurvesWidget(QtWidgets.QWidget):
         return self._plot_widget.rubberband_zoom_selection_mode
 
     @property
-    def marker_selection(self) -> Dict[SelectionMode, List[Union[float, Tuple[float, float]]]]:
+    def marker_selection(
+        self,
+    ) -> Dict[SelectionMode, List[Union[float, Tuple[float, float]]]]:
         return self._plot_widget.marker_selection
 
     @property
@@ -676,9 +708,13 @@ class InteractiveCurvesWidget(QtWidgets.QWidget):
         is_enabled = self._position_label.isVisible()
         self._position_label.setVisible(enable)
         if is_enabled and not enable:
-            self._plot_widget.sigMouseMoved.disconnect(self._position_label.update_position)
+            self._plot_widget.sigMouseMoved.disconnect(
+                self._position_label.update_position
+            )
         elif not is_enabled and enable:
-            self._plot_widget.sigMouseMoved.connect(self._position_label.update_position)
+            self._plot_widget.sigMouseMoved.connect(
+                self._position_label.update_position
+            )
 
     # Start of slots for internal updates
 
@@ -699,40 +735,42 @@ class InteractiveCurvesWidget(QtWidgets.QWidget):
             return
         x_label, y_label = self.labels
         if x is not None:
-            self._plot_widget.setLabel('bottom', x_label, units=x)
+            self._plot_widget.setLabel("bottom", x_label, units=x)
         if y is not None:
-            self._plot_widget.setLabel('left', y_label, units=y)
+            self._plot_widget.setLabel("left", y_label, units=y)
         self._position_label.set_units(*self.units)
         self.sigPlotParametersChanged.emit()
 
-    def __labels_changed(self, x: Optional[str] = None, y: Optional[str] = None) -> None:
+    def __labels_changed(
+        self, x: Optional[str] = None, y: Optional[str] = None
+    ) -> None:
         if x is y is None:
             return
         x_unit, y_unit = self.units
         if x is not None:
-            self._plot_widget.setLabel('bottom', x, units=x_unit)
+            self._plot_widget.setLabel("bottom", x, units=x_unit)
         if y is not None:
-            self._plot_widget.setLabel('left', y, units=y_unit)
+            self._plot_widget.setLabel("left", y, units=y_unit)
         self.sigPlotParametersChanged.emit()
 
-    def __limits_changed(self,
-                         x: Optional[Tuple[float, float]] = None,
-                         y: Optional[Tuple[float, float]] = None
-                         ) -> None:
+    def __limits_changed(
+        self,
+        x: Optional[Tuple[float, float]] = None,
+        y: Optional[Tuple[float, float]] = None,
+    ) -> None:
         if x is y is None:
             return
         if x is not None:
-            self._plot_widget.enableAutoRange(axis='x', enable=False)
+            self._plot_widget.enableAutoRange(axis="x", enable=False)
             self._plot_widget.setXRange(*x, padding=0)
         if y is not None:
-            self._plot_widget.enableAutoRange(axis='y', enable=False)
+            self._plot_widget.enableAutoRange(axis="y", enable=False)
             self._plot_widget.setYRange(*y, padding=0)
         # Signal is emitted once the pyqtgraph plot has actually changed.
         # See: self.__plot_widget_limits_changed
 
-    def __plot_widget_limits_changed(self,
-                                     _,
-                                     limits: Tuple[Tuple[float, float], Tuple[float, float]]
-                                     ) -> None:
+    def __plot_widget_limits_changed(
+        self, _, limits: Tuple[Tuple[float, float], Tuple[float, float]]
+    ) -> None:
         self._plot_editor.set_limits(*limits)
         self.sigPlotParametersChanged.emit()

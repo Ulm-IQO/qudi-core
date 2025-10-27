@@ -31,7 +31,7 @@ class TestGaussianMethods(unittest.TestCase):
 
     @staticmethod
     def gaussian(x, offset, amplitude, center, sigma):
-        return offset + amplitude * np.exp(-((x - center) ** 2) / (2 * sigma ** 2))
+        return offset + amplitude * np.exp(-((x - center) ** 2) / (2 * sigma**2))
 
     def setUp(self):
         self.offset = (np.random.rand() - 0.5) * 2e6
@@ -48,51 +48,53 @@ class TestGaussianMethods(unittest.TestCase):
 
     def test_gaussian(self):
         # Test for gaussian peak
-        y_values = self.noise + self.gaussian(self.x_values,
-                                              self.offset,
-                                              self.amplitude,
-                                              self.center,
-                                              self.sigma)
+        y_values = self.noise + self.gaussian(
+            self.x_values, self.offset, self.amplitude, self.center, self.sigma
+        )
         y_values += (np.random.rand(len(y_values)) - 0.5) * self.noise_amp
 
         fit_model = Gaussian()
-        fit_result = fit_model.fit(data=y_values,
-                                   x=self.x_values,
-                                   **fit_model.guess(y_values, self.x_values))
+        fit_result = fit_model.fit(
+            data=y_values, x=self.x_values, **fit_model.guess(y_values, self.x_values)
+        )
 
-        params_ideal = {'offset': self.offset,
-                        'amplitude': self.amplitude,
-                        'center': self.center,
-                        'sigma': self.sigma}
+        params_ideal = {
+            "offset": self.offset,
+            "amplitude": self.amplitude,
+            "center": self.center,
+            "sigma": self.sigma,
+        }
         for name, fit_param in fit_result.best_values.items():
             diff = abs(fit_param - params_ideal[name])
             tolerance = abs(params_ideal[name] * self._fit_param_tolerance)
-            msg = 'Gaussian peak fit parameter "{0}" not within {1:.2%} tolerance'.format(
-                name, self._fit_param_tolerance
+            msg = (
+                'Gaussian peak fit parameter "{0}" not within {1:.2%} tolerance'.format(
+                    name, self._fit_param_tolerance
+                )
             )
             self.assertLessEqual(diff, tolerance, msg)
 
         # Test for gaussian dip
-        y_values = self.noise + self.gaussian(self.x_values,
-                                              self.offset,
-                                              -self.amplitude,
-                                              self.center,
-                                              self.sigma)
+        y_values = self.noise + self.gaussian(
+            self.x_values, self.offset, -self.amplitude, self.center, self.sigma
+        )
 
         fit_model = Gaussian()
-        fit_result = fit_model.fit(data=y_values,
-                                   x=self.x_values,
-                                   **fit_model.guess(y_values, self.x_values))
+        fit_result = fit_model.fit(
+            data=y_values, x=self.x_values, **fit_model.guess(y_values, self.x_values)
+        )
 
-        params_ideal['amplitude'] = -self.amplitude
+        params_ideal["amplitude"] = -self.amplitude
         for name, fit_param in fit_result.best_values.items():
             diff = abs(fit_param - params_ideal[name])
             tolerance = abs(params_ideal[name] * self._fit_param_tolerance)
-            msg = 'Gaussian dip fit parameter "{0}" not within {1:.2%} tolerance'.format(
-                name, self._fit_param_tolerance
+            msg = (
+                'Gaussian dip fit parameter "{0}" not within {1:.2%} tolerance'.format(
+                    name, self._fit_param_tolerance
+                )
             )
             self.assertLessEqual(diff, tolerance, msg)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

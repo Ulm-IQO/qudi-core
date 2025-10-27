@@ -20,10 +20,21 @@ You should have received a copy of the GNU Lesser General Public License along w
 If not, see <https://www.gnu.org/licenses/>.
 """
 
-__all__ = ('get_timestamp_filename', 'format_column_headers', 'format_header',
-           'metadata_to_str_dict', 'str_dict_to_metadata', 'get_header_from_file',
-           'get_info_from_header', 'CsvDataStorage', 'create_dir_for_file', 'DataStorageBase',
-           'ImageFormat', 'NpyDataStorage', 'TextDataStorage')
+__all__ = (
+    "get_timestamp_filename",
+    "format_column_headers",
+    "format_header",
+    "metadata_to_str_dict",
+    "str_dict_to_metadata",
+    "get_header_from_file",
+    "get_info_from_header",
+    "CsvDataStorage",
+    "create_dir_for_file",
+    "DataStorageBase",
+    "ImageFormat",
+    "NpyDataStorage",
+    "TextDataStorage",
+)
 
 import os
 import re
@@ -39,15 +50,20 @@ from configparser import ConfigParser
 from io import StringIO
 
 from qudi.util.mutex import Mutex
-from qudi.util.helpers import is_string_type, is_integer_type, is_float_type, is_complex_type
+from qudi.util.helpers import (
+    is_string_type,
+    is_integer_type,
+    is_float_type,
+    is_complex_type,
+)
 from qudi.util.helpers import is_string, is_integer, is_float, is_complex, is_number
 
 
 class ImageFormat(Enum):
     """Image format to use for saving data thumbnails."""
 
-    PNG = '.png'
-    PDF = '.pdf'
+    PNG = ".png"
+    PDF = ".pdf"
 
 
 def get_timestamp_filename(timestamp, nametag=None):
@@ -68,22 +84,22 @@ def get_timestamp_filename(timestamp, nametag=None):
         Generated filename without file extension.
     """
     # Start of the filename contains the timestamp, i.e. "20210130-1130-59"
-    datetime_str = timestamp.strftime('%Y%m%d-%H%M-%S')
+    datetime_str = timestamp.strftime("%Y%m%d-%H%M-%S")
     if nametag:
         nametag = nametag.strip()
         # Replace unicode whitespaces with underscores.
         # Consecutive whitespaces are replaced by single underscore.
-        nametag = re.sub(r'[\s]+', '_', nametag)
+        nametag = re.sub(r"[\s]+", "_", nametag)
         # ToDo: More character sequence checking needed. Raise exception if bad.
     # Separate nametag and timestamp string with an underscore
-    return f'{datetime_str}_{nametag}' if nametag else datetime_str
+    return f"{datetime_str}_{nametag}" if nametag else datetime_str
 
 
-def format_column_headers(column_headers, delimiter=';;'):
+def format_column_headers(column_headers, delimiter=";;"):
     if isinstance(column_headers, str):
         return column_headers
     if any(not isinstance(header, str) for header in column_headers):
-        raise TypeError('column_headers must be iterable of str.')
+        raise TypeError("column_headers must be iterable of str.")
     return delimiter.join(column_headers)
 
 
@@ -104,29 +120,28 @@ def str_dict_to_metadata(str_dict):
 
 
 def _is_dtype_class(obj):
-    """Helper to check for valid dtypes that can be handled.
-    """
-    allowed_types = (int,
-                     float,
-                     complex,
-                     str,
-                     np.floating,
-                     np.integer,
-                     np.complexfloating,
-                     np.str_,
-                     np.string_)
+    """Helper to check for valid dtypes that can be handled."""
+    allowed_types = (
+        int,
+        float,
+        complex,
+        str,
+        np.floating,
+        np.integer,
+        np.complexfloating,
+        np.str_,
+        np.string_,
+    )
     return type(obj) == type and issubclass(obj, allowed_types)
 
 
 def _is_dtype_str(obj):
-    """Helper to check for valid dtype string.
-    """
-    return obj in ('int', 'float', 'complex', 'str')
+    """Helper to check for valid dtype string."""
+    return obj in ("int", "float", "complex", "str")
 
 
 def _value_to_dtype(val):
-    """Helper to return the dtype (int, float, complex or str) of a data value.
-    """
+    """Helper to return the dtype (int, float, complex or str) of a data value."""
     if is_string(val):
         return str
     if is_integer(val):
@@ -139,76 +154,87 @@ def _value_to_dtype(val):
 
 
 def _dtype_to_str(obj):
-    """Helper to convert dtype class to str representation.
-    """
+    """Helper to convert dtype class to str representation."""
     if _is_dtype_str(obj):
         return obj
     if is_integer_type(obj):
-        return 'int'
+        return "int"
     if is_float_type(obj):
-        return 'float'
+        return "float"
     if is_complex_type(obj):
-        return 'complex'
+        return "complex"
     if is_string_type(obj):
-        return 'str'
-    raise TypeError(f'Invalid dtype encountered: {obj}')
+        return "str"
+    raise TypeError(f"Invalid dtype encountered: {obj}")
 
 
 def _str_to_dtype(dtype_str):
-    """
-    """
-    if dtype_str in ('int', 'float', 'complex', 'str'):
+    """ """
+    if dtype_str in ("int", "float", "complex", "str"):
         return eval(dtype_str)
-    raise ValueError(f'Invalid dtype string encountered: "{dtype_str}".\n'
-                     f'Must be one of "int", "float", "complex", "str".')
+    raise ValueError(
+        f'Invalid dtype string encountered: "{dtype_str}".\n'
+        f'Must be one of "int", "float", "complex", "str".'
+    )
 
 
 def _is_1d_array(array):
     try:
         return is_number(array[0]) or is_string(array[0])
     except IndexError:
-        raise ValueError('Checking if empty array is 1D is not allowed.')
+        raise ValueError("Checking if empty array is 1D is not allowed.")
 
 
-def format_header(timestamp, number_format=None, metadata=None, notes=None, column_dtypes=None,
-                  column_headers=None, comments=None, delimiter=None):
-    """
-    """
+def format_header(
+    timestamp,
+    number_format=None,
+    metadata=None,
+    notes=None,
+    column_dtypes=None,
+    column_headers=None,
+    comments=None,
+    delimiter=None,
+):
+    """ """
     if comments is None:
-        comments = ''
+        comments = ""
     # Collect all data to include in the header into a config parser
-    config = ConfigParser(comment_prefixes=None, delimiters=('=',))
+    config = ConfigParser(comment_prefixes=None, delimiters=("=",))
 
     # write general section
-    general_dict = {'timestamp': timestamp.isoformat()}
+    general_dict = {"timestamp": timestamp.isoformat()}
     if comments:
-        general_dict['comments'] = repr(comments)
+        general_dict["comments"] = repr(comments)
     if delimiter:
-        general_dict['delimiter'] = repr(delimiter)
+        general_dict["delimiter"] = repr(delimiter)
     if number_format:
-        general_dict['number_format'] = number_format
+        general_dict["number_format"] = number_format
     if column_dtypes:
         if _is_dtype_class(column_dtypes):
-            general_dict['column_dtypes'] = _dtype_to_str(column_dtypes)
+            general_dict["column_dtypes"] = _dtype_to_str(column_dtypes)
         elif _is_dtype_str(column_dtypes):
-            general_dict['column_dtypes'] = column_dtypes
+            general_dict["column_dtypes"] = column_dtypes
         else:
             try:
-                general_dict['column_dtypes'] = ';;'.join(_dtype_to_str(t) for t in column_dtypes)
+                general_dict["column_dtypes"] = ";;".join(
+                    _dtype_to_str(t) for t in column_dtypes
+                )
             except TypeError:
-                raise TypeError(f'Unknown column_dtypes "{column_dtypes}".\nMust either be dtype '
-                                f'name str ("int", "float", "complex", "str"), dtype class (int, '
-                                f'float, complex, str, numpy.float32, etc.) or sequence of the '
-                                f'afore mentioned formats.')
+                raise TypeError(
+                    f'Unknown column_dtypes "{column_dtypes}".\nMust either be dtype '
+                    f'name str ("int", "float", "complex", "str"), dtype class (int, '
+                    f"float, complex, str, numpy.float32, etc.) or sequence of the "
+                    f"afore mentioned formats."
+                )
     if column_headers:
-        general_dict['column_headers'] = repr(format_column_headers(column_headers))
+        general_dict["column_headers"] = repr(format_column_headers(column_headers))
     if notes:
-        general_dict['notes'] = repr(notes)
-    config['General'] = general_dict
+        general_dict["notes"] = repr(notes)
+    config["General"] = general_dict
 
     # Write user metadata section
     if metadata:
-        config['Metadata'] = metadata_to_str_dict(metadata)
+        config["Metadata"] = metadata_to_str_dict(metadata)
 
     # Write config to string buffer instead of a temporary file
     buffer = StringIO()
@@ -219,70 +245,76 @@ def format_header(timestamp, number_format=None, metadata=None, notes=None, colu
 
     # Include comment specifiers at the beginning of each line
     # Also add an "end header" marker for easier custom header parsing
-    header_lines.append('---- END HEADER ----')
-    line_sep = f'\n{comments}'
-    return f'{comments}{line_sep.join(header_lines)}\n'
+    header_lines.append("---- END HEADER ----")
+    line_sep = f"\n{comments}"
+    return f"{comments}{line_sep.join(header_lines)}\n"
 
 
 def get_header_from_file(file_path):
     offset = 0
     comments = None
-    with open(file_path, 'r') as file:
+    with open(file_path, "r") as file:
         for line in file:
             # Determine comments specifier (if there is any)
-            if line.endswith('---- END HEADER ----\n'):
-                comments = line.rsplit('---- END HEADER ----', 1)[0]
+            if line.endswith("---- END HEADER ----\n"):
+                comments = line.rsplit("---- END HEADER ----", 1)[0]
                 break
             offset += len(line)
         file.seek(0)
         if comments is None:
             raise RuntimeError(
                 'Qudi data file is missing "---- END HEADER ----" marker. File was probably not '
-                'created by the same qudi.util.datastorage.<storage class> helper object'
+                "created by the same qudi.util.datastorage.<storage class> helper object"
             )
         header_lines = file.read(offset).splitlines()
     line_start = len(comments)
-    return '\n'.join(line[line_start:] for line in header_lines), len(header_lines)
+    return "\n".join(line[line_start:] for line in header_lines), len(header_lines)
 
 
 def get_info_from_header(header):
-    """
-
-    """
+    """ """
     # Parse header sections
-    config = ConfigParser(comment_prefixes=None, delimiters=('=',))
+    config = ConfigParser(comment_prefixes=None, delimiters=("=",))
     config.read_string(header)
 
     # extract and convert general section
-    general = {'timestamp': config.get('General', 'timestamp', raw=True, fallback=None),
-               'comments': config.get('General', 'comments', raw=True, fallback=None),
-               'delimiter': config.get('General', 'delimiter', raw=True, fallback=None),
-               'number_format': config.get('General', 'number_format', raw=True, fallback=None),
-               'column_dtypes': config.get('General', 'column_dtypes', raw=True, fallback=None),
-               'column_headers': config.get('General', 'column_headers', raw=True, fallback=None),
-               'notes': config.get('General', 'notes', raw=True, fallback=None)}
-    if general['timestamp']:
-        general['timestamp'] = datetime.fromisoformat(general['timestamp'])
-    if general['column_dtypes']:
-        dtypes = tuple(_str_to_dtype(t) for t in general['column_dtypes'].split(';;'))
+    general = {
+        "timestamp": config.get("General", "timestamp", raw=True, fallback=None),
+        "comments": config.get("General", "comments", raw=True, fallback=None),
+        "delimiter": config.get("General", "delimiter", raw=True, fallback=None),
+        "number_format": config.get(
+            "General", "number_format", raw=True, fallback=None
+        ),
+        "column_dtypes": config.get(
+            "General", "column_dtypes", raw=True, fallback=None
+        ),
+        "column_headers": config.get(
+            "General", "column_headers", raw=True, fallback=None
+        ),
+        "notes": config.get("General", "notes", raw=True, fallback=None),
+    }
+    if general["timestamp"]:
+        general["timestamp"] = datetime.fromisoformat(general["timestamp"])
+    if general["column_dtypes"]:
+        dtypes = tuple(_str_to_dtype(t) for t in general["column_dtypes"].split(";;"))
         if len(dtypes) == 1:
-            general['column_dtypes'] = dtypes[0]
+            general["column_dtypes"] = dtypes[0]
         elif len(dtypes) > 1:
-            general['column_dtypes'] = dtypes
+            general["column_dtypes"] = dtypes
         else:
-            general['column_dtypes'] = None
-    if general['comments']:
-        general['comments'] = eval(general['comments'])
-    if general['delimiter']:
-        general['delimiter'] = eval(general['delimiter'])
-    if general['notes']:
-        general['notes'] = eval(general['notes'])
-    if general['column_headers']:
-        general['column_headers'] = tuple(eval(general['column_headers']).split(';;'))
+            general["column_dtypes"] = None
+    if general["comments"]:
+        general["comments"] = eval(general["comments"])
+    if general["delimiter"]:
+        general["delimiter"] = eval(general["delimiter"])
+    if general["notes"]:
+        general["notes"] = eval(general["notes"])
+    if general["column_headers"]:
+        general["column_headers"] = tuple(eval(general["column_headers"]).split(";;"))
 
     # extract metadata
-    if config.has_section('Metadata'):
-        metadata_str_dict = dict(config.items('Metadata', raw=True))
+    if config.has_section("Metadata"):
+        metadata_str_dict = dict(config.items("Metadata", raw=True))
         metadata = str_dict_to_metadata(metadata_str_dict)
     else:
         metadata = dict()
@@ -313,11 +345,17 @@ class DataStorageBase(metaclass=ABCMeta):
     If the storage type is file based and root_dir is not initialized, each call to save_data must
     provide the full save path information and not just a file name or name tag.
     """
+
     _global_metadata = dict()
     _global_metadata_lock = Mutex()
 
-    def __init__(self, *, root_dir=None, include_global_metadata=True,
-                 image_format=ImageFormat.PNG):
+    def __init__(
+        self,
+        *,
+        root_dir=None,
+        include_global_metadata=True,
+        image_format=ImageFormat.PNG,
+    ):
         """
         Parameters
         ----------
@@ -331,7 +369,9 @@ class DataStorageBase(metaclass=ABCMeta):
         if not isinstance(image_format, ImageFormat):
             raise TypeError("image_format must be ImageFormat Enum")
 
-        self.root_dir = root_dir  # ToDo: Maybe some sanity checking for correct path syntax?
+        self.root_dir = (
+            root_dir  # ToDo: Maybe some sanity checking for correct path syntax?
+        )
         self.include_global_metadata = bool(include_global_metadata)
         self.image_format = image_format
 
@@ -356,9 +396,9 @@ class DataStorageBase(metaclass=ABCMeta):
 
         if self.image_format is ImageFormat.PDF:
             with PdfPages(file_path) as pdf:
-                pdf.savefig(mpl_figure, bbox_inches='tight', pad_inches=0.05)
+                pdf.savefig(mpl_figure, bbox_inches="tight", pad_inches=0.05)
         elif self.image_format is ImageFormat.PNG:
-            mpl_figure.savefig(file_path, bbox_inches='tight', pad_inches=0.05)
+            mpl_figure.savefig(file_path, bbox_inches="tight", pad_inches=0.05)
         else:
             raise RuntimeError(f'Unknown image format selected: "{self.image_format}"')
 
@@ -382,13 +422,17 @@ class DataStorageBase(metaclass=ABCMeta):
         dict
             New dictionary containing local metadata and global metadata.
         """
-        metadata = self.get_global_metadata() if self.include_global_metadata else dict()
+        metadata = (
+            self.get_global_metadata() if self.include_global_metadata else dict()
+        )
         if local_metadata is not None:
             metadata.update(local_metadata)
         return metadata
 
     @abstractmethod
-    def save_data(self, data, *, metadata=None, notes=None, nametag=None, timestamp=None, **kwargs):
+    def save_data(
+        self, data, *, metadata=None, notes=None, nametag=None, timestamp=None, **kwargs
+    ):
         """This method must be implemented in a subclass. It should provide the facility to save an
         entire measurement as a whole along with experiment metadata (to include e.g. in the file
         header). The user can either specify an explicit filename or a generic one will be created.
@@ -444,8 +488,7 @@ class DataStorageBase(metaclass=ABCMeta):
 
     @classmethod
     def get_global_metadata(cls):
-        """Return a copy of the global metadata dict.
-        """
+        """Return a copy of the global metadata dict."""
         with cls._global_metadata_lock:
             return cls._global_metadata.copy()
 
@@ -459,18 +502,22 @@ class DataStorageBase(metaclass=ABCMeta):
             metadata = {name: copy.deepcopy(value)}
         elif isinstance(name, dict):
             if any(not isinstance(key, str) for key in name):
-                TypeError('Metadata dict must contain only str type keys.')
+                TypeError("Metadata dict must contain only str type keys.")
             metadata = copy.deepcopy(name)
         else:
-            raise TypeError('add_global_metadata expects either a single dict as first argument or '
-                            'a str key and a value as first two arguments.')
+            raise TypeError(
+                "add_global_metadata expects either a single dict as first argument or "
+                "a str key and a value as first two arguments."
+            )
 
         with cls._global_metadata_lock:
             if not overwrite:
                 duplicate_keys = set(metadata).intersection(cls._global_metadata)
                 if duplicate_keys:
-                    raise KeyError(f'global metadata keys "{duplicate_keys}" already set while '
-                                   f'overwrite flag is False.')
+                    raise KeyError(
+                        f'global metadata keys "{duplicate_keys}" already set while '
+                        f"overwrite flag is False."
+                    )
             cls._global_metadata.update(metadata)
 
     @classmethod
@@ -496,10 +543,18 @@ class TextDataStorage(DataStorageBase):
     # __float_regex = re.compile(r'\A[+-]?\d+.\d+([eE][+-]?\d+)?\Z')
 
     # Default format specifiers for all dtypes
-    _default_fmt_for_type = {int: 'd', float: '.15e', complex: 'r', str: 's'}
+    _default_fmt_for_type = {int: "d", float: ".15e", complex: "r", str: "s"}
 
-    def __init__(self, *, root_dir, comments='# ', delimiter='\t', file_extension='.dat',
-                 column_formats=None, **kwargs):
+    def __init__(
+        self,
+        *,
+        root_dir,
+        comments="# ",
+        delimiter="\t",
+        file_extension=".dat",
+        column_formats=None,
+        **kwargs,
+    ):
         """
 
         Parameters
@@ -525,8 +580,8 @@ class TextDataStorage(DataStorageBase):
         """
         super().__init__(root_dir=root_dir, **kwargs)
 
-        self._file_extension = ''
-        self._delimiter = '\t'
+        self._file_extension = ""
+        self._delimiter = "\t"
         self.file_extension = file_extension
         self.delimiter = delimiter
         self.comments = comments if isinstance(comments, str) else None
@@ -539,13 +594,13 @@ class TextDataStorage(DataStorageBase):
     @file_extension.setter
     def file_extension(self, value):
         if (value is not None) and (not isinstance(value, str)):
-            raise TypeError('file_extension must be str or None')
+            raise TypeError("file_extension must be str or None")
         if not value:
-            self._file_extension = ''
-        elif value.startswith('.'):
+            self._file_extension = ""
+        elif value.startswith("."):
             self._file_extension = value
         else:
-            self._file_extension = '.' + value
+            self._file_extension = "." + value
 
     @property
     def delimiter(self):
@@ -553,26 +608,42 @@ class TextDataStorage(DataStorageBase):
 
     @delimiter.setter
     def delimiter(self, value):
-        if not isinstance(value, str) or value == '':
-            raise ValueError('delimiter must be non-empty string')
+        if not isinstance(value, str) or value == "":
+            raise ValueError("delimiter must be non-empty string")
         self._delimiter = value
 
-    def create_header(self, timestamp=None, metadata=None, notes=None, column_headers=None,
-                      column_dtypes=None):
-        """
-        """
+    def create_header(
+        self,
+        timestamp=None,
+        metadata=None,
+        notes=None,
+        column_headers=None,
+        column_dtypes=None,
+    ):
+        """ """
         # Gather all metadata (both global and locally provided) into a single dict
         metadata = self.get_unified_metadata(metadata)
-        return format_header(timestamp,
-                             metadata=metadata,
-                             notes=notes,
-                             column_headers=column_headers,
-                             column_dtypes=column_dtypes,
-                             comments=self.comments,
-                             delimiter=self.delimiter)
+        return format_header(
+            timestamp,
+            metadata=metadata,
+            notes=notes,
+            column_headers=column_headers,
+            column_dtypes=column_dtypes,
+            comments=self.comments,
+            delimiter=self.delimiter,
+        )
 
-    def new_file(self, *, timestamp=None, metadata=None, notes=None, nametag=None,
-                 column_headers=None, column_dtypes=None, filename=None):
+    def new_file(
+        self,
+        *,
+        timestamp=None,
+        metadata=None,
+        notes=None,
+        nametag=None,
+        column_headers=None,
+        column_dtypes=None,
+        filename=None,
+    ):
         """
         Create a new data file on disk and write header string to it. Will overwrite old files
         silently if they have the same path.
@@ -601,19 +672,23 @@ class TextDataStorage(DataStorageBase):
             timestamp = datetime.now()
         # Construct file name if none is given explicitly
         if filename is None:
-            filename = get_timestamp_filename(timestamp=timestamp,
-                                              nametag=nametag) + self.file_extension
+            filename = (
+                get_timestamp_filename(timestamp=timestamp, nametag=nametag)
+                + self.file_extension
+            )
         # Create header
-        header = self.create_header(timestamp=timestamp,
-                                    metadata=metadata,
-                                    notes=notes,
-                                    column_headers=column_headers,
-                                    column_dtypes=column_dtypes)
+        header = self.create_header(
+            timestamp=timestamp,
+            metadata=metadata,
+            notes=notes,
+            column_headers=column_headers,
+            column_dtypes=column_dtypes,
+        )
         # Determine full file path and create containing directories if needed
         file_path = os.path.join(self.root_dir, filename)
         create_dir_for_file(file_path)
         # Write to file. Overwrite silently.
-        with open(file_path, 'w') as file:
+        with open(file_path, "w") as file:
             file.write(header)
         return file_path, timestamp
 
@@ -636,8 +711,10 @@ class TextDataStorage(DataStorageBase):
             Number of columns written (int).
         """
         if not os.path.isfile(file_path):
-            raise FileNotFoundError(f'File to append data to not found: "{file_path}"\n'
-                                    f'Create a new file to append to by calling "new_file".')
+            raise FileNotFoundError(
+                f'File to append data to not found: "{file_path}"\n'
+                f'Create a new file to append to by calling "new_file".'
+            )
 
         # Determine data dimension
         try:
@@ -650,19 +727,23 @@ class TextDataStorage(DataStorageBase):
         first_row = data if is_1d else data[0]
         number_of_columns = len(first_row)
         if not self.column_formats:
-            column_formats = [self._default_fmt_for_type[_value_to_dtype(val)] for val in first_row]
+            column_formats = [
+                self._default_fmt_for_type[_value_to_dtype(val)] for val in first_row
+            ]
         elif isinstance(self.column_formats, str):
             column_formats = [self.column_formats] * number_of_columns
         elif len(self.column_formats) != number_of_columns:
             raise ValueError(
-                'column_formats sequence has not the same length as number of data columns.'
+                "column_formats sequence has not the same length as number of data columns."
             )
         else:
             column_formats = self.column_formats
-        row_fmt_str = self.delimiter.join(f'{{:{fmt}}}' for fmt in column_formats) + '\n'
+        row_fmt_str = (
+            self.delimiter.join(f"{{:{fmt}}}" for fmt in column_formats) + "\n"
+        )
 
         # Append data to file
-        with open(file_path, 'a') as file:
+        with open(file_path, "a") as file:
             # Write data row-by-row
             if is_1d:
                 file.write(row_fmt_str.format(*data))
@@ -674,8 +755,18 @@ class TextDataStorage(DataStorageBase):
                     rows_written += 1
         return rows_written, number_of_columns
 
-    def save_data(self, data, *, timestamp=None, metadata=None, notes=None, nametag=None,
-                  column_headers=None, column_dtypes=None, filename=None):
+    def save_data(
+        self,
+        data,
+        *,
+        timestamp=None,
+        metadata=None,
+        notes=None,
+        nametag=None,
+        column_headers=None,
+        column_dtypes=None,
+        filename=None,
+    ):
         """See: DataStorageBase.save_data() for more information.
 
         column_headers : str or list, optional
@@ -687,20 +778,22 @@ class TextDataStorage(DataStorageBase):
             column_dtypes = [_value_to_dtype(val) for val in first_row]
 
         # Create new data file (overwrite old one if it exists)
-        file_path, timestamp = self.new_file(timestamp=timestamp,
-                                             metadata=metadata,
-                                             notes=notes,
-                                             nametag=nametag,
-                                             column_headers=column_headers,
-                                             column_dtypes=column_dtypes,
-                                             filename=filename)
+        file_path, timestamp = self.new_file(
+            timestamp=timestamp,
+            metadata=metadata,
+            notes=notes,
+            nametag=nametag,
+            column_headers=column_headers,
+            column_dtypes=column_dtypes,
+            filename=filename,
+        )
         # Append data to file
         rows_columns = self.append_file(data, file_path=file_path)
         return file_path, timestamp, rows_columns
 
     @staticmethod
     def load_data(file_path):
-        """ See: DataStorageBase.load_data()
+        """See: DataStorageBase.load_data()
 
         file_path : str, optional
             Path to file to load data from.
@@ -710,7 +803,7 @@ class TextDataStorage(DataStorageBase):
             header, header_lines = get_header_from_file(file_path)
             general, metadata = get_info_from_header(header)
             # Determine dtype specifier from general header section
-            dtype = general['column_dtypes']
+            dtype = general["column_dtypes"]
             if dtype is not None and not isinstance(dtype, type):
                 # If dtypes differ, construct a structured array
                 if all(dtype[0] == typ for typ in dtype):
@@ -719,16 +812,20 @@ class TextDataStorage(DataStorageBase):
                     # handle str type separately since this is (arguably) a bug in numpy.genfromtxt
                     dtype = None
                 else:
-                    dtype = [(f'f{col:d}', typ) for col, typ in enumerate(dtype)]
+                    dtype = [(f"f{col:d}", typ) for col, typ in enumerate(dtype)]
             # Load data from file
-            data = np.genfromtxt(file_path,
-                                 dtype=dtype,
-                                 comments=general['comments'],
-                                 delimiter=general['delimiter'],
-                                 skip_header=header_lines + 1)
+            data = np.genfromtxt(
+                file_path,
+                dtype=dtype,
+                comments=general["comments"],
+                delimiter=general["delimiter"],
+                skip_header=header_lines + 1,
+            )
         except UnicodeError as err:
-            raise ValueError(f'Loading data from file "{file_path}" failed. The file you are '
-                             f'trying to load is most likely no unicode textfile.') from err
+            raise ValueError(
+                f'Loading data from file "{file_path}" failed. The file you are '
+                f"trying to load is most likely no unicode textfile."
+            ) from err
         return data, metadata, general
 
 
@@ -739,36 +836,43 @@ class CsvDataStorage(TextDataStorage):
     importing a table into e.g. MS Excel.
     """
 
-    def __init__(self, *, file_extension='.csv', **kwargs):
-        """See: qudi.util.datastorage.TextDataStorage
-        """
-        kwargs['delimiter'] = ','
+    def __init__(self, *, file_extension=".csv", **kwargs):
+        """See: qudi.util.datastorage.TextDataStorage"""
+        kwargs["delimiter"] = ","
         super().__init__(file_extension=file_extension, **kwargs)
 
     @property
     def delimiter(self):
-        return ','
+        return ","
 
     @delimiter.setter
     def delimiter(self, value):
-        if value != ',':
-            self._delimiter = ','
+        if value != ",":
+            self._delimiter = ","
             raise UserWarning('CsvDataStorage only accepts "," as delimiter')
 
-    def create_header(self, timestamp=None, metadata=None, notes=None, column_headers=None,
-                      column_dtypes=None):
+    def create_header(
+        self,
+        timestamp=None,
+        metadata=None,
+        notes=None,
+        column_headers=None,
+        column_dtypes=None,
+    ):
         """Include column_headers without line comment specifier.
         for more information see: qudi.util.datastorage.TextDataStorage.create_header()
         """
         # Create default header as specified in parent TextDataStorage object without column headers
-        header = super().create_header(timestamp=timestamp,
-                                       metadata=metadata,
-                                       notes=notes,
-                                       column_headers=column_headers,
-                                       column_dtypes=column_dtypes)
+        header = super().create_header(
+            timestamp=timestamp,
+            metadata=metadata,
+            notes=notes,
+            column_headers=column_headers,
+            column_dtypes=column_dtypes,
+        )
         # Append column headers if needed
         if column_headers:
-            return f'{header}{format_column_headers(column_headers, self.delimiter)}\n'
+            return f"{header}{format_column_headers(column_headers, self.delimiter)}\n"
         return header
 
     @staticmethod
@@ -782,7 +886,7 @@ class CsvDataStorage(TextDataStorage):
         header, header_lines = get_header_from_file(file_path)
         general, metadata = get_info_from_header(header)
         # Determine dtype specifier from general header section
-        dtype = general['column_dtypes']
+        dtype = general["column_dtypes"]
         if dtype is not None and not isinstance(dtype, type):
             # If dtypes differ, construct a structured array
             if all(dtype[0] == typ for typ in dtype):
@@ -791,43 +895,56 @@ class CsvDataStorage(TextDataStorage):
                 # handle str type separately since this is (arguably) a bug in numpy.genfromtxt
                 dtype = None
             else:
-                dtype = [(f'f{col:d}', typ) for col, typ in enumerate(dtype)]
+                dtype = [(f"f{col:d}", typ) for col, typ in enumerate(dtype)]
         # Load data from file and skip header
         start_line = header_lines + 1
-        if general['column_headers']:
+        if general["column_headers"]:
             start_line += 1
-        data = np.genfromtxt(file_path,
-                             dtype=dtype,
-                             comments=general['comments'],
-                             delimiter=general['delimiter'],
-                             skip_header=start_line)
+        data = np.genfromtxt(
+            file_path,
+            dtype=dtype,
+            comments=general["comments"],
+            delimiter=general["delimiter"],
+            skip_header=start_line,
+        )
         return data, metadata, general
 
 
 class NpyDataStorage(DataStorageBase):
-    """Helper class to store (measurement) data on disk as binary .npy file.
-    """
+    """Helper class to store (measurement) data on disk as binary .npy file."""
 
     def __init__(self, *, root_dir, **kwargs):
         super().__init__(root_dir=root_dir, **kwargs)
 
     @property
     def file_extension(self):
-        return '.npy'
+        return ".npy"
 
-    def create_header(self, timestamp, dtype, metadata=None, notes=None, column_headers=None):
-        """
-        """
+    def create_header(
+        self, timestamp, dtype, metadata=None, notes=None, column_headers=None
+    ):
+        """ """
         # Gather all metadata (both global and locally provided) into a single dict
         metadata = self.get_unified_metadata(metadata)
-        return format_header(timestamp,
-                             dtype,
-                             metadata=metadata,
-                             notes=notes,
-                             column_headers=column_headers)
+        return format_header(
+            timestamp,
+            dtype,
+            metadata=metadata,
+            notes=notes,
+            column_headers=column_headers,
+        )
 
-    def save_data(self, data, *, metadata=None, notes=None, nametag=None, timestamp=None,
-                  column_headers=None, filename=None):
+    def save_data(
+        self,
+        data,
+        *,
+        metadata=None,
+        notes=None,
+        nametag=None,
+        timestamp=None,
+        column_headers=None,
+        filename=None,
+    ):
         """Saves a binary file containing the data array.
         Also saves alongside a text file containing the notes, (global) metadata and column headers
         for this data set. The filename of the text file will be the same as for the binary file
@@ -844,26 +961,30 @@ class NpyDataStorage(DataStorageBase):
             timestamp = datetime.now()
         # Construct file name if none is given explicitly
         if filename is None:
-            filename = get_timestamp_filename(timestamp=timestamp,
-                                              nametag=nametag) + self.file_extension
+            filename = (
+                get_timestamp_filename(timestamp=timestamp, nametag=nametag)
+                + self.file_extension
+            )
         # Create filename for separate metadata textfile
-        meta_filename = filename.rsplit('.', 1)[0] + '_metadata.txt'
+        meta_filename = filename.rsplit(".", 1)[0] + "_metadata.txt"
 
         # Create header
-        header = self.create_header(timestamp,
-                                    data.dtype,
-                                    metadata=metadata,
-                                    notes=notes,
-                                    column_headers=column_headers)
+        header = self.create_header(
+            timestamp,
+            data.dtype,
+            metadata=metadata,
+            notes=notes,
+            column_headers=column_headers,
+        )
         # Determine full file path and create containing directories if needed
         file_path = os.path.join(self.root_dir, filename)
         create_dir_for_file(file_path)
         meta_file_path = os.path.join(self.root_dir, meta_filename)
         # Write data and metadata to file. Overwrite silently.
-        with open(file_path, 'wb') as file:
+        with open(file_path, "wb") as file:
             # Write numpy data array in binary format
             np.save(file, data, allow_pickle=False, fix_imports=False)
-        with open(meta_file_path, 'w') as file:
+        with open(meta_file_path, "w") as file:
             file.write(header)
         return file_path, timestamp, data.shape
 
@@ -885,7 +1006,7 @@ class NpyDataStorage(DataStorageBase):
         # Load numpy array
         data = np.load(file_path, allow_pickle=False, fix_imports=False)
         # Try to find and load metadata from text file
-        metadata_path = file_path.split('.npy')[0] + '_metadata.txt'
+        metadata_path = file_path.split(".npy")[0] + "_metadata.txt"
         try:
             header, _ = get_header_from_file(metadata_path)
         except FileNotFoundError:

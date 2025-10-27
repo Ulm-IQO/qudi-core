@@ -44,26 +44,32 @@ class TestSineMethods(unittest.TestCase):
         min_freq = 0.5 / window
         self.frequencies = min_freq + np.random.rand(3) * (max_freq - min_freq)
         self.phases = (np.random.rand(3) - 0.5) * 2 * np.pi
-        self.noise_amp = max(self.amplitudes.min() / 10, np.random.rand() * self.amplitudes.min())
+        self.noise_amp = max(
+            self.amplitudes.min() / 10, np.random.rand() * self.amplitudes.min()
+        )
         self.noise = (np.random.rand(points) - 0.5) * self.noise_amp
 
     def test_sine(self):
         # Test for sine fit
-        y_values = self.noise + self.sine(self.x_values,
-                                          self.offset,
-                                          self.amplitudes[0],
-                                          self.frequencies[0],
-                                          self.phases[0])
+        y_values = self.noise + self.sine(
+            self.x_values,
+            self.offset,
+            self.amplitudes[0],
+            self.frequencies[0],
+            self.phases[0],
+        )
 
         fit_model = Sine()
-        fit_result = fit_model.fit(data=y_values,
-                                   x=self.x_values,
-                                   **fit_model.guess(y_values, self.x_values))
+        fit_result = fit_model.fit(
+            data=y_values, x=self.x_values, **fit_model.guess(y_values, self.x_values)
+        )
 
-        params_ideal = {'offset': self.offset,
-                        'amplitude': self.amplitudes[0],
-                        'frequency': self.frequencies[0],
-                        'phase': self.phases[0]}
+        params_ideal = {
+            "offset": self.offset,
+            "amplitude": self.amplitudes[0],
+            "frequency": self.frequencies[0],
+            "phase": self.phases[0],
+        }
         for name, ideal_val in params_ideal.items():
             diff = abs(fit_result.best_values[name] - ideal_val)
             tolerance = abs(ideal_val * self._fit_param_tolerance)
@@ -74,29 +80,35 @@ class TestSineMethods(unittest.TestCase):
 
     def test_double_sine(self):
         # Test for sine fit
-        y_values = self.noise + self.sine(self.x_values,
-                                          self.offset,
-                                          self.amplitudes[0],
-                                          self.frequencies[0],
-                                          self.phases[0])
-        y_values += self.sine(self.x_values,
-                              self.offset,
-                              self.amplitudes[1],
-                              self.frequencies[1],
-                              self.phases[1])
+        y_values = self.noise + self.sine(
+            self.x_values,
+            self.offset,
+            self.amplitudes[0],
+            self.frequencies[0],
+            self.phases[0],
+        )
+        y_values += self.sine(
+            self.x_values,
+            self.offset,
+            self.amplitudes[1],
+            self.frequencies[1],
+            self.phases[1],
+        )
 
         fit_model = DoubleSine()
-        fit_result = fit_model.fit(data=y_values,
-                                   x=self.x_values,
-                                   **fit_model.guess(y_values, self.x_values))
+        fit_result = fit_model.fit(
+            data=y_values, x=self.x_values, **fit_model.guess(y_values, self.x_values)
+        )
 
-        params_ideal = {'offset': self.offset,
-                        'amplitude_1': self.amplitudes[0],
-                        'amplitude_2': self.amplitudes[1],
-                        'frequency_1': self.frequencies[0],
-                        'frequency_2': self.frequencies[0],
-                        'phase_1': self.phases[0],
-                        'phase_2': self.phases[1]}
+        params_ideal = {
+            "offset": self.offset,
+            "amplitude_1": self.amplitudes[0],
+            "amplitude_2": self.amplitudes[1],
+            "frequency_1": self.frequencies[0],
+            "frequency_2": self.frequencies[0],
+            "phase_1": self.phases[0],
+            "phase_2": self.phases[1],
+        }
         for name, ideal_val in params_ideal.items():
             diff = abs(fit_result.best_values[name] - ideal_val)
             tolerance = abs(ideal_val * self._fit_param_tolerance)
@@ -106,5 +118,5 @@ class TestSineMethods(unittest.TestCase):
             self.assertLessEqual(diff, tolerance, msg)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

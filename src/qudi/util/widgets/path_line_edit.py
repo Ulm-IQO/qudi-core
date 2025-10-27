@@ -21,17 +21,17 @@ You should have received a copy of the GNU Lesser General Public License along w
 If not, see <https://www.gnu.org/licenses/>.
 """
 
-__all__ = ['PathLineEdit']
+__all__ = ["PathLineEdit"]
 
 import os
-from PySide2 import QtCore, QtWidgets, QtGui
+from PySide6 import QtCore, QtWidgets, QtGui
 from typing import Optional, Any, List
 
 from qudi.util.paths import get_artwork_dir as _get_artwork_dir
 
 
 class PathLineEdit(QtWidgets.QWidget):
-    """ QLineEdit for editing file system paths directly or via QFileDialog.
+    """QLineEdit for editing file system paths directly or via QFileDialog.
     No validation is performed on the entered string.
     Multiple paths are separated by single semicolon, e.g. '<path1>;<path2>;<path3>'
 
@@ -39,22 +39,25 @@ class PathLineEdit(QtWidgets.QWidget):
     Images (*.png *.xpm *.jpg);;Text files (*.txt);;XML files (*.xml)
     """
 
-    def __init__(self,
-                 text: Optional[str] = None,
-                 parent: Optional[QtWidgets.QWidget] = None,
-                 dialog_caption: Optional[str] = None,
-                 root_directory: Optional[str] = None,
-                 filters: Optional[str] = None,
-                 select_directory: Optional[bool] = False,
-                 follow_symlinks: Optional[bool] = False,
-                 ) -> None:
+    def __init__(
+        self,
+        text: Optional[str] = None,
+        parent: Optional[QtWidgets.QWidget] = None,
+        dialog_caption: Optional[str] = None,
+        root_directory: Optional[str] = None,
+        filters: Optional[str] = None,
+        select_directory: Optional[bool] = False,
+        follow_symlinks: Optional[bool] = False,
+    ) -> None:
         super().__init__(parent=parent)
         self._line_edit = QtWidgets.QLineEdit(text)
         self._tool_button = QtWidgets.QToolButton()
         self._tool_button.setIcon(
-            QtGui.QIcon(os.path.join(os.path.join(_get_artwork_dir(), 'icons', 'document-open')))
+            QtGui.QIcon(
+                os.path.join(os.path.join(_get_artwork_dir(), "icons", "document-open"))
+            )
         )
-        self._tool_button.setToolTip('Open file dialog')
+        self._tool_button.setToolTip("Open file dialog")
         self._tool_button.clicked.connect(self._exec_file_dialog)
 
         layout = QtWidgets.QHBoxLayout()
@@ -64,12 +67,16 @@ class PathLineEdit(QtWidgets.QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(layout)
 
-        self._filters = '' if filters is None else filters
+        self._filters = "" if filters is None else filters
         self._select_directory = bool(select_directory)
         self._follow_symlinks = bool(follow_symlinks)
-        self._root_directory = os.path.abspath(os.sep) if root_directory is None else root_directory
+        self._root_directory = (
+            os.path.abspath(os.sep) if root_directory is None else root_directory
+        )
         if dialog_caption is None:
-            self._dialog_caption = 'Select Directory' if self._select_directory else 'Select Files'
+            self._dialog_caption = (
+                "Select Directory" if self._select_directory else "Select Files"
+            )
         else:
             self._dialog_caption = dialog_caption
 
@@ -78,20 +85,24 @@ class PathLineEdit(QtWidgets.QWidget):
             return getattr(self._line_edit, item)
         except AttributeError:
             pass
-        raise AttributeError(f"'{self.__class__.__name__}' object has not attribute '{item}'")
+        raise AttributeError(
+            f"'{self.__class__.__name__}' object has not attribute '{item}'"
+        )
 
     @property
     def paths(self) -> List[str]:
-        paths = (p.strip() for p in self._line_edit.text().split(';'))
+        paths = (p.strip() for p in self._line_edit.text().split(";"))
         return [p for p in paths if p]
 
     @QtCore.Slot()
     def _exec_file_dialog(self) -> None:
         self._line_edit.clearFocus()
-        dialog = QtWidgets.QFileDialog(parent=self,
-                                       caption=self._dialog_caption,
-                                       directory=self._root_directory,
-                                       filter=self._filters)
+        dialog = QtWidgets.QFileDialog(
+            parent=self,
+            caption=self._dialog_caption,
+            directory=self._root_directory,
+            filter=self._filters,
+        )
         options = QtWidgets.QFileDialog.Option.ReadOnly
         if not self._follow_symlinks:
             options |= QtWidgets.QFileDialog.Option.DontResolveSymlinks
@@ -104,7 +115,7 @@ class PathLineEdit(QtWidgets.QWidget):
         if dialog.exec_() == QtWidgets.QFileDialog.Accepted:
             paths = dialog.selectedFiles()
             if paths:
-                text = ';'.join(p for p in paths if p)
+                text = ";".join(p for p in paths if p)
                 if text and text != self._line_edit.text():
                     self._line_edit.setText(text)
                     self._line_edit.textEdited.emit(text)

@@ -19,7 +19,7 @@ You should have received a copy of the GNU Lesser General Public License along w
 If not, see <https://www.gnu.org/licenses/>.
 """
 
-from PySide2 import QtCore, QtGui, QtWidgets
+from PySide6 import QtCore, QtGui, QtWidgets
 from qudi.core.logger import get_record_table_model
 
 
@@ -39,7 +39,7 @@ class LogFilterProxy(QtCore.QSortFilterProxyModel):
             Parent object of the filter.
         """
         super().__init__(parent)
-        self._show_levels = frozenset({'debug', 'info', 'warning', 'error', 'critical'})
+        self._show_levels = frozenset({"debug", "info", "warning", "error", "critical"})
 
     def filterAcceptsRow(self, source_row, source_parent):
         """
@@ -77,8 +77,8 @@ class LogFilterProxy(QtCore.QSortFilterProxyModel):
 
 
 class SelectableTextDelegate(QtWidgets.QStyledItemDelegate):
-    """A subclass of QStyledItemDelegate to display a text editor for copying text fragments.
-    """
+    """A subclass of QStyledItemDelegate to display a text editor for copying text fragments."""
+
     def createEditor(self, parent, option, index):
         """
         Overwrite method from base class QStyledItemDelegate to show a read-only QLabel widget.
@@ -115,23 +115,25 @@ class SelectableTextDelegate(QtWidgets.QStyledItemDelegate):
             Data model index.
         """
         data = index.data(QtCore.Qt.EditRole)
-        editor.setText(f' {data}')
+        editor.setText(f" {data}")
 
 
 class LogTableWidget(QtWidgets.QTableView):
-    """Customized QTableView including the model for display of logging entries.
-    """
+    """Customized QTableView including the model for display of logging entries."""
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
         record_model = get_record_table_model()
         if record_model is None:
-            raise RuntimeError('No record table model set up in qudi.core.logger')
+            raise RuntimeError("No record table model set up in qudi.core.logger")
         self.filter_model = LogFilterProxy()
         self.filter_model.setSourceModel(record_model)
         self.setModel(self.filter_model)
 
-        self.setSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
+        self.setSizePolicy(
+            QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred
+        )
         self.setEditTriggers(QtWidgets.QTableView.DoubleClicked)
         self.setAlternatingRowColors(True)
         self.setSelectionMode(QtWidgets.QTableView.NoSelection)
@@ -148,8 +150,8 @@ class LogTableWidget(QtWidgets.QTableView):
         self.horizontalHeader().setSectionResizeMode(1, QtWidgets.QHeaderView.Fixed)
         # Set fixed with for "Time" and "Level" columns since they contain fixed width strings
         metrics = QtGui.QFontMetrics(self.font())
-        self.setColumnWidth(0, metrics.horizontalAdvance(' 5555-55-55 55:55:55 '))
-        self.setColumnWidth(1, metrics.horizontalAdvance(' warning '))
+        self.setColumnWidth(0, metrics.horizontalAdvance(" 5555-55-55 55:55:55 "))
+        self.setColumnWidth(1, metrics.horizontalAdvance(" warning "))
         # Estimate starting width of "Source" column
         self.setColumnWidth(2, metrics.horizontalAdvance(__name__ * 2))
 
@@ -168,8 +170,7 @@ class LogTableWidget(QtWidgets.QTableView):
 
 
 class LogWidget(QtWidgets.QSplitter):
-    """A widget to show log entries and filter them.
-    """
+    """A widget to show log entries and filter them."""
 
     def __init__(self, parent=None, debug_mode=False, **kwargs):
         """
@@ -187,13 +188,14 @@ class LogWidget(QtWidgets.QSplitter):
         # Build GUI elements
         # Set up QTableView to display log entries
         self.log_tablewidget = LogTableWidget()
-        self.log_tablewidget.setObjectName('log_table_widget')
+        self.log_tablewidget.setObjectName("log_table_widget")
 
         # Set up QTreeWidget for log filter ui
         self.filter_treewidget = QtWidgets.QTreeWidget()
-        self.filter_treewidget.setObjectName('filter_treewidget')
-        self.filter_treewidget.setSizePolicy(QtWidgets.QSizePolicy.Preferred,
-                                             QtWidgets.QSizePolicy.Preferred)
+        self.filter_treewidget.setObjectName("filter_treewidget")
+        self.filter_treewidget.setSizePolicy(
+            QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred
+        )
         self.filter_treewidget.setMinimumSize(210, 0)
         self.filter_treewidget.setEditTriggers(QtWidgets.QTreeWidget.NoEditTriggers)
         self.filter_treewidget.setDropIndicatorShown(False)
@@ -201,11 +203,13 @@ class LogWidget(QtWidgets.QSplitter):
         self.filter_treewidget.setSelectionMode(QtWidgets.QTreeWidget.NoSelection)
         self.filter_treewidget.setSelectionBehavior(QtWidgets.QTreeWidget.SelectItems)
         self.filter_treewidget.setColumnCount(1)
-        self.filter_treewidget.setHeaderLabels(('Display:',))
+        self.filter_treewidget.setHeaderLabels(("Display:",))
         item = QtWidgets.QTreeWidgetItem()
-        item.setText(0, 'All message types:')
+        item.setText(0, "All message types:")
         item.setCheckState(0, QtCore.Qt.Checked)
-        log_levels = ('debug', 'info', 'warning', 'error', 'critical')[int(not debug_mode):]
+        log_levels = ("debug", "info", "warning", "error", "critical")[
+            int(not debug_mode) :
+        ]
         for text in log_levels:
             child_item = QtWidgets.QTreeWidgetItem()
             child_item.setText(0, text)
@@ -216,7 +220,9 @@ class LogWidget(QtWidgets.QSplitter):
         self.log_tablewidget.set_level_filter(log_levels)
 
         # embed log view and filter tree into QSplitter widget
-        self.setSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
+        self.setSizePolicy(
+            QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred
+        )
         self.addWidget(self.log_tablewidget)
         self.addWidget(self.filter_treewidget)
         self.setStretchFactor(0, 1)
@@ -238,7 +244,9 @@ class LogWidget(QtWidgets.QSplitter):
         """
         # check all / uncheck all state
         show_all_item = self.filter_treewidget.topLevelItem(0)
-        level_items = [show_all_item.child(ii) for ii in range(show_all_item.childCount())]
+        level_items = [
+            show_all_item.child(ii) for ii in range(show_all_item.childCount())
+        ]
         if item is show_all_item:
             self.filter_treewidget.expandItem(item)
             if show_all_item.checkState(0):
@@ -254,7 +262,9 @@ class LogWidget(QtWidgets.QSplitter):
         else:
             show_all = all(it.checkState(0) for it in level_items)
             self.filter_treewidget.blockSignals(True)
-            show_all_item.setCheckState(0, QtCore.Qt.Checked if show_all else QtCore.Qt.Unchecked)
+            show_all_item.setCheckState(
+                0, QtCore.Qt.Checked if show_all else QtCore.Qt.Unchecked
+            )
             self.filter_treewidget.blockSignals(False)
 
         # set level filters

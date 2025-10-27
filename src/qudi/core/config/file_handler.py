@@ -20,22 +20,33 @@ You should have received a copy of the GNU Lesser General Public License along w
 If not, see <https://www.gnu.org/licenses/>.
 """
 
-__all__ = ['FileHandler', 'FileHandlerBase', 'ParserError', 'ValidationError', 'YAMLError',
-           'DuplicateKeyError']
+__all__ = [
+    "FileHandler",
+    "FileHandlerBase",
+    "ParserError",
+    "ValidationError",
+    "YAMLError",
+    "DuplicateKeyError",
+]
 
 
 import os
 from typing import Any, Dict, Mapping
 
 from qudi.util.paths import get_default_config_dir, get_appdata_dir
-from qudi.util.yaml import yaml_dump, yaml_load, ParserError, YAMLError, DuplicateKeyError
+from qudi.util.yaml import (
+    yaml_dump,
+    yaml_load,
+    ParserError,
+    YAMLError,
+    DuplicateKeyError,
+)
 
 from .validator import validate_config, ValidationError
 
 
 class FileHandlerBase:
-    """File handler base class providing static methods for handling raw qudi configuration files.
-    """
+    """File handler base class providing static methods for handling raw qudi configuration files."""
 
     @classmethod
     def _load(cls, path: str) -> Dict[str, Any]:
@@ -43,7 +54,7 @@ class FileHandlerBase:
 
     @classmethod
     def _dump(cls, path: str, config: Mapping[str, Any]) -> None:
-        if not path.endswith('.cfg'):
+        if not path.endswith(".cfg"):
             raise ValueError('Configuration file must have ".cfg" file extension.')
         path = cls._relative_to_absolute_path(path)
         os.makedirs(os.path.dirname(path), exist_ok=True)
@@ -55,8 +66,8 @@ class FileHandlerBase:
         config at the next start of qudi."""
         # Write current config file path to load.cfg
         yaml_dump(
-            os.path.join(get_appdata_dir(create_missing=True), 'load.cfg'),
-            {'load_config_path': cls._relative_to_absolute_path(path)}
+            os.path.join(get_appdata_dir(create_missing=True), "load.cfg"),
+            {"load_config_path": cls._relative_to_absolute_path(path)},
         )
 
     @staticmethod
@@ -65,13 +76,15 @@ class FileHandlerBase:
         Raises FileNotFoundError if unsuccessful or if the recovered file path does not exist.
         """
         # Try loading config file path from last session
-        load_cfg = yaml_load(os.path.join(get_appdata_dir(), 'load.cfg'), ignore_missing=True)
-        file_path = load_cfg.get('load_config_path', '')
-        if os.path.exists(file_path) and file_path.endswith('.cfg'):
+        load_cfg = yaml_load(
+            os.path.join(get_appdata_dir(), "load.cfg"), ignore_missing=True
+        )
+        file_path = load_cfg.get("load_config_path", "")
+        if os.path.exists(file_path) and file_path.endswith(".cfg"):
             return file_path
 
         # Raise error if no last run config file could be found
-        raise FileNotFoundError('No config file path saved from previous qudi sessions')
+        raise FileNotFoundError("No config file path saved from previous qudi sessions")
 
     @staticmethod
     def get_default_path() -> str:
@@ -83,17 +96,19 @@ class FileHandlerBase:
         Raises FileNotFoundError if no "default.cfg" file could be found in the above locations.
         """
         # Try default.cfg in user home directory
-        file_path = os.path.join(get_default_config_dir(create_missing=False), 'default.cfg')
+        file_path = os.path.join(
+            get_default_config_dir(create_missing=False), "default.cfg"
+        )
         if os.path.exists(file_path):
             return file_path
 
         # Fall back to default.cfg in qudi AppData directory if possible
-        file_path = os.path.join(get_appdata_dir(create_missing=False), 'default.cfg')
+        file_path = os.path.join(get_appdata_dir(create_missing=False), "default.cfg")
         if os.path.exists(file_path):
             return file_path
 
         # Raise error if no config file could be found
-        raise FileNotFoundError('No config file could be found in default directories')
+        raise FileNotFoundError("No config file could be found in default directories")
 
     @staticmethod
     def _relative_to_absolute_path(path):

@@ -19,20 +19,19 @@ You should have received a copy of the GNU Lesser General Public License along w
 If not, see <https://www.gnu.org/licenses/>.
 """
 
-from PySide2 import QtWidgets
+from PySide6 import QtWidgets
 
 
 class RemoteWidget(QtWidgets.QWidget):
-    """
+    """ """
 
-    """
     def __init__(self, parent=None, **kwargs):
         super().__init__(parent, **kwargs)
 
         # Create widgets
-        local_label = QtWidgets.QLabel('shared modules')
-        remote_label = QtWidgets.QLabel('remote modules')
-        self.server_label = QtWidgets.QLabel('Server URL')
+        local_label = QtWidgets.QLabel("shared modules")
+        remote_label = QtWidgets.QLabel("remote modules")
+        self.server_label = QtWidgets.QLabel("Server URL")
         self.shared_module_listview = QtWidgets.QListView()
         self.shared_module_listview.setUniformItemSizes(True)
         self.shared_module_listview.setAlternatingRowColors(True)

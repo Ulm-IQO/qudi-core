@@ -21,8 +21,13 @@ You should have received a copy of the GNU Lesser General Public License along w
 If not, see <https://www.gnu.org/licenses/>.
 """
 
-__all__ = ['ValidationError', 'validate_config', 'validate_local_module_config',
-           'validate_remote_module_config', 'validate_module_name']
+__all__ = [
+    "ValidationError",
+    "validate_config",
+    "validate_local_module_config",
+    "validate_remote_module_config",
+    "validate_module_name",
+]
 
 import re
 from typing import Mapping, Any
@@ -30,7 +35,11 @@ from jsonschema import ValidationError
 from jsonschema import validators as __validators
 from jsonschema import Draft7Validator as __BaseValidator
 
-from .schema import config_schema, remote_module_config_schema, local_module_config_schema
+from .schema import (
+    config_schema,
+    remote_module_config_schema,
+    local_module_config_schema,
+)
 
 
 def __set_defaults(validator, properties, instance, schema):
@@ -41,27 +50,30 @@ def __set_defaults(validator, properties, instance, schema):
         pass
     else:
         for property, subschema in properties.items():
-            if 'default' in subschema:
+            if "default" in subschema:
                 try:
-                    instance.setdefault(property, subschema['default'])
+                    instance.setdefault(property, subschema["default"])
                 except AttributeError:
                     pass
 
-    for error in __BaseValidator.VALIDATORS['properties'](validator, properties, instance, schema):
+    for error in __BaseValidator.VALIDATORS["properties"](
+        validator, properties, instance, schema
+    ):
         yield error
 
 
 def __is_iterable(checker, instance):
-    return (__BaseValidator.TYPE_CHECKER.is_type(instance, "array") or
-            isinstance(instance, (set, frozenset, tuple)))
+    return __BaseValidator.TYPE_CHECKER.is_type(instance, "array") or isinstance(
+        instance, (set, frozenset, tuple)
+    )
 
 
 # Add custom JSON schema (draft v7) validator that accepts all Python builtin sequences as "array"
 # type
 DefaultInsertionValidator = __validators.extend(
     validator=__BaseValidator,
-    validators={'properties': __set_defaults},
-    type_checker=__BaseValidator.TYPE_CHECKER.redefine("array", __is_iterable)
+    validators={"properties": __set_defaults},
+    type_checker=__BaseValidator.TYPE_CHECKER.redefine("array", __is_iterable),
 )
 
 
@@ -92,7 +104,7 @@ def validate_module_name(name: str) -> None:
 
     WARNING: The jsonschema.ValidationError raised does not contain any JSON schema information.
     """
-    if re.match(r'^[a-zA-Z_]+[a-zA-Z0-9_]*$', name) is None:
+    if re.match(r"^[a-zA-Z_]+[a-zA-Z0-9_]*$", name) is None:
         raise ValidationError(
-            'Module names must only contain word characters [a-zA-Z0-9_] and not start on a number.'
+            "Module names must only contain word characters [a-zA-Z0-9_] and not start on a number."
         )

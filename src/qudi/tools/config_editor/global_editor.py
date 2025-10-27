@@ -20,29 +20,30 @@ You should have received a copy of the GNU Lesser General Public License along w
 If not, see <https://www.gnu.org/licenses/>.
 """
 
-__all__ = ['GlobalEditorWidget']
+__all__ = ["GlobalEditorWidget"]
 
-from PySide2 import QtCore, QtWidgets
+from PySide6 import QtCore, QtWidgets
 from typing import Optional, Mapping, Dict, Union, Any
 from qudi.tools.config_editor.global_widgets import GlobalConfigWidget
 
 
 class GlobalEditorWidget(QtWidgets.QStackedWidget):
-    """
-    """
+    """ """
 
     def __init__(self, parent: Optional[QtWidgets.QWidget] = None) -> None:
         super().__init__(parent=parent)
 
-        self.placeholder_label = QtWidgets.QLabel('Please load configuration from file\n'
-                                                  'or create a new one.')
+        self.placeholder_label = QtWidgets.QLabel(
+            "Please load configuration from file\nor create a new one."
+        )
         font = self.placeholder_label.font()
         font.setBold(True)
         font.setPointSize(font.pointSize() + 4)
         self.placeholder_label.setFont(font)
         self.placeholder_label.setAlignment(QtCore.Qt.AlignCenter)
-        self.placeholder_label.setSizePolicy(QtWidgets.QSizePolicy.Expanding,
-                                             QtWidgets.QSizePolicy.Expanding)
+        self.placeholder_label.setSizePolicy(
+            QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding
+        )
         self.addWidget(self.placeholder_label)
 
         self.global_editor_widget = GlobalConfigWidget()
