@@ -24,16 +24,18 @@ __all__ = ['StatusVar']
 
 import copy
 import inspect
-from typing import Callable, Any, Optional
+from typing import Callable, Any, Optional, Generic, TypeVar
+
+T = TypeVar('T')
 
 
-class StatusVar:
+class StatusVar(Generic[T]):
     """This class defines a status variable that is loaded before activation and saved after
     deactivation.
     """
 
-    def __init__(self, name: Optional[str] = None, default: Optional[Any] = None, *,
-                 constructor: Optional[Callable] = None, representer: Optional[Callable] = None):
+    def __init__(self, name: Optional[str] = None, default: Optional[T] = None, *,
+                 constructor: Optional[Callable[..., T]] = None, representer: Optional[Callable[[T], Any]] = None):
         """
         Parameters
         ----------
@@ -48,8 +50,8 @@ class StatusVar:
         """
         self.name = name
         self.default = default
-        self.constructor_function = None
-        self.representer_function = None
+        self.constructor_function: Optional[Callable[..., T]] = None
+        self.representer_function: Optional[Callable[[T], Any]] = None
         if constructor is not None:
             self.constructor(constructor)
         if representer is not None:
@@ -65,7 +67,7 @@ class StatusVar:
     def __deepcopy__(self, memodict={}):
         return self.copy()
 
-    def copy(self, **kwargs):
+    def copy(self, **kwargs) -> 'StatusVar[T]':
         """Create a new instance of StatusVar with copied and updated values.
 
         Parameters
@@ -80,7 +82,7 @@ class StatusVar:
         newargs.update(kwargs)
         return StatusVar(**newargs)
 
-    def constructor(self, func: Callable) -> Callable:
+    def constructor(self, func: Callable[[Any], T]) -> Callable[[Any], T]:
         """This is the decorator for declaring constructor function for this StatusVar.
 
         Parameters
@@ -96,7 +98,7 @@ class StatusVar:
         self.constructor_function = self._assert_func_signature(func)
         return func
 
-    def representer(self, func: Callable) -> Callable:
+    def representer(self, func: Callable[[T], Any]) -> Callable[[T], Any]:
         """This is the decorator for declaring a representer function for this StatusVar.
 
         Parameters
@@ -113,7 +115,7 @@ class StatusVar:
         return func
 
     @staticmethod
-    def _assert_func_signature(func: Callable) -> Callable:
+    def _assert_func_signature(func: Callable[..., Any]) -> Callable[..., Any]:
         assert callable(func), 'StatusVar constructor/representer must be callable'
         params = tuple(inspect.signature(func).parameters)
         assert 0 < len(params) < 3, 'StatusVar constructor/representer must be function with ' \
