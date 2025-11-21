@@ -66,7 +66,7 @@ class TaskRunnerGui(GuiBase):
         self.show()
 
     def show(self):
-        """ Make sure that the window is visible and at the top.
+        """Make sure that the window is visible and at the top.
         """
         self._mw.show()
 
@@ -75,7 +75,7 @@ class TaskRunnerGui(GuiBase):
         self._qudi_main.module_manager.deactivate_module(self._meta['name'])
 
     def on_deactivate(self):
-        """ Hide window and stop ipython console.
+        """Hide window and stop ipython console.
         """
         self._save_window_geometry(self._mw)
         self._mw.sigStartTask.disconnect()

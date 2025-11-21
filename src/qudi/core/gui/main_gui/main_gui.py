@@ -62,7 +62,7 @@ class QudiMainGui(GuiBase):
         self._has_console = False  # Flag indicating if an IPython console is available
 
     def on_activate(self):
-        """ Activation method called on change to active state.
+        """Activation method called on change to active state.
 
         This method creates the Manager main window.
         """
@@ -196,7 +196,7 @@ class QudiMainGui(GuiBase):
 
     def reset_default_layout(self):
         """
-        Return the dockwidget layout and visibility to its default state
+        Return the dockwidget layout and visibility to its default state.
         """
         self.mw.config_dockwidget.setVisible(False)
         self.mw.console_dockwidget.setVisible(self._has_console)
@@ -231,7 +231,7 @@ class QudiMainGui(GuiBase):
         return
 
     def start_jupyter_widget(self):
-        """ Starts a qudi IPython kernel in a separate process and connects it to the console widget
+        """Starts a qudi IPython kernel in a separate process and connects it to the console widget.
         """
         self._has_console = False
         try:
@@ -285,7 +285,7 @@ class QudiMainGui(GuiBase):
             )
 
     def stop_jupyter_widget(self):
-        """ Stops the qudi IPython kernel process and detaches it from the console widget
+        """Stops the qudi IPython kernel process and detaches it from the console widget.
         """
         try:
             self.mw.console_widget.kernel_client.stop_channels()
@@ -299,13 +299,13 @@ class QudiMainGui(GuiBase):
         self.log.info('IPython kernel process for qudi main GUI has shut down.')
 
     def keep_settings(self):
-        """ Write old values into settings dialog.
+        """Write old values into settings dialog.
         """
         self.mw.settings_dialog.font_size_spinbox.setValue(self._console_font_size)
         self.mw.settings_dialog.show_error_popups_checkbox.setChecked(self._show_error_popups)
 
     def apply_settings(self):
-        """ Apply values from settings dialog.
+        """Apply values from settings dialog.
         """
         # Console font size
         font_size = self.mw.settings_dialog.font_size_spinbox.value()
@@ -320,14 +320,14 @@ class QudiMainGui(GuiBase):
 
     @QtCore.Slot()
     def _error_dialog_enabled_changed(self):
-        """ Callback for the error dialog disable checkbox
+        """Callback for the error dialog disable checkbox.
         """
         self._show_error_popups = self.error_dialog.enabled
         self.mw.settings_dialog.show_error_popups_checkbox.setChecked(self._show_error_popups)
 
     @QtCore.Slot(object)
     def update_config_widget(self, config=None):
-        """ Clear and refill the tree widget showing the configuration.
+        """Clear and refill the tree widget showing the configuration.
         """
         if config is None:
             config = self._qudi_main.configuration
@@ -335,7 +335,7 @@ class QudiMainGui(GuiBase):
 
     @QtCore.Slot(dict)
     def update_configured_modules(self, modules=None):
-        """ Clear and refill the module list widget
+        """Clear and refill the module list widget.
         """
         if modules is None:
             modules = self._qudi_main.module_manager
@@ -351,7 +351,7 @@ class QudiMainGui(GuiBase):
         self.mw.module_widget.update_module_app_data(base, name, exists)
 
     def get_qudi_version(self):
-        """ Try to determine the software version in case the program is in a git repository.
+        """Try to determine the software version in case the program is in a git repository.
         """
         # Try to get repository information if qudi has been checked out as git repo
         if Repo is not None:
@@ -374,7 +374,7 @@ class QudiMainGui(GuiBase):
         return 'unknown'
 
     def load_configuration(self):
-        """ Ask the user for a file where the configuration should be loaded from
+        """Ask the user for a file where the configuration should be loaded from.
         """
         filename = QtWidgets.QFileDialog.getOpenFileName(self.mw,
                                                          'Load Configuration',
@@ -396,7 +396,7 @@ class QudiMainGui(GuiBase):
                 self._qudi_main.restart()
 
     def new_configuration(self):
-        """ Prompt the user to open the graphical config editor in a subprocess in order to
+        """Prompt the user to open the graphical config editor in a subprocess in order to
         edit/create config files for qudi.
         """
         reply = QtWidgets.QMessageBox.question(

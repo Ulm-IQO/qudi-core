@@ -28,7 +28,7 @@ from qudi.util.mutex import Mutex
 
 
 class LogRecordsTableModel(QtCore.QAbstractTableModel):
-    """ This is a Qt model that represents textual information about all logged records.
+    """This is a Qt model that represents textual information about all logged records.
     Can be displayed with a QTableView for example.
     """
 
@@ -52,35 +52,54 @@ class LogRecordsTableModel(QtCore.QAbstractTableModel):
         self._fill_count = 0
 
     def rowCount(self, parent=None):
-        """ Returns the number of log records stored in the model.
+        """Returns the number of log records stored in the model.
 
-        @return int: number of log records stored
+        Returns
+        -------
+        int
+            Number of log records stored.
         """
         return self._fill_count
 
     def columnCount(self, parent=None):
-        """ Returns the number of columns each log record has.
+        """Returns the number of columns each log record has.
 
-        @return int: number of log record columns
+        Returns
+        -------
+        int
+            Number of columns for each log record.
         """
         return len(self._header)
 
     def flags(self, index):
-        """ Determines what can be done with log record cells in the table view.
+        """Determines what can be done with log record cells in the table view.
 
-        @param QModelIndex index: cell for which the flags are requested
+        Parameters
+        ----------
+        index : QModelIndex
+            Cell for which the flags are requested.
 
-        @return Qt.ItemFlags: actions allowed for this cell
+        Returns
+        -------
+        Qt.ItemFlags
+            Actions allowed for this cell.
         """
         return QtCore.Qt.ItemFlag.ItemIsEnabled | QtCore.Qt.ItemFlag.ItemIsSelectable | QtCore.Qt.ItemIsEditable
 
     def data(self, index, role):
-        """ Get data from model for a given cell. Data can have a role that affects display.
+        """Get data from model for a given cell. Data can have a role that affects display.
 
-        @param QModelIndex index: cell for which data is requested
-        @param ItemDataRole role: role for which data is requested
+        Parameters
+        ----------
+        index : QModelIndex
+            Cell for which data is requested.
+        role : ItemDataRole
+            Role for which data is requested.
 
-        @return QVariant: data for given cell and role
+        Returns
+        -------
+        QVariant
+            Data for given cell and role.
         """
         if index.isValid():
             record = self._records[(self._begin + index.row()) % self._max_records]
@@ -90,13 +109,21 @@ class LogRecordsTableModel(QtCore.QAbstractTableModel):
                 return record[index.column()]
 
     def headerData(self, section, orientation, role=None):
-        """ Data for the table view headers.
+        """Data for the table view headers.
 
-        @param int section: number of the column to get header data for
-        @param Qt.Orientation orientation: orientation of header (horizontal or vertical)
-        @param ItemDataRole role: role for which to get data
+        Parameters
+        ----------
+        section : int
+            Number of the column to get header data for.
+        orientation : Qt.Orientation
+            Orientation of header (horizontal or vertical).
+        role : ItemDataRole
+            Role for which to get data.
 
-        @return QVariant: header data for given column and role
+        Returns
+        -------
+        QVariant
+            Header data for given column and role.
         """
         if (role is None or role == QtCore.Qt.ItemDataRole.DisplayRole) and orientation == QtCore.Qt.Orientation.Horizontal:
             try:
@@ -107,10 +134,17 @@ class LogRecordsTableModel(QtCore.QAbstractTableModel):
 
     @QtCore.Slot(object)
     def add_record(self, data):
-        """ Add a single log entry to the end of the table model.
+        """Add a single log entry to the end of the table model.
 
-        @param logging.LogRecord data: log record as returned from logging module
-        @return bool: True if adding entry succeeded, False otherwise
+        Parameters
+        ----------
+        data : logging.LogRecord
+            Log record as returned from logging module.
+
+        Returns
+        -------
+        bool
+            True if adding entry succeeded, False otherwise.
         """
         with self._thread_lock:
             if self._fill_count < self._max_records:

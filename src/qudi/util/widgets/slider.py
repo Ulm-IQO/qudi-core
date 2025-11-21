@@ -82,7 +82,10 @@ class DoubleSlider(QtWidgets.QSlider):
         """
         Set the granularity of the slider, i.e. the number of discrete steps within the value range.
 
-        @param int number_of_steps: The number of discrete positions the slider has
+        Parameters
+        ----------
+        number_of_steps : int
+            The number of discrete positions the slider has.
         """
         number_of_steps = int(number_of_steps)
         if number_of_steps < 1:

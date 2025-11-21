@@ -24,7 +24,7 @@ from PySide6 import QtCore, QtWidgets
 
 class AboutQudiDialog(QtWidgets.QDialog):
     """
-    QWidgets.QDialog subclass representing an "about qudi" dialog
+    QWidgets.QDialog subclass representing an "about qudi" dialog.
     """
     def __init__(self, parent=None, **kwargs):
         super().__init__(parent, **kwargs)

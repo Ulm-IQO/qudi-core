@@ -74,7 +74,7 @@ class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
 
     @QtCore.Slot(QtWidgets.QSystemTrayIcon.ActivationReason)
     def handle_activation(self, reason):
-        """ Click handler.
+        """Click handler.
         This method is called when the tray icon is left-clicked.
         It opens a menu at the position of the left click.
 
@@ -106,7 +106,7 @@ class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
 
 
 class Gui(QtCore.QObject):
-    """ Set up all necessary GUI elements, like application icons, themes, etc.
+    """Set up all necessary GUI elements, like application icons, themes, etc.
     """
 
     _instance = None
@@ -165,7 +165,7 @@ class Gui(QtCore.QObject):
 
     @staticmethod
     def _init_app_icon():
-        """ Set up the Qudi application icon.
+        """Set up the Qudi application icon.
         """
         app_icon = QtGui.QIcon(os.path.join(get_artwork_dir(), 'logo', 'logo-qudi.svg'))
         QtWidgets.QApplication.instance().setWindowIcon(app_icon)
@@ -236,7 +236,7 @@ class Gui(QtCore.QObject):
 
     @staticmethod
     def close_windows():
-        """ Close all application windows.
+        """Close all application windows.
         """
         QtWidgets.QApplication.instance().closeAllWindows()
 
@@ -271,12 +271,12 @@ class Gui(QtCore.QObject):
         QtWidgets.QApplication.instance().processEvents()
 
     def show_system_tray_icon(self):
-        """ Show system tray icon
+        """Show system tray icon.
         """
         self.system_tray_icon.show()
 
     def hide_system_tray_icon(self):
-        """ Hide system tray icon
+        """Hide system tray icon.
         """
         self.system_tray_icon.hide()
 
@@ -307,7 +307,7 @@ class Gui(QtCore.QObject):
         self.system_tray_icon.showMessage(title, message, icon, int(round(time * 1000)))
 
     def prompt_shutdown(self, modules_locked=True):
-        """ Display a dialog, asking the user to confirm shutdown.
+        """Display a dialog, asking the user to confirm shutdown.
         """
         if modules_locked:
             msg = 'Some qudi modules are locked right now.\n' \
@@ -323,7 +323,7 @@ class Gui(QtCore.QObject):
         return result == QtWidgets.QMessageBox.Yes
 
     def prompt_restart(self, modules_locked=True):
-        """ Display a dialog, asking the user to confirm restart.
+        """Display a dialog, asking the user to confirm restart.
         """
         if modules_locked:
             msg = 'Some qudi modules are locked right now.\n' \
