@@ -229,5 +229,5 @@ class QudiMainWindow(QtWidgets.QMainWindow):
         # Connect dialog open signals
         self.action_about_qudi.triggered.connect(self.about_qudi_dialog.open)
         self.action_about_qt.triggered.connect(QtWidgets.QApplication.aboutQt)
-        self.action_settings.triggered.connect(self.settings_dialog.exec_)  # modal
+        self.action_settings.triggered.connect(self.settings_dialog.exec)  # modal
         return

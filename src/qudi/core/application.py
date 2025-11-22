@@ -29,6 +29,7 @@ import faulthandler
 from logging import DEBUG, INFO
 from PySide6 import QtCore, QtWidgets
 
+from qudi.core import logger
 from qudi.core.logger import init_rotating_file_handler, init_record_model_handler, clear_handlers
 from qudi.core.logger import get_logger, set_log_level
 from qudi.util.paths import get_main_dir, get_default_log_dir
@@ -296,51 +297,54 @@ class Qudi(QtCore.QObject):
     def run(self):
         """
         """
-        with self._run_lock:
-            if self._is_running:
-                raise RuntimeError('Qudi is already running!')
+        try:
+            with self._run_lock:
+                if self._is_running:
+                    raise RuntimeError('Qudi is already running!')
 
-            # Notify startup
-            startup_info = f'Starting qudi{" in debug mode..." if self.debug_mode else "..."}'
-            self.log.info(startup_info)
-            print(f'> {startup_info}')
+                # Notify startup
+                startup_info = f'Starting qudi{" in debug mode..." if self.debug_mode else "..."}'
+                self.log.info(startup_info)
+                print(f'> {startup_info}')
 
-            # Get QApplication instance
-            app_cls = QtCore.QCoreApplication if self.no_gui else QtWidgets.QApplication
-            app = app_cls.instance()
-            if app is None:
-                app = app_cls(sys.argv)
+                # Get QApplication instance
+                app_cls = QtCore.QCoreApplication if self.no_gui else QtWidgets.QApplication
+                app = app_cls.instance()
+                if app is None:
+                    app = app_cls(sys.argv)
 
-            # Install app watchdog
-            self.watchdog = AppWatchdog(self.interrupt_quit)
+                # Install app watchdog
+                self.watchdog = AppWatchdog(self.interrupt_quit)
 
-            # Start module servers
-            if self.remote_modules_server is not None:
-                self.remote_modules_server.start()
-            self.local_namespace_server.start()
+                # Start module servers
+                if self.remote_modules_server is not None:
+                    self.remote_modules_server.start()
+                self.local_namespace_server.start()
 
-            # Apply configuration to qudi
-            self._configure_qudi()
+                # Apply configuration to qudi
+                self._configure_qudi()
 
-            # Start GUI if needed
-            self._start_gui()
+                # Start GUI if needed
+                self._start_gui()
 
-            # Start the startup modules defined in the config file
-            self._start_startup_modules()
+                # Start the startup modules defined in the config file
+                self._start_startup_modules()
 
-            # Start Qt event loop unless running in interactive mode
-            self._is_running = True
-            self.log.info('Initialization complete! Starting Qt event loop...')
-            print('> Initialization complete! Starting Qt event loop...\n>')
-            exit_code = app.exec_()
+                # Start Qt event loop unless running in interactive mode
+                self._is_running = True
+                self.log.info('Initialization complete! Starting Qt event loop...')
+                print('> Initialization complete! Starting Qt event loop...\n>')
+                exit_code = app.exec()
 
-            self._shutting_down = False
-            self._is_running = False
-            self.log.info('Shutdown complete! Ciao')
-            print('>\n>   Shutdown complete! Ciao.\n>')
+                self._shutting_down = False
+                self._is_running = False
+                self.log.info('Shutdown complete! Ciao')
+                print('>\n>   Shutdown complete! Ciao.\n>')
 
-            # Exit application
-            sys.exit(exit_code)
+                # Exit application
+                sys.exit(exit_code)
+        except Exception as e:
+            self.log.exception(e)
 
     def _exit(self, prompt=True, restart=False):
         """Shutdown qudi. Nicely request that all modules shut down if prompt is True.

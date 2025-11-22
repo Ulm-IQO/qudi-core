@@ -214,7 +214,7 @@ class ConfigurationEditor(QtWidgets.QMainWindow):
         selector_dialog = ModuleSelector(available_modules=available,
                                          named_modules=named_selected,
                                          unnamed_modules=unnamed_selected)
-        if selector_dialog.exec_():
+        if selector_dialog.exec():
             # Recycle old module names if identical modules are selected but not named
             new_named_selected, new_unnamed_selected = selector_dialog.selected_modules
             recycled_named_selected = {
@@ -358,7 +358,7 @@ def main():
     editor = ConfigurationEditor()
     editor.show()
     # Start event loop
-    sys.exit(app.exec_())
+    sys.exit(app.exec())
 
 
 if __name__ == '__main__':

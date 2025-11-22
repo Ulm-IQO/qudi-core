@@ -101,7 +101,7 @@ class PathLineEdit(QtWidgets.QWidget):
         else:
             dialog.setFileMode(QtWidgets.QFileDialog.FileMode.ExistingFiles)
         dialog.setOptions(options)
-        if dialog.exec_() == QtWidgets.QFileDialog.Accepted:
+        if dialog.exec() == QtWidgets.QFileDialog.DialogCode.Accepted:
             paths = dialog.selectedFiles()
             if paths:
                 text = ';'.join(p for p in paths if p)

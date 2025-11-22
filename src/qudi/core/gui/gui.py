@@ -80,8 +80,8 @@ class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
 
         @param reason: reason that caused the activation
         """
-        if reason == self.Trigger:
-            self.left_menu.exec_(QtGui.QCursor.pos())
+        if reason == self.ActivationReason.Trigger:
+            self.left_menu.exec(QtGui.QCursor.pos())
 
     def add_action(self, label, callback, icon=None):
         if label in self._actions:
