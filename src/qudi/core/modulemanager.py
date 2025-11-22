@@ -198,7 +198,7 @@ class ModuleManager(QtCore.QObject):
             self.current_module_name = module_name
             QtCore.QMetaObject.invokeMethod(self,
             "_activate_module_slot",
-            QtCore.Qt.BlockingQueuedConnection)
+            QtCore.Qt.ConnectionType.BlockingQueuedConnection)
             return
 
         with self._lock:
@@ -212,7 +212,7 @@ class ModuleManager(QtCore.QObject):
             self.current_module_name = module_name
             QtCore.QMetaObject.invokeMethod(self,
             "_deactivate_module_slot",
-            QtCore.Qt.BlockingQueuedConnection)
+            QtCore.Qt.ConnectionType.BlockingQueuedConnection)
             return
 
         with self._lock:
@@ -498,7 +498,7 @@ class ManagedModule(QtCore.QObject):
     def activate(self) -> None:
         # Switch to the main thread if this method was called from another thread
         if QtCore.QThread.currentThread() is not self.thread():
-            QtCore.QMetaObject.invokeMethod(self, 'activate', QtCore.Qt.BlockingQueuedConnection)
+            QtCore.QMetaObject.invokeMethod(self, 'activate', QtCore.Qt.ConnectionType.BlockingQueuedConnection)
             if not self.is_active:
                 raise RuntimeError(f'Failed to activate {self.module_base} module "{self.name}"!')
             return
@@ -552,13 +552,13 @@ class ManagedModule(QtCore.QObject):
                 try:
                     QtCore.QMetaObject.invokeMethod(self._instance.module_state,
                                                     'activate',
-                                                    QtCore.Qt.BlockingQueuedConnection)
+                                                    QtCore.Qt.ConnectionType.BlockingQueuedConnection)
                 finally:
                     # Cleanup if activation was not successful
                     if not self.is_active:
                         QtCore.QMetaObject.invokeMethod(self._instance,
                                                         'move_to_main_thread',
-                                                        QtCore.Qt.BlockingQueuedConnection)
+                                                        QtCore.Qt.ConnectionType.BlockingQueuedConnection)
                         thread_manager.quit_thread(thread_name)
                         thread_manager.join_thread(thread_name)
                         self._disconnect()
@@ -608,7 +608,7 @@ class ManagedModule(QtCore.QObject):
     def deactivate(self):
         # Switch to the main thread if this method was called from another thread
         if QtCore.QThread.currentThread() is not self.thread():
-            QtCore.QMetaObject.invokeMethod(self, 'deactivate', QtCore.Qt.BlockingQueuedConnection)
+            QtCore.QMetaObject.invokeMethod(self, 'deactivate', QtCore.Qt.ConnectionType.BlockingQueuedConnection)
             if self.is_active:
                 raise RuntimeError(f'Failed to deactivate {self.module_base} module "{self.name}"!')
             return
@@ -642,11 +642,11 @@ class ManagedModule(QtCore.QObject):
                 try:
                     QtCore.QMetaObject.invokeMethod(self._instance.module_state,
                                                     'deactivate',
-                                                    QtCore.Qt.BlockingQueuedConnection)
+                                                    QtCore.Qt.ConnectionType.BlockingQueuedConnection)
                 finally:
                     QtCore.QMetaObject.invokeMethod(self._instance,
                                                     'move_to_main_thread',
-                                                    QtCore.Qt.BlockingQueuedConnection)
+                                                    QtCore.Qt.ConnectionType.BlockingQueuedConnection)
                     thread_manager.quit_thread(thread_name)
                     thread_manager.join_thread(thread_name)
             else:
@@ -672,7 +672,7 @@ class ManagedModule(QtCore.QObject):
     def reload(self):
         # Switch to the main thread if this method was called from another thread
         if QtCore.QThread.currentThread() is not self.thread():
-            QtCore.QMetaObject.invokeMethod(self, 'reload', QtCore.Qt.BlockingQueuedConnection)
+            QtCore.QMetaObject.invokeMethod(self, 'reload', QtCore.Qt.ConnectionType.BlockingQueuedConnection)
             return
 
         with self._lock:

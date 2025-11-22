@@ -244,7 +244,7 @@ class Gui(QtCore.QObject):
         if QtCore.QThread.currentThread() is not self.thread():
             QtCore.QMetaObject.invokeMethod(self,
                                             'activate_main_gui',
-                                            QtCore.Qt.BlockingQueuedConnection)
+                                            QtCore.Qt.ConnectionType.BlockingQueuedConnection)
             return
 
         if self.main_gui_module.module_state() != 'deactivated':
@@ -261,7 +261,7 @@ class Gui(QtCore.QObject):
         if QtCore.QThread.currentThread() is not self.thread():
             QtCore.QMetaObject.invokeMethod(self,
                                             'deactivate_main_gui',
-                                            QtCore.Qt.BlockingQueuedConnection)
+                                            QtCore.Qt.ConnectionType.BlockingQueuedConnection)
             return
 
         if self.main_gui_module.module_state() == 'deactivated':

@@ -215,7 +215,7 @@ class Base(QtCore.QObject, metaclass=ModuleMeta):
         if QtCore.QThread.currentThread() != self.thread():
             QtCore.QMetaObject.invokeMethod(self,
                                             'move_to_main_thread',
-                                            QtCore.Qt.BlockingQueuedConnection)
+                                            QtCore.Qt.ConnectionType.BlockingQueuedConnection)
         else:
             self.moveToThread(QtCore.QCoreApplication.instance().thread())
 
