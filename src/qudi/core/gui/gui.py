@@ -177,7 +177,7 @@ class Gui(QtCore.QObject):
             # test setting background of pyqtgraph
             testwidget = QtWidgets.QWidget()
             testwidget.ensurePolished()
-            bgcolor = testwidget.palette().color(QtGui.QPalette.Normal, testwidget.backgroundRole())
+            bgcolor = testwidget.palette().color(QtGui.QPalette.ColorGroup.Normal, testwidget.backgroundRole())
             # set manually the background color in hex code according to our color scheme:
             pg.setConfigOption('background', bgcolor)
             # experimental opengl usage
