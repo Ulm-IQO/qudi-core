@@ -210,11 +210,12 @@ class QudiMainGui(GuiBase):
         self.mw.threads_dockwidget.setFloating(False)
         self.mw.log_dockwidget.setFloating(False)
 
-        self.mw.addDockWidget(QtCore.Qt.BottomDockWidgetArea, self.mw.config_dockwidget)
-        self.mw.addDockWidget(QtCore.Qt.BottomDockWidgetArea, self.mw.log_dockwidget)
-        self.mw.addDockWidget(QtCore.Qt.BottomDockWidgetArea, self.mw.remote_dockwidget)
-        self.mw.addDockWidget(QtCore.Qt.BottomDockWidgetArea, self.mw.threads_dockwidget)
-        self.mw.addDockWidget(QtCore.Qt.RightDockWidgetArea, self.mw.console_dockwidget)
+        # For some reason on Windows the following commands cause a race condition on startup
+        #self.mw.addDockWidget(QtCore.Qt.BottomDockWidgetArea, self.mw.config_dockwidget)
+        #self.mw.addDockWidget(QtCore.Qt.BottomDockWidgetArea, self.mw.log_dockwidget)
+        #self.mw.addDockWidget(QtCore.Qt.BottomDockWidgetArea, self.mw.remote_dockwidget)
+        #self.mw.addDockWidget(QtCore.Qt.BottomDockWidgetArea, self.mw.threads_dockwidget)
+        #self.mw.addDockWidget(QtCore.Qt.RightDockWidgetArea, self.mw.console_dockwidget)
 
         self.mw.action_view_console.setChecked(self._has_console)
         self.mw.action_view_console.setVisible(self._has_console)
