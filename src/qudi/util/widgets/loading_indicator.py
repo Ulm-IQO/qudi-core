@@ -58,7 +58,7 @@ class CircleLoadingIndicator(QtWidgets.QWidget):
         super().__init__(*args, **kwargs)
         self.setMinimumSize(6, 6)
         self.setMouseTracking(False)
-        self.setFocusPolicy(QtCore.Qt.NoFocus)
+        self.setFocusPolicy(QtCore.Qt.FocusPolicy.NoFocus)
 
         # Fixed init parameters
         self._indicator_length = indicator_length
@@ -72,7 +72,7 @@ class CircleLoadingIndicator(QtWidgets.QWidget):
         # misc parameters
         self.__animation = None
         self.__pen = QtGui.QPen(self.palette().highlight().color())
-        self.__pen.setCapStyle(QtCore.Qt.RoundCap)
+        self.__pen.setCapStyle(QtCore.Qt.PenCapStyle.RoundCap)
         self.__draw_rect = None
         self.__update_draw_size()
         self.__size_hint = None
@@ -98,8 +98,8 @@ class CircleLoadingIndicator(QtWidgets.QWidget):
     def paintEvent(self, event):
         # Set up painter
         p = QtGui.QPainter(self)
-        p.setRenderHint(QtGui.QPainter.Antialiasing, True)
-        p.setBrush(QtCore.Qt.NoBrush)
+        p.setRenderHint(QtGui.QPainter.RenderHint.Antialiasing, True)
+        p.setBrush(QtCore.Qt.BrushStyle.NoBrush)
         self.__pen.setColor(self.palette().highlight().color())  # in case the palette has changed
         p.setPen(self.__pen)
 
