@@ -99,7 +99,7 @@ class SelectableTextDelegate(QtWidgets.QStyledItemDelegate):
             Instance of QLabel.
         """
         editor = QtWidgets.QLabel(parent)
-        editor.setTextInteractionFlags(QtCore.Qt.TextSelectableByMouse)
+        editor.setTextInteractionFlags(QtCore.Qt.TextInteractionFlag.TextSelectableByMouse)
         editor.setAlignment(option.displayAlignment)
         return editor
 
@@ -114,7 +114,7 @@ class SelectableTextDelegate(QtWidgets.QStyledItemDelegate):
         index : QModelIndex
             Data model index.
         """
-        data = index.data(QtCore.Qt.EditRole)
+        data = index.data(QtCore.Qt.ItemDataRole.EditRole)
         editor.setText(f' {data}')
 
 
@@ -131,12 +131,12 @@ class LogTableWidget(QtWidgets.QTableView):
         self.filter_model.setSourceModel(record_model)
         self.setModel(self.filter_model)
 
-        self.setSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
-        self.setEditTriggers(QtWidgets.QTableView.DoubleClicked)
+        self.setSizePolicy(QtWidgets.QSizePolicy.Policy.Preferred, QtWidgets.QSizePolicy.Policy.Preferred)
+        self.setEditTriggers(QtWidgets.QTableView.EditTrigger.DoubleClicked)
         self.setAlternatingRowColors(True)
-        self.setSelectionMode(QtWidgets.QTableView.NoSelection)
-        self.setHorizontalScrollMode(QtWidgets.QTableView.ScrollPerPixel)
-        self.setVerticalScrollMode(QtWidgets.QTableView.ScrollPerPixel)
+        self.setSelectionMode(QtWidgets.QTableView.SelectionMode.NoSelection)
+        self.setHorizontalScrollMode(QtWidgets.QTableView.ScrollMode.ScrollPerPixel)
+        self.setVerticalScrollMode(QtWidgets.QTableView.ScrollMode.ScrollPerPixel)
         self.setShowGrid(False)
         self.setCornerButtonEnabled(False)
         self.horizontalHeader().setCascadingSectionResizes(True)
@@ -144,8 +144,8 @@ class LogTableWidget(QtWidgets.QTableView):
         self.verticalHeader().hide()
         self.setItemDelegate(SelectableTextDelegate())
         self.horizontalHeader().setMinimumSectionSize(50)
-        self.horizontalHeader().setSectionResizeMode(0, QtWidgets.QHeaderView.Fixed)
-        self.horizontalHeader().setSectionResizeMode(1, QtWidgets.QHeaderView.Fixed)
+        self.horizontalHeader().setSectionResizeMode(0, QtWidgets.QHeaderView.ResizeMode.Fixed)
+        self.horizontalHeader().setSectionResizeMode(1, QtWidgets.QHeaderView.ResizeMode.Fixed)
         # Set fixed with for "Time" and "Level" columns since they contain fixed width strings
         metrics = QtGui.QFontMetrics(self.font())
         self.setColumnWidth(0, metrics.horizontalAdvance(' 5555-55-55 55:55:55 '))
@@ -192,31 +192,31 @@ class LogWidget(QtWidgets.QSplitter):
         # Set up QTreeWidget for log filter ui
         self.filter_treewidget = QtWidgets.QTreeWidget()
         self.filter_treewidget.setObjectName('filter_treewidget')
-        self.filter_treewidget.setSizePolicy(QtWidgets.QSizePolicy.Preferred,
-                                             QtWidgets.QSizePolicy.Preferred)
+        self.filter_treewidget.setSizePolicy(QtWidgets.QSizePolicy.Policy.Preferred,
+                                             QtWidgets.QSizePolicy.Policy.Preferred)
         self.filter_treewidget.setMinimumSize(210, 0)
-        self.filter_treewidget.setEditTriggers(QtWidgets.QTreeWidget.NoEditTriggers)
+        self.filter_treewidget.setEditTriggers(QtWidgets.QTreeWidget.EditTrigger.NoEditTriggers)
         self.filter_treewidget.setDropIndicatorShown(False)
         self.filter_treewidget.setDragEnabled(False)
-        self.filter_treewidget.setSelectionMode(QtWidgets.QTreeWidget.NoSelection)
-        self.filter_treewidget.setSelectionBehavior(QtWidgets.QTreeWidget.SelectItems)
+        self.filter_treewidget.setSelectionMode(QtWidgets.QTreeWidget.SelectionMode.NoSelection)
+        self.filter_treewidget.setSelectionBehavior(QtWidgets.QTreeWidget.SelectionBehavior.SelectItems)
         self.filter_treewidget.setColumnCount(1)
         self.filter_treewidget.setHeaderLabels(('Display:',))
         item = QtWidgets.QTreeWidgetItem()
         item.setText(0, 'All message types:')
-        item.setCheckState(0, QtCore.Qt.Checked)
+        item.setCheckState(0, QtCore.Qt.CheckState.Checked)
         log_levels = ('debug', 'info', 'warning', 'error', 'critical')[int(not debug_mode):]
         for text in log_levels:
             child_item = QtWidgets.QTreeWidgetItem()
             child_item.setText(0, text)
-            child_item.setCheckState(0, QtCore.Qt.Checked)
+            child_item.setCheckState(0, QtCore.Qt.CheckState.Checked)
             item.addChild(child_item)
         self.filter_treewidget.addTopLevelItem(item)
         self.filter_treewidget.expandItem(item)
         self.log_tablewidget.set_level_filter(log_levels)
 
         # embed log view and filter tree into QSplitter widget
-        self.setSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
+        self.setSizePolicy(QtWidgets.QSizePolicy.Policy.Preferred, QtWidgets.QSizePolicy.Policy.Preferred)
         self.addWidget(self.log_tablewidget)
         self.addWidget(self.filter_treewidget)
         self.setStretchFactor(0, 1)
@@ -241,22 +241,22 @@ class LogWidget(QtWidgets.QSplitter):
         level_items = [show_all_item.child(ii) for ii in range(show_all_item.childCount())]
         if item is show_all_item:
             self.filter_treewidget.expandItem(item)
-            if show_all_item.checkState(0):
+            if show_all_item.checkState(0) == QtCore.Qt.CheckState.Checked:
                 self.filter_treewidget.blockSignals(True)
                 for it in level_items:
-                    it.setCheckState(0, QtCore.Qt.Checked)
+                    it.setCheckState(0, QtCore.Qt.CheckState.Checked)
                 self.filter_treewidget.blockSignals(False)
             else:
                 # Prevent user from unchecking "show all"
                 self.filter_treewidget.blockSignals(True)
-                show_all_item.setCheckState(0, QtCore.Qt.Checked)
+                show_all_item.setCheckState(0, QtCore.Qt.CheckState.Checked)
                 self.filter_treewidget.blockSignals(False)
         else:
-            show_all = all(it.checkState(0) for it in level_items)
+            show_all = all(it.checkState(0) == QtCore.Qt.CheckState.Checked for it in level_items)
             self.filter_treewidget.blockSignals(True)
-            show_all_item.setCheckState(0, QtCore.Qt.Checked if show_all else QtCore.Qt.Unchecked)
+            show_all_item.setCheckState(0, QtCore.Qt.CheckState.Checked if show_all else QtCore.Qt.CheckState.Unchecked)
             self.filter_treewidget.blockSignals(False)
 
         # set level filters
-        level_filter = {str(it.text(0)) for it in level_items if it.checkState(0)}
+        level_filter = {str(it.text(0)) for it in level_items if it.checkState(0) == QtCore.Qt.CheckState.Checked}
         self.log_tablewidget.set_level_filter(level_filter)
