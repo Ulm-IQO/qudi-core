@@ -78,7 +78,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev-lint-format = ["ruff==0.7.0",]
+dev-lint-format = ["ruff>=0.7.0",]
 
 [tool.ruff]
 line-length = 120
