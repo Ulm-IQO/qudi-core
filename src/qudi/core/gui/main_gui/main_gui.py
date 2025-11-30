@@ -387,13 +387,13 @@ class QudiMainGui(GuiBase):
                 'Restart',
                 'Do you want to restart to use the configuration?\n'
                 'Choosing "No" will use the selected config file for the next start of Qudi.',
-                QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No | QtWidgets.QMessageBox.Cancel,
-                QtWidgets.QMessageBox.No
+                QtWidgets.QMessageBox.StandardButton.Yes | QtWidgets.QMessageBox.StandardButton.No | QtWidgets.QMessageBox.StandardButton.Cancel,
+                QtWidgets.QMessageBox.StandardButton.No
             )
-            if reply == QtWidgets.QMessageBox.Cancel:
+            if reply == QtWidgets.QMessageBox.StandardButton.Cancel:
                 return
             self._qudi_main.configuration.set_default_path(filename)
-            if reply == QtWidgets.QMessageBox.Yes:
+            if reply == QtWidgets.QMessageBox.StandardButton.Yes:
                 self._qudi_main.restart()
 
     def new_configuration(self):
@@ -405,10 +405,10 @@ class QudiMainGui(GuiBase):
                 'Open Configuration Editor',
                 'Do you want open the graphical qudi configuration editor to create or edit qudi '
                 'config files?\n',
-                QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No,
-                QtWidgets.QMessageBox.Yes
+                QtWidgets.QMessageBox.StandardButton.Yes | QtWidgets.QMessageBox.StandardButton.No,
+                QtWidgets.QMessageBox.StandardButton.Yes
         )
-        if reply == QtWidgets.QMessageBox.Yes:
+        if reply == QtWidgets.QMessageBox.StandardButton.Yes:
             process = subprocess.Popen(args=[sys.executable, '-m', 'tools.config_editor'],
                                        close_fds=False,
                                        env=os.environ.copy(),

@@ -36,7 +36,7 @@ class ColorBarItem(BarGraphItem):
         cmap = ColorScaleInferno().colormap if cmap is None else cmap
         pen = mkPen(QtGui.QPen(QtCore.Qt.PenStyle.NoPen)) if pen is None else mkPen(pen)
         grad = QtGui.QLinearGradient(0, 0, 0, 1)
-        grad.setCoordinateMode(QtGui.QGradient.ObjectMode)
+        grad.setCoordinateMode(QtGui.QGradient.CoordinateMode.ObjectMode)
         for stop, color in zip(*cmap.getStops('byte')):
             grad.setColorAt(stop, QtGui.QColor(*color))
         brush = mkBrush(QtGui.QBrush(grad))
@@ -73,28 +73,28 @@ class ColorBarWidget(QtWidgets.QWidget):
         super().__init__(*args, **kwargs)
 
         self.min_spinbox = ScienDSpinBox()
-        self.min_spinbox.setSizePolicy(QtWidgets.QSizePolicy.Preferred,
-                                       QtWidgets.QSizePolicy.Fixed)
+        self.min_spinbox.setSizePolicy(QtWidgets.QSizePolicy.Policy.Preferred,
+                                       QtWidgets.QSizePolicy.Policy.Fixed)
         self.min_spinbox.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
         self.min_spinbox.setMinimumWidth(75)
         self.min_spinbox.setValue(0)
         self.max_spinbox = ScienDSpinBox()
-        self.max_spinbox.setSizePolicy(QtWidgets.QSizePolicy.Preferred,
-                                       QtWidgets.QSizePolicy.Fixed)
+        self.max_spinbox.setSizePolicy(QtWidgets.QSizePolicy.Policy.Preferred,
+                                       QtWidgets.QSizePolicy.Policy.Fixed)
         self.max_spinbox.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
         self.min_spinbox.setMinimumWidth(75)
         self.max_spinbox.setValue(1)
         self.low_percentile_spinbox = ScienDSpinBox()
-        self.low_percentile_spinbox.setSizePolicy(QtWidgets.QSizePolicy.Preferred,
-                                                  QtWidgets.QSizePolicy.Fixed)
+        self.low_percentile_spinbox.setSizePolicy(QtWidgets.QSizePolicy.Policy.Preferred,
+                                                  QtWidgets.QSizePolicy.Policy.Fixed)
         self.low_percentile_spinbox.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
         self.low_percentile_spinbox.setMinimumWidth(75)
         self.low_percentile_spinbox.setSuffix('%')
         self.low_percentile_spinbox.setMinimalStep('0.01')
         self.low_percentile_spinbox.setValue(0)
         self.high_percentile_spinbox = ScienDSpinBox()
-        self.high_percentile_spinbox.setSizePolicy(QtWidgets.QSizePolicy.Preferred,
-                                                   QtWidgets.QSizePolicy.Fixed)
+        self.high_percentile_spinbox.setSizePolicy(QtWidgets.QSizePolicy.Policy.Preferred,
+                                                   QtWidgets.QSizePolicy.Policy.Fixed)
         self.high_percentile_spinbox.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
         self.high_percentile_spinbox.setMinimumWidth(75)
         self.high_percentile_spinbox.setSuffix('%')
@@ -116,7 +116,7 @@ class ColorBarWidget(QtWidgets.QWidget):
             self.high_percentile_spinbox.setRange(0, 100)
 
         grad = QtGui.QLinearGradient(0, 0, 0, 1)
-        grad.setCoordinateMode(QtGui.QGradient.ObjectMode)
+        grad.setCoordinateMode(QtGui.QGradient.CoordinateMode.ObjectMode)
         for stop, color in zip(*ColorScaleInferno().colormap.getStops('byte')):
             grad.setColorAt(stop, QtGui.QColor(*color))
         self._cb_brush = mkBrush(QtGui.QBrush(grad))
@@ -125,7 +125,7 @@ class ColorBarWidget(QtWidgets.QWidget):
         self.cb_plot_widget = PlotWidget()
         self.cb_plot_widget.hideButtons()
         self.cb_plot_widget.setMinimumWidth(75)
-        self.cb_plot_widget.setSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Expanding)
+        self.cb_plot_widget.setSizePolicy(QtWidgets.QSizePolicy.Policy.Preferred, QtWidgets.QSizePolicy.Policy.Expanding)
         self.cb_plot_widget.addItem(self.colorbar)
         self.cb_plot_widget.hideAxis('bottom')
         self.cb_plot_widget.setLabel('left', text=label, units=unit)
@@ -156,7 +156,7 @@ class ColorBarWidget(QtWidgets.QWidget):
         # main_layout.setSpacing(0)
         main_layout.setContentsMargins(1, 1, 1, 1)
         self.setLayout(main_layout)
-        self.setSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
+        self.setSizePolicy(QtWidgets.QSizePolicy.Policy.Preferred, QtWidgets.QSizePolicy.Policy.Preferred)
 
         # Connect signals
         self.min_spinbox.valueChanged.connect(self._absolute_value_changed)

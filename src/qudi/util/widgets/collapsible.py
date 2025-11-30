@@ -48,12 +48,12 @@ class CollapsibleWidget(QtWidgets.QWidget):
         self.expand_collapse_button.setStyleSheet(
             'QToolButton { border: none; background-color: none; }'
         )
-        self.expand_collapse_button.setToolButtonStyle(QtCore.Qt.ToolButtonTextBesideIcon)
-        self.expand_collapse_button.setArrowType(QtCore.Qt.RightArrow)
+        self.expand_collapse_button.setToolButtonStyle(QtCore.Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
+        self.expand_collapse_button.setArrowType(QtCore.Qt.ArrowType.RightArrow)
         self.expand_collapse_button.setText(title if title else '')
         self.expand_collapse_button.setCheckable(True)
 
-        widget.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Fixed)
+        widget.setSizePolicy(QtWidgets.QSizePolicy.Policy.Expanding, QtWidgets.QSizePolicy.Policy.Fixed)
         widget.setMaximumHeight(0)
         widget.setMinimumHeight(0)
 
@@ -110,11 +110,11 @@ class CollapsibleWidget(QtWidgets.QWidget):
     @QtCore.Slot(bool)
     def _start_animation(self, checked: bool) -> None:
         if checked:
-            arrow_type = QtCore.Qt.DownArrow
-            direction = QtCore.QAbstractAnimation.Forward
+            arrow_type = QtCore.Qt.ArrowType.DownArrow
+            direction = QtCore.QAbstractAnimation.Direction.Forward
         else:
-            arrow_type = QtCore.Qt.RightArrow
-            direction = QtCore.QAbstractAnimation.Backward
+            arrow_type = QtCore.Qt.ArrowType.RightArrow
+            direction = QtCore.QAbstractAnimation.Direction.Backward
         self.expand_collapse_button.setArrowType(arrow_type)
         self._animation_group.setDirection(direction)
         self._animation_group.start()

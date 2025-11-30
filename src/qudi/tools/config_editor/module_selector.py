@@ -100,7 +100,7 @@ class ModuleSelector(QtWidgets.QDialog):
         label = QtWidgets.QLabel(
             'Include qudi modules by dragging them into the right field (press DEL to remove).'
         )
-        label.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignmentFlag.AlignVCenter)
+        label.setAlignment(QtCore.Qt.AlignmentFlag.AlignLeft | QtCore.Qt.AlignmentFlag.AlignVCenter)
         font = label.font()
         font.setBold(True)
         label.setFont(font)

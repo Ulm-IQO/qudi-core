@@ -255,7 +255,7 @@ class LiteralLineEdit(QtWidgets.QLineEdit):
 
     def _revert_text(self) -> None:
         text = self.text()
-        if self.validator().validate(text, len(text)) != QtGui.QValidator.Acceptable:
+        if self.validator().validate(text, len(text)) != QtGui.QValidator.State.Acceptable:
             self.setText(self._last_valid_text)
 
     def _new_text_valid(self, text: str) -> bool:
@@ -264,7 +264,7 @@ class LiteralLineEdit(QtWidgets.QLineEdit):
         """
         if text != self._last_valid_text:
             validator = self.validator()
-            return validator.validate(text, len(text)) == QtGui.QValidator.Acceptable
+            return validator.validate(text, len(text)) == QtGui.QValidator.State.Acceptable
         return False
 
 

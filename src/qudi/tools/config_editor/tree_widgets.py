@@ -21,7 +21,7 @@ class AvailableModulesTreeWidget(QtWidgets.QTreeWidget):
 
         self.setColumnCount(2)
         self.setHeaderLabels(('Base', 'module.Class'))
-        self.setSelectionMode(self.ExtendedSelection)
+        self.setSelectionMode(self.SelectionMode.ExtendedSelection)
         self.setEditTriggers(self.EditTrigger.NoEditTriggers)
         self.setDragEnabled(True)
 
@@ -56,7 +56,7 @@ class AvailableModulesTreeWidget(QtWidgets.QTreeWidget):
         item = QtWidgets.QTreeWidgetItem()
         item.setText(1, module_class)
         item.setFlags(
-            QtCore.Qt.ItemFlag.ItemIsEnabled | QtCore.Qt.ItemFlag.ItemIsSelectable | QtCore.Qt.ItemIsDragEnabled
+            QtCore.Qt.ItemFlag.ItemIsEnabled | QtCore.Qt.ItemFlag.ItemIsSelectable | QtCore.Qt.ItemFlag.ItemIsDragEnabled
         )
         self.top_level_items[base].addChild(item)
 
@@ -116,7 +116,7 @@ class ConfigModulesTreeWidget(QtWidgets.QTreeWidget):
         self.setAcceptDrops(True)
         self.setColumnCount(3)
         self.setHeaderLabels(['Base', 'Name', 'module.Class'])
-        self.setSelectionMode(self.SingleSelection)
+        self.setSelectionMode(self.SelectionMode.SingleSelection)
         self.setEditTriggers(self.EditTrigger.NoEditTriggers)
         self.itemDoubleClicked.connect(self._edit_item_column)
 
@@ -168,7 +168,7 @@ class ConfigModulesTreeWidget(QtWidgets.QTreeWidget):
         item.setText(1, '<enter unique name>' if name is None else name)
         item.setText(2, module_class)
         item.setFlags(
-            QtCore.Qt.ItemFlag.ItemIsEnabled | QtCore.Qt.ItemFlag.ItemIsSelectable | QtCore.Qt.ItemIsEditable
+            QtCore.Qt.ItemFlag.ItemIsEnabled | QtCore.Qt.ItemFlag.ItemIsSelectable | QtCore.Qt.ItemFlag.ItemIsEditable
         )
         self.top_level_items[base].addChild(item)
 

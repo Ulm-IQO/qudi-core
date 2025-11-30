@@ -152,7 +152,7 @@ class DataSelectionMixin:
     def mouseDragEvent(self, ev: MouseDragEvent, axis: Optional[int] = None) -> None:
         if not ev.isAccepted():
             selection_enabled = self._region_selection_mode != self.SelectionMode.Disabled
-            no_mod = ev.modifiers() == QtCore.Qt.NoModifier
+            no_mod = ev.modifiers() == QtCore.Qt.KeyboardModifier.NoModifier
             is_left_button = ev.button() == QtCore.Qt.MouseButton.LeftButton
             data_valid = self.allow_tracking_outside_data or self.pointer_on_data(
                 ev.buttonDownScenePos()

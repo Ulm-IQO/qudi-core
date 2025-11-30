@@ -84,7 +84,7 @@ class LogRecordsTableModel(QtCore.QAbstractTableModel):
         Qt.ItemFlags
             Actions allowed for this cell.
         """
-        return QtCore.Qt.ItemFlag.ItemIsEnabled | QtCore.Qt.ItemFlag.ItemIsSelectable | QtCore.Qt.ItemIsEditable
+        return QtCore.Qt.ItemFlag.ItemIsEnabled | QtCore.Qt.ItemFlag.ItemIsSelectable | QtCore.Qt.ItemFlag.ItemIsEditable
 
     def data(self, index, role):
         """Get data from model for a given cell. Data can have a role that affects display.
@@ -103,9 +103,9 @@ class LogRecordsTableModel(QtCore.QAbstractTableModel):
         """
         if index.isValid():
             record = self._records[(self._begin + index.row()) % self._max_records]
-            if role == QtCore.Qt.TextColorRole:
+            if role == QtCore.Qt.ItemDataRole.ForegroundRole:
                 return self._color_map.get(record[1], self._fallback_color)
-            if role in (QtCore.Qt.ItemDataRole.DisplayRole, QtCore.Qt.ToolTipRole, QtCore.Qt.EditRole):
+            if role in (QtCore.Qt.ItemDataRole.DisplayRole, QtCore.Qt.ItemDataRole.ToolTipRole, QtCore.Qt.ItemDataRole.EditRole):
                 return record[index.column()]
 
     def headerData(self, section, orientation, role=None):

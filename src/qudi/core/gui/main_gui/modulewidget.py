@@ -56,8 +56,8 @@ class ModuleFrameWidget(QtWidgets.QWidget):
         self.activate_button.setObjectName('loadButton')
         self.activate_button.setCheckable(True)
         self.activate_button.setMinimumWidth(200)
-        self.activate_button.setSizePolicy(QtWidgets.QSizePolicy.MinimumExpanding,
-                                           QtWidgets.QSizePolicy.Fixed)
+        self.activate_button.setSizePolicy(QtWidgets.QSizePolicy.Policy.MinimumExpanding,
+                                           QtWidgets.QSizePolicy.Policy.Fixed)
 
         # Create status label
         self.status_label = QtWidgets.QLabel('Module status goes here...')
@@ -164,7 +164,7 @@ class ModuleListModel(QtCore.QAbstractListModel):
             return name, state, app_data
 
     def flags(self, index):
-        return QtCore.Qt.ItemNeverHasChildren | QtCore.Qt.ItemFlag.ItemIsEnabled
+        return QtCore.Qt.ItemFlag.ItemNeverHasChildren | QtCore.Qt.ItemFlag.ItemIsEnabled
 
     def append_module(self, name, state, app_data):
         with self._lock:
@@ -311,7 +311,7 @@ class ModuleWidget(QtWidgets.QTabWidget):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.setSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
+        self.setSizePolicy(QtWidgets.QSizePolicy.Policy.Preferred, QtWidgets.QSizePolicy.Policy.Preferred)
         self.list_models = {'gui'     : ModuleListModel(),
                             'logic'   : ModuleListModel(),
                             'hardware': ModuleListModel()}

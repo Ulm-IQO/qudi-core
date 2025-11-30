@@ -318,9 +318,9 @@ class Gui(QtCore.QObject):
         result = QtWidgets.QMessageBox.question(self.main_gui_module.mw,
                                                 'Qudi: Quit?',
                                                 msg,
-                                                QtWidgets.QMessageBox.Yes,
-                                                QtWidgets.QMessageBox.No)
-        return result == QtWidgets.QMessageBox.Yes
+                                                QtWidgets.QMessageBox.StandardButton.Yes,
+                                                QtWidgets.QMessageBox.StandardButton.No)
+        return result == QtWidgets.QMessageBox.StandardButton.Yes
 
     def prompt_restart(self, modules_locked=True):
         """Display a dialog, asking the user to confirm restart.
@@ -334,9 +334,9 @@ class Gui(QtCore.QObject):
         result = QtWidgets.QMessageBox.question(self.main_gui_module.mw,
                                                 'Qudi: Restart?',
                                                 msg,
-                                                QtWidgets.QMessageBox.Yes,
-                                                QtWidgets.QMessageBox.No)
-        return result == QtWidgets.QMessageBox.Yes
+                                                QtWidgets.QMessageBox.StandardButton.Yes,
+                                                QtWidgets.QMessageBox.StandardButton.No)
+        return result == QtWidgets.QMessageBox.StandardButton.Yes
 
     @QtCore.Slot(str, str)
     def pop_up_message(self, title, message):
@@ -355,7 +355,7 @@ class Gui(QtCore.QObject):
         if self.thread() is not QtCore.QThread.currentThread():
             self._sigPopUpMessage.emit(title, message)
             return
-        QtWidgets.QMessageBox.information(None, title, message, QtWidgets.QMessageBox.Ok)
+        QtWidgets.QMessageBox.information(None, title, message, QtWidgets.QMessageBox.StandardButton.Ok)
         return
 
     @QtCore.Slot(str, str, object, object)

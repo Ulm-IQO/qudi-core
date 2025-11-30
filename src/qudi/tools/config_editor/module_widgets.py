@@ -64,7 +64,7 @@ class ModuleConnectorsWidget(QtWidgets.QWidget):
 
         # Create Caption
         label = QtWidgets.QLabel('Connectors')
-        label.setAlignment(QtCore.Qt.AlignCenter)
+        label.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
         font = label.font()
         font.setBold(True)
         label.setFont(font)
@@ -127,12 +127,12 @@ class ModuleConnectorsWidget(QtWidgets.QWidget):
                            ) -> Tuple[QtWidgets.QLabel, QtWidgets.QComboBox]:
         label = QtWidgets.QLabel(f'{name}:' if optional else f'* {name}:')
         label.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight | QtCore.Qt.AlignmentFlag.AlignVCenter)
-        label.setTextInteractionFlags(QtCore.Qt.TextSelectableByMouse)
+        label.setTextInteractionFlags(QtCore.Qt.TextInteractionFlag.TextSelectableByMouse)
         label.setFocusPolicy(QtCore.Qt.FocusPolicy.NoFocus)
         editor = QtWidgets.QComboBox()
         editor.addItem('')
         editor.addItems(targets)
-        editor.setSizeAdjustPolicy(QtWidgets.QComboBox.AdjustToContents)
+        editor.setSizeAdjustPolicy(QtWidgets.QComboBox.SizeAdjustPolicy.AdjustToContents)
         return label, editor
 
 
@@ -158,7 +158,7 @@ class ModuleOptionsWidget(QtWidgets.QWidget):
 
         # Create Caption
         label = QtWidgets.QLabel('ConfigOptions')
-        label.setAlignment(QtCore.Qt.AlignCenter)
+        label.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
         font = label.font()
         font.setBold(True)
         label.setFont(font)
@@ -231,7 +231,7 @@ class ModuleOptionsWidget(QtWidgets.QWidget):
                              ) -> Tuple[QtWidgets.QLabel, QtWidgets.QLineEdit]:
         label = QtWidgets.QLabel(f'{name}:' if optional else f'* {name}:')
         label.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight | QtCore.Qt.AlignmentFlag.AlignVCenter)
-        label.setTextInteractionFlags(QtCore.Qt.TextSelectableByMouse)
+        label.setTextInteractionFlags(QtCore.Qt.TextInteractionFlag.TextSelectableByMouse)
         label.setFocusPolicy(QtCore.Qt.FocusPolicy.NoFocus)
         editor = QtWidgets.QLineEdit()
         editor.setPlaceholderText('text parsed by eval()')
@@ -287,8 +287,8 @@ class LocalModuleConfigWidget(QtWidgets.QWidget):
         # Create splitter to spread options and connectors horizontally
         self.splitter = QtWidgets.QSplitter(QtCore.Qt.Orientation.Horizontal)
         self.splitter.setChildrenCollapsible(False)
-        self.splitter.setSizePolicy(QtWidgets.QSizePolicy.Expanding,
-                                    QtWidgets.QSizePolicy.Expanding)
+        self.splitter.setSizePolicy(QtWidgets.QSizePolicy.Policy.Expanding,
+                                    QtWidgets.QSizePolicy.Policy.Expanding)
         layout.addWidget(self.splitter)
         # Module Connectors editor
         mandatory_targets, optional_targets = self._get_connector_targets(

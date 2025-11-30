@@ -203,7 +203,7 @@ class FitConfigurationsModel(QtCore.QAbstractListModel):
 
     def flags(self, index):
         if index.isValid():
-            return QtCore.Qt.ItemIsEditable | QtCore.Qt.ItemFlag.ItemIsEnabled
+            return QtCore.Qt.ItemFlag.ItemIsEditable | QtCore.Qt.ItemFlag.ItemIsEnabled
 
     def rowCount(self, parent=QtCore.QModelIndex()):
         return len(self._fit_configurations)
@@ -212,7 +212,7 @@ class FitConfigurationsModel(QtCore.QAbstractListModel):
         if role == QtCore.Qt.ItemDataRole.DisplayRole:
             if (orientation == QtCore.Qt.Orientation.Horizontal) and (section == 0):
                 return 'Fit Configurations'
-            elif orientation == QtCore.Qt.Vertical:
+            elif orientation == QtCore.Qt.Orientation.Vertical:
                 try:
                     return self.configuration_names[section]
                 except IndexError:
@@ -227,7 +227,7 @@ class FitConfigurationsModel(QtCore.QAbstractListModel):
                 pass
         return None
 
-    def setData(self, index, value, role=QtCore.Qt.EditRole):
+    def setData(self, index, value, role=QtCore.Qt.ItemDataRole.EditRole):
         if index.isValid():
             config = index.data(QtCore.Qt.ItemDataRole.DisplayRole)
             if config is None:

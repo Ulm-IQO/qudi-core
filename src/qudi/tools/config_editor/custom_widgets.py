@@ -93,13 +93,13 @@ class CustomItemsWidget(QtWidgets.QWidget):
 
         label = QtWidgets.QLabel(f'{name}:')
         label.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight | QtCore.Qt.AlignmentFlag.AlignVCenter)
-        label.setTextInteractionFlags(QtCore.Qt.TextSelectableByMouse)
+        label.setTextInteractionFlags(QtCore.Qt.TextInteractionFlag.TextSelectableByMouse)
         label.setFocusPolicy(QtCore.Qt.FocusPolicy.NoFocus)
         if self._allowed_values:
             editor = QtWidgets.QComboBox()
             editor.addItem('')
             editor.addItems(self._allowed_values)
-            editor.setSizeAdjustPolicy(QtWidgets.QComboBox.AdjustToContents)
+            editor.setSizeAdjustPolicy(QtWidgets.QComboBox.SizeAdjustPolicy.AdjustToContents)
         else:
             editor = QtWidgets.QLineEdit()
         remove_button = QtWidgets.QToolButton()

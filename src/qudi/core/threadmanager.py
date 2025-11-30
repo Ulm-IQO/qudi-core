@@ -225,7 +225,7 @@ class ThreadManager(QtCore.QAbstractListModel):
         with self._lock:
             return len(self._threads)
 
-    def headerData(self, section, orientation, role=QtCore.Qt.DisplayRole):
+    def headerData(self, section, orientation, role=QtCore.Qt.ItemDataRole.DisplayRole):
         """Data for the list view header.
 
         Parameters

@@ -34,7 +34,7 @@ class ToggleSwitch(QtWidgets.QAbstractButton):
                  display_text=True):
         super().__init__(parent=parent)
         self.setCheckable(True)
-        self.setSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
+        self.setSizePolicy(QtWidgets.QSizePolicy.Policy.Preferred, QtWidgets.QSizePolicy.Policy.Preferred)
 
         # check state_names
         if state_names is None:
@@ -232,8 +232,8 @@ class ToggleSwitch(QtWidgets.QAbstractButton):
     def paintEvent(self, event):
         # Set up painter
         p = QtGui.QPainter(self)
-        p.setRenderHint(QtGui.QPainter.Antialiasing, True)
-        p.setPen(QtCore.Qt.NoPen)
+        p.setRenderHint(QtGui.QPainter.RenderHint.Antialiasing, True)
+        p.setPen(QtCore.Qt.PenStyle.NoPen)
         track_opacity = self._track_opacity
         if self.isEnabled():
             track_brush = self._track_color
@@ -247,7 +247,7 @@ class ToggleSwitch(QtWidgets.QAbstractButton):
             text_color = palette.shadow().color()
 
         # draw track
-        p.setPen(QtCore.Qt.NoPen)
+        p.setPen(QtCore.Qt.PenStyle.NoPen)
         p.setBrush(track_brush)
         p.setOpacity(track_opacity)
         p.drawRoundedRect(self._track_margin,
@@ -266,11 +266,11 @@ class ToggleSwitch(QtWidgets.QAbstractButton):
                        self.height() / 2 - self._track_radius,
                        self.width() - 2 * self._track_margin,
                        2 * self._track_radius,
-                       QtCore.Qt.AlignCenter,
+                       QtCore.Qt.AlignmentFlag.AlignCenter,
                        self.current_state)
 
         # draw thumb
-        p.setPen(QtCore.Qt.NoPen)
+        p.setPen(QtCore.Qt.PenStyle.NoPen)
         p.setBrush(thumb_brush)
         p.setOpacity(1.0)
         p.drawEllipse(self._thumb_position - self._thumb_radius,
@@ -280,12 +280,12 @@ class ToggleSwitch(QtWidgets.QAbstractButton):
 
     def mouseReleaseEvent(self, event):
         super().mouseReleaseEvent(event)
-        if event.button() == QtCore.Qt.LeftButton:
+        if event.button() == QtCore.Qt.MouseButton.LeftButton:
             self._slider_animation.setDuration(200)
             self._slider_animation.setStartValue(self._thumb_position)
             self._slider_animation.setEndValue(self._thumb_end)
             self._slider_animation.start()
 
     def enterEvent(self, event):
-        self.setCursor(QtCore.Qt.PointingHandCursor)
+        self.setCursor(QtCore.Qt.CursorShape.PointingHandCursor)
         super().enterEvent(event)

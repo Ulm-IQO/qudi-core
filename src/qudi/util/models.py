@@ -52,7 +52,7 @@ class DictTableModel(QtCore.QAbstractTableModel):
         with self._lock:
             return len(self._headers)
 
-    def flags(self, index: Optional[QtCore.QModelIndex] = None) -> QtCore.Qt.ItemFlags:
+    def flags(self, index: Optional[QtCore.QModelIndex] = None) -> QtCore.Qt.ItemFlag:
         """Determines what can be done with the given indexed cell.
         """
         return QtCore.Qt.ItemFlag.ItemIsEnabled | QtCore.Qt.ItemFlag.ItemIsSelectable
@@ -71,7 +71,7 @@ class DictTableModel(QtCore.QAbstractTableModel):
             return None
 
     def headerData(self, section: int, orientation: QtCore.Qt.Orientation,
-                   role: Optional[QtCore.Qt.ItemDataRole] = QtCore.Qt.DisplayRole) -> Any:
+                   role: Optional[QtCore.Qt.ItemDataRole] = QtCore.Qt.ItemDataRole.DisplayRole) -> Any:
         """Data for the table view headers."""
         with self._lock:
             if role == QtCore.Qt.ItemDataRole.DisplayRole:
@@ -246,7 +246,7 @@ class ListTableModel(QtCore.QAbstractTableModel):
         """
         return len(self._headers)
 
-    def flags(self, index: QtCore.QModelIndex) -> QtCore.Qt.ItemFlags:
+    def flags(self, index: QtCore.QModelIndex) -> QtCore.Qt.ItemFlag:
         """Determines what can be done with entry cells in the table view.
         """
         return QtCore.Qt.ItemFlag.ItemIsEnabled | QtCore.Qt.ItemFlag.ItemIsSelectable
@@ -260,7 +260,7 @@ class ListTableModel(QtCore.QAbstractTableModel):
             return None
 
     def headerData(self, section: int, orientation: QtCore.Qt.Orientation,
-                   role: Optional[QtCore.Qt.ItemDataRole] = QtCore.Qt.DisplayRole) -> Any:
+                   role: Optional[QtCore.Qt.ItemDataRole] = QtCore.Qt.ItemDataRole.DisplayRole) -> Any:
         """Data for the table view headers.
         """
         if role == QtCore.Qt.ItemDataRole.DisplayRole:

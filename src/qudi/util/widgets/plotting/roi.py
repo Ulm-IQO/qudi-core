@@ -196,7 +196,7 @@ class RectangleROI(ROI):
 
     def mouseDragEvent(self, ev) -> None:
         if not ev.isAccepted():
-            if self.translatable and ev.button() == QtCore.Qt.LeftButton and ev.modifiers() == QtCore.Qt.NoModifier:
+            if self.translatable and ev.button() == QtCore.Qt.MouseButton.LeftButton and ev.modifiers() == QtCore.Qt.KeyboardModifier.NoModifier:
                 is_start = ev.isStart()
                 is_finish = ev.isFinish()
                 ev.accept()

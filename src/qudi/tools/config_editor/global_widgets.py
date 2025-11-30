@@ -311,7 +311,7 @@ class GlobalConfigWidget(QtWidgets.QWidget):
 
         # Create Caption
         label = QtWidgets.QLabel('Global Configuration')
-        label.setAlignment(QtCore.Qt.AlignCenter)
+        label.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
         font = label.font()
         font.setBold(True)
         font.setPointSize(font.pointSize() + 4)

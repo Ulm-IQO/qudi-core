@@ -29,7 +29,7 @@ class AboutQudiDialog(QtWidgets.QDialog):
     def __init__(self, parent=None, **kwargs):
         super().__init__(parent, **kwargs)
 
-        self.setWindowFlags(QtCore.Qt.WindowTitleHint | QtCore.Qt.WindowCloseButtonHint)
+        self.setWindowFlags(QtCore.Qt.WindowType.WindowTitleHint | QtCore.Qt.WindowType.WindowCloseButtonHint)
 
         buttonbox = QtWidgets.QDialogButtonBox(QtWidgets.QDialogButtonBox.StandardButton.Ok)
         buttonbox.setOrientation(QtCore.Qt.Orientation.Horizontal)
@@ -44,8 +44,8 @@ class AboutQudiDialog(QtWidgets.QDialog):
         self.header_label.setFont(font)
         self.version_label = QtWidgets.QLabel('Version number goes here...')
         self.version_label.setObjectName('versionLabel')
-        self.version_label.setTextInteractionFlags(QtCore.Qt.TextSelectableByMouse
-                                                   | QtCore.Qt.TextBrowserInteraction)
+        self.version_label.setTextInteractionFlags(QtCore.Qt.TextInteractionFlag.TextSelectableByMouse
+                                                   | QtCore.Qt.TextInteractionFlag.TextBrowserInteraction)
         self.version_label.setOpenExternalLinks(True)
 
         self.about_label = QtWidgets.QLabel('<html><head/><body><p>Qudi is a suite of tools for '
@@ -56,8 +56,8 @@ class AboutQudiDialog(QtWidgets.QDialog):
                                             'controlling experiments.</p></body></html>')
         self.about_label.setWordWrap(True)
         self.about_label.setObjectName('aboutLabel')
-        self.about_label.setTextInteractionFlags(QtCore.Qt.TextSelectableByMouse
-                                                 | QtCore.Qt.TextBrowserInteraction)
+        self.about_label.setTextInteractionFlags(QtCore.Qt.TextInteractionFlag.TextSelectableByMouse
+                                                 | QtCore.Qt.TextInteractionFlag.TextBrowserInteraction)
         self.about_label.setOpenExternalLinks(True)
 
         self.credits_label = QtWidgets.QLabel(
@@ -71,7 +71,7 @@ class AboutQudiDialog(QtWidgets.QDialog):
         self.credits_label.setWordWrap(True)
         self.credits_label.setObjectName('creditsLabel')
         self.credits_label.setTextInteractionFlags(
-            QtCore.Qt.TextSelectableByMouse | QtCore.Qt.TextBrowserInteraction
+            QtCore.Qt.TextInteractionFlag.TextSelectableByMouse | QtCore.Qt.TextInteractionFlag.TextBrowserInteraction
         )
         self.credits_label.setOpenExternalLinks(True)
 
@@ -110,8 +110,8 @@ class AboutQudiDialog(QtWidgets.QDialog):
         self.license_label.setWordWrap(True)
         self.license_label.setOpenExternalLinks(True)
         self.license_label.setObjectName('licenseLabel')
-        self.license_label.setTextInteractionFlags(QtCore.Qt.TextSelectableByMouse
-                                                   | QtCore.Qt.TextBrowserInteraction)
+        self.license_label.setTextInteractionFlags(QtCore.Qt.TextInteractionFlag.TextSelectableByMouse
+                                                   | QtCore.Qt.TextInteractionFlag.TextBrowserInteraction)
         self.license_label.setOpenExternalLinks(True)
 
         self.citation_label = QtWidgets.QLabel(
@@ -139,7 +139,7 @@ class AboutQudiDialog(QtWidgets.QDialog):
         self.citation_label.setWordWrap(True)
         self.citation_label.setObjectName('creditsLabel')
         self.citation_label.setTextInteractionFlags(
-            QtCore.Qt.TextSelectableByMouse | QtCore.Qt.TextBrowserInteraction
+            QtCore.Qt.TextInteractionFlag.TextSelectableByMouse | QtCore.Qt.TextInteractionFlag.TextBrowserInteraction
         )
         self.citation_label.setOpenExternalLinks(True)
 
@@ -176,4 +176,4 @@ class AboutQudiDialog(QtWidgets.QDialog):
         self.setLayout(layout)
         self.about_label.setFocus()
         return
-   
+

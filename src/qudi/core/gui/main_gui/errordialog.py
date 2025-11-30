@@ -45,10 +45,10 @@ class ErrorDialog(QtWidgets.QDialog):
 
         # Set up dialog window
         self.setWindowTitle('Qudi Error')
-        self.setWindowFlags((QtCore.Qt.Dialog |
-                             QtCore.Qt.CustomizeWindowHint |
-                             QtCore.Qt.WindowSystemMenuHint |
-                             QtCore.Qt.WindowTitleHint) & (~QtCore.Qt.WindowCloseButtonHint))
+        self.setWindowFlags((QtCore.Qt.WindowType.Dialog |
+                             QtCore.Qt.WindowType.CustomizeWindowHint |
+                             QtCore.Qt.WindowType.WindowSystemMenuHint |
+                             QtCore.Qt.WindowType.WindowTitleHint) & (~QtCore.Qt.WindowType.WindowCloseButtonHint))
         self.setModal(True)
         screen_size = QtWidgets.QApplication.instance().primaryScreen().availableSize()
         screen_width = screen_size.width()
@@ -62,26 +62,26 @@ class ErrorDialog(QtWidgets.QDialog):
 
         # Set up header label widget
         self.header_label = QtWidgets.QLabel()
-        self.header_label.setFocusPolicy(QtCore.Qt.NoFocus)
+        self.header_label.setFocusPolicy(QtCore.Qt.FocusPolicy.NoFocus)
         self.header_label.setTextInteractionFlags(
-            QtCore.Qt.TextSelectableByMouse | QtCore.Qt.LinksAccessibleByMouse
+            QtCore.Qt.TextInteractionFlag.TextSelectableByMouse | QtCore.Qt.TextInteractionFlag.LinksAccessibleByMouse
         )
-        self.header_label.setSizePolicy(QtWidgets.QSizePolicy.Expanding,
-                                     QtWidgets.QSizePolicy.Preferred)
+        self.header_label.setSizePolicy(QtWidgets.QSizePolicy.Policy.Expanding,
+                                     QtWidgets.QSizePolicy.Policy.Preferred)
 
         # Set up scrollable message label widget
         scroll_area = QtWidgets.QScrollArea()
         scroll_area.setWidgetResizable(True)
-        scroll_area.setFocusPolicy(QtCore.Qt.NoFocus)
+        scroll_area.setFocusPolicy(QtCore.Qt.FocusPolicy.NoFocus)
         self.msg_label = QtWidgets.QLabel()
-        self.msg_label.setFocusPolicy(QtCore.Qt.NoFocus)
+        self.msg_label.setFocusPolicy(QtCore.Qt.FocusPolicy.NoFocus)
         self.msg_label.setTextInteractionFlags(
-            QtCore.Qt.TextSelectableByMouse | QtCore.Qt.LinksAccessibleByMouse
+            QtCore.Qt.TextInteractionFlag.TextSelectableByMouse | QtCore.Qt.TextInteractionFlag.LinksAccessibleByMouse
         )
         self.msg_label.setWordWrap(True)
-        self.msg_label.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignTop)
-        self.msg_label.setSizePolicy(QtWidgets.QSizePolicy.Expanding,
-                                     QtWidgets.QSizePolicy.Expanding)
+        self.msg_label.setAlignment(QtCore.Qt.AlignmentFlag.AlignLeft | QtCore.Qt.AlignmentFlag.AlignTop)
+        self.msg_label.setSizePolicy(QtWidgets.QSizePolicy.Policy.Expanding,
+                                     QtWidgets.QSizePolicy.Policy.Expanding)
         scroll_area.setWidget(self.msg_label)
 
         # Set up disable checkbox

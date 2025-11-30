@@ -70,7 +70,7 @@ class FloatValidator(QtGui.QValidator):
         Returns
         -------
         QValidator.State
-            The returned validator state: QValidator.Invalid, QValidator.Acceptable, or QValidator.Intermediate.
+            The returned validator state: QValidator.State.Invalid, QValidator.State.Acceptable, or QValidator.State.Intermediate.
         str
             The input string after validation.
         int
