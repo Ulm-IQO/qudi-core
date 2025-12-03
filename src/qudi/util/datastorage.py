@@ -114,7 +114,8 @@ def _is_dtype_class(obj):
                      np.integer,
                      np.complexfloating,
                      np.str_,
-                     np.string_)
+                     np.dtypes.StringDType,
+                     np.dtypes.StrDType)
     return type(obj) == type and issubclass(obj, allowed_types)
 
 

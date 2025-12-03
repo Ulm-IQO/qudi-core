@@ -141,12 +141,12 @@ def is_complex_type(test_obj: Type) -> bool:
 
 def is_string(test_value: Any) -> bool:
     """Check all available string representations."""
-    return isinstance(test_value, (str, np.str_, np.string_))
+    return isinstance(test_value, (str, np.str_, np.dtypes.StringDType, np.dtypes.StrDType))
 
 
 def is_string_type(test_obj: Type) -> bool:
     """Check if passed object is a string type."""
-    return issubclass(test_obj, (str, np.str_, np.string_))
+    return issubclass(test_obj, (str, np.str_, np.dtypes.StringDType, np.dtypes.StrDType))
 
 
 def in_range(value: _RealNumber, lower_limit: _RealNumber,
@@ -169,7 +169,7 @@ def csv_2_list(csv_string: str, str_2_val: Optional[Callable[[str], Any]] = None
     """
     Parse a list literal (with or without square brackets) given as a string containing
     comma-separated int or float values to a Python list.
-    
+
     Blanks before and after commas are handled.
 
     Parameters
