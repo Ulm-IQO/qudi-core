@@ -368,12 +368,12 @@ class InfiniteLine(QtCore.QObject):
             self._is_dragged = True
             is_start = True
 
-        start_pos = self.line.startPosition[0 if self.line.angle == 90 else 1]
+        start_pos = self.line.startPosition.x() if self.line.angle == 90 else self.line.startPosition.y()
         self.sigPositionDragged.emit(start_pos, self.position, is_start, False)
 
     def _line_drag_finished(self, line: Optional[_InfiniteLine] = None) -> None:
         self._is_dragged = False
-        start_pos = self.line.startPosition[0 if self.line.angle == 90 else 1]
+        start_pos = self.line.startPosition.x() if self.line.angle == 90 else self.line.startPosition.y()
         self.sigPositionDragged.emit(start_pos, self.position, False, True)
 
     def _line_changed(self, line: Optional[_InfiniteLine] = None) -> None:
