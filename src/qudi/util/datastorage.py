@@ -683,8 +683,12 @@ class TextDataStorage(DataStorageBase):
         """
         # Derive dtypes from first data row if not explicitly given
         if column_dtypes is None:
-            first_row = data if _is_1d_array(data) else data[0]
-            column_dtypes = [_value_to_dtype(val) for val in first_row]
+            try:
+                first_row = data if _is_1d_array(data) else data[0]
+                column_dtypes = [_value_to_dtype(val) for val in first_row]
+            except ValueError:
+                column_dtypes = []
+
 
         # Create new data file (overwrite old one if it exists)
         file_path, timestamp = self.new_file(timestamp=timestamp,
