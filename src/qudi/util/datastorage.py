@@ -683,11 +683,12 @@ class TextDataStorage(DataStorageBase):
         """
         # Derive dtypes from first data row if not explicitly given
         if column_dtypes is None:
-            try:
-                first_row = data if _is_1d_array(data) else data[0]
-                column_dtypes = [_value_to_dtype(val) for val in first_row]
-            except ValueError:
+            if (data is None) or (len(data) == 0):
                 column_dtypes = []
+            elif _is_1d_array(data):
+                column_dtypes = [_value_to_dtype(val) for val in data]
+            else:
+                column_dtypes = [_value_to_dtype(val) for val in data[0]]
 
 
         # Create new data file (overwrite old one if it exists)
