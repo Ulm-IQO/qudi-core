@@ -12,6 +12,7 @@ None
 ### New Features
 - Added type hinting in `FitConfiguration`
 - Added optional parameters `estimator` and `custom_parameters` to `FitConfigurationsModel.add_configuration` to enable adding of new fit configuration with custom parameters and selectable estimator
+- Added an new `ConnectorList` type for connecting an unspecified number of modules of the same interface to a module.
 - Added ruff configuration to `pyproject.toml` to standardize formatting
 
 ### Other

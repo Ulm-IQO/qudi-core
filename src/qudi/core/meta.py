@@ -24,7 +24,7 @@ __all__ = ('ABCQObjectMeta', 'ModuleMeta', 'QObjectMeta', 'QudiObjectMeta')
 from abc import ABCMeta
 from PySide2.QtCore import QObject
 from qudi.core.statusvariable import StatusVar
-from qudi.core.connector import Connector
+from qudi.core.connector import Connector, ConnectorList
 from qudi.core.configoption import ConfigOption
 
 
@@ -53,7 +53,7 @@ class ABCQObjectMeta(ABCMeta, QObjectMeta):
 
 class QudiObjectMeta(ABCQObjectMeta):
     """General purpose metaclass for abstract QObject subclasses that include qudi meta objects
-    (Connector, StatusVar, ConfigOption).
+    (Connector, StatusVar, ConfigOption, ConnectorList).
     Collects all meta objects in new "_meta" class variable for easier access.
     """
     def __new__(mcs, name, bases, attributes):
@@ -64,6 +64,7 @@ class QudiObjectMeta(ABCQObjectMeta):
         # Collect qudi module meta attributes (Connector, StatusVar, ConfigOption) and put them
         # in the class variable dict "_meta" for easy bookkeeping and access.
         connectors = dict()
+        connector_lists = dict()
         status_vars = dict()
         config_opt = dict()
         for attr_name in dir(cls):
@@ -74,9 +75,12 @@ class QudiObjectMeta(ABCQObjectMeta):
                 status_vars[attr_name] = attr
             elif isinstance(attr, ConfigOption):
                 config_opt[attr_name] = attr
+            elif isinstance(attr, ConnectorList):
+                connector_lists[attr_name] = attr
         meta.update({'connectors'      : connectors,
                      'status_variables': status_vars,
-                     'config_options'  : config_opt})
+                     'config_options'  : config_opt,
+                     'connector_lists' : connector_lists})
         setattr(cls, '_meta', meta)
         return cls
 
