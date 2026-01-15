@@ -13,6 +13,7 @@ None
 - Added type hinting in `FitConfiguration`
 - Added optional parameters `estimator` and `custom_parameters` to `FitConfigurationsModel.add_configuration` to enable adding of new fit configuration with custom parameters and selectable estimator
 - Added ruff configuration to `pyproject.toml` to standardize formatting
+- Properly load any object that can be imported from the namespace when loading data with any `DataStorage` class
 
 ### Other
 None
