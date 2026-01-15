@@ -100,4 +100,6 @@ class ModuleMeta(QudiObjectMeta):
                 elif base.__name__ == 'Base':
                     cls._meta['base'] = 'hardware'
                     break
+            # keep module resolution order as reference for which interface is implemented
+            cls._meta['mro'] = [base.__name__ for base in cls.mro()]
         return cls
