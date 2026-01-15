@@ -7,6 +7,7 @@ None
 
 ### Bugfixes
 - Fixed the correct assignment of `metadata` and `general` when loading data with `NpyDataStorage`, in line with the other storage classes
+- Fixed `TextDataStorage` to allow for saving just metadata
 
 ### New Features
 - Added type hinting in `FitConfiguration`
