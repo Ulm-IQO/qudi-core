@@ -199,6 +199,8 @@ class Base(QtCore.QObject, metaclass=ModuleMeta):
     def __initialize_connectors(self) -> None:
         for attr_name, conn in self._meta['connectors'].items():
             setattr(self, attr_name, conn)
+        for attr_name, conn in self._meta['connector_lists'].items():
+            setattr(self, attr_name, conn)
 
     def __eq__(self, other):
         if isinstance(other, Base):
@@ -388,15 +390,19 @@ class Base(QtCore.QObject, metaclass=ModuleMeta):
         qudi_main.gui.pop_up_message(title, message)
 
     def connect_modules(self, connections: Mapping[str, Any]) -> None:
-        """Connects given modules (values) to their respective Connector (keys).
+        """Connects given modules (values) to their respective Connector and ConnectorList (keys).
 
         DO NOT CALL THIS METHOD UNLESS YOU KNOW WHAT YOU ARE DOING!
         """
         # Sanity checks
         conn_names = set(conn.name for conn in self._meta['connectors'].values())
+        conn_names = conn_names.union(set(conn.name for conn in self._meta['connector_lists'].values()))
         mandatory_conn = set(
             conn.name for conn in self._meta['connectors'].values() if not conn.optional
         )
+        mandatory_conn = mandatory_conn.union(set(
+            conn.name for conn in self._meta['connector_lists'].values() if not conn.optional
+        ))
         configured_conn = set(connections)
         if not configured_conn.issubset(conn_names):
             raise KeyError(f'Mismatch of connectors in configuration {configured_conn} and module '
@@ -414,6 +420,12 @@ class Base(QtCore.QObject, metaclass=ModuleMeta):
                 raise RuntimeError(f'Connector "{conn.name}" already connected.\n'
                                    f'Call "disconnect_modules()" before trying to reconnect.')
             conn.connect(target)
+        for conn in self._meta['connector_lists'].values():
+            targets = connections.get(conn.name, None)
+            if targets is None:
+                continue
+            for target in targets:
+                conn.connect(target)
 
     def disconnect_modules(self) -> None:
         """Disconnects all Connector instances for this module.
@@ -421,6 +433,8 @@ class Base(QtCore.QObject, metaclass=ModuleMeta):
         DO NOT CALL THIS METHOD UNLESS YOU KNOW WHAT YOU ARE DOING!
         """
         for conn in self._meta['connectors'].values():
+            conn.disconnect()
+        for conn in self._meta['connector_lists'].values():
             conn.disconnect()
 
     @abstractmethod
