@@ -69,6 +69,7 @@ explicitly in the dependencies.
 server has shut down first. This sometimes even prevented remote clients to shut down altogether.
 - Improved thread safety of the `ThreadManager` which should get rid of bugs related to rapid 
 module activation/deactivation cycles.
+- Fixed `TextDataStorage` to allow for saving just metadata
 
 ### New Features
 - Added type hinting in `FitConfiguration`
@@ -98,6 +99,7 @@ warning will be logged on the remote client.
 or clear all module appdata at once.
 - Added "Dump AppData" button to each module in manager/main GUI to manually force an AppData dump
 of the respective module.
+- Properly load any object that can be imported from the namespace when loading data with any `DataStorage` class
 
 ### Other
 - Deprecated calling `qudi.core.module.Base.module_state` property and `Connector` meta attributes.
