@@ -30,6 +30,7 @@ import re
 import copy
 import numpy as np
 import matplotlib.pyplot as plt
+import importlib
 
 from enum import Enum
 from datetime import datetime
@@ -98,7 +99,19 @@ def str_dict_to_metadata(str_dict):
     for param, value in str_dict.items():
         try:
             metadata[param] = eval(value)
-        except:
+        except NameError as e:
+            match = re.match(r"name '(\w+)' is not defined", str(e))
+            if match:
+                missing_name = match.group(1)
+                try:
+                    modules = {}
+                    modules[missing_name] = importlib.import_module(missing_name)
+                    metadata[param] = eval(value, modules)
+                except Exception as e:
+                    metadata[param] = value
+            else:
+                metadata[param] = value
+        except Exception:
             metadata[param] = value
     return metadata
 
@@ -684,8 +697,13 @@ class TextDataStorage(DataStorageBase):
         """
         # Derive dtypes from first data row if not explicitly given
         if column_dtypes is None:
-            first_row = data if _is_1d_array(data) else data[0]
-            column_dtypes = [_value_to_dtype(val) for val in first_row]
+            if (data is None) or (len(data) == 0):
+                column_dtypes = []
+            elif _is_1d_array(data):
+                column_dtypes = [_value_to_dtype(val) for val in data]
+            else:
+                column_dtypes = [_value_to_dtype(val) for val in data[0]]
+
 
         # Create new data file (overwrite old one if it exists)
         file_path, timestamp = self.new_file(timestamp=timestamp,
