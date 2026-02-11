@@ -55,15 +55,6 @@ class ModuleScript(QtCore.QObject, metaclass=QudiObjectMeta):
 
     sigFinished = QtCore.Signal()
 
-    # FIXME: This __new__ implementation has the sole purpose to circumvent a known PySide6(6) bug.
-    #  See https://bugreports.qt.io/browse/PYSIDE-1434 for more details.
-    def __new__(cls, *args, **kwargs):
-        abstract = getattr(cls, '__abstractmethods__', frozenset())
-        if abstract:
-            raise TypeError(f'Can\'t instantiate abstract class "{cls.__name__}" '
-                            f'with abstract methods {set(abstract)}')
-        return super().__new__(cls, *args, **kwargs)
-
     def __init__(self):
         # ModuleScript QObjects must not have a parent in order to be used as threaded workers
         super().__init__()

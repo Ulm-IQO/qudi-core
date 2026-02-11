@@ -114,15 +114,6 @@ class Base(QtCore.QObject, metaclass=ModuleMeta):
     """
     _threaded = False
 
-    # FIXME: This __new__ implementation has the sole purpose to circumvent a known PySide6(6) bug.
-    #  See https://bugreports.qt.io/browse/PYSIDE-1434 for more details.
-    def __new__(cls, *args, **kwargs):
-        abstract = getattr(cls, '__abstractmethods__', frozenset())
-        if abstract:
-            raise TypeError(f'Can\'t instantiate abstract class "{cls.__name__}" '
-                            f'with abstract methods {set(abstract)}')
-        return super().__new__(cls, *args, **kwargs)
-
     def __init__(self, qudi_main_weakref: Any, name: str,
                  config: Optional[Mapping[str, Any]] = None,
                  callbacks: Optional[Mapping[str, Callable]] = None, **kwargs):
