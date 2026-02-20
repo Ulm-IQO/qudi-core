@@ -3,7 +3,8 @@
 ## Pre-Release
 
 ### Breaking Changes
-None
+- Dropped `Python 3.8, 3.9` support
+- Upgraded Qt framework to `PySide6`
 
 ### Bugfixes
 - Fixed the correct assignment of `metadata` and `general` when loading data with `NpyDataStorage`, in line with the other storage classes
