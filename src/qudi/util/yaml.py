@@ -130,7 +130,7 @@ class SafeRepresenter(_yaml.SafeRepresenter):
                 dir_path = os.path.dirname(out_stream_path)
                 file_name = os.path.splitext(os.path.basename(out_stream_path))[0]
                 file_path = f'{os.path.join(dir_path, file_name)}-{self._extndarray_count:06}.npy'
-                np.save(file_path, data, allow_pickle=False, fix_imports=False)
+                np.save(file_path, data, allow_pickle=False)
                 self._extndarray_count += 1
                 return self.represent_scalar(tag='tag:yaml.org,2002:extndarray', value=file_path)
             except:
@@ -138,7 +138,7 @@ class SafeRepresenter(_yaml.SafeRepresenter):
 
         # Represent as binary stream (ASCII-encoded) by default
         with BytesIO() as f:
-            np.save(f, data, allow_pickle=False, fix_imports=False)
+            np.save(f, data, allow_pickle=False)
             binary_repr = f.getvalue()
         node = self.represent_binary(binary_repr)
         node.tag = 'tag:yaml.org,2002:ndarray'
@@ -174,7 +174,7 @@ class SafeConstructor(_yaml.SafeConstructor):
     def construct_extndarray(self, node):
         """The constructor for a numpy array that is saved in a separate file.
         """
-        return np.load(self.construct_yaml_str(node), allow_pickle=False, fix_imports=False)
+        return np.load(self.construct_yaml_str(node), allow_pickle=False)
 
     def construct_frozenset(self, node):
         """The frozenset constructor.
