@@ -106,7 +106,7 @@ class Lorentzian(FitModelBase):
 
         # according to the derived formula, calculate sigma. The crucial part is here that the
         # offset was estimated correctly, then the area under the curve is calculated correctly:
-        numerical_integral = np.trapz(data_smoothed, x)
+        numerical_integral = np.trapezoid(data_smoothed, x)
         sigma = abs(numerical_integral / (np.pi * amplitude))
 
         x_spacing = min(abs(np.ediff1d(x)))

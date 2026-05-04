@@ -23,7 +23,7 @@ __all__ = ['QudiTrayIcon']
 
 import os
 import weakref
-from PySide2 import QtCore, QtWidgets, QtGui
+from PySide6 import QtCore, QtWidgets, QtGui
 from typing import Optional, Callable, Union, Dict
 
 from qudi.util.paths import get_artwork_dir
@@ -50,7 +50,7 @@ class QudiTrayIcon(QtWidgets.QSystemTrayIcon):
 
     _instance: Union[None, weakref.ref] = None  # Only instance will be stored here as weakref
     _lock = Mutex()
-    _module_actions: Dict[str, QtWidgets.QAction]
+    _module_actions: Dict[str, QtGui.QAction]
 
     @classmethod
     def instance(cls) -> Union['QudiTrayIcon', None]:
@@ -86,20 +86,20 @@ class QudiTrayIcon(QtWidgets.QSystemTrayIcon):
         # Generate quit action
         icon = QtGui.QIcon()
         icon.addFile(os.path.join(iconpath, 'application-exit'), QtCore.QSize(16, 16))
-        self.quit_action = QtWidgets.QAction(icon, 'Quit', self.right_click_menu)
+        self.quit_action = QtGui.QAction(icon, 'Quit', self.right_click_menu)
         self.quit_action.triggered.connect(quit_callback, QtCore.Qt.QueuedConnection)
         self.right_click_menu.addAction(self.quit_action)
         # Generate restart action
         icon = QtGui.QIcon()
         icon.addFile(os.path.join(iconpath, 'view-refresh'), QtCore.QSize(16, 16))
-        self.restart_action = QtWidgets.QAction(icon, 'Restart', self.right_click_menu)
+        self.restart_action = QtGui.QAction(icon, 'Restart', self.right_click_menu)
         self.restart_action.triggered.connect(restart_callback, QtCore.Qt.QueuedConnection)
         self.right_click_menu.addAction(self.restart_action)
         # Generate main GUI action if needed
         if main_gui_callback is not None:
             icon = QtGui.QIcon()
             icon.addFile(os.path.join(iconpath, 'go-home'), QtCore.QSize(16, 16))
-            self.main_gui_action = QtWidgets.QAction(icon, 'Main GUI', self.left_click_menu)
+            self.main_gui_action = QtGui.QAction(icon, 'Main GUI', self.left_click_menu)
             self.main_gui_action.triggered.connect(main_gui_callback, QtCore.Qt.QueuedConnection)
             self.left_click_menu.addAction(self.main_gui_action)
             self.left_click_menu.addSeparator()
@@ -114,7 +114,7 @@ class QudiTrayIcon(QtWidgets.QSystemTrayIcon):
                 raise ValueError(f'Action for module with name "{name}" already registered in tray')
             icon = QtGui.QIcon()
             icon.addFile(os.path.join(get_artwork_dir(), 'icons', 'go-next'))
-            action = QtWidgets.QAction(icon=icon, text=name)
+            action = QtGui.QAction(icon=icon, text=name)
             action.triggered.connect(callback)
             self.left_click_menu.addAction(action)
             self._module_actions[name] = action

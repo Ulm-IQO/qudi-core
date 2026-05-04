@@ -56,6 +56,23 @@ since most users and even developers are not aware about the many caveats that c
 - Removed support for Python 3.8 since it is EOL
 
 ### Bugfixes
+None
+
+### New Features
+None
+
+### Other
+None
+
+
+## Version 1.7.0
+Released on 04.05.2026
+
+### Breaking Changes
+- Dropped `Python 3.8, 3.9` support
+- Upgraded Qt framework to `PySide6`
+
+### Bugfixes
 - Fixed the correct assignment of `metadata` and `general` when loading data with `NpyDataStorage`, in line with the other storage classes
 - Fixed a `scipy` warning about the deprecated `scipy.ndimage.filters` namespace
 - Exceptions during initialization and construction of `ConfigOption` and `StatusVar` will now

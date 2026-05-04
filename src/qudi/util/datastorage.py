@@ -127,7 +127,8 @@ def _is_dtype_class(obj):
                      np.integer,
                      np.complexfloating,
                      np.str_,
-                     np.string_)
+                     np.dtypes.StringDType,
+                     np.dtypes.StrDType)
     return type(obj) == type and issubclass(obj, allowed_types)
 
 
@@ -880,7 +881,7 @@ class NpyDataStorage(DataStorageBase):
         # Write data and metadata to file. Overwrite silently.
         with open(file_path, 'wb') as file:
             # Write numpy data array in binary format
-            np.save(file, data, allow_pickle=False, fix_imports=False)
+            np.save(file, data, allow_pickle=False)
         with open(meta_file_path, 'w') as file:
             file.write(header)
         return file_path, timestamp, data.shape
@@ -901,7 +902,7 @@ class NpyDataStorage(DataStorageBase):
             Data as a numpy array.
         """
         # Load numpy array
-        data = np.load(file_path, allow_pickle=False, fix_imports=False)
+        data = np.load(file_path, allow_pickle=False)
         # Try to find and load metadata from text file
         metadata_path = file_path.split('.npy')[0] + '_metadata.txt'
         try:

@@ -21,7 +21,7 @@ If not, see <https://www.gnu.org/licenses/>.
 
 __all__ = ['popup_message', 'balloon_message', 'prompt_shutdown', 'prompt_restart']
 
-from PySide2 import QtWidgets, QtGui
+from PySide6 import QtWidgets, QtGui
 from typing import Optional
 
 from qudi.core.logger import get_logger

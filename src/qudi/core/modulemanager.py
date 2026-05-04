@@ -29,7 +29,7 @@ import rpyc
 
 from typing import FrozenSet, Dict, Union, Optional, Mapping, Callable, List
 from typing import Any, final
-from PySide2 import QtCore
+from PySide6 import QtCore
 from abc import abstractmethod
 
 from qudi.util.helpers import call_slot_from_native_thread, current_is_main_thread

@@ -20,7 +20,7 @@ If not, see <https://www.gnu.org/licenses/>.
 """
 
 import os
-from PySide2 import QtCore, QtGui, QtWidgets
+from PySide6 import QtCore, QtGui, QtWidgets
 from typing import Optional, Union, Tuple
 
 from qudi.util.paths import get_artwork_dir
@@ -94,6 +94,10 @@ class ModuleFrameWidget(QtWidgets.QWidget):
     def __init__(self, *args, module_name: Optional[str] = '', **kwargs):
         super().__init__(*args, **kwargs)
         self._module_name = module_name
+
+        self.setSizePolicy(QtWidgets.QSizePolicy.Policy.Expanding,
+                           QtWidgets.QSizePolicy.Policy.Fixed)
+        self.setAttribute(QtCore.Qt.WidgetAttribute.WA_StyledBackground, True)
 
         # Create QToolButtons
         self.cleanup_button = QtWidgets.QToolButton()
@@ -200,7 +204,6 @@ class ModuleListItemDelegate(QtWidgets.QStyledItemDelegate):
 
     def createEditor(self, parent, option, index) -> QtWidgets.QWidget:
         widget = ModuleFrameWidget(parent=parent)
-        # Found no other way to pefectly match editor and rendered item view (using paint())
         widget.setContentsMargins(2, 2, 2, 2)
         widget.sigActivateClicked.connect(self.sigActivateClicked)
         widget.sigDeactivateClicked.connect(self.sigDeactivateClicked)
@@ -214,8 +217,8 @@ class ModuleListItemDelegate(QtWidgets.QStyledItemDelegate):
         if data is not None:
             editor.set_module_data(*data)
 
-    # def destroyEditor(self, editor, index) -> None:
-    #     return super().destroyEditor(editor, index)
+    def updateEditorGeometry(self, editor, option, index, /):
+        editor.setGeometry(option.rect)
 
     def sizeHint(self, option=None, index=None):
         return self.__render_widget.sizeHint()

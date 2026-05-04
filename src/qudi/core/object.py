@@ -26,7 +26,7 @@ import copy
 import logging
 from uuid import uuid4, UUID
 from typing import MutableMapping, Mapping, Optional, Any, final, Sequence, Union
-from PySide2 import QtCore
+from PySide6 import QtCore
 
 from qudi.core.statusvariable import StatusVar
 from qudi.core.logger import get_logger
@@ -247,7 +247,7 @@ class QudiObjectPeriodicAppDataDumper(QtCore.QObject):
 
 class ABCQObjectMixin(metaclass=ABCQObjectMeta):
     """
-    Base class for an abstract QObject. This is necessary because of a known bug in PySide2(6).
+    Base class for an abstract QObject. This is necessary because of a known bug in PySide6.
     See https://bugreports.qt.io/browse/PYSIDE-1434 for more details
     """
     def __new__(cls, *args, **kwargs):

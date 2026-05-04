@@ -23,7 +23,7 @@ If not, see <https://www.gnu.org/licenses/>.
 __all__ = ['ThreadManager', 'ThreadManagerListModel']
 
 import weakref
-from PySide2 import QtCore
+from PySide6 import QtCore
 from typing import Dict, List, Union, Optional
 
 from qudi.util.mutex import RecursiveMutex, Mutex
@@ -294,7 +294,7 @@ class ThreadManagerListModel(QtCore.QAbstractListModel):
         """
         return len(self._thread_names)
 
-    def headerData(self, section, orientation, role=QtCore.Qt.DisplayRole):
+    def headerData(self, section, orientation, role=QtCore.Qt.ItemDataRole.DisplayRole):
         """Data for the list view header.
 
         Parameters
@@ -311,7 +311,7 @@ class ThreadManagerListModel(QtCore.QAbstractListModel):
         str
             Header data for the given column/row and role.
         """
-        if role == QtCore.Qt.DisplayRole and orientation == QtCore.Qt.Horizontal and section == 0:
+        if role == QtCore.Qt.ItemDataRole.DisplayRole and orientation == QtCore.Qt.Orientation.Horizontal and section == 0:
             return 'Thread Name'
         return None
 
@@ -330,7 +330,7 @@ class ThreadManagerListModel(QtCore.QAbstractListModel):
         QVariant
             Data for the given cell and role.
         """
-        if index.isValid() and role == QtCore.Qt.DisplayRole and index.column() == 0:
+        if index.isValid() and role == QtCore.Qt.ItemDataRole.DisplayRole and index.column() == 0:
             try:
                 return self._thread_names[index.row()]
             except IndexError:
@@ -350,7 +350,7 @@ class ThreadManagerListModel(QtCore.QAbstractListModel):
         Qt.ItemFlags
             Actions allowed for this cell.
         """
-        return QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable
+        return QtCore.Qt.ItemFlag.ItemIsEnabled | QtCore.Qt.ItemFlag.ItemIsSelectable
 
     def _thread_registered(self, name: str) -> None:
         row = len(self._thread_names)

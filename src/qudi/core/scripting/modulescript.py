@@ -28,7 +28,7 @@ import importlib
 import copy
 import inspect
 from abc import abstractmethod
-from PySide2 import QtCore
+from PySide6 import QtCore
 from logging import Logger
 from typing import Mapping, Any, Type, Optional, Union, Dict
 
@@ -54,15 +54,6 @@ class ModuleScript(QtCore.QObject, metaclass=QudiQObjectMeta):
     # Declare all module connectors used in this script here
 
     sigFinished = QtCore.Signal()
-
-    # FIXME: This __new__ implementation has the sole purpose to circumvent a known PySide2(6) bug.
-    #  See https://bugreports.qt.io/browse/PYSIDE-1434 for more details.
-    def __new__(cls, *args, **kwargs):
-        abstract = getattr(cls, '__abstractmethods__', frozenset())
-        if abstract:
-            raise TypeError(f'Can\'t instantiate abstract class "{cls.__name__}" '
-                            f'with abstract methods {set(abstract)}')
-        return super().__new__(cls, *args, **kwargs)
 
     def __init__(self):
         # ModuleScript QObjects must not have a parent in order to be used as threaded workers

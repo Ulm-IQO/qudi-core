@@ -29,7 +29,7 @@ import traceback
 import faulthandler
 from functools import partial
 from logging import DEBUG, INFO, Logger
-from PySide2 import QtCore, QtWidgets, QtGui
+from PySide6 import QtCore, QtWidgets, QtGui
 from typing import Optional, Union, List, Sequence
 
 from qudi.core.logger import init_rotating_file_handler, init_record_model_handler, clear_handlers
@@ -51,11 +51,8 @@ from qudi.core.message import prompt_restart, prompt_shutdown
 
 
 def setup_environment() -> None:
-    # Set QT_API environment variable to PySide2
-    os.environ['QT_API'] = 'pyside2'
-
-    # Enable the High DPI scaling support of Qt5
-    os.environ['QT_ENABLE_HIGHDPI_SCALING'] = '1'
+    # Set QT_API environment variable to PySide6
+    os.environ['QT_API'] = 'pyside6'
 
     if sys.platform == 'win32':
         # Set QT_LOGGING_RULES environment variable to suppress qt.svg related warnings that
@@ -381,7 +378,7 @@ class Qudi(QtCore.QObject):
             self._is_running = True
             self.log.info('Initialization complete! Starting Qt event loop...')
             print('> Initialization complete! Starting Qt event loop...\n>')
-            exit_code = app.exec_()
+            exit_code = app.exec()
 
             self._shutting_down = False
             self._is_running = False

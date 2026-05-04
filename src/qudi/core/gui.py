@@ -24,7 +24,7 @@ __all__ = ['set_theme', 'set_stylesheet', 'close_windows', 'initialize_app_icon'
 
 import os
 import platform
-from PySide2 import QtGui, QtWidgets
+from PySide6 import QtGui, QtWidgets
 from typing import Optional
 
 from qudi.util.paths import get_artwork_dir

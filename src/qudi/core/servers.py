@@ -23,7 +23,7 @@ __all__ = ['BaseServer', 'RemoteModulesServer', 'QudiNamespaceServer']
 
 import ssl
 import rpyc
-from PySide2 import QtCore
+from PySide6 import QtCore
 from rpyc.utils.authenticators import SSLAuthenticator
 from typing import Optional, Mapping, Any
 

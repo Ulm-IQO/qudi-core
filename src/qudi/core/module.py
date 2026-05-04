@@ -30,7 +30,7 @@ import importlib
 from abc import abstractmethod
 from enum import Enum
 from uuid import uuid4, UUID
-from PySide2 import QtCore, QtWidgets
+from PySide6 import QtCore, QtWidgets
 from typing import Any, Mapping, Optional, Type, Dict, Final, MutableMapping, final
 
 from qudi.core.object import QudiQObject
