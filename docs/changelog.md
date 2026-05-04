@@ -3,6 +3,22 @@
 ## Pre-Release
 
 ### Breaking Changes
+None
+
+### Bugfixes
+None
+
+### New Features
+None
+
+### Other
+None
+
+
+## Version 1.7.0
+Released on 04.05.2026
+
+### Breaking Changes
 - Dropped `Python 3.8, 3.9` support
 - Upgraded Qt framework to `PySide6`
 
