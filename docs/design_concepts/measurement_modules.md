@@ -39,7 +39,7 @@ notebook using the qudi kernel or the qudi manager GUI console.
 While a logic module is in principle enough to control a measurement application, you may want to 
 provide a more user-friendly interface. This is where qudi GUI modules come into play. 
 Each qudi GUI module must assemble and show a Qt `QMainWindow` instance that can use everything 
-[Qt for Python (PySide2)](https://doc.qt.io/qtforpython/) has to offer.  
+[Qt for Python (PySide6)](https://doc.qt.io/qtforpython/) has to offer.  
 They must connect to at least one logic module in order to provide a graphical interface for it. 
 
 > **⚠ WARNING:**
@@ -198,7 +198,7 @@ would otherwise lock up and be unresponsive until the logic method has returned.
 
 A common example would be a GUI module triggering the start of a long-running logic method:
 ```python
-from PySide2.QtCore import Signal
+from PySide6.QtCore import Signal
 from qudi.core.module import Base, LogicBase
 from qudi.core.connector import Connector
 
