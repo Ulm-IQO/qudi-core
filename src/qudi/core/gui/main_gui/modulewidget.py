@@ -37,6 +37,9 @@ class ModuleFrameWidget(QtWidgets.QWidget):
     def __init__(self, *args, module_name=None, **kwargs):
         super().__init__(*args, **kwargs)
 
+        self.setSizePolicy(QtWidgets.QSizePolicy.Policy.Expanding, QtWidgets.QSizePolicy.Policy.Fixed)
+        self.setAttribute(QtCore.Qt.WidgetAttribute.WA_StyledBackground, True)
+
         # Create QToolButtons
         self.cleanup_button = QtWidgets.QToolButton()
         self.cleanup_button.setObjectName('cleanupButton')
@@ -223,26 +226,20 @@ class ModuleListModel(QtCore.QAbstractListModel):
 
 
 class ModuleListItemDelegate(QtWidgets.QStyledItemDelegate):
-    """
-    """
     sigActivateClicked = QtCore.Signal(str)
     sigDeactivateClicked = QtCore.Signal(str)
     sigReloadClicked = QtCore.Signal(str)
     sigCleanupClicked = QtCore.Signal(str)
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.render_widget = ModuleFrameWidget()
-        self.__origin = QtCore.QPoint()
-
     def createEditor(self, parent, option, index):
         widget = ModuleFrameWidget(parent=parent)
-        # Found no other way to pefectly match editor and rendered item view (using paint())
         widget.setContentsMargins(2, 2, 2, 2)
+
         widget.sigActivateClicked.connect(self.sigActivateClicked)
         widget.sigDeactivateClicked.connect(self.sigDeactivateClicked)
         widget.sigReloadClicked.connect(self.sigReloadClicked)
         widget.sigCleanupClicked.connect(self.sigCleanupClicked)
+
         return widget
 
     def setEditorData(self, editor, index):
@@ -252,53 +249,46 @@ class ModuleListItemDelegate(QtWidgets.QStyledItemDelegate):
             editor.set_module_state(data[1])
             editor.set_module_app_data(data[2])
 
-    def setModelData(self, editor, model, index):
-        pass
+    def updateEditorGeometry(self, editor, option, index):
+        editor.setGeometry(option.rect)
 
-    def sizeHint(self, option=None, index=None):
-        return self.render_widget.sizeHint()
-
-    def paint(self, painter, option, index):
-        """
-        """
-        name, state, app_data = index.data()
-        self.render_widget.set_module_name(name)
-        self.render_widget.set_module_state(state)
-        self.render_widget.set_module_app_data(app_data)
-        self.render_widget.setGeometry(option.rect)
-        painter.save()
-        painter.translate(option.rect.topLeft())
-        self.render_widget.render(painter, self.__origin)
-        painter.restore()
+    def sizeHint(self, option, index):
+        widget = ModuleFrameWidget()
+        return widget.sizeHint()
 
 
 class ModuleListView(QtWidgets.QListView):
-    """
-    """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.setMouseTracking(True)
+
         delegate = ModuleListItemDelegate()
         self.setItemDelegate(delegate)
-        self.setMinimumWidth(delegate.sizeHint().width())
+
         self.setUniformItemSizes(True)
-        self.setContentsMargins(0, 0, 0, 0)
         self.setSpacing(1)
-        self.previous_index = QtCore.QModelIndex()
+        self.setContentsMargins(0, 0, 0, 0)
 
-    def mouseMoveEvent(self, event):
-        index = self.indexAt(event.pos())
-        if index != self.previous_index:
-            if self.previous_index.isValid():
-                self.closePersistentEditor(self.previous_index)
-            if index.isValid():
-                self.openPersistentEditor(index)
-            self.previous_index = index
+    def setModel(self, model):
+        super().setModel(model)
 
-    def leaveEvent(self, event):
-        if self.previous_index.isValid():
-            self.closePersistentEditor(self.previous_index)
-        self.previous_index = QtCore.QModelIndex()
+        # Open persistent editors for all rows
+        for row in range(model.rowCount(None)):
+            index = model.index(row, 0)
+            self.openPersistentEditor(index)
+
+        # Keep them in sync when model changes
+        model.rowsInserted.connect(self._open_editors)
+        model.modelReset.connect(self._reset_editors)
+
+    def _open_editors(self, parent, first, last):
+        for row in range(first, last + 1):
+            index = self.model().index(row, 0)
+            self.openPersistentEditor(index)
+
+    def _reset_editors(self):
+        for row in range(self.model().rowCount(None)):
+            index = self.model().index(row, 0)
+            self.openPersistentEditor(index)
 
 
 class ModuleWidget(QtWidgets.QTabWidget):
