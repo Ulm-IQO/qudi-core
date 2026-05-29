@@ -270,6 +270,18 @@ class Base(QtCore.QObject, metaclass=ModuleMeta):
             self.log.exception('Error while collecting status variables:')
         return variables
 
+    
+    @property
+    def module_interface_names(self) -> tuple:
+        """Names of every class in this module's MRO.
+
+        Accessed through an rpyc netref, this getter runs on the server where
+        type(self) is the real class. Only a tuple of strings crosses the
+        connection, so it is immune
+        to the rpyc>=6 bug that mangles class objects sent over the wire.
+        """
+        return tuple(cls.__name__ for cls in type(self).mro())
+
     @property
     def _qudi_main(self) -> Any:
         qudi_main = self.__qudi_main_weakref()

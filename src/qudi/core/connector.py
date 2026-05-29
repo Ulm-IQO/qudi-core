@@ -113,8 +113,7 @@ class Connector(Generic[M]):
     def connect(self, target: M) -> None:
         """Check if target is connectible by this connector and connect.
         """
-        bases = {cls.__name__ for cls in target.__class__.mro()}
-        if self.interface not in bases:
+        if self.interface not in self._interface_names(target):
             raise RuntimeError(
                 f'Module "{target}" connected to connector "{self.name}" does not implement '
                 f'interface "{self.interface}".'
@@ -122,6 +121,18 @@ class Connector(Generic[M]):
         self._obj_proxy = OverloadProxy(target, self.interface)
         self._obj_ref = weakref.ref(target, self.__module_died_callback)
 
+    @staticmethod
+    def _interface_names(target: M) -> set:
+        """Class names in the target's MRO.
+
+        For remote modules this resolves server-side and only strings cross the
+        rpyc connection. Falls back to a local MRO walk for non-Base targets.
+        """
+        try:
+            return set(target.module_interface_names)
+        except AttributeError:
+            return {cls.__name__ for cls in target.__class__.mro()}
+    
     def disconnect(self) -> None:
         """Disconnect connector.
         """
