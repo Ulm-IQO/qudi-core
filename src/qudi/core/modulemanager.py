@@ -643,7 +643,7 @@ class ManagedModule(QtCore.QObject):
             if self.is_remote:
                 logger.info(
                     f'Disconnecting client from remote {self.module_base} module '
-                    f'"{self.remote_url}" (server-side module left active)'
+                    f'"{self.remote_url}"'
                 )
                 # Recursively deactivate client-side dependents only
                 for module_ref in self.dependent_modules:

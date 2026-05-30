@@ -112,6 +112,13 @@ class ModuleFrameWidget(QtWidgets.QWidget):
             self.reload_button.setEnabled(True)
             if self.activate_button.isChecked():
                 self.activate_button.setChecked(False)
+        elif state in ('DISCONNECTED', 'BROKEN'):
+            self.activate_button.setText('Reconnect {0}'.format(self._module_name))
+            self.cleanup_button.setEnabled(False)
+            self.deactivate_button.setEnabled(False)
+            self.reload_button.setEnabled(True)
+            if self.activate_button.isChecked():
+                self.activate_button.setChecked(False)
         else:
             self.activate_button.setText(self._module_name)
             self.cleanup_button.setEnabled(False)
@@ -119,7 +126,13 @@ class ModuleFrameWidget(QtWidgets.QWidget):
             self.reload_button.setEnabled(True)
             if not self.activate_button.isChecked():
                 self.activate_button.setChecked(True)
-        self.status_label.setText('Module is {0}'.format(state))
+
+        if state in ('DISCONNECTED', 'BROKEN'):
+            self.status_label.setText('Module is {0}'.format(state))
+            self.status_label.setStyleSheet('color: #d33; font-weight: bold;')
+        else:
+            self.status_label.setText('Module is {0}'.format(state))
+            self.status_label.setStyleSheet('')
 
     def set_module_app_data(self, exists):
         self.cleanup_button.setEnabled(exists)
