@@ -22,7 +22,7 @@ If not, see <https://www.gnu.org/licenses/>.
 
 __all__ = ['ModuleEditorWidget']
 
-from PySide2 import QtCore, QtWidgets
+from PySide6 import QtCore, QtWidgets
 from typing import Optional, Mapping, Dict, Union, Any
 from qudi.util.widgets.separator_lines import HorizontalLine
 from qudi.tools.config_editor.module_finder import QudiModules
@@ -53,9 +53,9 @@ class ModuleEditorWidget(QtWidgets.QStackedWidget):
         font.setBold(True)
         font.setPointSize(font.pointSize() + 4)
         self.placeholder_label.setFont(font)
-        self.placeholder_label.setAlignment(QtCore.Qt.AlignCenter)
-        self.placeholder_label.setSizePolicy(QtWidgets.QSizePolicy.Expanding,
-                                             QtWidgets.QSizePolicy.Expanding)
+        self.placeholder_label.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
+        self.placeholder_label.setSizePolicy(QtWidgets.QSizePolicy.Policy.Expanding,
+                                             QtWidgets.QSizePolicy.Policy.Expanding)
         self.addWidget(self.placeholder_label)
 
         self._editor_layout = QtWidgets.QVBoxLayout()
@@ -65,7 +65,7 @@ class ModuleEditorWidget(QtWidgets.QStackedWidget):
         sub_layout = QtWidgets.QHBoxLayout()
         sub_layout.setStretch(1, 1)
         label = QtWidgets.QLabel('* Module Name:')
-        label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+        label.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight | QtCore.Qt.AlignmentFlag.AlignVCenter)
         self.module_name_lineedit = QtWidgets.QLineEdit()
         self.module_name_lineedit.setPlaceholderText('Enter locally unique module name')
         self.module_name_lineedit.setFont(font)

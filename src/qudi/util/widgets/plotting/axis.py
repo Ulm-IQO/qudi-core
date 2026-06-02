@@ -22,7 +22,7 @@ If not, see <https://www.gnu.org/licenses/>.
 
 __all__ = ['LabelNudgeAxis', 'label_nudged_plot_widget']
 
-from PySide2.QtCore import QSizeF, QPointF
+from PySide6.QtCore import QSizeF, QPointF
 from pyqtgraph import AxisItem, PlotWidget
 from typing import Type
 

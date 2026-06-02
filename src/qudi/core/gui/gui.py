@@ -22,7 +22,7 @@ If not, see <https://www.gnu.org/licenses/>.
 import os
 import weakref
 import platform
-from PySide2 import QtCore, QtGui, QtWidgets
+from PySide6 import QtCore, QtGui, QtWidgets
 from qudi.core.gui.main_gui.main_gui import QudiMainGui
 from qudi.core.modulemanager import ModuleManager
 from qudi.util.paths import get_artwork_dir
@@ -53,15 +53,15 @@ class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
         iconpath = os.path.join(get_artwork_dir(), 'icons')
         self.managericon = QtGui.QIcon()
         self.managericon.addFile(os.path.join(iconpath, 'go-home'), QtCore.QSize(16, 16))
-        self.managerAction = QtWidgets.QAction(self.managericon, 'Manager', self.left_menu)
+        self.managerAction = QtGui.QAction(self.managericon, 'Manager', self.left_menu)
 
         self.exiticon = QtGui.QIcon()
         self.exiticon.addFile(os.path.join(iconpath, 'application-exit'), QtCore.QSize(16, 16))
-        self.quitAction = QtWidgets.QAction(self.exiticon, 'Quit', self.right_menu)
+        self.quitAction = QtGui.QAction(self.exiticon, 'Quit', self.right_menu)
 
         self.restarticon = QtGui.QIcon()
         self.restarticon.addFile(os.path.join(iconpath, 'view-refresh'), QtCore.QSize(16, 16))
-        self.restartAction = QtWidgets.QAction(self.restarticon, 'Restart', self.right_menu)
+        self.restartAction = QtGui.QAction(self.restarticon, 'Restart', self.right_menu)
 
         self.left_menu.addAction(self.managerAction)
         self.left_menu.addSeparator()
@@ -80,8 +80,8 @@ class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
 
         @param reason: reason that caused the activation
         """
-        if reason == self.Trigger:
-            self.left_menu.exec_(QtGui.QCursor.pos())
+        if reason == self.ActivationReason.Trigger:
+            self.left_menu.exec(QtGui.QCursor.pos())
 
     def add_action(self, label, callback, icon=None):
         if label in self._actions:
@@ -92,7 +92,7 @@ class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
             iconpath = os.path.join(get_artwork_dir(), 'icons')
             icon.addFile(os.path.join(iconpath, 'go-next'))
 
-        action = QtWidgets.QAction(label)
+        action = QtGui.QAction(label)
         action.setIcon(icon)
         action.triggered.connect(callback)
         self.left_menu.addAction(action)
@@ -142,18 +142,18 @@ class Gui(QtCore.QObject):
             self.set_style_sheet(stylesheet_path)
         self.system_tray_icon = SystemTrayIcon()
 
-        self._sigPopUpMessage.connect(self.pop_up_message, QtCore.Qt.QueuedConnection)
-        self._sigBalloonMessage.connect(self.balloon_message, QtCore.Qt.QueuedConnection)
+        self._sigPopUpMessage.connect(self.pop_up_message, QtCore.Qt.ConnectionType.QueuedConnection)
+        self._sigBalloonMessage.connect(self.balloon_message, QtCore.Qt.ConnectionType.QueuedConnection)
 
         self._configure_pyqtgraph(use_opengl)
         self.main_gui_module = QudiMainGui(qudi_main_weakref=weakref.ref(qudi_instance),
                                            name='qudi_main_gui')
         self.system_tray_icon.managerAction.triggered.connect(self.activate_main_gui,
-                                                              QtCore.Qt.QueuedConnection)
+                                                              QtCore.Qt.ConnectionType.QueuedConnection)
         self.system_tray_icon.quitAction.triggered.connect(qudi_instance.quit,
-                                                           QtCore.Qt.QueuedConnection)
+                                                           QtCore.Qt.ConnectionType.QueuedConnection)
         self.system_tray_icon.restartAction.triggered.connect(qudi_instance.restart,
-                                                              QtCore.Qt.QueuedConnection)
+                                                              QtCore.Qt.ConnectionType.QueuedConnection)
         qudi_instance.module_manager.sigModuleStateChanged.connect(self._tray_module_action_changed)
         self.show_system_tray_icon()
 
@@ -177,7 +177,7 @@ class Gui(QtCore.QObject):
             # test setting background of pyqtgraph
             testwidget = QtWidgets.QWidget()
             testwidget.ensurePolished()
-            bgcolor = testwidget.palette().color(QtGui.QPalette.Normal, testwidget.backgroundRole())
+            bgcolor = testwidget.palette().color(QtGui.QPalette.ColorGroup.Normal, testwidget.backgroundRole())
             # set manually the background color in hex code according to our color scheme:
             pg.setConfigOption('background', bgcolor)
             # experimental opengl usage
@@ -244,7 +244,7 @@ class Gui(QtCore.QObject):
         if QtCore.QThread.currentThread() is not self.thread():
             QtCore.QMetaObject.invokeMethod(self,
                                             'activate_main_gui',
-                                            QtCore.Qt.BlockingQueuedConnection)
+                                            QtCore.Qt.ConnectionType.BlockingQueuedConnection)
             return
 
         if self.main_gui_module.module_state() != 'deactivated':
@@ -261,7 +261,7 @@ class Gui(QtCore.QObject):
         if QtCore.QThread.currentThread() is not self.thread():
             QtCore.QMetaObject.invokeMethod(self,
                                             'deactivate_main_gui',
-                                            QtCore.Qt.BlockingQueuedConnection)
+                                            QtCore.Qt.ConnectionType.BlockingQueuedConnection)
             return
 
         if self.main_gui_module.module_state() == 'deactivated':
@@ -318,9 +318,9 @@ class Gui(QtCore.QObject):
         result = QtWidgets.QMessageBox.question(self.main_gui_module.mw,
                                                 'Qudi: Quit?',
                                                 msg,
-                                                QtWidgets.QMessageBox.Yes,
-                                                QtWidgets.QMessageBox.No)
-        return result == QtWidgets.QMessageBox.Yes
+                                                QtWidgets.QMessageBox.StandardButton.Yes,
+                                                QtWidgets.QMessageBox.StandardButton.No)
+        return result == QtWidgets.QMessageBox.StandardButton.Yes
 
     def prompt_restart(self, modules_locked=True):
         """Display a dialog, asking the user to confirm restart.
@@ -334,9 +334,9 @@ class Gui(QtCore.QObject):
         result = QtWidgets.QMessageBox.question(self.main_gui_module.mw,
                                                 'Qudi: Restart?',
                                                 msg,
-                                                QtWidgets.QMessageBox.Yes,
-                                                QtWidgets.QMessageBox.No)
-        return result == QtWidgets.QMessageBox.Yes
+                                                QtWidgets.QMessageBox.StandardButton.Yes,
+                                                QtWidgets.QMessageBox.StandardButton.No)
+        return result == QtWidgets.QMessageBox.StandardButton.Yes
 
     @QtCore.Slot(str, str)
     def pop_up_message(self, title, message):
@@ -355,7 +355,7 @@ class Gui(QtCore.QObject):
         if self.thread() is not QtCore.QThread.currentThread():
             self._sigPopUpMessage.emit(title, message)
             return
-        QtWidgets.QMessageBox.information(None, title, message, QtWidgets.QMessageBox.Ok)
+        QtWidgets.QMessageBox.information(None, title, message, QtWidgets.QMessageBox.StandardButton.Ok)
         return
 
     @QtCore.Slot(str, str, object, object)
