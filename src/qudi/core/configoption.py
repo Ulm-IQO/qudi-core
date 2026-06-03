@@ -26,7 +26,7 @@ __all__ = ['ConfigOption', 'MissingOption']
 import copy
 import inspect
 from enum import Enum
-from typing import Any, Optional, Callable, Generic, TypeVar
+from typing import Any, Callable, Generic, Optional, TypeVar, Union
 
 T = TypeVar('T')
 
@@ -36,16 +36,24 @@ class MissingOption(Enum):
     warn = -2
     info = -1
     nothing = 0
+UserConstructor = Union[Callable[[Any], T], Callable[[Any, Any], T]]
+BoundConstructor = Callable[[Any, Any], T]
 
 
 class ConfigOption(Generic[T]):
     """This class represents a configuration entry in the config file that is loaded before
     module initalisation.
     """
-
-    def __init__(self, name: Optional[str] = None, default: Optional[T] = None, *,
-                 missing: Optional[str] = 'nothing', constructor: Optional[Callable[..., T]] = None,
-                 checker: Optional[Callable[[T], bool]] = None, converter: Optional[Callable[[Any], T]] = None):
+    def __init__(
+        self,
+        name: Optional[str] = None,
+        default: Optional[T] = None,
+        *,
+        missing:  Optional[str] = 'nothing',
+        constructor: Optional[UserConstructor[T]] = None,
+        checker: Optional[Callable[[T], bool]] = None,
+        converter: Optional[Callable[[Any], T]] = None
+    ) -> None:
         """ Create a ConfigOption object.
 
         Parameters
@@ -73,7 +81,8 @@ class ConfigOption(Generic[T]):
         self.default = default
         self.checker = checker
         self.converter = converter
-        self.constructor_function: Optional[Callable[[Any, Any], T]] = None
+        self.constructor_function: Optional[BoundConstructor[T]] = None
+
         if constructor is not None:
             self.constructor(constructor)
 
@@ -122,7 +131,7 @@ class ConfigOption(Generic[T]):
             return self.converter(value)
         return value
 
-    def constructor(self, func: Callable[..., T]) -> Callable[..., T]:
+    def constructor(self, func: UserConstructor[T]) -> UserConstructor[T]:
         """Decorator for declaring a constructor function for this ConfigOption.
 
         Parameters
@@ -139,7 +148,7 @@ class ConfigOption(Generic[T]):
         return func
 
     @staticmethod
-    def _assert_func_signature(func: Callable[..., T]) -> Callable[[Any, Any], T]:
+    def _assert_func_signature(func: UserConstructor[T]) -> BoundConstructor[T]:
         assert callable(func), 'ConfigOption constructor must be callable'
         params = tuple(inspect.signature(func).parameters)
         assert 0 < len(params) < 3, 'ConfigOption constructor must be function with ' \
