@@ -115,7 +115,7 @@ class ModuleFrameWidget(QtWidgets.QWidget):
         elif state in ('DISCONNECTED', 'BROKEN'):
             self.activate_button.setText('Reconnect {0}'.format(self._module_name))
             self.cleanup_button.setEnabled(False)
-            self.deactivate_button.setEnabled(False)
+            self.deactivate_button.setEnabled(True)
             self.reload_button.setEnabled(True)
             if self.activate_button.isChecked():
                 self.activate_button.setChecked(False)

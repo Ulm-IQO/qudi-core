@@ -637,7 +637,10 @@ class ManagedModule(QtCore.QObject):
             return
 
         with self._lock:
-            if not self.is_active:
+            if self.is_remote:
+                if not self.is_loaded:
+                    return
+            elif not self.is_active:
                 return
 
             if self.is_remote:
