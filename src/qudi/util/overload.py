@@ -122,7 +122,7 @@ class OverloadedAttribute:
 
 
 class OverloadProxy:
-    """ Instances of this class serve as proxies for objects containing attributes of type
+    """Instances of this class serve as proxies for objects containing attributes of type
     OverloadedAttribute. It can be used to hide the overloading mechanism by fixing the overloaded
     attribute access key in a OverloadProxy instance. This allows for interfacing an overloaded
     attribute in the object represented by this proxy by normal "pythonic" means without the
@@ -188,7 +188,7 @@ class OverloadProxy:
 
     @classmethod
     def _create_class_proxy(cls, theclass):
-        """ creates a proxy for the given class
+        """Creates a proxy for the given class.
         """
 
         def make_method(name):
@@ -204,10 +204,10 @@ class OverloadProxy:
         return type(f'{cls.__name__}({theclass.__name__})', (cls,), namespace)
 
     def __new__(cls, obj, overload_key, *args, **kwargs):
-        """ creates an proxy instance referencing `obj`. (obj, *args, **kwargs) are passed to this
+        """Creates an proxy instance referencing `obj`. (obj, *args, **kwargs) are passed to this
         class' __init__, so deriving classes can define an __init__ method of their own.
 
-        note: _class_proxy_cache is unique per class (each deriving class must hold its own cache)
+        note: _class_proxy_cache is unique per class (each deriving class must hold its own cache).
         """
         try:
             cache = cls.__dict__['_class_proxy_cache']

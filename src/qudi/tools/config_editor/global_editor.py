@@ -22,7 +22,7 @@ If not, see <https://www.gnu.org/licenses/>.
 
 __all__ = ['GlobalEditorWidget']
 
-from PySide2 import QtCore, QtWidgets
+from PySide6 import QtCore, QtWidgets
 from typing import Optional, Mapping, Dict, Union, Any
 from qudi.tools.config_editor.global_widgets import GlobalConfigWidget
 
@@ -40,9 +40,9 @@ class GlobalEditorWidget(QtWidgets.QStackedWidget):
         font.setBold(True)
         font.setPointSize(font.pointSize() + 4)
         self.placeholder_label.setFont(font)
-        self.placeholder_label.setAlignment(QtCore.Qt.AlignCenter)
-        self.placeholder_label.setSizePolicy(QtWidgets.QSizePolicy.Expanding,
-                                             QtWidgets.QSizePolicy.Expanding)
+        self.placeholder_label.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
+        self.placeholder_label.setSizePolicy(QtWidgets.QSizePolicy.Policy.Expanding,
+                                             QtWidgets.QSizePolicy.Policy.Expanding)
         self.addWidget(self.placeholder_label)
 
         self.global_editor_widget = GlobalConfigWidget()

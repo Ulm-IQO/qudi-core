@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 
 """
-This file contains a custom .ui file loader since the current (v5.14.1) Pyside2 implementation or
+This file contains a custom .ui file loader since the current Pyside6 implementation or
 qtpy implementation do not fully allow promotion to a custom widget if the custom widget is not a
 direct subclass of the base widget defined in the .ui file. For example you can subclass
 QDoubleSpinBox and promote this to your custom class MyDoubleSpinBox but you can not properly
 subclass QAbstractSpinBox and promote QDoubleSpinBox (even though QDoubleSpinBox inherits
 QAbstractSpinBox).
-Funny enough it works if you use Pyside2's ui-to-py-converter and run the generated python code.
+Funny enough it works if you use Pyside6's ui-to-py-converter and run the generated python code.
 This module provides a wrapper to do just that.
 
 Copyright (c) 2021, the qudi developers. See the AUTHORS.md file at the top-level directory of this
@@ -41,7 +41,7 @@ __artwork_path_pattern = re.compile(r'>(.*?/artwork/.*?)</')
 
 
 def loadUi(file_path, base_widget):
-    """ Compiles a given .ui-file at <file_path> into python code. This code will be executed and
+    """Compiles a given .ui-file at <file_path> into python code. This code will be executed and
     the generated class will be used to initialize the widget given in <base_widget>.
     Creates a temporary file in the systems tmp directory using the tempfile module.
     The original .ui file will remain untouched.
@@ -49,8 +49,16 @@ def loadUi(file_path, base_widget):
     WARNING: base_widget must be of the same class as the top-level widget in the .ui file.
              Compatible subclasses of the top-level widget in the .ui file will also work.
 
-    @param str file_path: The full path to the .ui-file to load
-    @param object base_widget: Instance of the base widget represented by the .ui-file
+    Parameters
+    ----------
+    file_path : str
+        The full path to the .ui-file to load.
+    base_widget : object
+        Instance of the base widget represented by the .ui-file.
+
+    Returns
+    -------
+    None
     """
     # This step is a workaround because Qt Designer will only specify relative paths which is very
     # error prone if the user changes the cwd (e.g. os.chdir)
@@ -67,7 +75,7 @@ def loadUi(file_path, base_widget):
             os.remove(file_path)
             raise
     try:
-        result = subprocess.run(['pyside2-uic', file_path],
+        result = subprocess.run(['pyside6-uic', file_path],
                                 capture_output=True,
                                 text=True,
                                 check=True)
@@ -81,10 +89,10 @@ def loadUi(file_path, base_widget):
     if match is None:
         raise RuntimeError('Failed to match regex for finding class name in generated python code.')
     class_name = match.groups()[0]
-    # Workaround (again) because pyside2-uic forgot to include objects from PySide2 that can be
+    # Workaround (again) because pyside6-uic forgot to include objects from PySide6 that can be
     # used by Qt Designer. So we inject import statements here just before the class declaration.
     insert = match.start()
-    compiled = compiled[:insert] + 'from PySide2.QtCore import QLocale\n\n' + compiled[insert:]
+    compiled = compiled[:insert] + 'from PySide6.QtCore import QLocale\n\n' + compiled[insert:]
 
     # Execute python code in order to obtain a module object from it
     spec = spec_from_loader('ui_module', loader=None)
@@ -104,11 +112,18 @@ def loadUi(file_path, base_widget):
 
 
 def _convert_ui_to_absolute_paths(file_path):
-    """ Converts the .ui file in order to change all relative path declarations containing the
+    """Converts the .ui file in order to change all relative path declarations containing the
     keyword "/artwork/" into absolute paths pointing to the qudi artwork data directory.
 
-    @param str file_path: The path to the .ui file to convert
-    @return str|NoneType: Converted file content of the .ui file, None if conversion is not needed
+    Parameters
+    ----------
+    file_path : str
+        The path to the .ui file to convert.
+
+    Returns
+    -------
+    str | None
+        Converted file content of the .ui file, None if conversion is not needed.
     """
     path_prefix = get_artwork_dir()
     with open(file_path, 'r') as file:

@@ -20,7 +20,7 @@ If not, see <https://www.gnu.org/licenses/>.
 """
 
 from functools import partial
-from PySide2 import QtCore
+from PySide6 import QtCore
 from typing import Any, Type, Mapping, List, Dict
 
 from qudi.util.mutex import Mutex
@@ -31,7 +31,7 @@ from qudi.core.configoption import ConfigOption
 
 
 class TaskRunnerLogic(LogicBase):
-    """ This module keeps a collection of available ModuleTask subclasses (defined by config) and
+    """This module keeps a collection of available ModuleTask subclasses (defined by config) and
     respective initialized instances that can be run.
     Handles module connections to tasks and allows monitoring of task states and results.
     """
@@ -51,7 +51,7 @@ class TaskRunnerLogic(LogicBase):
         self._consecutive_activation = False  # Flag indicating consecutive activations
 
     def on_activate(self) -> None:
-        """ Initialise task runner """
+        """Initialise task runner."""
         self._running_tasks = dict()
         self._configured_task_types = dict()
         for name, task_cfg in self._module_task_configs.items():
@@ -62,11 +62,11 @@ class TaskRunnerLogic(LogicBase):
             if not issubclass(task, ModuleTask):
                 raise TypeError('Configured task is not a ModuleTask (sub)class')
             self._configured_task_types[name] = task
-        self._sigStartTask.connect(self._run_task, QtCore.Qt.QueuedConnection)
+        self._sigStartTask.connect(self._run_task, QtCore.Qt.ConnectionType.QueuedConnection)
         self._consecutive_activation = True
 
     def on_deactivate(self) -> None:
-        """ Shut down task runner """
+        """Shut down task runner."""
         self._sigStartTask.disconnect()
         for task in self._running_tasks.values():
             task.interrupt
@@ -115,7 +115,7 @@ class TaskRunnerLogic(LogicBase):
             self.sigTaskStarted.emit(name)
 
     def _task_finished_callback(self, name: str) -> None:
-        """ Called every time a task finishes """
+        """Called every time a task finishes."""
         with self._thread_lock:
             task = self._running_tasks.get(name, None)
             if task is not None:
@@ -136,7 +136,7 @@ class TaskRunnerLogic(LogicBase):
         self.sigTaskStateChanged.emit(name, state)
 
     def __init_task(self, name: str) -> ModuleTask:
-        """ Create a ModuleTask instance """
+        """Create a ModuleTask instance."""
         try:
             if name in self._running_tasks:
                 raise RuntimeError(f'ModuleTask "{name}" is already initialized')
@@ -146,7 +146,7 @@ class TaskRunnerLogic(LogicBase):
             raise
 
     def __set_task_arguments(self, task: ModuleTask, arguments: Mapping[str, Any]) -> None:
-        """ Set arguments for ModuleTask instance """
+        """Set arguments for ModuleTask instance."""
         try:
             if not (isinstance(arguments, Mapping) and all(isinstance(a, str) for a in arguments)):
                 raise TypeError('ModuleTask kwargs must be mapping with str type keys')
@@ -156,7 +156,7 @@ class TaskRunnerLogic(LogicBase):
             raise
 
     def __activate_connect_task_modules(self, name: str, task: ModuleTask) -> None:
-        """ Activate and connect all configured module connectors for ModuleTask """
+        """Activate and connect all configured module connectors for ModuleTask."""
         try:
             module_manager = self._qudi_main.module_manager
             connect_targets = dict()
@@ -171,7 +171,7 @@ class TaskRunnerLogic(LogicBase):
             raise
 
     def __move_task_into_thread(self, name: str, task: ModuleTask) -> None:
-        """ Create a new QThread via qudi thread manager and move ModuleTask instance into it """
+        """Create a new QThread via qudi thread manager and move ModuleTask instance into it."""
         try:
             thread = self._qudi_main.thread_manager.get_new_thread(name=f'ModuleTask-{name}')
             if thread is None:
@@ -180,14 +180,14 @@ class TaskRunnerLogic(LogicBase):
             self.log.exception('Exception during thread creation:')
             raise
         task.moveToThread(thread)
-        thread.started.connect(task.run, QtCore.Qt.QueuedConnection)
+        thread.started.connect(task.run, QtCore.Qt.ConnectionType.QueuedConnection)
         thread.finished.connect(partial(self._thread_finished_callback, name=name))
 
     def __connect_task_signals(self, name: str, task: ModuleTask) -> None:
         task.sigFinished.connect(partial(self._task_finished_callback, name=name),
-                                 QtCore.Qt.QueuedConnection)
+                                 QtCore.Qt.ConnectionType.QueuedConnection)
         task.sigStateChanged.connect(partial(self._task_state_changed_callback, name=name),
-                                     QtCore.Qt.QueuedConnection)
+                                     QtCore.Qt.ConnectionType.QueuedConnection)
 
     def __start_task(self, name: str, task: ModuleTask) -> None:
         self._running_tasks[name] = task

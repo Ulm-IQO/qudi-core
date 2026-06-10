@@ -34,14 +34,17 @@ logger = logging.getLogger(__name__)
 
 
 class ParentPollerUnix(Thread):
-    """ A Unix-specific daemon thread that terminates the program immediately
+    """A Unix-specific daemon thread that terminates the program immediately
     when the parent process no longer exists.
     """
 
     def __init__(self, quit_function=None):
-        """ Create the parentpoller.
+        """Create the parent poller.
 
-            @param callable quitfunction: function to run before exiting
+        Parameters
+        ----------
+        quitfunction : callable
+            Function to run before exiting.
         """
         if quit_function is None:
             pass
@@ -52,7 +55,7 @@ class ParentPollerUnix(Thread):
         self.quit_function = quit_function
 
     def run(self):
-        """ Run the parentpoller.
+        """Run the parentpoller.
         """
         # We cannot use os.waitpid because it works only for child processes.
         from errno import EINTR
@@ -73,16 +76,19 @@ class ParentPollerUnix(Thread):
 
 
 class ParentPollerWindows(Thread):
-    """ A Windows-specific daemon thread that listens for a special event that signals an interrupt
+    """A Windows-specific daemon thread that listens for a special event that signals an interrupt
     and, optionally, terminates the program immediately when the parent process no longer exists.
     """
 
     def __init__(self, parent_handle, quit_function=None):
         """ Create the parent poller.
 
-        @param callable quit_function: Function to call for shutdown if parent process is dead.
-        @param int parent_handle: The program will terminate immediately when this handle is
-                                  signaled.
+        Parameters
+        ----------
+        quit_function : callable
+            Function to call for shutdown if the parent process is dead.
+        parent_handle : int
+            The program will terminate immediately when this handle is signaled.
         """
         if quit_function is None:
             pass
@@ -95,7 +101,7 @@ class ParentPollerWindows(Thread):
         self._stop_requested = False
 
     def run(self):
-        """ Run the poll loop. This method never returns.
+        """Run the poll loop. This method never returns.
         """
         try:
             from _winapi import WAIT_OBJECT_0, INFINITE

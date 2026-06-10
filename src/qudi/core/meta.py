@@ -22,7 +22,7 @@ If not, see <https://www.gnu.org/licenses/>.
 __all__ = ('ABCQObjectMeta', 'ModuleMeta', 'QObjectMeta', 'QudiObjectMeta')
 
 from abc import ABCMeta
-from PySide2.QtCore import QObject
+from PySide6.QtCore import QObject
 from qudi.core.statusvariable import StatusVar
 from qudi.core.connector import Connector
 from qudi.core.configoption import ConfigOption
@@ -32,7 +32,7 @@ QObjectMeta = type(QObject)
 
 
 class ABCQObjectMeta(ABCMeta, QObjectMeta):
-    """ Metaclass for abstract QObject subclasses.
+    """Metaclass for abstract QObject subclasses.
     """
 
     def __new__(mcs, name, bases, attributes):
@@ -52,7 +52,7 @@ class ABCQObjectMeta(ABCMeta, QObjectMeta):
 
 
 class QudiObjectMeta(ABCQObjectMeta):
-    """ General purpose metaclass for abstract QObject subclasses that include qudi meta objects
+    """General purpose metaclass for abstract QObject subclasses that include qudi meta objects
     (Connector, StatusVar, ConfigOption).
     Collects all meta objects in new "_meta" class variable for easier access.
     """
@@ -82,7 +82,7 @@ class QudiObjectMeta(ABCQObjectMeta):
 
 
 class ModuleMeta(QudiObjectMeta):
-    """ Metaclass for all qudi modules (GUI, logic and hardware)
+    """Metaclass for all qudi modules (GUI, logic and hardware).
     """
 
     def __new__(mcs, name, bases, attributes):

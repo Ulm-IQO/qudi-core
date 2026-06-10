@@ -22,19 +22,19 @@ If not, see <https://www.gnu.org/licenses/>.
 __all__ = ('LogSignalHandler', 'LogTableModelHandler', 'qt_message_handler')
 
 import logging
-from PySide2 import QtCore
+from PySide6 import QtCore
 
 from .records_model import LogRecordsTableModel
 
 
 class QtSignaller(QtCore.QObject):
-    """ Just a bare Qt QObject containing a signal
+    """Just a bare Qt QObject containing a signal.
     """
     sigSignal = QtCore.Signal(object)
 
 
 class LogSignalHandler(logging.Handler):
-    """ Logging handler that emits a Qt signal when a log entry is registered
+    """Logging handler that emits a Qt signal when a log entry is registered.
     """
     def __init__(self, level=logging.NOTSET):
         super().__init__(level=level)
@@ -45,13 +45,13 @@ class LogSignalHandler(logging.Handler):
         return self.__qt_signaller.sigSignal
 
     def emit(self, record):
-        """ Emit a signal when logging.Handler emits a new log record
+        """Emit a signal when logging.Handler emits a new log record.
         """
         self.__qt_signaller.sigSignal.emit(record)
 
 
 class LogTableModelHandler(logging.Handler):
-    """ Logging handler that stores each log record in a QAbstractTableModel.
+    """Logging handler that stores each log record in a QAbstractTableModel.
     """
     def __init__(self, level=logging.INFO, max_records=10000):
         if level < logging.DEBUG:
@@ -60,10 +60,10 @@ class LogTableModelHandler(logging.Handler):
         self.__qt_signaller = QtSignaller()
         self.table_model = LogRecordsTableModel(max_records=max_records)
         self.__qt_signaller.sigSignal.connect(self.table_model.add_record,
-                                              QtCore.Qt.QueuedConnection)
+                                              QtCore.Qt.ConnectionType.QueuedConnection)
 
     def emit(self, record):
-        """ Store the log record information in the table model
+        """Store the log record information in the table model.
         """
         self.__qt_signaller.sigSignal.emit(record)
 
@@ -73,13 +73,13 @@ def qt_message_handler(msg_type, context, msg):
     A message handler handling Qt5 messages.
     """
     logger = logging.getLogger('Qt')
-    if msg_type == QtCore.QtDebugMsg:
+    if msg_type == QtCore.QtMsgType.QtDebugMsg:
         logger.debug(msg)
-    elif msg_type == QtCore.QtInfoMsg:
+    elif msg_type == QtCore.QtMsgType.QtInfoMsg:
         logger.info(msg)
-    elif msg_type == QtCore.QtWarningMsg:
+    elif msg_type == QtCore.QtMsgType.QtWarningMsg:
         logger.warning(msg)
-    elif msg_type == QtCore.QtCriticalMsg:
+    elif msg_type == QtCore.QtMsgType.QtCriticalMsg:
         logger.critical(msg)
     else:
         import traceback

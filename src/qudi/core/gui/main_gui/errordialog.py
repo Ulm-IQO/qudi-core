@@ -23,7 +23,7 @@ import traceback
 from datetime import datetime
 from collections import deque
 from qudi.util.mutex import RecursiveMutex
-from PySide2 import QtWidgets, QtCore
+from PySide6 import QtWidgets, QtCore
 
 
 class ErrorDialog(QtWidgets.QDialog):
@@ -36,7 +36,7 @@ class ErrorDialog(QtWidgets.QDialog):
                        'critical': 'font-weight: bold; color: #FF00FF;'}
 
     def __init__(self, *args, **kwargs):
-        """ Create an ErrorDialog object
+        """Create an ErrorDialog object.
         """
         super().__init__(*args, **kwargs)
 
@@ -45,10 +45,10 @@ class ErrorDialog(QtWidgets.QDialog):
 
         # Set up dialog window
         self.setWindowTitle('Qudi Error')
-        self.setWindowFlags((QtCore.Qt.Dialog |
-                             QtCore.Qt.CustomizeWindowHint |
-                             QtCore.Qt.WindowSystemMenuHint |
-                             QtCore.Qt.WindowTitleHint) & (~QtCore.Qt.WindowCloseButtonHint))
+        self.setWindowFlags((QtCore.Qt.WindowType.Dialog |
+                             QtCore.Qt.WindowType.CustomizeWindowHint |
+                             QtCore.Qt.WindowType.WindowSystemMenuHint |
+                             QtCore.Qt.WindowType.WindowTitleHint) & (~QtCore.Qt.WindowType.WindowCloseButtonHint))
         self.setModal(True)
         screen_size = QtWidgets.QApplication.instance().primaryScreen().availableSize()
         screen_width = screen_size.width()
@@ -62,26 +62,26 @@ class ErrorDialog(QtWidgets.QDialog):
 
         # Set up header label widget
         self.header_label = QtWidgets.QLabel()
-        self.header_label.setFocusPolicy(QtCore.Qt.NoFocus)
+        self.header_label.setFocusPolicy(QtCore.Qt.FocusPolicy.NoFocus)
         self.header_label.setTextInteractionFlags(
-            QtCore.Qt.TextSelectableByMouse | QtCore.Qt.LinksAccessibleByMouse
+            QtCore.Qt.TextInteractionFlag.TextSelectableByMouse | QtCore.Qt.TextInteractionFlag.LinksAccessibleByMouse
         )
-        self.header_label.setSizePolicy(QtWidgets.QSizePolicy.Expanding,
-                                     QtWidgets.QSizePolicy.Preferred)
+        self.header_label.setSizePolicy(QtWidgets.QSizePolicy.Policy.Expanding,
+                                     QtWidgets.QSizePolicy.Policy.Preferred)
 
         # Set up scrollable message label widget
         scroll_area = QtWidgets.QScrollArea()
         scroll_area.setWidgetResizable(True)
-        scroll_area.setFocusPolicy(QtCore.Qt.NoFocus)
+        scroll_area.setFocusPolicy(QtCore.Qt.FocusPolicy.NoFocus)
         self.msg_label = QtWidgets.QLabel()
-        self.msg_label.setFocusPolicy(QtCore.Qt.NoFocus)
+        self.msg_label.setFocusPolicy(QtCore.Qt.FocusPolicy.NoFocus)
         self.msg_label.setTextInteractionFlags(
-            QtCore.Qt.TextSelectableByMouse | QtCore.Qt.LinksAccessibleByMouse
+            QtCore.Qt.TextInteractionFlag.TextSelectableByMouse | QtCore.Qt.TextInteractionFlag.LinksAccessibleByMouse
         )
         self.msg_label.setWordWrap(True)
-        self.msg_label.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignTop)
-        self.msg_label.setSizePolicy(QtWidgets.QSizePolicy.Expanding,
-                                     QtWidgets.QSizePolicy.Expanding)
+        self.msg_label.setAlignment(QtCore.Qt.AlignmentFlag.AlignLeft | QtCore.Qt.AlignmentFlag.AlignTop)
+        self.msg_label.setSizePolicy(QtWidgets.QSizePolicy.Policy.Expanding,
+                                     QtWidgets.QSizePolicy.Policy.Expanding)
         scroll_area.setWidget(self.msg_label)
 
         # Set up disable checkbox
@@ -111,9 +111,13 @@ class ErrorDialog(QtWidgets.QDialog):
 
     @QtCore.Slot(object)
     def new_error(self, data):
-        """ Show a new error log entry.
+        """
+        Show a new error log entry.
 
-        @param logging.LogRecord data: log record as returned from logging module
+        Parameters
+        ----------
+        data : logging.LogRecord
+            Log record as returned from the logging module.
         """
         with self._thread_lock:
             self._error_queue.append(data)
@@ -146,9 +150,12 @@ class ErrorDialog(QtWidgets.QDialog):
 
     @property
     def enabled(self):
-        """ Property holding the enabled flag for this error message popup
+        """Property holding the enabled flag for this error message popup.
 
-        @return bool: Flag indicating enabled (True) or disabled (False) error message popups
+        Returns
+        -------
+        bool
+            Flag indicating whether error message popups are enabled (`True`) or disabled (`False`).
         """
         with self._thread_lock:
             return not self.disable_checkbox.isChecked()
@@ -177,7 +184,7 @@ class ErrorDialog(QtWidgets.QDialog):
 
     @QtCore.Slot()
     def reject(self):
-        """ Override reject slot in order to prevent rejection of this QDialog.
+        """Override reject slot in order to prevent rejection of this QDialog.
         """
         if not self.dismiss_button.hasFocus():
             self.dismiss_button.setFocus()

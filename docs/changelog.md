@@ -6,10 +6,50 @@
 None
 
 ### Bugfixes
+None
+
+### New Features
+None
+
+### Other
+None
+
+
+## Version 1.7.0
+Released on 04.05.2026
+
+### Breaking Changes
+- Dropped `Python 3.8, 3.9` support
+- Upgraded Qt framework to `PySide6`
+
+### Bugfixes
+- Fixed the correct assignment of `metadata` and `general` when loading data with `NpyDataStorage`, in line with the other storage classes
+- Fixed `TextDataStorage` to allow for saving just metadata
+
+### New Features
+- Added type hinting in `FitConfiguration`
+- Added optional parameters `estimator` and `custom_parameters` to `FitConfigurationsModel.add_configuration` to enable adding of new fit configuration with custom parameters and selectable estimator
+- Added ruff configuration to `pyproject.toml` to standardize formatting
+- Properly load any object that can be imported from the namespace when loading data with any `DataStorage` class
+
+### Other
+None
+
+
+## Version 1.6.0
+Released on 03.02.2025
+
+### Breaking Changes
+None
+
+### Bugfixes
 - Fixed a bug where qudi would deadlock when starting a GUI module via the ipython terminal
-- Fixed a bug with the `qtconsole` package no longer being part of `jupyter`. It is now listed 
+- Fixed a bug with the `qtconsole` package no longer being part of `jupyter`. It is now listed
 explicitly in the dependencies.
 - Fixed SystemTrayIcon error when activating GUI modules
+- Fixed `TextDataStorage.load_data` to load all lines of data and not skip the first line of data
+- Fixed `CsvDataStorage.load_data` to load all lines of data and not skip the first line of data
+- Fixed `NpyDataStorage.load_data` exception when loading metadata
 
 ### New Features
 None
@@ -30,7 +70,7 @@ None
 - Fixed syntax error in `qudi.util.fit_models.lorentzian.LorentzianLinear` fit model
 
 ### New Features
-- Introduced `DiscreteScalarConstraint` that expands the functionality of `ScalarConstraint` to check whether a value 
+- Introduced `DiscreteScalarConstraint` that expands the functionality of `ScalarConstraint` to check whether a value
 is in a set of discrete values
 
 ### Other

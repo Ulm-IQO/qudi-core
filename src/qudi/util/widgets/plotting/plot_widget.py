@@ -25,7 +25,7 @@ __all__ = ['PlotWidget', 'MouseTrackingPlotWidget', 'RubberbandZoomPlotWidget',
            'RubberbandZoomMixin', 'DataSelectionMixin']
 
 from typing import Union, Tuple, List, Dict, Optional, Any, Sequence
-from PySide2 import QtCore
+from PySide6 import QtCore
 from pyqtgraph import PlotWidget as _PlotWidget
 from pyqtgraph import SignalProxy as _SignalProxy
 import qudi.util.widgets.plotting.view_box as _vb

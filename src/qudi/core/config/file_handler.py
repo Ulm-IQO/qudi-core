@@ -34,7 +34,7 @@ from .validator import validate_config, ValidationError
 
 
 class FileHandlerBase:
-    """ File handler base class providing static methods for handling raw qudi configuration files.
+    """File handler base class providing static methods for handling raw qudi configuration files.
     """
 
     @classmethod
@@ -51,8 +51,8 @@ class FileHandlerBase:
 
     @classmethod
     def set_default_path(cls, path: str) -> None:
-        """ Writes the given config file path to "<AppData>/qudi/load.cfg" to be used as default
-        config at the next start of qudi. """
+        """Writes the given config file path to "<AppData>/qudi/load.cfg" to be used as default
+        config at the next start of qudi."""
         # Write current config file path to load.cfg
         yaml_dump(
             os.path.join(get_appdata_dir(create_missing=True), 'load.cfg'),
@@ -61,7 +61,7 @@ class FileHandlerBase:
 
     @staticmethod
     def get_saved_path() -> str:
-        """ Tries to parse "<AppData>/qudi/load.cfg" and return the stored config file path.
+        """Tries to parse "<AppData>/qudi/load.cfg" and return the stored config file path.
         Raises FileNotFoundError if unsuccessful or if the recovered file path does not exist.
         """
         # Try loading config file path from last session
@@ -75,7 +75,7 @@ class FileHandlerBase:
 
     @staticmethod
     def get_default_path() -> str:
-        """ Tries to find config file named "default.cfg" in several locations with the following,
+        """Tries to find config file named "default.cfg" in several locations with the following,
         non-recursive search directory priority:
             1. <UserHome>/qudi/config/
             2. <AppData>/qudi/
@@ -97,7 +97,7 @@ class FileHandlerBase:
 
     @staticmethod
     def _relative_to_absolute_path(path):
-        """ Helper method converting given relative path to an existing absolute path.
+        """Helper method converting given relative path to an existing absolute path.
         Prepends directories to given path with the following priority until an existing path has
         been created:
             1. <UserHome>/qudi/config/
@@ -122,14 +122,14 @@ class FileHandlerBase:
 
 
 class FileHandler(FileHandlerBase):
-    """ File handler class providing static methods for handling raw qudi configuration files.
+    """File handler class providing static methods for handling raw qudi configuration files.
     Also applies qudi configuration validation and default value insertion upon loading/dumping
     configuration files.
     """
 
     @classmethod
     def load(cls, path: str) -> Dict[str, Any]:
-        """ Load and validate a qudi configuration file from disk.
+        """Load and validate a qudi configuration file from disk.
         Raises jsonschema.ValidationError if validation fails.
         """
         config = cls._load(path)
@@ -138,7 +138,7 @@ class FileHandler(FileHandlerBase):
 
     @classmethod
     def dump(cls, path: str, config: Dict[str, Any]) -> None:
-        """ Validate and dump a qudi configuration file to disk.
+        """Validate and dump a qudi configuration file to disk.
         Raises jsonschema.ValidationError if validation fails.
         """
         validate_config(config)

@@ -20,14 +20,14 @@ If not, see <https://www.gnu.org/licenses/>.
 """
 
 import os
-from PySide2 import QtCore, QtGui, QtWidgets
+from PySide6 import QtCore, QtGui, QtWidgets
 from qudi.util.paths import get_artwork_dir
 from qudi.util.mutex import Mutex
 
 
 class ModuleFrameWidget(QtWidgets.QWidget):
     """
-    Custom module QWidget for the Qudi main GUI
+    Custom module QWidget for the Qudi main GUI.
     """
     sigActivateClicked = QtCore.Signal(str)
     sigDeactivateClicked = QtCore.Signal(str)
@@ -36,6 +36,9 @@ class ModuleFrameWidget(QtWidgets.QWidget):
 
     def __init__(self, *args, module_name=None, **kwargs):
         super().__init__(*args, **kwargs)
+
+        self.setSizePolicy(QtWidgets.QSizePolicy.Policy.Expanding, QtWidgets.QSizePolicy.Policy.Fixed)
+        self.setAttribute(QtCore.Qt.WidgetAttribute.WA_StyledBackground, True)
 
         # Create QToolButtons
         self.cleanup_button = QtWidgets.QToolButton()
@@ -56,8 +59,8 @@ class ModuleFrameWidget(QtWidgets.QWidget):
         self.activate_button.setObjectName('loadButton')
         self.activate_button.setCheckable(True)
         self.activate_button.setMinimumWidth(200)
-        self.activate_button.setSizePolicy(QtWidgets.QSizePolicy.MinimumExpanding,
-                                           QtWidgets.QSizePolicy.Fixed)
+        self.activate_button.setSizePolicy(QtWidgets.QSizePolicy.Policy.MinimumExpanding,
+                                           QtWidgets.QSizePolicy.Policy.Fixed)
 
         # Create status label
         self.status_label = QtWidgets.QLabel('Module status goes here...')
@@ -160,11 +163,11 @@ class ModuleListModel(QtCore.QAbstractListModel):
         name = self._module_names[row]
         state = self._module_states[name]
         app_data = self._module_app_data[name]
-        if role == QtCore.Qt.DisplayRole:
+        if role == QtCore.Qt.ItemDataRole.DisplayRole:
             return name, state, app_data
 
     def flags(self, index):
-        return QtCore.Qt.ItemNeverHasChildren | QtCore.Qt.ItemIsEnabled
+        return QtCore.Qt.ItemFlag.ItemNeverHasChildren | QtCore.Qt.ItemFlag.ItemIsEnabled
 
     def append_module(self, name, state, app_data):
         with self._lock:
@@ -208,7 +211,7 @@ class ModuleListModel(QtCore.QAbstractListModel):
             row = self._module_names.index(name)
             self.dataChanged.emit(self.createIndex(row, 0),
                                   self.createIndex(row + 1, 0),
-                                  (QtCore.Qt.DisplayRole,))
+                                  (QtCore.Qt.ItemDataRole.DisplayRole,))
 
     def change_app_data(self, name, exists):
         with self._lock:
@@ -223,26 +226,20 @@ class ModuleListModel(QtCore.QAbstractListModel):
 
 
 class ModuleListItemDelegate(QtWidgets.QStyledItemDelegate):
-    """
-    """
     sigActivateClicked = QtCore.Signal(str)
     sigDeactivateClicked = QtCore.Signal(str)
     sigReloadClicked = QtCore.Signal(str)
     sigCleanupClicked = QtCore.Signal(str)
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.render_widget = ModuleFrameWidget()
-        self.__origin = QtCore.QPoint()
-
     def createEditor(self, parent, option, index):
         widget = ModuleFrameWidget(parent=parent)
-        # Found no other way to pefectly match editor and rendered item view (using paint())
         widget.setContentsMargins(2, 2, 2, 2)
+
         widget.sigActivateClicked.connect(self.sigActivateClicked)
         widget.sigDeactivateClicked.connect(self.sigDeactivateClicked)
         widget.sigReloadClicked.connect(self.sigReloadClicked)
         widget.sigCleanupClicked.connect(self.sigCleanupClicked)
+
         return widget
 
     def setEditorData(self, editor, index):
@@ -252,53 +249,46 @@ class ModuleListItemDelegate(QtWidgets.QStyledItemDelegate):
             editor.set_module_state(data[1])
             editor.set_module_app_data(data[2])
 
-    def setModelData(self, editor, model, index):
-        pass
+    def updateEditorGeometry(self, editor, option, index):
+        editor.setGeometry(option.rect)
 
-    def sizeHint(self, option=None, index=None):
-        return self.render_widget.sizeHint()
-
-    def paint(self, painter, option, index):
-        """
-        """
-        name, state, app_data = index.data()
-        self.render_widget.set_module_name(name)
-        self.render_widget.set_module_state(state)
-        self.render_widget.set_module_app_data(app_data)
-        self.render_widget.setGeometry(option.rect)
-        painter.save()
-        painter.translate(option.rect.topLeft())
-        self.render_widget.render(painter, self.__origin)
-        painter.restore()
+    def sizeHint(self, option, index):
+        widget = ModuleFrameWidget()
+        return widget.sizeHint()
 
 
 class ModuleListView(QtWidgets.QListView):
-    """
-    """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.setMouseTracking(True)
+
         delegate = ModuleListItemDelegate()
         self.setItemDelegate(delegate)
-        self.setMinimumWidth(delegate.sizeHint().width())
+
         self.setUniformItemSizes(True)
-        self.setContentsMargins(0, 0, 0, 0)
         self.setSpacing(1)
-        self.previous_index = QtCore.QModelIndex()
+        self.setContentsMargins(0, 0, 0, 0)
 
-    def mouseMoveEvent(self, event):
-        index = self.indexAt(event.pos())
-        if index != self.previous_index:
-            if self.previous_index.isValid():
-                self.closePersistentEditor(self.previous_index)
-            if index.isValid():
-                self.openPersistentEditor(index)
-            self.previous_index = index
+    def setModel(self, model):
+        super().setModel(model)
 
-    def leaveEvent(self, event):
-        if self.previous_index.isValid():
-            self.closePersistentEditor(self.previous_index)
-        self.previous_index = QtCore.QModelIndex()
+        # Open persistent editors for all rows
+        for row in range(model.rowCount(None)):
+            index = model.index(row, 0)
+            self.openPersistentEditor(index)
+
+        # Keep them in sync when model changes
+        model.rowsInserted.connect(self._open_editors)
+        model.modelReset.connect(self._reset_editors)
+
+    def _open_editors(self, parent, first, last):
+        for row in range(first, last + 1):
+            index = self.model().index(row, 0)
+            self.openPersistentEditor(index)
+
+    def _reset_editors(self):
+        for row in range(self.model().rowCount(None)):
+            index = self.model().index(row, 0)
+            self.openPersistentEditor(index)
 
 
 class ModuleWidget(QtWidgets.QTabWidget):
@@ -311,7 +301,7 @@ class ModuleWidget(QtWidgets.QTabWidget):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.setSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
+        self.setSizePolicy(QtWidgets.QSizePolicy.Policy.Preferred, QtWidgets.QSizePolicy.Policy.Preferred)
         self.list_models = {'gui'     : ModuleListModel(),
                             'logic'   : ModuleListModel(),
                             'hardware': ModuleListModel()}
