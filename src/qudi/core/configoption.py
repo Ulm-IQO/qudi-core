@@ -26,7 +26,7 @@ __all__ = ['ConfigOption', 'MissingOption']
 import copy
 import inspect
 from enum import Enum
-from typing import Any, Callable, Generic, Optional, TypeVar, Union
+from typing import Any, Callable, Generic, Optional, TypeVar, Union, cast
 
 T = TypeVar('T')
 
@@ -115,7 +115,8 @@ class ConfigOption(Generic[T]):
                    'checker': self.checker,
                    'converter': self.converter}
         newargs.update(kwargs)
-        return ConfigOption(**newargs)
+        return cast('ConfigOption[T]', ConfigOption(**newargs))
+
 
     def check(self, value: T) -> bool:
         """If checker function set, check value. Assume everything is ok otherwise.
