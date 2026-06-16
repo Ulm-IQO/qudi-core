@@ -22,7 +22,7 @@ If not, see <https://www.gnu.org/licenses/>.
 __all__ = ['Connector']
 
 import weakref
-from typing import Optional, Type, Union, TypeVar, Generic, TYPE_CHECKING
+from typing import Optional, Type, Union, TypeVar, Generic, TYPE_CHECKING, Any
 from qudi.util.overload import OverloadProxy
 
 if TYPE_CHECKING:
