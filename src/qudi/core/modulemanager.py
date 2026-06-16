@@ -186,7 +186,12 @@ class ModuleManager(QtCore.QObject):
             }
             for module_name, module in self._modules.items():
                 # Add required module references
-                required = set(module.connection_cfg.values())
+                required = set()
+                for name in module.connection_cfg.values():
+                    if isinstance(name, list):
+                        required.update(name)
+                    else:
+                        required.add(name)
                 module.required_modules = set(
                     mod_ref for name, mod_ref in weak_refs.items() if name in required)
                 # Add dependent module references
@@ -756,8 +761,12 @@ class ManagedModule(QtCore.QObject):
             module_instances = {
                 module_ref().name: module_ref().instance for module_ref in self.required_modules
             }
-            module_connections = {conn_name: module_instances[mod_name] for conn_name, mod_name in
-                                  self._connect_cfg.items()}
+            module_connections = dict()
+            for conn_name, mod in self._connect_cfg.items():
+                if isinstance(mod, list):
+                    module_connections[conn_name] = [module_instances[n] for n in mod]
+                else:
+                    module_connections[conn_name] = module_instances[mod]
 
             # Apply module connections
             self._instance.connect_modules(module_connections)

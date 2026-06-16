@@ -70,7 +70,7 @@ class LogTableModelHandler(logging.Handler):
 
 def qt_message_handler(msg_type, context, msg):
     """
-    A message handler handling Qt5 messages.
+    A message handler handling Qt messages.
     """
     logger = logging.getLogger('Qt')
     if msg_type == QtCore.QtMsgType.QtDebugMsg:

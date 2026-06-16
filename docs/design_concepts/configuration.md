@@ -211,6 +211,18 @@ logic:
             my_connector_name: 'my_other_module'  
 ```
 
+Some qudi modules have the ability to connect to a number of other modules that is not predetermined. In that case, the module uses a `ConnectorList` (you do not have to worry about the difference if you are not coding your own module). Such connections are configured as:
+```yaml
+logic:
+    my_module:
+        module.Class: 'my_module.MyModuleClass'
+        connect:
+            my_connector_name: 
+                - 'my_first_module'  
+                - 'my_second_module'  
+                - 'my_third_module'  
+```
+
 Now in order to configure static variables in the module configuration qudi modules use 
 `ConfigOption` meta-objects ([more details here](config_options.md)).  
 If the logic module in our example needs to have options configured, you have to specify this in 
