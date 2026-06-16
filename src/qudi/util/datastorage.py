@@ -30,6 +30,7 @@ import re
 import copy
 import numpy as np
 import matplotlib.pyplot as plt
+import importlib
 
 from enum import Enum
 from datetime import datetime
@@ -98,7 +99,19 @@ def str_dict_to_metadata(str_dict):
     for param, value in str_dict.items():
         try:
             metadata[param] = eval(value)
-        except:
+        except NameError as e:
+            match = re.match(r"name '(\w+)' is not defined", str(e))
+            if match:
+                missing_name = match.group(1)
+                try:
+                    modules = {}
+                    modules[missing_name] = importlib.import_module(missing_name)
+                    metadata[param] = eval(value, modules)
+                except Exception as e:
+                    metadata[param] = value
+            else:
+                metadata[param] = value
+        except Exception:
             metadata[param] = value
     return metadata
 
@@ -114,7 +127,8 @@ def _is_dtype_class(obj):
                      np.integer,
                      np.complexfloating,
                      np.str_,
-                     np.string_)
+                     np.dtypes.StringDType,
+                     np.dtypes.StrDType)
     return type(obj) == type and issubclass(obj, allowed_types)
 
 
@@ -683,8 +697,13 @@ class TextDataStorage(DataStorageBase):
         """
         # Derive dtypes from first data row if not explicitly given
         if column_dtypes is None:
-            first_row = data if _is_1d_array(data) else data[0]
-            column_dtypes = [_value_to_dtype(val) for val in first_row]
+            if (data is None) or (len(data) == 0):
+                column_dtypes = []
+            elif _is_1d_array(data):
+                column_dtypes = [_value_to_dtype(val) for val in data]
+            else:
+                column_dtypes = [_value_to_dtype(val) for val in data[0]]
+
 
         # Create new data file (overwrite old one if it exists)
         file_path, timestamp = self.new_file(timestamp=timestamp,
@@ -862,7 +881,7 @@ class NpyDataStorage(DataStorageBase):
         # Write data and metadata to file. Overwrite silently.
         with open(file_path, 'wb') as file:
             # Write numpy data array in binary format
-            np.save(file, data, allow_pickle=False, fix_imports=False)
+            np.save(file, data, allow_pickle=False)
         with open(meta_file_path, 'w') as file:
             file.write(header)
         return file_path, timestamp, data.shape
@@ -883,7 +902,7 @@ class NpyDataStorage(DataStorageBase):
             Data as a numpy array.
         """
         # Load numpy array
-        data = np.load(file_path, allow_pickle=False, fix_imports=False)
+        data = np.load(file_path, allow_pickle=False)
         # Try to find and load metadata from text file
         metadata_path = file_path.split('.npy')[0] + '_metadata.txt'
         try:

@@ -24,7 +24,7 @@ __all__ = ('get_remote_module_instance', 'BaseServer', 'RemoteModulesServer', 'Q
 import ssl
 import rpyc
 import weakref
-from PySide2 import QtCore
+from PySide6 import QtCore
 from urllib.parse import urlparse
 from rpyc.utils.authenticators import SSLAuthenticator
 

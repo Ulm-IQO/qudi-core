@@ -25,7 +25,7 @@ import uuid
 from abc import abstractmethod
 from uuid import uuid4
 from fysom import Fysom
-from PySide2 import QtCore, QtGui, QtWidgets
+from PySide6 import QtCore, QtGui, QtWidgets
 from typing import Any, Mapping, Optional, Callable, Union, Dict
 
 from qudi.core.configoption import MissingOption
@@ -113,15 +113,6 @@ class Base(QtCore.QObject, metaclass=ModuleMeta):
     * Reload module data (from saved variables)
     """
     _threaded = False
-
-    # FIXME: This __new__ implementation has the sole purpose to circumvent a known PySide2(6) bug.
-    #  See https://bugreports.qt.io/browse/PYSIDE-1434 for more details.
-    def __new__(cls, *args, **kwargs):
-        abstract = getattr(cls, '__abstractmethods__', frozenset())
-        if abstract:
-            raise TypeError(f'Can\'t instantiate abstract class "{cls.__name__}" '
-                            f'with abstract methods {set(abstract)}')
-        return super().__new__(cls, *args, **kwargs)
 
     def __init__(self, qudi_main_weakref: Any, name: str,
                  config: Optional[Mapping[str, Any]] = None,
@@ -217,7 +208,7 @@ class Base(QtCore.QObject, metaclass=ModuleMeta):
         if QtCore.QThread.currentThread() != self.thread():
             QtCore.QMetaObject.invokeMethod(self,
                                             'move_to_main_thread',
-                                            QtCore.Qt.BlockingQueuedConnection)
+                                            QtCore.Qt.ConnectionType.BlockingQueuedConnection)
         else:
             self.moveToThread(QtCore.QCoreApplication.instance().thread())
 
