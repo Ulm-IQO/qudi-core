@@ -3,13 +3,13 @@
 ## Pre-Release
 
 ### Breaking Changes
-None
+- Dropped support for rpyc version 5 and lower
 
 ### Bugfixes
-None
+- Workaround for MRO resolution for remote module connections
 
 ### New Features
-None
+- Added an new `ConnectorList` type for connecting an unspecified number of modules of the same interface to a module.
 
 ### Other
 None
@@ -29,7 +29,6 @@ Released on 04.05.2026
 ### New Features
 - Added type hinting in `FitConfiguration`
 - Added optional parameters `estimator` and `custom_parameters` to `FitConfigurationsModel.add_configuration` to enable adding of new fit configuration with custom parameters and selectable estimator
-- Added an new `ConnectorList` type for connecting an unspecified number of modules of the same interface to a module.
 - Added ruff configuration to `pyproject.toml` to standardize formatting
 - Properly load any object that can be imported from the namespace when loading data with any `DataStorage` class
 
