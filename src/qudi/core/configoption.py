@@ -86,6 +86,9 @@ class ConfigOption(Generic[T]):
         if constructor is not None:
             self.constructor(constructor)
 
+    def __get__(self, instance, owner) -> T:
+        return self
+
     def __set_name__(self, owner, name):
         if self.name is None:
             self.name = name
