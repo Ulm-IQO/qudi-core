@@ -25,7 +25,7 @@ from abc import ABCMeta
 from PySide6.QtCore import QObject
 
 from qudi.core.statusvariable import StatusVar
-from qudi.core.connector import Connector
+from qudi.core.connector import Connector, ConnectorList
 from qudi.core.configoption import ConfigOption
 
 
@@ -53,7 +53,7 @@ class ABCQObjectMeta(ABCMeta, QObjectMeta):
 class QudiQObjectMeta(ABCQObjectMeta):
     """
     General purpose metaclass for abstract (ABC) QObject classes that include qudi meta attribute
-    descriptors, i.e. Connector, StatusVar and ConfigOption.
+    descriptors, i.e. Connector, ConnectorList, StatusVar and ConfigOption.
     Collects all meta attribute descriptors in new `_meta` class variable for easier access.
     """
     def __new__(mcs, name, bases, attributes):
@@ -64,6 +64,7 @@ class QudiQObjectMeta(ABCQObjectMeta):
         base_meta = getattr(cls, '_meta', dict())  # extend shallow copy of _meta dicts if existent
 
         connectors = base_meta.get('connectors', dict()).copy()
+        connector_lists = base_meta.get('connector_lists', dict()).copy()
         status_vars = base_meta.get('status_variables', dict()).copy()
         config_opt = base_meta.get('config_options', dict()).copy()
         for attr_name, attr in cls.__dict__.items():
@@ -73,8 +74,11 @@ class QudiQObjectMeta(ABCQObjectMeta):
                 status_vars[attr_name] = attr
             elif isinstance(attr, ConfigOption):
                 config_opt[attr_name] = attr
+            elif isinstance(attr, ConnectorList):
+                connector_lists[attr_name] = attr
 
         cls._meta = {'connectors'      : connectors,
                      'status_variables': status_vars,
-                     'config_options'  : config_opt}
+                     'config_options'  : config_opt,
+                     'connector_lists' : connector_lists}
         return cls

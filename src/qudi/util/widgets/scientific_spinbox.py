@@ -233,7 +233,7 @@ class IntegerValidator(QtGui.QValidator):
 
 class ScienDSpinBox(QtWidgets.QAbstractSpinBox):
     """
-    Wrapper Class from PyQt5 (or QtPy) to display a QDoubleSpinBox in Scientific way.
+    Wrapper Class to display a QDoubleSpinBox in Scientific way.
     Fully supports prefix and suffix functionality of the QDoubleSpinBox.
     Has built-in functionality to invoke the displayed number precision from the user input.
 
@@ -1197,7 +1197,7 @@ class ScienDSpinBox(QtWidgets.QAbstractSpinBox):
 
 class ScienSpinBox(QtWidgets.QAbstractSpinBox):
     """
-    Wrapper Class from PyQt5 (or QtPy) to display a QSpinBox in Scientific way.
+    Wrapper Class to display a QSpinBox in Scientific way.
     Fully supports prefix and suffix functionality of the QSpinBox.
 
     This class can be directly used in Qt Designer by promoting the QSpinBox to ScienSpinBox.

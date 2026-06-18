@@ -54,12 +54,13 @@ before. Reloading will no longer invalidate the import cache and reload the modu
 that code changes are applied during runtime. This has been causing too many problems in the past 
 since most users and even developers are not aware about the many caveats that come with it.
 - Removed support for Python 3.8 since it is EOL
+- Dropped support for rpyc version 5 and lower
 
 ### Bugfixes
-None
+- Workaround for MRO resolution for remote module connections
 
 ### New Features
-None
+- Added an new `ConnectorList` type for connecting an unspecified number of modules of the same interface to a module.
 
 ### Other
 None
