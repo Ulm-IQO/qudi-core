@@ -20,7 +20,7 @@ You should have received a copy of the GNU Lesser General Public License along w
 If not, see <https://www.gnu.org/licenses/>.
 """
 
-from PySide2 import QtWidgets, QtCore, QtGui
+from PySide6 import QtWidgets, QtCore, QtGui
 
 
 class CircleLoadingIndicator(QtWidgets.QWidget):
@@ -38,9 +38,19 @@ class CircleLoadingIndicator(QtWidgets.QWidget):
     def __init__(self, *args, cycle_time=1.2, indicator_length=960, indicator_width_ratio=0.2,
                  **kwargs):
         """
-        @param float cycle_time: The animation time in seconds for a full cycle
-        @param int indicator_length: Length of the indicator arc in 1/16th of a degree
-        @param float indicator_width_ratio: Ratio of the indicator arc width WRT widget size
+        Parameters
+        ----------
+        cycle_time : float
+            The animation time in seconds for a full cycle.
+        indicator_length : int
+            Length of the indicator arc in 1/16th of a degree.
+        indicator_width_ratio : float
+            Ratio of the indicator arc width with respect to the widget size.
+
+        Returns
+        -------
+        None
+            (or specify the return type and description if the function returns something)
         """
         assert cycle_time > 0, 'cycle_time must be larger than 0'
         assert 0 < indicator_length < 5760, 'indicator_length must be >0 and <5760'
@@ -48,7 +58,7 @@ class CircleLoadingIndicator(QtWidgets.QWidget):
         super().__init__(*args, **kwargs)
         self.setMinimumSize(6, 6)
         self.setMouseTracking(False)
-        self.setFocusPolicy(QtCore.Qt.NoFocus)
+        self.setFocusPolicy(QtCore.Qt.FocusPolicy.NoFocus)
 
         # Fixed init parameters
         self._indicator_length = indicator_length
@@ -62,7 +72,7 @@ class CircleLoadingIndicator(QtWidgets.QWidget):
         # misc parameters
         self.__animation = None
         self.__pen = QtGui.QPen(self.palette().highlight().color())
-        self.__pen.setCapStyle(QtCore.Qt.RoundCap)
+        self.__pen.setCapStyle(QtCore.Qt.PenCapStyle.RoundCap)
         self.__draw_rect = None
         self.__update_draw_size()
         self.__size_hint = None
@@ -88,8 +98,8 @@ class CircleLoadingIndicator(QtWidgets.QWidget):
     def paintEvent(self, event):
         # Set up painter
         p = QtGui.QPainter(self)
-        p.setRenderHint(QtGui.QPainter.Antialiasing, True)
-        p.setBrush(QtCore.Qt.NoBrush)
+        p.setRenderHint(QtGui.QPainter.RenderHint.Antialiasing, True)
+        p.setBrush(QtCore.Qt.BrushStyle.NoBrush)
         self.__pen.setColor(self.palette().highlight().color())  # in case the palette has changed
         p.setPen(self.__pen)
 

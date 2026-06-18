@@ -20,7 +20,8 @@ You should have received a copy of the GNU Lesser General Public License along w
 If not, see <https://www.gnu.org/licenses/>.
 """
 
-__all__ = ('Sine', 'DoubleSine', 'ExponentialDecaySine', 'estimate_frequency_ft')
+__all__ = ['Sine', 'DoubleSine', 'ExponentialDecaySine', 'ExponentialDecayDoubleSine',
+           'estimate_frequency_ft']
 
 import numpy as np
 from qudi.util.math import compute_ft
@@ -235,7 +236,7 @@ class ExponentialDecaySine(FitModelBase):
         # remove noise for peak width and decay constant estimation
         dft_y[np.argwhere(dft_y <= np.std(dft_y))] = 0
         # calculating the width of the FT peak for the estimation of decay constant
-        decay = 1 / (2 * np.trapz(dft_y, dft_x) / max(dft_y))
+        decay = 1 / (2 * np.trapezoid(dft_y, dft_x) / max(dft_y))
         # s = 0
         # for i in range(0, len(dft_x)):
         #     s += dft_y[i] * abs(dft_x[1] - dft_x[0]) / max(dft_y)

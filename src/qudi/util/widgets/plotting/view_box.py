@@ -29,7 +29,7 @@ import warnings
 from typing import Optional, Union, Any, Tuple, Sequence, List, Dict
 from enum import IntEnum
 
-from PySide2 import QtCore
+from PySide6 import QtCore
 from pyqtgraph import ViewBox, PlotDataItem, ImageItem, PlotCurveItem, ScatterPlotItem
 from pyqtgraph import LinearRegionItem as _LinearRegionItem
 from pyqtgraph.GraphicsScene.mouseEvents import MouseClickEvent, MouseDragEvent
@@ -99,8 +99,8 @@ class DataSelectionMixin:
 
     SelectionMode = SelectionMode
 
-    sigMarkerSelectionChanged = QtCore.Signal(dict)
-    sigRegionSelectionChanged = QtCore.Signal(dict)
+    sigMarkerSelectionChanged = QtCore.Signal(object)
+    sigRegionSelectionChanged = QtCore.Signal(object)
 
     def __init__(self,
                  selection_bounds: Optional[Sequence[Tuple[Union[None, float], Union[None, float]]]] = None,
@@ -110,6 +110,7 @@ class DataSelectionMixin:
                  selection_hover_brush: Optional[Any] = None,
                  xy_region_selection_crosshair: Optional[bool] = False,
                  xy_region_selection_handles: Optional[bool] = True,
+                 xy_region_min_size_percentile: Optional[float] = None,
                  **kwargs
                  ) -> None:
         super().__init__(**kwargs)
@@ -123,14 +124,26 @@ class DataSelectionMixin:
         self._region_selection_mode = self.SelectionMode.Disabled
         self._marker_selection_mode = self.SelectionMode.Disabled
         self._selection_mutable = True
+        if (xy_region_min_size_percentile is not None) and (xy_region_min_size_percentile > 0):
+            self._xy_region_min_size_percentile = xy_region_min_size_percentile
+            self.sigRangeChanged.connect(self._update_xy_region_min_size)
+        else:
+            self._xy_region_min_size_percentile = None
 
         self.__regions = list()
         self.__markers = list()
 
+    def _update_xy_region_min_size(self, viewbox, new_range, changed) -> None:
+        min_size = [
+            self._xy_region_min_size_percentile * abs(rang[1] - rang[0]) for rang in new_range
+        ]
+        for region in self.__regions:
+            region.set_min_size(min_size)
+
     def mouseClickEvent(self, ev: MouseClickEvent) -> None:
         if self.allow_tracking_outside_data or self.pointer_on_data(ev.scenePos()):
             selection_enabled = self._marker_selection_mode != self.SelectionMode.Disabled
-            if selection_enabled and (ev.button() == QtCore.Qt.LeftButton) and not ev.double():
+            if selection_enabled and (ev.button() == QtCore.Qt.MouseButton.LeftButton) and not ev.double():
                 ev.accept()
                 pos = self.mapToView(ev.pos())
                 self.add_marker_selection((pos.x(), pos.y()))
@@ -139,8 +152,8 @@ class DataSelectionMixin:
     def mouseDragEvent(self, ev: MouseDragEvent, axis: Optional[int] = None) -> None:
         if not ev.isAccepted():
             selection_enabled = self._region_selection_mode != self.SelectionMode.Disabled
-            no_mod = ev.modifiers() == QtCore.Qt.NoModifier
-            is_left_button = ev.button() == QtCore.Qt.LeftButton
+            no_mod = ev.modifiers() == QtCore.Qt.KeyboardModifier.NoModifier
+            is_left_button = ev.button() == QtCore.Qt.MouseButton.LeftButton
             data_valid = self.allow_tracking_outside_data or self.pointer_on_data(
                 ev.buttonDownScenePos()
             )
@@ -247,11 +260,11 @@ class DataSelectionMixin:
             )
         else:
             if mode == self.SelectionMode.X:
-                orientation = QtCore.Qt.Vertical
+                orientation = QtCore.Qt.Orientation.Vertical
                 bounds = None if self._selection_bounds is None else self._selection_bounds[0]
                 values = span[0]
             else:
-                orientation = QtCore.Qt.Horizontal
+                orientation = QtCore.Qt.Orientation.Horizontal
                 bounds = None if self._selection_bounds is None else self._selection_bounds[1]
                 values = span[1]
             item = LinearRegion(viewbox=self,
@@ -290,11 +303,11 @@ class DataSelectionMixin:
                                      hover_pen=self._selection_hover_pen)
         else:
             if mode == self.SelectionMode.X:
-                orientation = QtCore.Qt.Vertical
+                orientation = QtCore.Qt.Orientation.Vertical
                 bounds = None if self._selection_bounds is None else self._selection_bounds[0]
                 pos = position[0]
             else:
-                orientation = QtCore.Qt.Horizontal
+                orientation = QtCore.Qt.Orientation.Horizontal
                 bounds = None if self._selection_bounds is None else self._selection_bounds[1]
                 pos = position[1]
             item = InfiniteLine(viewbox=self,
@@ -322,7 +335,7 @@ class DataSelectionMixin:
         item = self.__regions[index]
         item.blockSignals(True)
         if isinstance(item, LinearRegion):
-            if item.orientation == QtCore.Qt.Vertical:
+            if item.orientation == QtCore.Qt.Orientation.Vertical:
                 item.set_area(sorted(span[0]))
             else:
                 item.set_area(sorted(span[1]))
@@ -348,7 +361,7 @@ class DataSelectionMixin:
         item = self.__markers[index]
         item.blockSignals(True)
         if isinstance(item, InfiniteLine):
-            item.set_position(position[0 if item.orientation == QtCore.Qt.Vertical else 1])
+            item.set_position(position[0 if item.orientation == QtCore.Qt.Orientation.Vertical else 1])
         elif isinstance(item, InfiniteCrosshair):
             item.set_position(position)
         item.blockSignals(False)
@@ -424,11 +437,11 @@ class DataSelectionMixin:
         return {
             self.SelectionMode.X: [
                 m.position for m in self.__markers if
-                isinstance(m, InfiniteLine) and m.orientation == QtCore.Qt.Vertical
+                isinstance(m, InfiniteLine) and m.orientation == QtCore.Qt.Orientation.Vertical
             ],
             self.SelectionMode.Y: [
                 m.position for m in self.__markers if
-                isinstance(m, InfiniteLine) and m.orientation == QtCore.Qt.Horizontal
+                isinstance(m, InfiniteLine) and m.orientation == QtCore.Qt.Orientation.Horizontal
             ],
             self.SelectionMode.XY: [
                 m.position for m in self.__markers if isinstance(m, InfiniteCrosshair)
@@ -440,11 +453,11 @@ class DataSelectionMixin:
         return {
             self.SelectionMode.X: [
                 r.area for r in self.__regions if
-                isinstance(r, LinearRegion) and r.orientation == QtCore.Qt.Vertical
+                isinstance(r, LinearRegion) and r.orientation == QtCore.Qt.Orientation.Vertical
             ],
             self.SelectionMode.Y: [
                 r.area for r in self.__regions if
-                isinstance(r, LinearRegion) and r.orientation == QtCore.Qt.Horizontal
+                isinstance(r, LinearRegion) and r.orientation == QtCore.Qt.Orientation.Horizontal
             ],
             self.SelectionMode.XY: [r.area for r in self.__regions if isinstance(r, Rectangle)]
         }
@@ -462,12 +475,12 @@ class DataSelectionMixin:
             x_bounds, y_bounds = self._selection_bounds
         for m in self.__markers:
             if isinstance(m, InfiniteLine):
-                m.set_bounds(x_bounds if m.orientation == QtCore.Qt.Vertical else y_bounds)
+                m.set_bounds(x_bounds if m.orientation == QtCore.Qt.Orientation.Vertical else y_bounds)
             elif isinstance(m, InfiniteCrosshair):
                 m.set_bounds((x_bounds, y_bounds))
         for r in self.__regions:
             if isinstance(r, LinearRegion):
-                r.set_bounds(x_bounds if r.orientation == QtCore.Qt.Vertical else y_bounds)
+                r.set_bounds(x_bounds if r.orientation == QtCore.Qt.Orientation.Vertical else y_bounds)
             elif isinstance(r, Rectangle):
                 r.set_bounds((x_bounds, y_bounds))
 
@@ -479,16 +492,17 @@ class RubberbandZoomMixin:
 
     sigZoomAreaApplied = QtCore.Signal(QtCore.QRectF)
 
-    # FIXME: Workaround for pyqtgraph. See also mouseDragEvent.
+    # FIXME: Introduce general dependency checking during qudi startup to avoid cluttering with
+    #  checks like the one below
     try:
         from pyqtgraph import __version__ as __pyqtgraph_version
-        major, minor, revision = (int(v) for v in __pyqtgraph_version.split('.'))
-        _legacy_pyqtgraph = (major == 0) and ((minor < 12) or ((minor == 12) and (revision < 4)))
-    except (ValueError, TypeError, ImportError):
-        _legacy_pyqtgraph = True
-    if _legacy_pyqtgraph:
-        warnings.warn('You are using an older, unsupported version of pyqtgraph. '
-                      'Please update to a newer version >= 0.12.4.')
+        if __pyqtgraph_version == '0.12.4':
+            raise RuntimeError(
+                'You are using an unupported version of pyqtgraph. Please re-install qudi-core '
+                'using pip or update pyqtgraph to a version != 0.12.4 manually.'
+            )
+    except ImportError:
+        pass
 
     def __init__(self, **kwargs) -> None:
         super().__init__(**kwargs)
@@ -520,8 +534,8 @@ class RubberbandZoomMixin:
         """ Additional mouse drag event handling to implement rubber band selection and zooming.
         """
         if not ev.isAccepted():
-            no_mod = ev.modifiers() == QtCore.Qt.NoModifier
-            is_left_button = ev.button() == QtCore.Qt.LeftButton
+            no_mod = ev.modifiers() == QtCore.Qt.KeyboardModifier.NoModifier
+            is_left_button = ev.button() == QtCore.Qt.MouseButton.LeftButton
             mode = self._rubberband_zoom_selection_mode
             zoom_enabled = mode != self.SelectionMode.Disabled
 
@@ -532,13 +546,7 @@ class RubberbandZoomMixin:
                 current_pos = self.mapToView(ev.pos())
                 zoom_rect = QtCore.QRectF(start_pos, current_pos)
                 if mode == self.SelectionMode.XY:
-                    # FIXME: Workaround for messed-up pyqtgraph version >= 0.12.4. Somehow the
-                    #  coordinate mapping changed unintended from 0.12.3 to 0.12.4 (not stated in
-                    #  the changelog).
-                    if self._legacy_pyqtgraph:
-                        self.updateScaleBox(ev.buttonDownPos(), ev.pos())
-                    else:
-                        self.updateScaleBox(ev.buttonDownScenePos(), ev.scenePos())
+                    self.updateScaleBox(ev.buttonDownPos(), ev.pos())
                     if ev.isFinish():
                         self.rbScaleBox.hide()
                         self.setRange(rect=zoom_rect, padding=0)

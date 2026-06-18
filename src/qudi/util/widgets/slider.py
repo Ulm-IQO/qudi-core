@@ -22,7 +22,7 @@ If not, see <https://www.gnu.org/licenses/>.
 
 __all__ = ['DoubleSlider']
 
-from PySide2 import QtCore, QtWidgets
+from PySide6 import QtCore, QtWidgets
 
 
 class DoubleSlider(QtWidgets.QSlider):
@@ -68,9 +68,11 @@ class DoubleSlider(QtWidgets.QSlider):
         return self.minimum() + (self.maximum() - self.minimum()) * (int_val / self._step_number)
 
     def setValue(self, val):
-        int_val = round((val - self.minimum()) * self._step_number / (self.maximum() - self.minimum()))
+        max_val = self.maximum()
+        min_val = self.minimum()
+        val = max(min_val, min(max_val, val))
+        int_val = int(round((val - min_val) * self._step_number / (max_val - min_val)))
         super().setValue(int_val)
-        return
 
     @property
     def granularity(self) -> int:
@@ -80,7 +82,10 @@ class DoubleSlider(QtWidgets.QSlider):
         """
         Set the granularity of the slider, i.e. the number of discrete steps within the value range.
 
-        @param int number_of_steps: The number of discrete positions the slider has
+        Parameters
+        ----------
+        number_of_steps : int
+            The number of discrete positions the slider has.
         """
         number_of_steps = int(number_of_steps)
         if number_of_steps < 1:

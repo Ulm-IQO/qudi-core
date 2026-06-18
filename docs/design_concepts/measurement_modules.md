@@ -39,7 +39,7 @@ notebook using the qudi kernel or the qudi manager GUI console.
 While a logic module is in principle enough to control a measurement application, you may want to 
 provide a more user-friendly interface. This is where qudi GUI modules come into play. 
 Each qudi GUI module must assemble and show a Qt `QMainWindow` instance that can use everything 
-[Qt for Python (PySide2)](https://doc.qt.io/qtforpython/) has to offer.  
+[Qt for Python (PySide6)](https://doc.qt.io/qtforpython/) has to offer.  
 They must connect to at least one logic module in order to provide a graphical interface for it. 
 
 > **⚠ WARNING:**
@@ -142,7 +142,7 @@ NOT each time the module is activated.
 See also the [qudi configuration option documentation](../404.md).
 
 #### 7. Measurement Module Interconnection
-You can define other measurement modules that can be accessed via `Connector` meta object members.  
+You can define other measurement modules that can be accessed via `Connector` and `ConnectorList` meta object members.  
 The qudi module manager will automatically load and activate dependency modules according to the 
 configuration and connect them to the module upon activation.
 
@@ -179,7 +179,7 @@ So, as you might have noticed the relationship of GUI, logic and hardware module
 - Hardware modules control no other qudi modules and are just providing an interface to a specific 
 instrument
 
-The connection to another module is done by the `qudi.core.connector.Connector` meta object. These
+The connection to another module is done by the `qudi.core.connector.Connector` and `qudi.core.connector.ConnectorList`  meta object. These
 connectors declare the dependency of a module on another module further down the hierarchy, i.e. it 
 opens up a control flow path to another module.
 
@@ -198,7 +198,7 @@ would otherwise lock up and be unresponsive until the logic method has returned.
 
 A common example would be a GUI module triggering the start of a long-running logic method:
 ```python
-from PySide2.QtCore import Signal
+from PySide6.QtCore import Signal
 from qudi.core.module import Base, LogicBase
 from qudi.core.connector import Connector
 

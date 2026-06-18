@@ -21,6 +21,12 @@ If not, see <https://www.gnu.org/licenses/>.
 
 __all__ = ('ScalarConstraint',)
 
+import warnings
+warnings.warn('The "qudi.core.interface" module is deprecated and will soon be removed in future '
+              'releases. Please use the objects contained in "qudi.util.constraints" instead.',
+              DeprecationWarning,
+              stacklevel=2)
+
 
 class ScalarConstraint:
     """

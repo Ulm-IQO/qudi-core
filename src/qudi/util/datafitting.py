@@ -28,7 +28,8 @@ import logging
 import inspect
 import lmfit
 import numpy as np
-from PySide2 import QtCore
+from PySide6 import QtCore
+from typing import Iterable, Optional, Mapping, Union
 
 import qudi.util.fit_models as _fit_models_ns
 from qudi.util.mutex import Mutex
@@ -67,7 +68,7 @@ class FitConfiguration:
     """
     """
 
-    def __init__(self, name, model, estimator=None, custom_parameters=None):
+    def __init__(self, name: str, model: str, estimator: Optional[str] = None, custom_parameters: Optional[lmfit.Parameters] = None):
         assert isinstance(name, str), 'FitConfiguration name must be str type.'
         assert name, 'FitConfiguration name must be non-empty string.'
         assert model in _fit_models, f'Invalid fit model name encountered: "{model}".'
@@ -93,7 +94,7 @@ class FitConfiguration:
         return self._estimator
 
     @estimator.setter
-    def estimator(self, value):
+    def estimator(self, value: Union[str, None]):
         if value is not None:
             assert value in self.available_estimators, \
                 f'Invalid fit model estimator encountered: "{value}"'
@@ -113,7 +114,7 @@ class FitConfiguration:
         return self._custom_parameters.copy() if self._custom_parameters is not None else None
 
     @custom_parameters.setter
-    def custom_parameters(self, value):
+    def custom_parameters(self, value: Union[lmfit.Parameters, None]):
         if value is not None:
             default_params = self.default_parameters
             invalid = set(value).difference(default_params)
@@ -172,10 +173,10 @@ class FitConfigurationsModel(QtCore.QAbstractListModel):
         return self._fit_configurations.copy()
 
     @QtCore.Slot(str, str)
-    def add_configuration(self, name, model):
+    def add_configuration(self, name: str, model: str, estimator: Optional[str] = None, custom_parameters: Optional[lmfit.Parameters] = None):
         assert name not in self.configuration_names, f'Fit config "{name}" already defined.'
         assert name != 'No Fit', '"No Fit" is a reserved name for fit configs. Choose another.'
-        config = FitConfiguration(name, model)
+        config = FitConfiguration(name, model, estimator, custom_parameters)
         new_row = len(self._fit_configurations)
         self.beginInsertRows(self.createIndex(new_row, 0), new_row, new_row)
         self._fit_configurations.append(config)
@@ -202,33 +203,33 @@ class FitConfigurationsModel(QtCore.QAbstractListModel):
 
     def flags(self, index):
         if index.isValid():
-            return QtCore.Qt.ItemIsEditable | QtCore.Qt.ItemIsEnabled
+            return QtCore.Qt.ItemFlag.ItemIsEditable | QtCore.Qt.ItemFlag.ItemIsEnabled
 
     def rowCount(self, parent=QtCore.QModelIndex()):
         return len(self._fit_configurations)
 
-    def headerData(self, section, orientation, role=QtCore.Qt.DisplayRole):
-        if role == QtCore.Qt.DisplayRole:
-            if (orientation == QtCore.Qt.Horizontal) and (section == 0):
+    def headerData(self, section, orientation, role=QtCore.Qt.ItemDataRole.DisplayRole):
+        if role == QtCore.Qt.ItemDataRole.DisplayRole:
+            if (orientation == QtCore.Qt.Orientation.Horizontal) and (section == 0):
                 return 'Fit Configurations'
-            elif orientation == QtCore.Qt.Vertical:
+            elif orientation == QtCore.Qt.Orientation.Vertical:
                 try:
                     return self.configuration_names[section]
                 except IndexError:
                     pass
         return None
 
-    def data(self, index=QtCore.QModelIndex(), role=QtCore.Qt.DisplayRole):
-        if (role == QtCore.Qt.DisplayRole) and (index.isValid()):
+    def data(self, index=QtCore.QModelIndex(), role=QtCore.Qt.ItemDataRole.DisplayRole):
+        if (role == QtCore.Qt.ItemDataRole.DisplayRole) and (index.isValid()):
             try:
                 return self._fit_configurations[index.row()]
             except IndexError:
                 pass
         return None
 
-    def setData(self, index, value, role=QtCore.Qt.EditRole):
+    def setData(self, index, value, role=QtCore.Qt.ItemDataRole.EditRole):
         if index.isValid():
-            config = index.data(QtCore.Qt.DisplayRole)
+            config = index.data(QtCore.Qt.ItemDataRole.DisplayRole)
             if config is None:
                 return False
             new_params = value[1]
@@ -241,7 +242,6 @@ class FitConfigurationsModel(QtCore.QAbstractListModel):
                       value=value_tuple[1],
                       min=value_tuple[2],
                       max=value_tuple[3])
-            print('setData:', params)
             config.estimator = None if not value[0] else value[0]
             config.custom_parameters = None if not params else params
             self.dataChanged.emit(self.createIndex(index.row(), 0),
@@ -250,22 +250,36 @@ class FitConfigurationsModel(QtCore.QAbstractListModel):
         return False
 
     def dump_configs(self):
-        """ Returns all currently held fit configurations as dicts representations containing only
-        data types that can be dumped as YAML in qudi app status.
+        """
+        Returns all currently held fit configurations as dictionary representations containing only
+        data types that can be dumped as YAML in the Qudi app status.
 
-        @return list: List of fit config dict representations.
+        Returns
+        -------
+        list of dict
+            List of fit configuration dictionary representations.
         """
         return [cfg.to_dict() for cfg in self._fit_configurations]
 
     def load_configs(self, configs):
-        """ Initializes/overwrites all currently held fit configurations by a given iterable of dict
+        """Initializes/overwrites all currently held fit configurations by a given iterable of dict
         representations (see also: FitConfigurationsModel.dump_configs).
 
-        Calling this method will reset the list model.
+        This method will reset the list model.
 
-        @param iterable configs: Iterable of FitConfiguration dict representations
+        Parameters
+        ----------
+        configs : iterable
+            Iterable of FitConfiguration dictionary representations.
+            See also: FitConfigurationsModel.dump_configs.
+
         """
-        config_objects = [FitConfiguration.from_dict(cfg) for cfg in configs]
+        config_objects = list()
+        for cfg in configs:
+            try:
+                config_objects.append(FitConfiguration.from_dict(cfg))
+            except:
+                _log.warning(f'Unable to load fit configuration:\n{cfg}')
         self.beginResetModel()
         self._fit_configurations = config_objects
         self.endResetModel()
@@ -335,16 +349,39 @@ class FitContainer(QtCore.QObject):
             return '', None
 
     @staticmethod
-    def formatted_result(fit_result, parameters_units=None):
+    def formatted_result(fit_result: Union[None, lmfit.model.ModelResult],
+                         parameters_units: Optional[Mapping[str, str]] = None) -> str:
         if fit_result is None:
             return ''
         if parameters_units is None:
             parameters_units = dict()
+
         parameters_to_format = dict()
         for name, param in fit_result.params.items():
-            if not param.vary:
-                continue
+            stderr = param.stderr if param.vary else None
+            stderr = np.nan if param.vary and stderr is None else stderr
+
             parameters_to_format[name] = {'value': param.value,
-                                          'error': param.stderr,
+                                          'error': stderr,
                                           'unit': parameters_units.get(name, '')}
+
         return create_formatted_output(parameters_to_format)
+
+    @staticmethod
+    def dict_result(fit_result: Union[None, lmfit.model.ModelResult],
+                    parameters_units: Optional[Mapping[str, str]] = None,
+                    export_keys: Optional[Iterable[str]] = ('value', 'stderr')) -> dict:
+        if fit_result is None:
+            return dict()
+        if parameters_units is None:
+            parameters_units = dict()
+
+        fitparams = fit_result.result.params
+        export_dict = {'model': fit_result.model.name}
+
+        for key, res in fitparams.items():
+            dict_i = {key: getattr(res, key) for key in export_keys}
+            dict_i['unit'] = parameters_units.get(key, '')
+            export_dict[key] = dict_i
+
+        return export_dict

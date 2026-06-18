@@ -20,7 +20,8 @@ You should have received a copy of the GNU Lesser General Public License along w
 If not, see <https://www.gnu.org/licenses/>.
 """
 
-__all__ = ('DoubleGaussian', 'Gaussian', 'Gaussian2D', 'TripleGaussian', 'multiple_gaussian')
+__all__ = ['DoubleGaussian', 'Gaussian', 'Gaussian2D', 'TripleGaussian', 'GaussianLinear',
+           'multiple_gaussian']
 
 import numpy as np
 from qudi.util.fit_models.model import FitModelBase, estimator
@@ -34,12 +35,24 @@ logger = get_logger(__name__)
 def multiple_gaussian(x, centers, sigmas, amplitudes):
     """ Mathematical definition of the sum of multiple gaussian functions without any bias.
 
-    WARNING: iterable parameters "centers", "sigmas" and "amplitudes" must have same length.
+    WARNING: Iterable parameters "centers", "sigmas", and "amplitudes" must have the same length.
 
-    @param float x: The independent variable to calculate gauss(x)
-    @param iterable centers: Iterable containing center positions for all gaussians
-    @param iterable sigmas: Iterable containing sigmas for all gaussians
-    @param iterable amplitudes: Iterable containing amplitudes for all gaussians
+    Parameters
+    ----------
+    x : float
+        The independent variable to calculate gauss(x).
+    centers : iterable
+        Iterable containing center positions for all Gaussians.
+    sigmas : iterable
+        Iterable containing standard deviations (sigmas) for all Gaussians.
+    amplitudes : iterable
+        Iterable containing amplitudes for all Gaussians.
+
+    Returns
+    -------
+    float
+        The result given x for gauss(x).
+
     """
     assert len(centers) == len(sigmas) == len(amplitudes)
     return sum(amp * np.exp(-((x - c) ** 2) / (2 * sig ** 2)) for c, sig, amp in
@@ -76,7 +89,7 @@ class Gaussian(FitModelBase):
 
         # according to the derived formula, calculate sigma. The crucial part is here that the
         # offset was estimated correctly, then the area under the curve is calculated correctly:
-        numerical_integral = np.trapz(data_smoothed, x)
+        numerical_integral = np.trapezoid(data_smoothed, x)
         sigma = abs(numerical_integral / (np.sqrt(2 * np.pi) * amplitude))
 
         x_spacing = min(abs(np.ediff1d(x)))
@@ -337,21 +350,21 @@ class Gaussian2D(FitModelBase):
         self.set_param_hint('theta', value=0., min=-np.pi, max=np.pi)
 
     @staticmethod
-    def _model_function(xy, offset, amplitude, center_x, center_y, sigma_x, sigma_y, theta):
+    def _model_function(x, offset, amplitude, center_x, center_y, sigma_x, sigma_y, theta):
         try:
             a = np.cos(-theta) ** 2 / (2 * sigma_x ** 2) + np.sin(-theta) ** 2 / (2 * sigma_y ** 2)
             b = np.sin(2 * -theta) / (4 * sigma_y ** 2) - np.sin(2 * -theta) / (4 * sigma_x ** 2)
             c = np.sin(-theta) ** 2 / (2 * sigma_x ** 2) + np.cos(-theta) ** 2 / (2 * sigma_y ** 2)
         except ZeroDivisionError:
-            return np.full(xy[0].shape, offset)
-        x_prime = xy[0] - center_x
-        y_prime = xy[1] - center_y
+            return np.full(x[0].shape, offset)
+        x_prime = x[0] - center_x
+        y_prime = x[1] - center_y
         gauss = offset + amplitude * np.exp(
             -(a * x_prime ** 2 + 2 * b * x_prime * y_prime + c * y_prime ** 2))
         return gauss.ravel()
 
     @estimator('Peak')
-    def estimate_peak(self, data, xy):
+    def estimate_peak(self, data, x):
         # ToDo: Not properly implemented, yet
         stepsize_x = xy[0][1,0] - xy[0][0,0]
         stepsize_y = xy[1][0,1] - xy[1][0,0]
@@ -395,8 +408,8 @@ class Gaussian2D(FitModelBase):
 
 
     @estimator('Dip')
-    def estimate_dip(self, data, xy):
-        estimate = self.estimate_peak(-data, xy)
+    def estimate_dip(self, data, x):
+        estimate = self.estimate_peak(-data, x)
         estimate['offset'].set(value=-estimate['offset'].value,
                                min=-estimate['offset'].max,
                                max=-estimate['offset'].min)
