@@ -29,8 +29,6 @@ from qudi.util.fit_models.helpers import correct_offset_histogram, smooth_data, 
 from qudi.util.fit_models.helpers import estimate_double_peaks, estimate_triple_peaks
 from qudi.util.fit_models.linear import Linear
 
-from qudi.core.logger import get_logger
-logger = get_logger(__name__)
 
 def multiple_gaussian(x, centers, sigmas, amplitudes):
     """ Mathematical definition of the sum of multiple gaussian functions without any bias.
