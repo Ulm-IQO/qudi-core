@@ -63,7 +63,7 @@ since most users and even developers are not aware about the many caveats that c
 - Added an new `ConnectorList` type for connecting an unspecified number of modules of the same interface to a module.
 
 ### Other
-None
+- Replaced custom colorscale definitions from `qudi.util.colordefs` with their corresponding `matplotlib` defaults.
 
 
 ## Version 1.7.0
