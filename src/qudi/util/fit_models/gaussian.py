@@ -20,7 +20,8 @@ You should have received a copy of the GNU Lesser General Public License along w
 If not, see <https://www.gnu.org/licenses/>.
 """
 
-__all__ = ('DoubleGaussian', 'Gaussian', 'Gaussian2D', 'TripleGaussian', 'multiple_gaussian')
+__all__ = ['DoubleGaussian', 'Gaussian', 'Gaussian2D', 'TripleGaussian', 'GaussianLinear',
+           'multiple_gaussian']
 
 import numpy as np
 from qudi.util.fit_models.model import FitModelBase, estimator
