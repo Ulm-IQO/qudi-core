@@ -20,14 +20,13 @@ See the GNU Lesser General Public License for more details.
 You should have received a copy of the GNU Lesser General Public License along with qudi.
 If not, see <https://www.gnu.org/licenses/>.
 """
-
+from __future__ import annotations
 
 __all__ = ['ConfigOption', 'MissingOption']
 
 import copy
 import inspect
 from enum import Enum
-from __future__ import annotations
 from collections.abc import Callable
 from typing import Any, Generic, TypeAlias, TypeVar, cast
 

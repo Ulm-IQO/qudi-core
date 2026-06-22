@@ -19,12 +19,12 @@ See the GNU Lesser General Public License for more details.
 You should have received a copy of the GNU Lesser General Public License along with qudi.
 If not, see <https://www.gnu.org/licenses/>.
 """
+from __future__ import annotations
 
 __all__ = ['StatusVar']
 
 import copy
 import inspect
-from __future__ import annotations
 from collections.abc import Callable
 from typing import Any, Generic, TypeVar, cast
 
