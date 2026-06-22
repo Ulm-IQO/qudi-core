@@ -20,7 +20,7 @@ You should have received a copy of the GNU Lesser General Public License along w
 If not, see <https://www.gnu.org/licenses/>.
 """
 
-__all__ = ('ExponentialDecay', 'multiple_exponential_decay')
+__all__ = ['ExponentialDecay', 'DoubleExponentialDecay', 'multiple_exponential_decay']
 
 import warnings
 import numpy as np

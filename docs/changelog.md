@@ -3,16 +3,16 @@
 ## Pre-Release
 
 ### Breaking Changes
-None
+- Dropped support for rpyc version 5 and lower
 
 ### Bugfixes
-None
+- Workaround for MRO resolution for remote module connections
 
 ### New Features
-None
+- Added an new `ConnectorList` type for connecting an unspecified number of modules of the same interface to a module.
 
 ### Other
-None
+- Replaced custom colorscale definitions from `qudi.util.colordefs` with their corresponding `matplotlib` defaults.
 
 
 ## Version 1.7.0

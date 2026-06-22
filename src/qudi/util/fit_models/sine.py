@@ -20,7 +20,8 @@ You should have received a copy of the GNU Lesser General Public License along w
 If not, see <https://www.gnu.org/licenses/>.
 """
 
-__all__ = ('Sine', 'DoubleSine', 'ExponentialDecaySine', 'estimate_frequency_ft')
+__all__ = ['Sine', 'DoubleSine', 'ExponentialDecaySine', 'ExponentialDecayDoubleSine',
+           'estimate_frequency_ft']
 
 import numpy as np
 from qudi.util.math import compute_ft
