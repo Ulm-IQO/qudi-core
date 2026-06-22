@@ -24,7 +24,9 @@ __all__ = ['StatusVar']
 
 import copy
 import inspect
-from typing import Callable, Any, Optional, Generic, TypeVar, cast
+from __future__ import annotations
+from collections.abc import Callable
+from typing import Any, Generic, TypeVar, cast
 
 T = TypeVar('T')
 
@@ -34,8 +36,9 @@ class StatusVar(Generic[T]):
     deactivation.
     """
 
-    def __init__(self, name: Optional[str] = None, default: Optional[T] = None, *,
-                 constructor: Optional[Callable[..., T]] = None, representer: Optional[Callable[..., Any]] = None):
+    def __init__(self, name: str | None = None, default: T | None = None, *,
+                 constructor: Callable[..., T] | None = None,
+                 representer: Callable[..., Any] | None = None):
         """
         Parameters
         ----------
@@ -50,8 +53,8 @@ class StatusVar(Generic[T]):
         """
         self.name = name
         self.default = default
-        self.constructor_function: Optional[Callable[[Any, Any], T]] = None
-        self.representer_function: Optional[Callable[[Any, T], Any]] = None
+        self.constructor_function: Callable[[Any, Any], T] | None = None
+        self.representer_function: Callable[[Any, T], Any] | None = None
         if constructor is not None:
             self.constructor(constructor)
         if representer is not None:
@@ -70,7 +73,7 @@ class StatusVar(Generic[T]):
     def __deepcopy__(self, memodict={}):
         return self.copy()
 
-    def copy(self, **kwargs) -> 'StatusVar[T]':
+    def copy(self, **kwargs) -> StatusVar[T]:
         """Create a new instance of StatusVar with copied and updated values.
 
         Parameters
@@ -83,9 +86,9 @@ class StatusVar(Generic[T]):
                    'constructor': self.constructor_function,
                    'representer': self.representer_function}
         newargs.update(kwargs)
-        return cast('StatusVar[T]', StatusVar(**newargs))
+        return cast(StatusVar[T], StatusVar(**newargs))
 
-    def constructor(self,  func: Callable[..., T]) -> Callable[..., T]:
+    def constructor(self, func: Callable[..., T]) -> Callable[..., T]:
         """This is the decorator for declaring constructor function for this StatusVar.
 
         Parameters

@@ -21,14 +21,18 @@ You should have received a copy of the GNU Lesser General Public License along w
 If not, see <https://www.gnu.org/licenses/>.
 """
 
+
 __all__ = ['ConfigOption', 'MissingOption']
 
 import copy
 import inspect
 from enum import Enum
-from typing import Any, Callable, Generic, Optional, TypeVar, Union, cast
+from __future__ import annotations
+from collections.abc import Callable
+from typing import Any, Generic, TypeAlias, TypeVar, cast
 
 T = TypeVar('T')
+
 
 class MissingOption(Enum):
     """ Representation for missing ConfigOption """
@@ -36,8 +40,10 @@ class MissingOption(Enum):
     warn = -2
     info = -1
     nothing = 0
-UserConstructor = Union[Callable[[Any], T], Callable[[Any, Any], T]]
-BoundConstructor = Callable[[Any, Any], T]
+
+
+UserConstructor: TypeAlias = Callable[[Any], T] | Callable[[Any, Any], T]
+BoundConstructor: TypeAlias = Callable[[Any, Any], T]
 
 
 class ConfigOption(Generic[T]):
@@ -46,13 +52,13 @@ class ConfigOption(Generic[T]):
     """
     def __init__(
         self,
-        name: Optional[str] = None,
-        default: Optional[T] = None,
+        name: str | None = None,
+        default: T | None = None,
         *,
-        missing:  Optional[str] = 'nothing',
-        constructor: Optional[UserConstructor[T]] = None,
-        checker: Optional[Callable[[T], bool]] = None,
-        converter: Optional[Callable[[Any], T]] = None
+        missing: str | None = 'nothing',
+        constructor: UserConstructor[T] | None = None,
+        checker: Callable[[T], bool] | None = None,
+        converter: Callable[[Any], T] | None = None
     ) -> None:
         """ Create a ConfigOption object.
 
@@ -81,7 +87,7 @@ class ConfigOption(Generic[T]):
         self.default = default
         self.checker = checker
         self.converter = converter
-        self.constructor_function: Optional[BoundConstructor[T]] = None
+        self.constructor_function: BoundConstructor[T] | None = None
 
         if constructor is not None:
             self.constructor(constructor)
@@ -103,7 +109,7 @@ class ConfigOption(Generic[T]):
     def optional(self) -> bool:
         return self.missing != MissingOption.error
 
-    def copy(self, **kwargs) -> 'ConfigOption[T]':
+    def copy(self, **kwargs) -> ConfigOption[T]:
         """Create a new instance of ConfigOption with copied values and update.
 
         Parameters
@@ -118,8 +124,7 @@ class ConfigOption(Generic[T]):
                    'checker': self.checker,
                    'converter': self.converter}
         newargs.update(kwargs)
-        return cast('ConfigOption[T]', ConfigOption(**newargs))
-
+        return cast(ConfigOption[T], ConfigOption(**newargs))
 
     def check(self, value: T) -> bool:
         """If checker function set, check value. Assume everything is ok otherwise.
