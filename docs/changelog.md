@@ -10,6 +10,7 @@
 
 ### New Features
 - Added an new `ConnectorList` type for connecting an unspecified number of modules of the same interface to a module.
+- Added Generic type and updated type hints for ConfigOption, StatusVariable, and ConnectorList classes
 
 ### Other
 - Replaced custom colorscale definitions from `qudi.util.colordefs` with their corresponding `matplotlib` defaults.

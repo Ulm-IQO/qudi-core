@@ -20,13 +20,17 @@ See the GNU Lesser General Public License for more details.
 You should have received a copy of the GNU Lesser General Public License along with qudi.
 If not, see <https://www.gnu.org/licenses/>.
 """
+from __future__ import annotations
 
 __all__ = ['ConfigOption', 'MissingOption']
 
 import copy
 import inspect
 from enum import Enum
-from typing import Any, Optional, Callable
+from collections.abc import Callable
+from typing import Any, Generic, TypeAlias, TypeVar, cast
+
+T = TypeVar('T')
 
 
 class MissingOption(Enum):
@@ -37,14 +41,24 @@ class MissingOption(Enum):
     nothing = 0
 
 
-class ConfigOption:
+UserConstructor: TypeAlias = Callable[[Any], T] | Callable[[Any, Any], T]
+BoundConstructor: TypeAlias = Callable[[Any, Any], T]
+
+
+class ConfigOption(Generic[T]):
     """This class represents a configuration entry in the config file that is loaded before
     module initalisation.
     """
-
-    def __init__(self, name: Optional[str] = None, default: Optional[Any] = None, *,
-                 missing: Optional[str] = 'nothing', constructor: Optional[Callable] = None,
-                 checker: Optional[Callable] = None, converter: Optional[Callable] = None):
+    def __init__(
+        self,
+        name: str | None = None,
+        default: T | None = None,
+        *,
+        missing: str | None = 'nothing',
+        constructor: UserConstructor[T] | None = None,
+        checker: Callable[[T], bool] | None = None,
+        converter: Callable[[Any], T] | None = None
+    ) -> None:
         """ Create a ConfigOption object.
 
         Parameters
@@ -72,9 +86,13 @@ class ConfigOption:
         self.default = default
         self.checker = checker
         self.converter = converter
-        self.constructor_function = None
+        self.constructor_function: BoundConstructor[T] | None = None
+
         if constructor is not None:
             self.constructor(constructor)
+
+    def __get__(self, instance, owner) -> T:
+        return self
 
     def __set_name__(self, owner, name):
         if self.name is None:
@@ -90,7 +108,7 @@ class ConfigOption:
     def optional(self) -> bool:
         return self.missing != MissingOption.error
 
-    def copy(self, **kwargs):
+    def copy(self, **kwargs) -> ConfigOption[T]:
         """Create a new instance of ConfigOption with copied values and update.
 
         Parameters
@@ -105,23 +123,23 @@ class ConfigOption:
                    'checker': self.checker,
                    'converter': self.converter}
         newargs.update(kwargs)
-        return ConfigOption(**newargs)
+        return cast(ConfigOption[T], ConfigOption(**newargs))
 
-    def check(self, value: Any) -> bool:
+    def check(self, value: T) -> bool:
         """If checker function set, check value. Assume everything is ok otherwise.
         """
         if callable(self.checker):
             return self.checker(value)
         return True
 
-    def convert(self, value: Any) -> Any:
+    def convert(self, value: Any) -> T:
         """If converter function set, convert value (pass-through otherwise).
         """
         if callable(self.converter):
             return self.converter(value)
         return value
 
-    def constructor(self, func: Callable) -> Callable:
+    def constructor(self, func: UserConstructor[T]) -> UserConstructor[T]:
         """Decorator for declaring a constructor function for this ConfigOption.
 
         Parameters
@@ -138,7 +156,7 @@ class ConfigOption:
         return func
 
     @staticmethod
-    def _assert_func_signature(func: Callable) -> Callable:
+    def _assert_func_signature(func: UserConstructor[T]) -> BoundConstructor[T]:
         assert callable(func), 'ConfigOption constructor must be callable'
         params = tuple(inspect.signature(func).parameters)
         assert 0 < len(params) < 3, 'ConfigOption constructor must be function with ' \

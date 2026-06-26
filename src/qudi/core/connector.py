@@ -18,11 +18,12 @@ See the GNU Lesser General Public License for more details.
 You should have received a copy of the GNU Lesser General Public License along with qudi.
 If not, see <https://www.gnu.org/licenses/>.
 """
+from __future__ import annotations
 
 __all__ = ['Connector']
 
 import weakref
-from typing import Optional, Type, Union, TypeVar, Generic, TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Generic, TypeVar, cast
 from qudi.util.overload import OverloadProxy
 
 if TYPE_CHECKING:
@@ -38,15 +39,15 @@ class Connector(Generic[M]):
 
     def __init__(
             self,
-            interface: Union[str, Type[M]],
-            name: Optional[str] = None,
-            optional: Optional[bool] = False
+            interface: str | type[M],
+            name: str | None = None,
+            optional: bool | None = False
     ):
         """Initialize a Connector instance.
 
         Parameters
         ----------
-        interface : Union[str, Type]
+        interface : str | type
             Name of the interface class to connect to or the interface class itself.
         name : str, optional
             Name of the connector in qudi config. Will set attribute name if omitted.
@@ -126,15 +127,15 @@ class Connector(Generic[M]):
         """
         self._obj_proxy = None
 
-    def copy(self, **kwargs):
+    def copy(self, **kwargs) -> Connector[M]:
         """Create a new instance of Connector with copied values and update
         """
-        return Connector(kwargs.get('interface', self.interface),
-                         kwargs.get('name', self.name),
-                         kwargs.get('optional', self.optional))
+        return cast(Connector[M], Connector(kwargs.get('interface', self.interface),
+                                             kwargs.get('name', self.name),
+                                             kwargs.get('optional', self.optional)))
 
 
-class ConnectorList:
+class ConnectorList(Generic[M]):
     """A list of connectors used to connect qudi modules with each other.
     """
     class ConnectorListIterator:
@@ -143,7 +144,7 @@ class ConnectorList:
             self.i = 0
         def __iter__(self):
             return self
-        def __next__(self) -> int:
+        def __next__(self) -> M:
             if self.i >= len(self.connector_list):
                 raise StopIteration()
             item = self.connector_list(self.i)
@@ -151,13 +152,13 @@ class ConnectorList:
             return item
 
     def __init__(
-        self, interface: Union[str, Type], name: Union[str, None] = None, optional: bool = False
+        self, interface: str | type[M], name: str | None = None, optional: bool = False
     ):
         """Initialize a ConnectorList instance.
 
         Parameters
         ----------
-        interface : Union[str, Type]
+        interface : str | type
             Name of the interface class to connect to or the interface class itself.
         name : str, optional
             Name of the connector in qudi config. Will set attribute name if omitted.
@@ -187,7 +188,7 @@ class ConnectorList:
         if self.name is None:
             self.name = name
 
-    def __call__(self, i: int) -> Any:
+    def __call__(self, i: int) -> M:
         """Return reference to the module that this connector is connected to."""
         if not (0 <= i <= len(self._obj_proxies)):
             if self.optional:
@@ -197,7 +198,7 @@ class ConnectorList:
             )
         return self._obj_proxies[i]
 
-    def __getitem__(self, i: int) -> Any:
+    def __getitem__(self, i: int) -> M:
         return self(i)
 
     def __copy__(self):
@@ -228,7 +229,7 @@ class ConnectorList:
         """
         return len(self._obj_proxies) > 0
 
-    def connect(self, target: Any) -> None:
+    def connect(self, target: M) -> None:
         """Check if target is connectible by this connector and connect.
         """
         if self.interface not in target._meta['mro']:
@@ -244,10 +245,9 @@ class ConnectorList:
         """
         self._obj_proxies = []
 
-    def copy(self, **kwargs):
+    def copy(self, **kwargs) -> ConnectorList[M]:
         """Create a new instance of Connector with copied values and update
         """
-        return ConnectorList(kwargs.get('interface', self.interface),
-                             kwargs.get('name', self.name),
-                             kwargs.get('optional', self.optional))
-
+        return cast(ConnectorList[M], ConnectorList(kwargs.get('interface', self.interface),
+                                                    kwargs.get('name', self.name),
+                                                    kwargs.get('optional', self.optional)))
