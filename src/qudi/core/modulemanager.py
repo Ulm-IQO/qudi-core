@@ -382,11 +382,15 @@ class ManagedModule(QtCore.QObject):
     @property
     def is_active(self):
         with self._lock:
-            return self._instance is not None and self._instance.module_state() != 'deactivated'
+            if self._instance is None:
+                return False
+            return self.state not in ('deactivated', 'not loaded', 'BROKEN', 'DISCONNECTED')
 
     @property
     def is_busy(self):
         with self._lock:
+            if self._instance is None:
+                return False
             return self.is_active and self._instance.module_state() != 'idle'
 
     @property
@@ -411,12 +415,20 @@ class ManagedModule(QtCore.QObject):
 
     @property
     def state(self):
+        if self._instance is None:
+            return 'not loaded'
         try:
             return self._instance.module_state()
         except AttributeError:
             return 'not loaded'
-        except:
-            return 'BROKEN'
+        except (EOFError, OSError):
+            if self.is_remote:
+                return 'DISCONNECTED'
+            raise
+        except Exception:
+            if self.is_remote:
+                return 'BROKEN'
+            raise
 
     @property
     def connection_cfg(self):
@@ -512,6 +524,10 @@ class ManagedModule(QtCore.QObject):
             if not self.is_loaded:
                 self._load()
 
+            if self.is_remote and self.is_loaded and self.state in ('BROKEN', 'DISCONNECTED'):
+                self._instance = None
+                self._load(reload=True)
+
             if self.is_remote and self.__poll_timer is None:
                 self.__poll_timer = QtCore.QTimer(self)
                 logger.debug(f"creating new timer {self.__poll_timer}")
@@ -548,7 +564,7 @@ class ManagedModule(QtCore.QObject):
             self._connect()
 
             # Activate this module
-            if self._instance.is_module_threaded:
+            if self._instance.is_module_threaded and not self.is_remote:
                 thread_name = self.module_thread_name
                 thread_manager = self._qudi_main_ref().thread_manager
                 thread = thread_manager.get_new_thread(thread_name)
@@ -598,6 +614,13 @@ class ManagedModule(QtCore.QObject):
         with self._lock:
             state = self.state
             if state != self.__last_state:
+                if self.is_remote and state == 'DISCONNECTED':
+                    logger.error(
+                        f'Lost connection to remote {self.module_base} module '
+                        f'"{self.name}" at {self.remote_url}. The server may have '
+                        f'shut down or become unreachable. Re-activate the module '
+                        f'to reconnect once the server is available again.'
+                    )
                 self.__last_state = state
                 self.sigStateChanged.emit(self._base, self._name, state)
             try:
@@ -619,15 +642,31 @@ class ManagedModule(QtCore.QObject):
             return
 
         with self._lock:
-            if not self.is_active:
+            if self.is_remote:
+                if not self.is_loaded:
+                    return
+            elif not self.is_active:
                 return
 
             if self.is_remote:
-                logger.info(f'Deactivating remote {self.module_base} module "{self.remote_url}"')
-            else:
                 logger.info(
-                    f'Deactivating {self.module_base} module "{self.module_name}.{self.class_name}"'
+                    f'Disconnecting client from remote {self.module_base} module '
+                    f'"{self.remote_url}"'
                 )
+                # Recursively deactivate client-side dependents only
+                for module_ref in self.dependent_modules:
+                    module = module_ref()
+                    if module is None:
+                        raise ReferenceError(
+                            f'Dead dependent module weakref encountered in ManagedModule "{self.name}".'
+                        )
+                    module.deactivate()
+                self._disable_state_updated()
+                self._instance = None
+                self.__last_state = self.state
+                self.sigStateChanged.emit(self._base, self._name, self.__last_state)
+                self.sigAppDataChanged.emit(self._base, self._name, self.has_app_data)
+                return
 
             # Recursively deactivate dependent modules
             for module_ref in self.dependent_modules:
@@ -773,13 +812,30 @@ class ManagedModule(QtCore.QObject):
 
     def _disconnect(self):
         with self._lock:
-            self._instance.disconnect_modules()
+            if self._instance is None:
+                return
+            try:
+                self._instance.disconnect_modules()
+            except (EOFError, OSError):
+                pass
+            except Exception:
+                logger.exception(f'Error while disconnecting module "{self._name}"')
 
     def _disable_state_updated(self):
         try:
-            self.__poll_timer.stop()
-            self.__poll_timer.timeout.disconnect()
-        except AttributeError:
-            self._instance.module_state.sigStateChanged.disconnect(self._state_change_callback)
+            if self.__poll_timer is not None:
+                self.__poll_timer.stop()
+                try:
+                    self.__poll_timer.timeout.disconnect()
+                except Exception:
+                    pass
+            else:
+                try:
+                    if self._instance is not None:
+                        self._instance.module_state.sigStateChanged.disconnect(
+                            self._state_change_callback
+                        )
+                except (AttributeError, RuntimeError, EOFError, OSError):
+                    pass
         finally:
             self.__poll_timer = None
