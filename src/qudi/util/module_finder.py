@@ -115,7 +115,7 @@ def iter_directory_module_names(path: str):
     yield from module_names
 
 
-def get_modules_from_path(path: str, predicate:  Callable[[Any], bool] | None = None, *, reload=True):
+def get_modules_from_path(path: str, predicate:  Callable[[Any], bool] | None = None, *, reload=True) -> List[Type[Base]]:
     """ Collect all modules matching ``predicate`` from the loose ``*.py`` modules in a directory.
     """
     class_list = list()
@@ -127,7 +127,7 @@ def get_modules_from_path(path: str, predicate:  Callable[[Any], bool] | None = 
     return class_list
 
 
-def normalize_import_paths(paths: list| str, option_name: str = None, logger: Logger = None):
+def normalize_import_paths(paths: list| str, option_name: str = None, logger: Logger = None) -> List[str]:
     """ Coerce a ConfigOption import-path value into a validated list of existing directories.
     """
     path_list = list()
