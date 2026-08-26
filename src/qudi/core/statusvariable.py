@@ -132,3 +132,78 @@ class StatusVar(Generic[T]):
 
             return wrapper
         return func
+
+    def check_value_type(self, value: Any) -> tuple[Any, str | None]:
+        """ Reconcile a loaded status variable value against this StatusVar's default.
+        Missing dict keys are backfilled from the default; values whose type does not
+        match the default's are replaced by the default.
+        """
+        default = self.default
+        messages: list[str] = []
+
+        # 1. dict handling: backfill missing keys, then per-value type reconciliation
+        if isinstance(value, dict) and isinstance(default, dict):
+            value, missing_keys = self._merge_defaults(value, default)
+            if missing_keys:
+                messages.append(f"status variable '{self.name}' has missing keys "
+                                f"{missing_keys} which are loaded with default values")
+            value, value_msgs = self._reconcile_dict_value_types(value, default, self.name)
+            messages.extend(value_msgs)
+
+        # 2. top-level type comparison -> substitute the default on mismatch
+        if (default is not None and value is not None
+                and not self._types_match(type(default), type(value))):
+            messages.append(f"status variable '{self.name}' loaded as type "
+                            f"'{type(value).__name__}' but its default is of type "
+                            f"'{type(default).__name__}';")
+            value = copy.deepcopy(default)
+
+        return value, ('; '.join(messages) if messages else None)
+
+    @classmethod
+    def _reconcile_dict_value_types(cls, loaded: dict, default: dict, path: str) -> tuple[dict, list]:
+        """ Recursively compare the type of each value under a shared key against the
+        default; where they differ, substitute it with the default value.
+        """
+        reconciled = dict(loaded)
+        messages = []
+        for key, default_value in default.items():
+            if key not in reconciled:
+                continue 
+            loaded_value = reconciled[key]
+            if default_value is None or loaded_value is None:
+                continue 
+            if isinstance(loaded_value, dict) and isinstance(default_value, dict):
+                reconciled[key], sub = cls._reconcile_dict_value_types(
+                    loaded_value, default_value, f"{path}.{key}")
+                messages.extend(sub)
+            elif not cls._types_match(type(default_value), type(loaded_value)):
+                messages.append(f"key '{path}.{key}' loaded as type "
+                                f"'{type(loaded_value).__name__}' but default is of type "
+                                f"'{type(default_value).__name__}';")
+                reconciled[key] = copy.deepcopy(default_value)
+        return reconciled, messages
+
+    @staticmethod
+    def _types_match(expected: type, actual: type) -> bool:
+        if actual is expected:
+            return True
+        numeric = (int, float)
+        return (expected in numeric and actual in numeric
+                and expected is not bool and actual is not bool)
+
+    @staticmethod
+    def _merge_defaults(loaded: dict, default: dict) -> tuple[dict, list]:
+        """Fill the missing keys in the loaded dict with default dict
+        """
+        merged = dict(loaded)
+        missing_keys = []
+        for key, default_value in default.items():
+            if key not in merged:
+                missing_keys.append(key)
+                merged[key] = copy.deepcopy(default_value)
+            elif isinstance(merged[key], dict) and isinstance(default_value, dict):
+                merged[key], _ = StatusVar._merge_defaults(merged[key], default_value)
+        return merged, missing_keys
+
+  
