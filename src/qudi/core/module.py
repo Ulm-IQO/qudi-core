@@ -334,9 +334,21 @@ class Base(QtCore.QObject, metaclass=ModuleMeta):
         # Set instance attributes according to StatusVar meta objects
         try:
             for attr_name, var in self._meta['status_variables'].items():
+                from_disk = var.name in variables
                 value = variables.get(var.name, copy.deepcopy(var.default))
+
+                # Backfill missing dict keys + type check
+                if from_disk:
+                    value, mismatch = var.check_value_type(value)
+                else:
+                    mismatch = None
+
                 if var.constructor_function is not None:
                     value = var.constructor_function(self, value)
+                elif mismatch is not None:
+                    self.log.warning(f'Status variable type mismatch on load: {mismatch}. '
+                                    f'Using the default value.')
+
                 setattr(self, attr_name, value)
         except:
             self.log.exception('Error while settings status variables:')

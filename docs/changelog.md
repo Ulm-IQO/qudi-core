@@ -11,6 +11,7 @@
 - Disabled deactivation of remote hardware module from client for remote module connections
 
 ### New Features
+- Added validation for status variables.
 - Added an new `ConnectorList` type for connecting an unspecified number of modules of the same interface to a module.
 - Added Generic type and updated type hints for ConfigOption, StatusVariable, and ConnectorList classes
 
