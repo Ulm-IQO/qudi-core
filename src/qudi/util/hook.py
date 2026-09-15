@@ -7,9 +7,8 @@ handles and implements `unstructure` and/or `structure`.
 
 And a converter class that automatically registers all such hooks.
 
-
 Copyright (c) 2021, the qudi developers. See the AUTHORS.md file at the top-level directory of this
-distribution and on <https://github.com/Ulm-IQO/qudi-iqo-modules/>
+distribution and on <https://github.com/Ulm-IQO/qudi-core/>
 
 This file is part of qudi.
 
