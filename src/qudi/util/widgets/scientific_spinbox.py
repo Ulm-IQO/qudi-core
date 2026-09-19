@@ -1043,12 +1043,12 @@ class ScienDSpinBox(QtWidgets.QAbstractSpinBox):
                     if not fractional_str:
                         fractional_str = '1'
                     else:
-                        fractional_str = str(int(fractional_str) + 1)
+                        fractional_str = str(int(fractional_str) + 1).zfill(len(fractional_str))
             elif self.__decimals == len(fractional_str):
                 if fractional >= 0.5:
                     if fractional_str:
                         fractional_int = int(fractional_str) + 1
-                        fractional_str = str(fractional_int)
+                        fractional_str = str(fractional_int).zfill(len(fractional_str))
                     else:
                         fractional_str = '1'
             elif self.__decimals > len(fractional_str):
@@ -1056,7 +1056,10 @@ class ScienDSpinBox(QtWidgets.QAbstractSpinBox):
                 fractional_tmp_str = ('{0:.' + str(digits_to_add) + 'f}').format(fractional)
                 if fractional_tmp_str.startswith('1'):
                     if fractional_str:
-                        fractional_str = str(int(fractional_str) + 1) + '0' * digits_to_add
+                        fractional_str = (
+                            str(int(fractional_str) + 1).zfill(len(fractional_str))
+                            + '0' * digits_to_add
+                        )
                     else:
                         fractional_str = '1' + '0' * digits_to_add
                 else:
