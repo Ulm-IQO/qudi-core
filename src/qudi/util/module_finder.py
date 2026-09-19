@@ -32,6 +32,15 @@ from qudi.core import  Base
 from qudi.util.helpers import iter_modules_recursive
 
 
+def is_subclass(obj, base):
+    """
+    Check whether obj is a subclass of base.
+
+    Returns True if obj is a class that inherits from base at any depth,
+    excluding base itself.
+    """
+    return inspect.isclass(obj) and issubclass(obj, base) and obj is not base
+
 
 def get_module_names_from_ns(namespace: object) -> List[str]:
         """

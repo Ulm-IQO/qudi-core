@@ -20,7 +20,7 @@ You should have received a copy of the GNU Lesser General Public License along w
 If not, see <https://www.gnu.org/licenses/>.
 """
 
-__all__ = ('is_fit_model', 'get_all_fit_models', 'FitConfiguration', 'FitConfigurationsModel',
+__all__ = ( 'get_all_fit_models', 'FitConfiguration', 'FitConfigurationsModel',
            'FitContainer')
 
 import importlib
@@ -28,6 +28,7 @@ import logging
 import inspect
 import lmfit
 import numpy as np
+from functools import partial
 from PySide6 import QtCore
 from typing import Iterable, Optional, Mapping, Union
 
@@ -35,14 +36,11 @@ import qudi.util.fit_models as _fit_models_ns
 from qudi.util.mutex import Mutex
 from qudi.util.units import create_formatted_output
 from qudi.util.fit_models.model import FitModelBase
-from qudi.util.module_finder import get_modules_from_ns
+from qudi.util.module_finder import get_modules_from_ns, is_subclass
 
 
 _log = logging.getLogger(__name__)
 
-
-def is_fit_model(cls):
-    return inspect.isclass(cls) and issubclass(cls, FitModelBase) and (cls is not FitModelBase)
 
 
 # Upon import of this module the global attribute _fit_models is initialized with a dict
@@ -50,7 +48,7 @@ def is_fit_model(cls):
 _fit_models = dict()
 
 
-_fit_models = get_modules_from_ns(_fit_models_ns, is_fit_model, logger=_log)
+_fit_models = get_modules_from_ns(_fit_models_ns, partial(is_subclass, base=FitModelBase), logger=_log)
 
 def get_all_fit_models():
     return _fit_models.copy()
