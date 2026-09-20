@@ -5,12 +5,12 @@
 
 __all__ = ['ModuleFinder', 'QudiModules']
 
-import importlib
 import inspect
 import logging
 from typing import List, Type, Dict, Iterable
 
 from qudi.core import Connector, ConfigOption, Base, LogicBase, GuiBase
+from qudi.util.module_finder import get_modules_from_ns
 from qudi.util.helpers import iter_modules_recursive
 
 
@@ -26,29 +26,24 @@ class ModuleFinder:
             return False
         return inspect.isclass(obj) and issubclass(obj, Base) and not inspect.isabstract(obj)
 
-    @staticmethod
-    def get_module_names_from_ns(namespace: object) -> List[str]:
-        module_names = [mod_finder.name for mod_finder in
-                        iter_modules_recursive(namespace.__path__, f'{namespace.__name__}.')]
-        # Remove duplicates
-        return list(dict.fromkeys(module_names))
-
     @classmethod
-    def get_qudi_classes_in_module(cls, module: object) -> Dict[str, Type[Base]]:
-        members = inspect.getmembers(module, cls.is_qudi_module)
-        return {f'{module.__name__}.{name}': obj for name, obj in members if
-                obj.__module__ == module.__name__}
+    def get_qudi_modules_from_ns(cls, namespace: object, simple_module_name: bool = False) -> Dict[str, Type[Base]]:
+        """
+        Get qudi modules from a namespace
 
-    @classmethod
-    def get_qudi_modules_from_ns(cls, namespace: object) -> Dict[str, Type[Base]]:
-        qudi_modules = dict()
-        for module_name in cls.get_module_names_from_ns(namespace):
-            try:
-                module = importlib.import_module(module_name)
-            except:
-                log.warning(f'Error during import of module "{module_name}"')
-                continue
-            qudi_modules.update(cls.get_qudi_classes_in_module(module))
+        Parameters
+        ----------
+        namespace
+            namespace object
+        simple_module_name
+            boolean to indicate whether to fetch the module names without or with the absolute path of the module
+            Here it is set to False by default as the absolute path is needed.
+        Returns
+        -------
+        dict
+            dict of module name and its corresponding base class .
+        """
+        qudi_modules = get_modules_from_ns(namespace, cls.is_qudi_module, simple_module_name, logger=log)
         return qudi_modules
 
     @classmethod

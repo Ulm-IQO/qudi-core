@@ -9,9 +9,11 @@
 - Workaround for MRO resolution for remote module connections
 - Fixed client crashing when server disconnects for remote module connections by introduncing a new state for module- DISCONNECTED
 - Disabled deactivation of remote hardware module from client for remote module connections
+- Preserve leading zeros when incrementing fractional digit strings during scientific spinbox rounding to maintain the fractional field width.
 
 ### New Features
 - Added support for cattrs with a framework for defining custom hooks and converter.
+- Added a utility file (module finder) and some generic functions to iterate and find modules from a namespace/directory. 
 - Added an new `ConnectorList` type for connecting an unspecified number of modules of the same interface to a module.
 - Added Generic type and updated type hints for ConfigOption, StatusVariable, and ConnectorList classes
 

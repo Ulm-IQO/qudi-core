@@ -20,7 +20,7 @@ You should have received a copy of the GNU Lesser General Public License along w
 If not, see <https://www.gnu.org/licenses/>.
 """
 
-__all__ = ('is_fit_model', 'get_all_fit_models', 'FitConfiguration', 'FitConfigurationsModel',
+__all__ = ( 'get_all_fit_models', 'FitConfiguration', 'FitConfigurationsModel',
            'FitContainer')
 
 import importlib
@@ -28,37 +28,27 @@ import logging
 import inspect
 import lmfit
 import numpy as np
+from functools import partial
 from PySide6 import QtCore
 from typing import Iterable, Optional, Mapping, Union
 
 import qudi.util.fit_models as _fit_models_ns
 from qudi.util.mutex import Mutex
 from qudi.util.units import create_formatted_output
-from qudi.util.helpers import iter_modules_recursive
 from qudi.util.fit_models.model import FitModelBase
+from qudi.util.module_finder import get_modules_from_ns, is_subclass
 
 
 _log = logging.getLogger(__name__)
 
 
-def is_fit_model(cls):
-    return inspect.isclass(cls) and issubclass(cls, FitModelBase) and (cls is not FitModelBase)
-
 
 # Upon import of this module the global attribute _fit_models is initialized with a dict
 # containing all importable fit model objects with names as keys.
 _fit_models = dict()
-for mod_finder in iter_modules_recursive(_fit_models_ns.__path__, _fit_models_ns.__name__ + '.'):
-    try:
-        _fit_models.update(
-            {name: cls for name, cls in
-             inspect.getmembers(importlib.import_module(mod_finder.name), is_fit_model)}
-        )
-    except:
-        _log.exception(
-            f'Exception while importing qudi.util.fit_models sub-module "{mod_finder.name}":'
-        )
 
+
+_fit_models = get_modules_from_ns(_fit_models_ns, partial(is_subclass, base=FitModelBase), logger=_log)
 
 def get_all_fit_models():
     return _fit_models.copy()
