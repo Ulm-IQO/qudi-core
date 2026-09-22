@@ -114,6 +114,10 @@ class MyExampleLogic(LogicBase):
 Since these conversion functions are usually static (as the example above also shows), you could 
 also combine that with the `@staticmethod` decorator. But this is not necessary and just good style.
 
+If the same custom type is stored by several modules, consider registering a
+reusable conversion instead of repeating these `constructor`/`representer`
+functions on each `StatusVar` — see [Serialization Hooks](data_conversion.md).
+
 #### name
 There is an optional `name` argument for `StatusVar`. The name given here is used by the YAML 
 dumper as field name for the variable data. So the `name` argument can be used to store the status 
