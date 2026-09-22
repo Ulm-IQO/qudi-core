@@ -21,6 +21,7 @@ has_children: true
 ### Design Concepts
 - [Measurement Modules (Hardware/Logic/GUI)](design_concepts/measurement_modules.md)
 - [Status Variables](design_concepts/status_variables.md)
+- [Data Conversion](design_concepts/data_conversion.md)
 - [Config Options](design_concepts/config_options.md)
 - [Connectors](design_concepts/connectors.md)
 - [Configuration](design_concepts/configuration.md)
@@ -36,6 +37,7 @@ has_children: true
 - Task Runner
 - [Data Storage](core_elements/data_storage.md)
 - Data Fit Models
+
 
 ### Programming Guidelines
 - [Code Style](programming_guidelines/code_style.md)

@@ -24,7 +24,7 @@ You should have received a copy of the GNU Lesser General Public License along w
 If not, see <https://www.gnu.org/licenses/>.
 """
 
-__all__ = ['ValueConverter', 'get_converter', 'structure', 'unstructure']
+__all__ = ['ValueConverter', 'get_converter', 'registered_converters']
 
 import functools
 from abc import ABC, abstractmethod
@@ -96,9 +96,3 @@ def registered_converters() -> MappingProxyType[type, type[ValueConverter]]:
     """Read-only mapping of target type to the ValueConverter class handling it."""
     return MappingProxyType(_build()[1])
 
-def unstructure(obj: Any) -> Any:
-    return get_converter().unstructure(obj)
-
-
-def structure(value: Any, type_: type) -> Any:
-    return get_converter().structure(value, type_)

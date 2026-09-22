@@ -116,7 +116,7 @@ also combine that with the `@staticmethod` decorator. But this is not necessary 
 
 If the same custom type is stored by several modules, consider registering a
 reusable conversion instead of repeating these `constructor`/`representer`
-functions on each `StatusVar` — see [Serialization Hooks](serialization_hooks.md).
+functions on each `StatusVar` — see [Serialization Hooks](data_conversion.md).
 
 #### name
 There is an optional `name` argument for `StatusVar`. The name given here is used by the YAML 

@@ -14,27 +14,25 @@ A lot of standard datatypes are supported out of the box, additionally this impl
 
 ## Concepts
 
-A **hook** converts one custom type in two directions:
+A cattrs hook converts one custom type in two directions:
 
 - `unstructure`: custom object → serializable primitive.
 - `structure`: primitive → custom object.
 
-It is a subclass of `qudi.util.hook.Hook` that sets `target` to the type it
-handles and implements both methods.
+`qudi.util.data_conversion.ValueConverter` is the base class for all custom hooks that set `target` to the type they
+handle and implement both methods.
 
-The converter, `qudi.util.hook.CattrsConverter`, discovers every `Hook` subclass
-in the `qudi.util.hooks` namespace, registers them on a single cattrs
-`Converter`, and exposes it via `.converter`.
+`get_converter()` discovers every ValueConverter subclass in the qudi.util.value_converters namespace and registers it on a single shared cattrs Converter. The converter is built once, on first use, and reused afterwards.
 
 ## Writing a hook
 
-Place a `Hook` subclass in the `qudi.util.hooks` namespace:
+Place a `ValueConverter` subclass in the `qudi.util.value_converters` namespace:
 
 ```python
 from __future__ import annotations
-from qudi.util.hook import Hook
+from qudi.util.data_conversion import ValueConverter
 
-class FancyDataTypeHook(Hook):
+class FancyDataTypeConverter(ValueConverter):
     target = FancyDataType
 
     def unstructure(self, obj):
@@ -45,22 +43,26 @@ class FancyDataTypeHook(Hook):
 ```
 
 That is the whole registration — no manual `register(...)` call and no YAML tag.
-`CattrsConverter` finds the hook by scanning the namespace.
+The converter object finds the hook by scanning the namespace.
 
 ## Using the converter
+With the existing datetime converter , string values can be converted/structured to datetime objects
 
 ```python
-from qudi.util.hook import CattrsConverter
+from qudi.util.data_conversion import get_converter, structure
+from datetime import datetime
 
-converter = CattrsConverter().converter
+conv = get_converter()
 
-primitive = converter.unstructure(FancyDataType(42, 3.1415))
-obj = converter.structure([42, 3.1415], FancyDataType)
+dt = "2026-05-21"
+
+dt = conv.structure(dt, datetime)
+
 ```
 
 
 ```python
-converter = CattrsConverter().converter
+converter =  get_converter()
 
 _my_status_variable = StatusVar(
     default=FancyDataType(1, 2),
