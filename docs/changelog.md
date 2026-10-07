@@ -3,6 +3,21 @@
 ## Pre-Release
 
 ### Breaking Changes
+None
+
+### Bugfixes
+None
+
+### New Features
+None
+
+### Other
+None
+
+## Version 1.8.0
+Released on 07.10.2026
+
+### Breaking Changes
 - Dropped support for rpyc version 5 and lower
 
 ### Bugfixes
@@ -12,7 +27,7 @@
 - Preserve leading zeros when incrementing fractional digit strings during scientific spinbox rounding to maintain the fractional field width.
 
 ### New Features
-- Added a utility file (module finder) and some generic functions to iterate and find modules from a namespace/directory. 
+- Added a utility file (module finder) and some generic functions to iterate and find modules from a namespace/directory.
 - Added an new `ConnectorList` type for connecting an unspecified number of modules of the same interface to a module.
 - Added Generic type and updated type hints for ConfigOption, StatusVariable, and ConnectorList classes
 
