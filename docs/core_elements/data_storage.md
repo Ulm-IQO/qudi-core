@@ -16,6 +16,7 @@ currently includes:
 - `TextDataStorage` for text files 
 - `CsvDataStorage` for csv files (specialized text file)
 - `NpyDataStorage` for numpy binary files (.npy)
+- `TOMLHeaderDataStorage` for text files with a TOML header
 
 There may be more supported storage formats in the future (e.g. database storage like SQL or HDF5) 
 so you might want to check `qudi.util.datastorage` for any objects not listed in this 
