@@ -9,7 +9,7 @@ None
 None
 
 ### New Features
-None
+- Added the `TOMLHeaderDataStorage` storage for easier to use data exports.
 
 ### Other
 None

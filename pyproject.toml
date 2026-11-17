@@ -77,6 +77,8 @@ dependencies = [
     "scipy>=1.15.3",
     "jsonschema>=4.25.1",
     "qtconsole>=5.7.0",
+    "tomli>=2.2.1",
+    "tomli-w>=1.2.0",
 ]
 
 [project.optional-dependencies]
